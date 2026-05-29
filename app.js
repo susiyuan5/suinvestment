@@ -194,22 +194,35 @@
     const quoteUrl = new URL("https://finnhub.io/api/v1/quote");
     quoteUrl.search = new URLSearchParams({ symbol, token: apiKey }).toString();
 
-    const [candle, quote] = await Promise.all([fetchJson(candleUrl), fetchJson(quoteUrl)]);
-    if (candle.s !== "ok" || !Array.isArray(candle.c) || candle.c.length < 6) {
-      throw new Error("insufficient daily candles");
+    const quote = await fetchJson(quoteUrl);
+    if (!isFiniteNumber(quote.c) || quote.c <= 0) {
+      throw new Error("quote unavailable");
     }
 
-    const closes = candle.c.filter(isFiniteNumber);
-    const comparison = calculateWeeklyChange(closes);
+    let comparison = null;
+    let candleNote = "Live quote; daily candles unavailable";
+
+    try {
+      const candle = await fetchJson(candleUrl);
+      if (candle.s !== "ok" || !Array.isArray(candle.c) || candle.c.length < 6) {
+        throw new Error(candle.s === "no_data" ? "no daily candle data" : "insufficient daily candles");
+      }
+
+      const closes = candle.c.filter(isFiniteNumber);
+      comparison = calculateWeeklyChange(closes);
+      candleNote = "Live quote and daily candles";
+    } catch (error) {
+      console.warn("Finnhub candles failed for", symbol, error);
+    }
 
     return {
       symbol,
-      price: isFiniteNumber(quote.c) ? quote.c : comparison.latestClose,
-      latestClose: comparison.latestClose,
-      weekAgoClose: comparison.weekAgoClose,
-      weeklyChange: comparison.weeklyChange,
+      price: quote.c,
+      latestClose: comparison ? comparison.latestClose : null,
+      weekAgoClose: comparison ? comparison.weekAgoClose : null,
+      weeklyChange: comparison ? comparison.weeklyChange : null,
       source: "Finnhub",
-      note: "Live daily candles",
+      note: candleNote,
       fetchedAt: Date.now()
     };
   }
@@ -458,7 +471,10 @@
 
     try {
       const response = await fetch(url, { signal: controller.signal });
-      if (!response.ok) throw new Error("Request failed with status " + response.status);
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error("Request failed with status " + response.status + " " + body.slice(0, 120));
+      }
       return response.json();
     } catch (error) {
       if (error && error.name === "AbortError") {
