@@ -34,6 +34,7 @@
     qqqWeekly: null,
     panicActive: false,
     loading: false,
+    pendingRefresh: false,
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {})
   };
@@ -85,9 +86,13 @@
   refreshMarketData();
 
   async function refreshMarketData() {
-    if (state.loading) return;
+    if (state.loading) {
+      state.pendingRefresh = true;
+      return;
+    }
 
     state.loading = true;
+    state.pendingRefresh = false;
     refreshBtn.disabled = true;
     refreshBtn.textContent = "Refreshing...";
     lastUpdatedEl.textContent = "Refreshing market data...";
@@ -113,6 +118,10 @@
     state.loading = false;
     refreshBtn.disabled = false;
     refreshBtn.textContent = "Refresh Prices";
+
+    if (state.pendingRefresh) {
+      refreshMarketData();
+    }
   }
 
   function openSettings() {
@@ -172,7 +181,7 @@
 
   async function fetchFinnhubSnapshot(symbol, apiKey) {
     const now = Math.floor(Date.now() / 1000);
-    const from = now - 21 * 24 * 60 * 60;
+    const from = now - 45 * 24 * 60 * 60;
     const candleUrl = new URL("https://finnhub.io/api/v1/stock/candle");
     candleUrl.search = new URLSearchParams({
       symbol,
