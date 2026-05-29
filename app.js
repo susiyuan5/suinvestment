@@ -44,6 +44,9 @@
   const refreshBtn = document.getElementById("refreshBtn");
   const copyBtn = document.getElementById("copyBtn");
   const apiKeyInput = document.getElementById("apiKey");
+  const openSettingsBtn = document.getElementById("openSettingsBtn");
+  const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+  const settingsModal = document.getElementById("settingsModal");
   const lastUpdatedEl = document.getElementById("lastUpdated");
   const panicBanner = document.getElementById("panicBanner");
   const template = document.getElementById("stockCardTemplate");
@@ -61,6 +64,17 @@
     if (event.key === "Enter") {
       window.clearTimeout(apiKeyRefreshTimer);
       refreshMarketData();
+    }
+  });
+
+  openSettingsBtn.addEventListener("click", openSettings);
+  closeSettingsBtn.addEventListener("click", closeSettings);
+  settingsModal.addEventListener("click", function (event) {
+    if (event.target === settingsModal) closeSettings();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !settingsModal.classList.contains("hidden")) {
+      closeSettings();
     }
   });
 
@@ -98,7 +112,17 @@
 
     state.loading = false;
     refreshBtn.disabled = false;
-    refreshBtn.textContent = "Refresh Data";
+    refreshBtn.textContent = "Refresh Prices";
+  }
+
+  function openSettings() {
+    settingsModal.classList.remove("hidden");
+    apiKeyInput.focus();
+  }
+
+  function closeSettings() {
+    settingsModal.classList.add("hidden");
+    openSettingsBtn.focus();
   }
 
   async function fetchSymbolSnapshot(symbol) {

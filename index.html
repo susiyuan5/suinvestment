@@ -28,7 +28,7 @@
               <p class="eyebrow">Monthly settings</p>
               <h2 id="settings-title">Deployment Plan</h2>
             </div>
-            <button id="refreshBtn" class="primary-button" type="button">Refresh Data</button>
+            <button id="openSettingsBtn" class="primary-button" type="button">Settings</button>
           </div>
 
           <div class="metrics-grid">
@@ -50,10 +50,6 @@
             </article>
           </div>
 
-          <label class="api-key-row" for="apiKey">
-            <span>Finnhub API Key</span>
-            <input id="apiKey" type="password" autocomplete="off" placeholder="Enter key for live prices">
-          </label>
         </section>
 
         <section id="panicBanner" class="panic-banner hidden" aria-live="polite">
@@ -103,6 +99,30 @@
           </p>
         </section>
       </main>
+    </div>
+
+    <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="price-settings-title">
+      <div class="modal-card">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow">Live market data</p>
+            <h2 id="price-settings-title">Price Settings</h2>
+          </div>
+          <button id="closeSettingsBtn" class="icon-button" type="button" aria-label="Close price settings">×</button>
+        </div>
+
+        <label class="api-key-row" for="apiKey">
+          <span>Finnhub API Key</span>
+          <input id="apiKey" type="password" autocomplete="off" placeholder="Enter key for live prices">
+        </label>
+
+        <button id="refreshBtn" class="primary-button modal-refresh" type="button">Refresh Prices</button>
+
+        <div class="modal-note">
+          <strong>Source priority</strong>
+          <span>Finnhub → Yahoo fallback → Cache → Manual Override</span>
+        </div>
+      </div>
     </div>
 
     <template id="stockCardTemplate">
