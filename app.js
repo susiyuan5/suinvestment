@@ -491,26 +491,40 @@ if (isFiniteNumber(weekly)) {
 
   async function fetchJson(url) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(function () {
-      controller.abort();
+
+    const timeoutId = setTimeout(() => {
+        controller.abort();
     }, CONFIG.requestTimeoutMs);
 
     try {
-      const response = await fetch(url, { signal: controller.signal });
-      if (!response.ok) {
-        const body = await response.text();
-        throw new Error("Request failed with status " + response.status + " " + body.slice(0, 120));
-      }
-      return response.json();
+        const response = await fetch(url, {
+            signal: controller.signal
+        });
+
+        if (!response.ok) {
+            const body = await response.text();
+            throw new Error(
+                "Request failed " +
+                response.status +
+                " " +
+                body.slice(0,120)
+            );
+        }
+
+        return response.json();
+
     } catch (error) {
-      if (error && error.name === "AbortError") {
-        throw new Error("request timed out");
-      }
-      throw error;
+
+        if (error.name === "AbortError") {
+            throw new Error("request timed out");
+        }
+
+        throw error;
+
     } finally {
-      clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
     }
-  }
+}
 
   function describeError(error) {
     const message = error && error.message ? error.message : String(error);
