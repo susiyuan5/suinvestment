@@ -204,9 +204,19 @@
 
     try {
       const candle = await fetchJson(candleUrl);
-      if (candle.s !== "ok" || !Array.isArray(candle.c) || candle.c.length < 6) {
-        throw new Error(candle.s === "no_data" ? "no daily candle data" : "insufficient daily candles");
-      }
+     if (candle.s === "ok" && Array.isArray(candle.c) && candle.c.length >= 2) {
+
+    const closes = candle.c;
+
+    const latestClose = closes[closes.length-1];
+    const previousClose = closes[closes.length-2];
+
+    comparison =
+        ((latestClose - previousClose) / previousClose) * 100;
+
+    candleNote = "Weekly change auto";
+
+}
 
       const closes = candle.c.filter(isFiniteNumber);
       comparison = calculateWeeklyChange(closes);
@@ -254,13 +264,38 @@
     };
   }
 
-  function calculateWeeklyChange(closes) {
+ function calculateWeeklyChange(closes) {
+
+    if (!Array.isArray(closes) || closes.length < 2) {
+        return {
+            latestClose: null,
+            weekAgoClose: null,
+            weeklyChange: 0
+        };
+    }
+
     const latestClose = closes[closes.length - 1];
-    const lookback = Math.min(7, Math.max(5, closes.length - 1));
-    const weekAgoClose = closes[closes.length - 1 - lookback];
-    const weeklyChange = round2(((latestClose - weekAgoClose) / weekAgoClose) * 100);
-    return { latestClose, weekAgoClose, weeklyChange };
-  }
+
+    const lookback =
+        closes.length >= 6
+        ? 5
+        : 1;
+
+    const weekAgoClose =
+        closes[closes.length - 1 - lookback];
+
+    const weeklyChange =
+        round2(
+            ((latestClose - weekAgoClose)
+            / weekAgoClose) * 100
+        );
+
+    return {
+        latestClose,
+        weekAgoClose,
+        weeklyChange
+    };
+}
 
   function getMultiplier(weeklyChange) {
     if (!isFiniteNumber(weeklyChange)) return 1;
