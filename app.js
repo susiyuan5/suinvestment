@@ -47,11 +47,21 @@
   const lastUpdatedEl = document.getElementById("lastUpdated");
   const panicBanner = document.getElementById("panicBanner");
   const template = document.getElementById("stockCardTemplate");
+  let apiKeyRefreshTimer = 0;
 
   apiKeyInput.value = localStorage.getItem(STORAGE_KEYS.apiKey) || "";
 
-  apiKeyInput.addEventListener("change", function () {
+  apiKeyInput.addEventListener("input", function () {
     localStorage.setItem(STORAGE_KEYS.apiKey, apiKeyInput.value.trim());
+    window.clearTimeout(apiKeyRefreshTimer);
+    apiKeyRefreshTimer = window.setTimeout(refreshMarketData, 700);
+  });
+
+  apiKeyInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      window.clearTimeout(apiKeyRefreshTimer);
+      refreshMarketData();
+    }
   });
 
   refreshBtn.addEventListener("click", refreshMarketData);
@@ -66,7 +76,9 @@
     state.loading = true;
     refreshBtn.disabled = true;
     refreshBtn.textContent = "Refreshing...";
+    lastUpdatedEl.textContent = "Refreshing market data...";
     copyStatusEl.textContent = "";
+    markCardsLoading();
 
     const symbols = CONFIG.marketSymbols;
     const results = await Promise.all(symbols.map(fetchSymbolSnapshot));
@@ -92,6 +104,7 @@
   async function fetchSymbolSnapshot(symbol) {
     const apiKey = apiKeyInput.value.trim();
     const cached = getValidCache(symbol);
+    const failures = [];
 
     if (apiKey) {
       try {
@@ -100,6 +113,7 @@
         return finnhub;
       } catch (error) {
         console.warn("Finnhub failed for", symbol, error);
+        failures.push("Finnhub: " + describeError(error));
       }
     }
 
@@ -109,16 +123,18 @@
       return yahoo;
     } catch (error) {
       console.warn("Yahoo failed for", symbol, error);
+      failures.push("Yahoo: " + describeError(error));
     }
 
     if (cached) {
       return {
         ...cached,
         source: "Cache",
-        note: "Using saved snapshot"
+        note: "API failed; using saved snapshot"
       };
     }
 
+    const note = failures.length ? failures.join(" | ") : "Enter Finnhub key or use manual override";
     return {
       symbol,
       price: null,
@@ -126,7 +142,7 @@
       weekAgoClose: null,
       weeklyChange: null,
       source: "Unavailable",
-      note: "Use manual override"
+      note
     };
   }
 
@@ -147,7 +163,7 @@
 
     const [candle, quote] = await Promise.all([fetchJson(candleUrl), fetchJson(quoteUrl)]);
     if (candle.s !== "ok" || !Array.isArray(candle.c) || candle.c.length < 6) {
-      throw new Error("Finnhub returned insufficient candles");
+      throw new Error("insufficient daily candles");
     }
 
     const closes = candle.c.filter(isFiniteNumber);
@@ -259,6 +275,14 @@
       });
 
       cardsEl.appendChild(card);
+    });
+  }
+
+  function markCardsLoading() {
+    cardsEl.querySelectorAll(".stock-card").forEach(function (card) {
+      card.querySelector(".source-badge").textContent = "Loading";
+      card.querySelector(".source-badge").className = "source-badge";
+      card.querySelector(".note").textContent = "Fetching market data";
     });
   }
 
@@ -403,9 +427,21 @@
       const response = await fetch(url, { signal: controller.signal });
       if (!response.ok) throw new Error("Request failed with status " + response.status);
       return response.json();
+    } catch (error) {
+      if (error && error.name === "AbortError") {
+        throw new Error("request timed out");
+      }
+      throw error;
     } finally {
       clearTimeout(timeoutId);
     }
+  }
+
+  function describeError(error) {
+    const message = error && error.message ? error.message : String(error);
+    if (/Failed to fetch/i.test(message)) return "browser blocked request";
+    if (/401|403/.test(message)) return "check API key permissions";
+    return message;
   }
 
   function round2(value) {
