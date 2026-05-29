@@ -478,7 +478,51 @@ if (isFiniteNumber(weekly)) {
     }
   }
 
-  function saveCache(symbol, snapshot) {
+ function saveCache(symbol, snapshot) {
+
+    const safeSnapshot = {
+
+        ...snapshot,
+
+        previousClose:
+            snapshot.previousClose ??
+            snapshot.pc ??
+            null,
+
+        weekly:
+            snapshot.weekly ??
+            (
+                snapshot.price != null &&
+                (
+                    snapshot.previousClose != null ||
+                    snapshot.pc != null
+                )
+            )
+            ? (
+                (
+                    snapshot.price -
+                    (snapshot.previousClose ?? snapshot.pc)
+                )
+                /
+                (snapshot.previousClose ?? snapshot.pc)
+            ) * 100
+            : null
+    };
+
+    state.cache[symbol] = {
+
+        ...safeSnapshot,
+
+        fetchedAt: Date.now()
+
+    };
+
+    localStorage.setItem(
+        STORAGE_KEYS.cache,
+        JSON.stringify(state.cache)
+    );
+
+}
     state.cache[symbol] = {
       ...snapshot,
       fetchedAt: Date.now()
