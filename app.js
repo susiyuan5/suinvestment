@@ -199,26 +199,8 @@
       throw new Error("quote unavailable");
     }
 
-    if (
-    isFiniteNumber(price) &&
-    isFiniteNumber(previousClose)
-) {
-
-    weekly =
-        ((price - previousClose)
-        / previousClose) * 100;
-
-    note =
-        "Daily proxy calculation";
-
-} else {
-
-    weekly = 0;
-
-    note =
-        "Fallback calculation";
-
-}
+    let comparison = null;
+    let candleNote = "Live quote; daily candles unavailable";
 
     try {
       const candle = await fetchJson(candleUrl);
@@ -478,51 +460,7 @@ if (isFiniteNumber(weekly)) {
     }
   }
 
- function saveCache(symbol, snapshot) {
-
-    const safeSnapshot = {
-
-        ...snapshot,
-
-        previousClose:
-            snapshot.previousClose ??
-            snapshot.pc ??
-            null,
-
-        weekly:
-            snapshot.weekly ??
-            (
-                snapshot.price != null &&
-                (
-                    snapshot.previousClose != null ||
-                    snapshot.pc != null
-                )
-            )
-            ? (
-                (
-                    snapshot.price -
-                    (snapshot.previousClose ?? snapshot.pc)
-                )
-                /
-                (snapshot.previousClose ?? snapshot.pc)
-            ) * 100
-            : null
-    };
-
-    state.cache[symbol] = {
-
-        ...safeSnapshot,
-
-        fetchedAt: Date.now()
-
-    };
-
-    localStorage.setItem(
-        STORAGE_KEYS.cache,
-        JSON.stringify(state.cache)
-    );
-
-}
+  function saveCache(symbol, snapshot) {
     state.cache[symbol] = {
       ...snapshot,
       fetchedAt: Date.now()
