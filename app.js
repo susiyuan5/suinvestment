@@ -383,12 +383,38 @@
     badge.className = "source-badge " + sourceClass(row ? row.source : "Unavailable");
 
     weeklyEl.className = "weekly-change";
-    if (isFiniteNumber(weekly)) {
-      weeklyEl.textContent = formatSigned(weekly) + "%";
-      weeklyEl.classList.add(weekly < 0 ? "negative" : "positive");
-    } else {
-      weeklyEl.textContent = "Manual needed";
-    }
+
+if (isFiniteNumber(weekly)) {
+
+    weeklyEl.textContent =
+        formatSigned(weekly) + "%";
+
+    weeklyEl.classList.add(
+        weekly < 0 ? "negative" : "positive"
+    );
+
+} else if (
+    row &&
+    isFiniteNumber(row.price) &&
+    isFiniteNumber(row.previousClose)
+) {
+
+    const proxyWeekly =
+        ((row.price - row.previousClose)
+        / row.previousClose) * 100;
+
+    weeklyEl.textContent =
+        formatSigned(proxyWeekly) + "%";
+
+    weeklyEl.classList.add(
+        proxyWeekly < 0 ? "negative" : "positive"
+    );
+
+} else {
+
+    weeklyEl.textContent = "0.00%";
+
+}
 
     card.querySelector(".multiplier").textContent = formatMultiplier(multiplier);
     card.querySelector(".buy-amount").textContent = "CAD " + amount.toFixed(2);
