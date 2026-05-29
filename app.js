@@ -536,7 +536,21 @@ if (isFiniteNumber(weekly)) {
 
     const ageMs = Date.now() - cached.fetchedAt;
     if (ageMs > CONFIG.cacheHours * 60 * 60 * 1000) return null;
-    return cached;
+   if (
+    cached.weekly == null &&
+    cached.price != null &&
+    cached.previousClose != null
+) {
+
+    cached.weekly =
+        (
+            (cached.price - cached.previousClose)
+            / cached.previousClose
+        ) * 100;
+
+}
+
+return cached;
   }
 
   function saveOverrides() {
