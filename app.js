@@ -199,8 +199,26 @@
       throw new Error("quote unavailable");
     }
 
-    let comparison = null;
-    let candleNote = "Live quote; daily candles unavailable";
+    if (
+    isFiniteNumber(price) &&
+    isFiniteNumber(previousClose)
+) {
+
+    weekly =
+        ((price - previousClose)
+        / previousClose) * 100;
+
+    note =
+        "Daily proxy calculation";
+
+} else {
+
+    weekly = 0;
+
+    note =
+        "Fallback calculation";
+
+}
 
     try {
       const candle = await fetchJson(candleUrl);
