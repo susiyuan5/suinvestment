@@ -311,6 +311,10 @@ input::placeholder {
 
 .modal-card {
   width: min(520px, 100%);
+  max-height: min(760px, calc(100vh - 36px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   display: grid;
   gap: 16px;
   padding: 18px;
@@ -483,7 +487,9 @@ input::placeholder {
 
 .stock-card {
   display: grid;
-  gap: 14px;
+  grid-template-columns: minmax(112px, 0.75fr) minmax(300px, 1.65fr) minmax(160px, 0.8fr);
+  align-items: center;
+  gap: 10px;
   min-width: 0;
   padding: 14px;
   border: 1px solid var(--line);
@@ -498,6 +504,10 @@ input::placeholder {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.stock-topline {
+  justify-content: flex-start;
 }
 
 .allocation {
@@ -576,22 +586,56 @@ input::placeholder {
 }
 
 .buy-amount {
+  display: block;
   color: #f6d779;
+  font-size: 1.18rem;
+  text-align: right;
 }
 
 .note {
   text-align: right;
 }
 
-.override-row {
+.price-row {
   display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.override-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
 }
 
+@media (max-width: 620px) {
+  .stock-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .price-row {
+    justify-items: start;
+  }
+
+  .buy-amount {
+    text-align: left;
+  }
+
+  .override-row {
+    grid-template-columns: 1fr;
+  }
+
+  .override-actions button {
+    flex: 1 1 0;
+  }
+}
+
 .override-actions button {
-  flex: 1 1 0;
+  flex: 0 0 auto;
   min-width: 0;
-  padding: 0 10px;
+  padding: 0 14px;
   font-size: 0.86rem;
 }
 
@@ -658,7 +702,7 @@ input::placeholder {
   }
 
   .cards-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 }
 
