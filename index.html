@@ -9,6 +9,14 @@
   </head>
   <body>
     <div class="app-shell">
+      <nav class="top-menu" aria-label="Main menu">
+        <strong>Su Investment Pro</strong>
+        <div class="top-menu-actions">
+          <button id="openStocksBtn" class="nav-button" type="button">Stocks</button>
+          <button id="openSettingsBtn" class="nav-button" type="button">Settings</button>
+        </div>
+      </nav>
+
       <header class="hero">
         <div>
           <p class="eyebrow">Weekly investment calculator</p>
@@ -28,7 +36,6 @@
               <p class="eyebrow">Monthly settings</p>
               <h2 id="settings-title">Deployment Plan</h2>
             </div>
-            <button id="openSettingsBtn" class="primary-button" type="button">Settings</button>
           </div>
 
           <div class="metrics-grid">
@@ -90,6 +97,7 @@
           </div>
           <ol class="source-list">
             <li>Finnhub</li>
+            <li>Weekly Snapshot</li>
             <li>Yahoo Finance fallback</li>
             <li>Cache</li>
             <li>Manual Override</li>
@@ -122,6 +130,34 @@
           <strong>Source priority</strong>
           <span>Finnhub → Yahoo fallback → Cache → Manual Override</span>
         </div>
+      </div>
+    </div>
+
+    <div id="stocksModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="stock-settings-title">
+      <div class="modal-card wide-modal">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow">Portfolio</p>
+            <h2 id="stock-settings-title">Stock Manager</h2>
+          </div>
+          <button id="closeStocksBtn" class="icon-button" type="button" aria-label="Close stock manager">×</button>
+        </div>
+
+        <div class="stock-manager-head">
+          <span>Select stocks shown on the main dashboard.</span>
+          <strong id="allocationTotal">Total 100%</strong>
+        </div>
+
+        <div id="stockManager" class="stock-manager"></div>
+
+        <div class="modal-actions">
+          <button id="saveStocksBtn" class="primary-button" type="button">Save Stocks</button>
+          <button id="resetStocksBtn" class="secondary-button" type="button">Reset Defaults</button>
+        </div>
+
+        <p class="fine-print no-margin">
+          QQQ can be shown on the dashboard, and it is always checked in the background for panic mode.
+        </p>
       </div>
     </div>
 

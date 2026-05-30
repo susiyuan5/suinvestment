@@ -37,6 +37,10 @@ Su Investment Pro is a production-ready standalone weekly investment calculator 
 
 Manual overrides are entered per stock as a weekly percentage value, such as `-9.2`, `+12`, or `10.5`. Overrides are saved in the browser and take priority for that stock.
 
+## Stock Manager
+
+Use the top menu's Stocks button to choose which supported symbols appear on the dashboard. Each selected symbol has an allocation percentage. The weekly order amount is calculated from the selected symbol's allocation and multiplier.
+
 ## Weekly Change Formula
 
 ```text

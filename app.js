@@ -12,7 +12,7 @@
     qqqPanicThreshold: -10,
     panicMultiplier: 1.3,
     panicSymbols: new Set(["MSFT", "NVDA", "AAPL", "ASML"]),
-    stocks: [
+    defaultPortfolio: [
       { symbol: "BYDDY", allocation: 0.3 },
       { symbol: "MSFT", allocation: 0.22 },
       { symbol: "NVDA", allocation: 0.18 },
@@ -20,13 +20,14 @@
       { symbol: "ASML", allocation: 0.1 },
       { symbol: "KO", allocation: 0.05 }
     ],
-    marketSymbols: ["BYDDY", "MSFT", "NVDA", "AAPL", "ASML", "KO", "QQQ"]
+    supportedSymbols: ["BYDDY", "MSFT", "NVDA", "AAPL", "ASML", "KO", "QQQ"]
   };
 
   const STORAGE_KEYS = {
     apiKey: "su-investment-pro:finnhub-key",
     cache: "su-investment-pro:market-cache",
-    overrides: "su-investment-pro:manual-overrides"
+    overrides: "su-investment-pro:manual-overrides",
+    portfolio: "su-investment-pro:portfolio"
   };
 
   const state = {
@@ -37,6 +38,7 @@
     loading: false,
     pendingRefresh: false,
     weeklySnapshot: null,
+    portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultPortfolio)),
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {})
   };
@@ -50,6 +52,13 @@
   const openSettingsBtn = document.getElementById("openSettingsBtn");
   const closeSettingsBtn = document.getElementById("closeSettingsBtn");
   const settingsModal = document.getElementById("settingsModal");
+  const openStocksBtn = document.getElementById("openStocksBtn");
+  const closeStocksBtn = document.getElementById("closeStocksBtn");
+  const stocksModal = document.getElementById("stocksModal");
+  const stockManagerEl = document.getElementById("stockManager");
+  const allocationTotalEl = document.getElementById("allocationTotal");
+  const saveStocksBtn = document.getElementById("saveStocksBtn");
+  const resetStocksBtn = document.getElementById("resetStocksBtn");
   const lastUpdatedEl = document.getElementById("lastUpdated");
   const panicBanner = document.getElementById("panicBanner");
   const template = document.getElementById("stockCardTemplate");
@@ -75,15 +84,26 @@
   settingsModal.addEventListener("click", function (event) {
     if (event.target === settingsModal) closeSettings();
   });
+  openStocksBtn.addEventListener("click", openStocks);
+  closeStocksBtn.addEventListener("click", closeStocks);
+  stocksModal.addEventListener("click", function (event) {
+    if (event.target === stocksModal) closeStocks();
+  });
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape" && !settingsModal.classList.contains("hidden")) {
       closeSettings();
+    }
+    if (event.key === "Escape" && !stocksModal.classList.contains("hidden")) {
+      closeStocks();
     }
   });
 
   refreshBtn.addEventListener("click", refreshMarketData);
   copyBtn.addEventListener("click", copyOrderList);
+  saveStocksBtn.addEventListener("click", saveStocks);
+  resetStocksBtn.addEventListener("click", resetStocks);
 
+  renderStockManager();
   renderSkeleton();
   refreshMarketData();
 
@@ -103,13 +123,20 @@
 
     state.weeklySnapshot = await fetchWeeklySnapshot();
 
-    const symbols = CONFIG.marketSymbols;
+    const symbols = Array.from(new Set(currentStocks().map(function (stock) {
+      return stock.symbol;
+    }).concat("QQQ")));
     const results = await Promise.all(symbols.map(fetchSymbolSnapshot));
 
     results.forEach(function (result) {
       if (!result) return;
       if (result.symbol === "QQQ") {
         state.qqqWeekly = result.weeklyChange;
+        if (currentStocks().some(function (stock) {
+          return stock.symbol === "QQQ";
+        })) {
+          state.marketRows.set(result.symbol, result);
+        }
       } else {
         state.marketRows.set(result.symbol, result);
       }
@@ -136,6 +163,16 @@
   function closeSettings() {
     settingsModal.classList.add("hidden");
     openSettingsBtn.focus();
+  }
+
+  function openStocks() {
+    renderStockManager();
+    stocksModal.classList.remove("hidden");
+  }
+
+  function closeStocks() {
+    stocksModal.classList.add("hidden");
+    openStocksBtn.focus();
   }
 
   async function fetchSymbolSnapshot(symbol) {
@@ -323,7 +360,7 @@
   }
 
   function applyManualOverrides() {
-    CONFIG.stocks.forEach(function (stock) {
+    currentStocks().forEach(function (stock) {
       const base = state.marketRows.get(stock.symbol) || {
         symbol: stock.symbol,
         price: null,
@@ -348,19 +385,19 @@
 
   function renderSkeleton() {
     cardsEl.innerHTML = "";
-    CONFIG.stocks.forEach(function (stock) {
+    currentStocks().forEach(function (stock) {
       const card = template.content.firstElementChild.cloneNode(true);
       card.dataset.symbol = stock.symbol;
       card.querySelector("h3").textContent = stock.symbol;
       card.querySelector(".allocation").textContent = formatPercent(stock.allocation * 100) + " allocation";
 
-    const input = card.querySelector(".override-input");
-    input.value = state.overrides[stock.symbol] === undefined ? "" : formatSignedInput(state.overrides[stock.symbol]);
-    card.querySelector(".source-badge").textContent = "Loading";
-    card.querySelector(".weekly-change").textContent = "Loading";
-    card.querySelector(".multiplier").textContent = "1x";
-    card.querySelector(".buy-amount").textContent = "CAD " + round2(CONFIG.weeklyDeployment * stock.allocation).toFixed(2);
-    card.querySelector(".price").textContent = "Price loading";
+      const input = card.querySelector(".override-input");
+      input.value = state.overrides[stock.symbol] === undefined ? "" : formatSignedInput(state.overrides[stock.symbol]);
+      card.querySelector(".source-badge").textContent = "Loading";
+      card.querySelector(".weekly-change").textContent = "Loading";
+      card.querySelector(".multiplier").textContent = "1x";
+      card.querySelector(".buy-amount").textContent = "CAD " + round2(CONFIG.weeklyDeployment * stock.allocation).toFixed(2);
+      card.querySelector(".price").textContent = "Price loading";
 
       card.querySelector(".apply-override").addEventListener("click", function () {
         applyOverride(stock.symbol, input.value);
@@ -393,7 +430,7 @@
     let roundedTotal = 0;
     let latestTimestamp = 0;
 
-    CONFIG.stocks.forEach(function (stock) {
+    currentStocks().forEach(function (stock) {
       const row = state.rows.get(stock.symbol);
       const weekly = row ? row.weeklyChange : null;
       const normalMultiplier = getMultiplier(weekly);
@@ -425,6 +462,95 @@
     orderLines.push("CAD " + targetTotal.toFixed(2));
     orderTextEl.textContent = orderLines.join("\n");
     lastUpdatedEl.textContent = latestTimestamp ? "Updated " + formatDateTime(latestTimestamp) : "No live data yet";
+  }
+
+  function renderStockManager() {
+    stockManagerEl.innerHTML = "";
+
+    CONFIG.supportedSymbols.forEach(function (symbol) {
+      const existing = state.portfolio.find(function (stock) {
+        return stock.symbol === symbol;
+      });
+      const defaultStock = CONFIG.defaultPortfolio.find(function (stock) {
+        return stock.symbol === symbol;
+      });
+
+      const row = document.createElement("div");
+      row.className = "stock-manager-row";
+      row.dataset.symbol = symbol;
+
+      const label = document.createElement("label");
+      label.className = "stock-pick";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = Boolean(existing);
+      checkbox.addEventListener("change", updateAllocationTotal);
+
+      const symbolText = document.createElement("span");
+      symbolText.textContent = symbol;
+
+      label.append(checkbox, symbolText);
+
+      const allocationLabel = document.createElement("label");
+      allocationLabel.className = "allocation-field";
+      allocationLabel.textContent = "Allocation %";
+
+      const allocationInput = document.createElement("input");
+      allocationInput.type = "text";
+      allocationInput.inputMode = "decimal";
+      allocationInput.value = formatAllocationInput(existing ? existing.allocation : defaultStock ? defaultStock.allocation : 0);
+      allocationInput.addEventListener("input", updateAllocationTotal);
+
+      allocationLabel.appendChild(allocationInput);
+      row.append(label, allocationLabel);
+      stockManagerEl.appendChild(row);
+    });
+
+    updateAllocationTotal();
+  }
+
+  function updateAllocationTotal() {
+    const total = collectPortfolioFromManager().reduce(function (sum, stock) {
+      return sum + stock.allocation;
+    }, 0);
+    allocationTotalEl.textContent = "Total " + round2(total * 100).toFixed(2).replace(/\.00$/, "") + "%";
+    allocationTotalEl.classList.toggle("warning", Math.abs(total - 1) > 0.001);
+  }
+
+  function saveStocks() {
+    const nextPortfolio = normalizePortfolio(collectPortfolioFromManager());
+    if (!nextPortfolio.length) {
+      copyStatusEl.textContent = "Choose at least one stock.";
+      return;
+    }
+
+    state.portfolio = nextPortfolio;
+    localStorage.setItem(STORAGE_KEYS.portfolio, JSON.stringify(state.portfolio));
+    renderSkeleton();
+    closeStocks();
+    refreshMarketData();
+  }
+
+  function resetStocks() {
+    state.portfolio = normalizePortfolio(CONFIG.defaultPortfolio);
+    localStorage.setItem(STORAGE_KEYS.portfolio, JSON.stringify(state.portfolio));
+    renderStockManager();
+  }
+
+  function collectPortfolioFromManager() {
+    return Array.from(stockManagerEl.querySelectorAll(".stock-manager-row")).reduce(function (items, row) {
+      const checkbox = row.querySelector('input[type="checkbox"]');
+      const allocationInput = row.querySelector(".allocation-field input");
+      if (!checkbox.checked) return items;
+
+      const allocation = parseAllocation(allocationInput.value);
+      items.push({
+        symbol: row.dataset.symbol,
+        allocation
+      });
+      return items;
+    }, []);
   }
 
   function updateCard(card, row, stock, weekly, multiplier, amount) {
@@ -501,6 +627,38 @@
     const ageMs = Date.now() - cached.fetchedAt;
     if (ageMs > CONFIG.cacheHours * 60 * 60 * 1000) return null;
     return cached;
+  }
+
+  function currentStocks() {
+    return state.portfolio;
+  }
+
+  function normalizePortfolio(items) {
+    const seen = new Set();
+    return (Array.isArray(items) ? items : []).reduce(function (portfolio, item) {
+      const symbol = String(item && item.symbol ? item.symbol : "").toUpperCase();
+      const allocation = Number(item && item.allocation);
+      if (!CONFIG.supportedSymbols.includes(symbol) || seen.has(symbol) || !Number.isFinite(allocation) || allocation < 0) {
+        return portfolio;
+      }
+
+      seen.add(symbol);
+      portfolio.push({
+        symbol,
+        allocation: round2(allocation * 100) / 100
+      });
+      return portfolio;
+    }, []);
+  }
+
+  function parseAllocation(value) {
+    const number = Number(String(value).trim().replace("%", ""));
+    if (!Number.isFinite(number) || number < 0) return 0;
+    return round2(number) / 100;
+  }
+
+  function formatAllocationInput(allocation) {
+    return round2((allocation || 0) * 100).toFixed(2).replace(/\.00$/, "");
   }
 
   function saveOverrides() {
