@@ -38,7 +38,7 @@
     loading: false,
     pendingRefresh: false,
     weeklySnapshot: null,
-    portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultPortfolio)),
+    portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultPortfolio), { allowCustom: true }),
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {})
   };
@@ -59,6 +59,8 @@
   const allocationTotalEl = document.getElementById("allocationTotal");
   const saveStocksBtn = document.getElementById("saveStocksBtn");
   const resetStocksBtn = document.getElementById("resetStocksBtn");
+  const newSymbolInput = document.getElementById("newSymbolInput");
+  const addSymbolBtn = document.getElementById("addSymbolBtn");
   const lastUpdatedEl = document.getElementById("lastUpdated");
   const panicBanner = document.getElementById("panicBanner");
   const template = document.getElementById("stockCardTemplate");
@@ -102,6 +104,10 @@
   copyBtn.addEventListener("click", copyOrderList);
   saveStocksBtn.addEventListener("click", saveStocks);
   resetStocksBtn.addEventListener("click", resetStocks);
+  addSymbolBtn.addEventListener("click", addSymbol);
+  newSymbolInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") addSymbol();
+  });
 
   renderStockManager();
   renderSkeleton();
@@ -467,7 +473,7 @@
   function renderStockManager() {
     stockManagerEl.innerHTML = "";
 
-    CONFIG.supportedSymbols.forEach(function (symbol) {
+    managerSymbols().forEach(function (symbol) {
       const existing = state.portfolio.find(function (stock) {
         return stock.symbol === symbol;
       });
@@ -487,10 +493,15 @@
       checkbox.checked = Boolean(existing);
       checkbox.addEventListener("change", updateAllocationTotal);
 
+      const visualToggle = document.createElement("span");
+      visualToggle.className = "stock-check";
+      visualToggle.setAttribute("aria-hidden", "true");
+      visualToggle.textContent = "✓";
+
       const symbolText = document.createElement("span");
       symbolText.textContent = symbol;
 
-      label.append(checkbox, symbolText);
+      label.append(checkbox, visualToggle, symbolText);
 
       const allocationLabel = document.createElement("label");
       allocationLabel.className = "allocation-field";
@@ -525,7 +536,7 @@
       return;
     }
 
-    state.portfolio = nextPortfolio;
+    state.portfolio = normalizePortfolio(nextPortfolio, { allowCustom: true });
     localStorage.setItem(STORAGE_KEYS.portfolio, JSON.stringify(state.portfolio));
     renderSkeleton();
     closeStocks();
@@ -533,9 +544,30 @@
   }
 
   function resetStocks() {
-    state.portfolio = normalizePortfolio(CONFIG.defaultPortfolio);
+    state.portfolio = normalizePortfolio(CONFIG.defaultPortfolio, { allowCustom: true });
     localStorage.setItem(STORAGE_KEYS.portfolio, JSON.stringify(state.portfolio));
     renderStockManager();
+  }
+
+  function addSymbol() {
+    const symbol = normalizeSymbol(newSymbolInput.value);
+    if (!symbol) {
+      copyStatusEl.textContent = "Enter a ticker symbol first.";
+      return;
+    }
+
+    const current = collectPortfolioFromManager();
+    if (!current.some(function (stock) {
+      return stock.symbol === symbol;
+    })) {
+      current.push({ symbol, allocation: 0 });
+    }
+
+    state.portfolio = normalizePortfolio(current, { allowCustom: true });
+    localStorage.setItem(STORAGE_KEYS.portfolio, JSON.stringify(state.portfolio));
+    newSymbolInput.value = "";
+    renderStockManager();
+    copyStatusEl.textContent = symbol + " added to Stocks.";
   }
 
   function collectPortfolioFromManager() {
@@ -633,12 +665,27 @@
     return state.portfolio;
   }
 
-  function normalizePortfolio(items) {
+  function managerSymbols() {
+    return Array.from(new Set(CONFIG.supportedSymbols.concat(state.portfolio.map(function (stock) {
+      return stock.symbol;
+    })))).sort(function (a, b) {
+      const aIndex = CONFIG.supportedSymbols.indexOf(a);
+      const bIndex = CONFIG.supportedSymbols.indexOf(b);
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }
+
+  function normalizePortfolio(items, options) {
+    const allowCustom = options && options.allowCustom;
     const seen = new Set();
     return (Array.isArray(items) ? items : []).reduce(function (portfolio, item) {
-      const symbol = String(item && item.symbol ? item.symbol : "").toUpperCase();
+      const symbol = normalizeSymbol(item && item.symbol);
       const allocation = Number(item && item.allocation);
-      if (!CONFIG.supportedSymbols.includes(symbol) || seen.has(symbol) || !Number.isFinite(allocation) || allocation < 0) {
+      const supported = CONFIG.supportedSymbols.includes(symbol);
+      if (!symbol || (!supported && !allowCustom) || seen.has(symbol) || !Number.isFinite(allocation) || allocation < 0) {
         return portfolio;
       }
 
@@ -649,6 +696,12 @@
       });
       return portfolio;
     }, []);
+  }
+
+  function normalizeSymbol(value) {
+    const symbol = String(value || "").trim().toUpperCase();
+    if (!/^[A-Z0-9.-]{1,12}$/.test(symbol)) return "";
+    return symbol;
   }
 
   function parseAllocation(value) {

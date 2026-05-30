@@ -388,6 +388,25 @@ input::placeholder {
   gap: 8px;
 }
 
+.add-symbol-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.add-symbol-row label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.add-symbol-row button {
+  min-width: 88px;
+}
+
 .stock-manager-row {
   padding: 10px;
   border: 1px solid var(--line);
@@ -404,9 +423,35 @@ input::placeholder {
 }
 
 .stock-pick input {
-  width: 20px;
-  min-height: 20px;
-  accent-color: var(--accent);
+  position: absolute;
+  width: 1px;
+  min-height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stock-check {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #355176;
+  border-radius: 8px;
+  color: transparent;
+  background: #080f1a;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.stock-pick input:checked + .stock-check {
+  border-color: rgba(79, 195, 161, 0.78);
+  color: #07110f;
+  background: var(--accent);
+  font-weight: 1000;
+}
+
+.stock-pick input:focus-visible + .stock-check {
+  outline: 3px solid rgba(102, 163, 255, 0.45);
+  outline-offset: 2px;
 }
 
 .allocation-field {
