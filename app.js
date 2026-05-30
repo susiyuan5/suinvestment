@@ -207,6 +207,11 @@
     const candle =
         await fetchJson(candleUrl);
 
+  try {
+
+    const candle =
+        await fetchJson(candleUrl);
+
     if (
         candle.s === "ok" &&
         Array.isArray(candle.c) &&
@@ -224,20 +229,14 @@
     }
 
 } catch (error) {
-  
-      console.warn("Finnhub candles failed for", symbol, error);
-    }
 
-    return {
-      symbol,
-      price: quote.c,
-      latestClose: comparison ? comparison.latestClose : null,
-      weekAgoClose: comparison ? comparison.weekAgoClose : null,
-      weeklyChange: comparison ? comparison.weeklyChange : null,
-      source: "Finnhub",
-      note: candleNote,
-      fetchedAt: Date.now()
-    };
+    console.warn(
+        "Finnhub candles failed for",
+        symbol,
+        error
+    );
+
+}
   }
 
   async function fetchYahooSnapshot(symbol) {
