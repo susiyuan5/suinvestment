@@ -202,41 +202,39 @@
     let comparison = null;
     let candleNote = "Live quote; daily candles unavailable";
 
-   try {
+    try {
+      const candle = await fetchJson(candleUrl);
+     if (candle.s === "ok" && Array.isArray(candle.c) && candle.c.length >= 2) {
 
-    const candle =
-        await fetchJson(candleUrl);
+    const closes = candle.c;
 
-  try {
+    const latestClose = closes[closes.length-1];
+    const previousClose = closes[closes.length-2];
 
-    const candle =
-        await fetchJson(candleUrl);
+    comparison =
+        ((latestClose - previousClose) / previousClose) * 100;
 
-    if (
-        candle.s === "ok" &&
-        Array.isArray(candle.c) &&
-        candle.c.length >= 6
-    ) {
-
-        const closes =
-            candle.c.filter(isFiniteNumber);
-
-        comparison =
-            calculateWeeklyChange(closes);
-
-        candleNote =
-            "Live quote and 7D candles";
-    }
-
-} catch (error) {
-
-    console.warn(
-        "Finnhub candles failed for",
-        symbol,
-        error
-    );
+    candleNote = "Weekly change auto";
 
 }
+
+      const closes = candle.c.filter(isFiniteNumber);
+      comparison = calculateWeeklyChange(closes);
+      candleNote = "Live quote and daily candles";
+    } catch (error) {
+      console.warn("Finnhub candles failed for", symbol, error);
+    }
+
+    return {
+      symbol,
+      price: quote.c,
+      latestClose: comparison ? comparison.latestClose : null,
+      weekAgoClose: comparison ? comparison.weekAgoClose : null,
+      weeklyChange: comparison ? comparison.weeklyChange : null,
+      source: "Finnhub",
+      note: candleNote,
+      fetchedAt: Date.now()
+    };
   }
 
   async function fetchYahooSnapshot(symbol) {
@@ -266,50 +264,36 @@
     };
   }
 
-function calculateWeeklyChange(closes) {
+ function calculateWeeklyChange(closes) {
 
-    if (
-        !Array.isArray(closes) ||
-        closes.length < 6
-    ) {
+    if (!Array.isArray(closes) || closes.length < 2) {
         return {
             latestClose: null,
             weekAgoClose: null,
-            weeklyChange: null
+            weeklyChange: 0
         };
     }
 
-    const latestClose =
-        closes[closes.length - 1];
+    const latestClose = closes[closes.length - 1];
+
+    const lookback =
+        closes.length >= 6
+        ? 5
+        : 1;
 
     const weekAgoClose =
-        closes[
-            Math.max(
-                0,
-                closes.length - 6
-            )
-        ];
+        closes[closes.length - 1 - lookback];
 
-    if (
-        !isFiniteNumber(latestClose) ||
-        !isFiniteNumber(weekAgoClose)
-    ) {
-        return {
-            latestClose: null,
-            weekAgoClose: null,
-            weeklyChange: null
-        };
-    }
+    const weeklyChange =
+        round2(
+            ((latestClose - weekAgoClose)
+            / weekAgoClose) * 100
+        );
 
     return {
         latestClose,
         weekAgoClose,
-        weeklyChange: round2(
-            (
-                (latestClose - weekAgoClose)
-                / weekAgoClose
-            ) * 100
-        )
+        weeklyChange
     };
 }
 
@@ -447,15 +431,12 @@ if (isFiniteNumber(weekly)) {
 } else if (
     row &&
     isFiniteNumber(row.price) &&
-    isFiniteNumber(row.weekAgoClose)
+    isFiniteNumber(row.previousClose)
 ) {
 
     const proxyWeekly =
-        (
-(row.latestClose - row.weekAgoClose)
-/
-row.weekAgoClose
-)
+        ((row.price - row.previousClose)
+        / row.previousClose) * 100;
 
     weeklyEl.textContent =
         formatSigned(proxyWeekly) + "%";
