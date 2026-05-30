@@ -204,19 +204,9 @@
 
     try {
       const candle = await fetchJson(candleUrl);
-     if (candle.s === "ok" && Array.isArray(candle.c) && candle.c.length >= 2) {
-
-    const closes = candle.c;
-
-    const latestClose = closes[closes.length-1];
-    const previousClose = closes[closes.length-2];
-
-    comparison =
-        ((latestClose - previousClose) / previousClose) * 100;
-
-    candleNote = "Weekly change auto";
-
-}
+      if (candle.s !== "ok" || !Array.isArray(candle.c) || candle.c.length < 6) {
+        throw new Error(candle.s === "no_data" ? "no daily candle data" : "insufficient daily candles");
+      }
 
       const closes = candle.c.filter(isFiniteNumber);
       comparison = calculateWeeklyChange(closes);
@@ -264,38 +254,13 @@
     };
   }
 
- function calculateWeeklyChange(closes) {
-
-    if (!Array.isArray(closes) || closes.length < 2) {
-        return {
-            latestClose: null,
-            weekAgoClose: null,
-            weeklyChange: 0
-        };
-    }
-
+  function calculateWeeklyChange(closes) {
     const latestClose = closes[closes.length - 1];
-
-    const lookback =
-        closes.length >= 6
-        ? 5
-        : 1;
-
-    const weekAgoClose =
-        closes[closes.length - 1 - lookback];
-
-    const weeklyChange =
-        round2(
-            ((latestClose - weekAgoClose)
-            / weekAgoClose) * 100
-        );
-
-    return {
-        latestClose,
-        weekAgoClose,
-        weeklyChange
-    };
-}
+    const lookback = Math.min(7, Math.max(5, closes.length - 1));
+    const weekAgoClose = closes[closes.length - 1 - lookback];
+    const weeklyChange = round2(((latestClose - weekAgoClose) / weekAgoClose) * 100);
+    return { latestClose, weekAgoClose, weeklyChange };
+  }
 
   function getMultiplier(weeklyChange) {
     if (!isFiniteNumber(weeklyChange)) return 1;
@@ -418,38 +383,12 @@
     badge.className = "source-badge " + sourceClass(row ? row.source : "Unavailable");
 
     weeklyEl.className = "weekly-change";
-
-if (isFiniteNumber(weekly)) {
-
-    weeklyEl.textContent =
-        formatSigned(weekly) + "%";
-
-    weeklyEl.classList.add(
-        weekly < 0 ? "negative" : "positive"
-    );
-
-} else if (
-    row &&
-    isFiniteNumber(row.price) &&
-    isFiniteNumber(row.previousClose)
-) {
-
-    const proxyWeekly =
-        ((row.price - row.previousClose)
-        / row.previousClose) * 100;
-
-    weeklyEl.textContent =
-        formatSigned(proxyWeekly) + "%";
-
-    weeklyEl.classList.add(
-        proxyWeekly < 0 ? "negative" : "positive"
-    );
-
-} else {
-
-    weeklyEl.textContent = "0.00%";
-
-}
+    if (isFiniteNumber(weekly)) {
+      weeklyEl.textContent = formatSigned(weekly) + "%";
+      weeklyEl.classList.add(weekly < 0 ? "negative" : "positive");
+    } else {
+      weeklyEl.textContent = "Manual needed";
+    }
 
     card.querySelector(".multiplier").textContent = formatMultiplier(multiplier);
     card.querySelector(".buy-amount").textContent = "CAD " + amount.toFixed(2);
@@ -526,40 +465,26 @@ if (isFiniteNumber(weekly)) {
 
   async function fetchJson(url) {
     const controller = new AbortController();
-
-    const timeoutId = setTimeout(() => {
-        controller.abort();
+    const timeoutId = setTimeout(function () {
+      controller.abort();
     }, CONFIG.requestTimeoutMs);
 
     try {
-        const response = await fetch(url, {
-            signal: controller.signal
-        });
-
-        if (!response.ok) {
-            const body = await response.text();
-            throw new Error(
-                "Request failed " +
-                response.status +
-                " " +
-                body.slice(0,120)
-            );
-        }
-
-        return response.json();
-
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error("Request failed with status " + response.status + " " + body.slice(0, 120));
+      }
+      return response.json();
     } catch (error) {
-
-        if (error.name === "AbortError") {
-            throw new Error("request timed out");
-        }
-
-        throw error;
-
+      if (error && error.name === "AbortError") {
+        throw new Error("request timed out");
+      }
+      throw error;
     } finally {
-        clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
     }
-}
+  }
 
   function describeError(error) {
     const message = error && error.message ? error.message : String(error);
