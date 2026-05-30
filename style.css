@@ -60,7 +60,7 @@ input:focus-visible {
 .app-shell {
   width: min(1120px, 100%);
   margin: 0 auto;
-  padding: 20px 14px 48px;
+  padding: 18px 14px 48px;
 }
 
 .top-menu {
@@ -71,8 +71,8 @@ input:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: -20px -14px 14px;
-  padding: max(12px, env(safe-area-inset-top)) 14px 12px;
+  margin: -18px -14px 16px;
+  padding: max(10px, env(safe-area-inset-top)) 14px 10px;
   border-bottom: 1px solid rgba(36, 49, 68, 0.82);
   background: rgba(8, 13, 20, 0.88);
   backdrop-filter: blur(14px);
@@ -104,7 +104,7 @@ input:focus-visible {
 .hero {
   display: grid;
   gap: 18px;
-  padding: max(24px, env(safe-area-inset-top)) 4px 20px;
+  padding: 18px 4px 18px;
 }
 
 .eyebrow {
@@ -125,8 +125,8 @@ p {
 
 h1 {
   margin: 0;
-  font-size: clamp(2.25rem, 12vw, 5.4rem);
-  line-height: 0.94;
+  font-size: clamp(2.25rem, 10vw, 4.7rem);
+  line-height: 0.96;
   letter-spacing: 0;
 }
 
@@ -487,9 +487,9 @@ input::placeholder {
 
 .stock-card {
   display: grid;
-  grid-template-columns: minmax(112px, 0.75fr) minmax(300px, 1.65fr) minmax(160px, 0.8fr);
+  grid-template-columns: minmax(132px, 0.78fr) minmax(330px, 1.7fr) minmax(146px, 0.72fr);
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
   padding: 14px;
   border: 1px solid var(--line);
@@ -500,14 +500,18 @@ input::placeholder {
 .stock-topline,
 .price-row,
 .override-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: 10px;
 }
 
 .stock-topline {
-  justify-content: flex-start;
+  justify-items: start;
+  gap: 8px;
+}
+
+.stock-topline h3 {
+  overflow-wrap: normal;
+  white-space: nowrap;
 }
 
 .allocation {
@@ -519,6 +523,7 @@ input::placeholder {
 
 .source-badge {
   flex: 0 0 auto;
+  width: fit-content;
   padding: 6px 9px;
   border-radius: 999px;
   border: 1px solid var(--line);
@@ -566,7 +571,8 @@ input::placeholder {
 
 .stock-values > div {
   min-width: 0;
-  padding: 12px;
+  min-height: 78px;
+  padding: 12px 14px;
   border-radius: 8px;
   background: var(--panel-3);
 }
@@ -589,34 +595,56 @@ input::placeholder {
   display: block;
   color: #f6d779;
   font-size: 1.18rem;
-  text-align: right;
+  text-align: left;
 }
 
 .note {
   text-align: right;
+  line-height: 1.25;
 }
 
 .price-row {
   display: grid;
   justify-items: end;
-  gap: 4px;
+  gap: 6px;
+}
+
+.price {
+  color: var(--text);
+  font-size: 1.02rem;
+  font-weight: 900;
+  text-align: right;
 }
 
 .override-row {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  grid-template-columns: minmax(220px, 1fr) minmax(260px, 0.9fr);
+  gap: 10px;
 }
 
-@media (max-width: 620px) {
+.override-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 780px) {
   .stock-card {
     grid-template-columns: 1fr;
     align-items: stretch;
   }
 
+  .stock-topline {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
   .price-row {
     justify-items: start;
+  }
+
+  .price,
+  .note {
+    text-align: left;
   }
 
   .buy-amount {
@@ -633,10 +661,10 @@ input::placeholder {
 }
 
 .override-actions button {
-  flex: 0 0 auto;
   min-width: 0;
-  padding: 0 14px;
-  font-size: 0.86rem;
+  width: 100%;
+  padding: 0 10px;
+  font-size: 0.82rem;
 }
 
 .order-text {
@@ -671,11 +699,11 @@ input::placeholder {
 
 @media (min-width: 720px) {
   .app-shell {
-    padding: 34px 22px 64px;
+    padding: 26px 22px 64px;
   }
 
   .top-menu {
-    margin: -34px -22px 20px;
+    margin: -26px -22px 18px;
     padding-left: 22px;
     padding-right: 22px;
   }
@@ -683,7 +711,7 @@ input::placeholder {
   .hero {
     grid-template-columns: 1fr 220px;
     align-items: end;
-    padding-bottom: 28px;
+    padding-bottom: 22px;
   }
 
   .section-heading,
@@ -708,7 +736,7 @@ input::placeholder {
 
 @media (min-width: 980px) {
   main {
-    grid-template-columns: 1fr 360px;
+    grid-template-columns: minmax(0, 1fr) 340px;
     align-items: start;
   }
 
