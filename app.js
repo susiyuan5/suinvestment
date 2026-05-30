@@ -224,7 +224,7 @@
     }
 
 } catch (error) {
-    } catch (error) {
+  
       console.warn("Finnhub candles failed for", symbol, error);
     }
 
