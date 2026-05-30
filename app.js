@@ -7,6 +7,7 @@
     crashFund: 100,
     weeklyDeployment: 69.23,
     cacheHours: 24,
+    weeklySnapshotUrl: "data/market-data.json",
     requestTimeoutMs: 9000,
     qqqPanicThreshold: -10,
     panicMultiplier: 1.3,
@@ -35,6 +36,7 @@
     panicActive: false,
     loading: false,
     pendingRefresh: false,
+    weeklySnapshot: null,
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {})
   };
@@ -99,6 +101,8 @@
     copyStatusEl.textContent = "";
     markCardsLoading();
 
+    state.weeklySnapshot = await fetchWeeklySnapshot();
+
     const symbols = CONFIG.marketSymbols;
     const results = await Promise.all(symbols.map(fetchSymbolSnapshot));
 
@@ -137,13 +141,15 @@
   async function fetchSymbolSnapshot(symbol) {
     const apiKey = apiKeyInput.value.trim();
     const cached = getValidCache(symbol);
+    const weeklyData = getWeeklySnapshot(symbol);
     const failures = [];
 
     if (apiKey) {
       try {
         const finnhub = await fetchFinnhubSnapshot(symbol, apiKey);
-        saveCache(symbol, finnhub);
-        return finnhub;
+        const mergedFinnhub = mergeWeeklySnapshot(finnhub, weeklyData);
+        saveCache(symbol, mergedFinnhub);
+        return mergedFinnhub;
       } catch (error) {
         console.warn("Finnhub failed for", symbol, error);
         failures.push("Finnhub: " + describeError(error));
@@ -152,11 +158,25 @@
 
     try {
       const yahoo = await fetchYahooSnapshot(symbol);
-      saveCache(symbol, yahoo);
-      return yahoo;
+      const mergedYahoo = mergeWeeklySnapshot(yahoo, weeklyData);
+      saveCache(symbol, mergedYahoo);
+      return mergedYahoo;
     } catch (error) {
       console.warn("Yahoo failed for", symbol, error);
       failures.push("Yahoo: " + describeError(error));
+    }
+
+    if (weeklyData) {
+      return {
+        symbol,
+        price: weeklyData.price,
+        latestClose: weeklyData.latestClose,
+        weekAgoClose: weeklyData.weekAgoClose,
+        weeklyChange: weeklyData.weeklyChange,
+        source: "Weekly",
+        note: "Weekly close snapshot",
+        fetchedAt: weeklyData.fetchedAt
+      };
     }
 
     if (cached) {
@@ -176,6 +196,38 @@
       weeklyChange: null,
       source: "Unavailable",
       note
+    };
+  }
+
+  async function fetchWeeklySnapshot() {
+    try {
+      return await fetchJson(CONFIG.weeklySnapshotUrl + "?v=" + Date.now());
+    } catch (error) {
+      console.warn("Weekly snapshot failed", error);
+      return null;
+    }
+  }
+
+  function getWeeklySnapshot(symbol) {
+    const item = state.weeklySnapshot && state.weeklySnapshot.symbols && state.weeklySnapshot.symbols[symbol];
+    if (!item || !isFiniteNumber(item.weeklyChange)) return null;
+    return {
+      price: isFiniteNumber(item.price) ? item.price : null,
+      latestClose: isFiniteNumber(item.latestClose) ? item.latestClose : null,
+      weekAgoClose: isFiniteNumber(item.weekAgoClose) ? item.weekAgoClose : null,
+      weeklyChange: item.weeklyChange,
+      fetchedAt: state.weeklySnapshot.generatedAt ? Date.parse(state.weeklySnapshot.generatedAt) : Date.now()
+    };
+  }
+
+  function mergeWeeklySnapshot(row, weeklyData) {
+    if (!weeklyData || isFiniteNumber(row.weeklyChange)) return row;
+    return {
+      ...row,
+      latestClose: weeklyData.latestClose,
+      weekAgoClose: weeklyData.weekAgoClose,
+      weeklyChange: weeklyData.weeklyChange,
+      note: row.note + "; weekly snapshot"
     };
   }
 
@@ -256,7 +308,7 @@
 
   function calculateWeeklyChange(closes) {
     const latestClose = closes[closes.length - 1];
-    const lookback = Math.min(7, Math.max(5, closes.length - 1));
+    const lookback = Math.min(5, closes.length - 1);
     const weekAgoClose = closes[closes.length - 1 - lookback];
     const weeklyChange = round2(((latestClose - weekAgoClose) / weekAgoClose) * 100);
     return { latestClose, weekAgoClose, weeklyChange };

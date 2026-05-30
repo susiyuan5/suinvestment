@@ -6,7 +6,9 @@ Su Investment Pro is a production-ready standalone weekly investment calculator 
 
 - `index.html` - App markup
 - `style.css` - Dark mobile-first dashboard UI
-- `app.js` - Market fetching, cache, manual overrides, panic mode, and order calculation
+- `app.js` - Market fetching, weekly snapshot loading, cache, manual overrides, panic mode, and order calculation
+- `scripts/update-market-data.js` - GitHub Actions script that calculates weekly percentage changes
+- `data/market-data.json` - Weekly market snapshot served by GitHub Pages
 
 ## Settings
 
@@ -27,10 +29,11 @@ Su Investment Pro is a production-ready standalone weekly investment calculator 
 
 ## Data Source Priority
 
-1. Finnhub, when the user enters an API key
-2. Yahoo Finance fallback
-3. 24-hour local cache
-4. Manual override
+1. Finnhub, when the user enters an API key, for current quote
+2. Weekly snapshot generated every Tuesday from Yahoo daily closes
+3. Yahoo Finance browser fallback, where available
+4. 24-hour local cache
+5. Manual override
 
 Manual overrides are entered per stock as a weekly percentage value, such as `-9.2`, `+12`, or `10.5`. Overrides are saved in the browser and take priority for that stock.
 
@@ -40,7 +43,7 @@ Manual overrides are entered per stock as a weekly percentage value, such as `-9
 Weekly % = ((LatestClose - WeekAgoClose) / WeekAgoClose) * 100
 ```
 
-The app compares the latest close with a 5-7 trading day lookback and rounds to 2 decimals.
+The app compares the latest close with the close from 5 trading sessions earlier and rounds to 2 decimals. The weekly snapshot is updated every Tuesday at 12:00 PM Bangkok time by GitHub Actions.
 
 ## Multiplier Rules
 
