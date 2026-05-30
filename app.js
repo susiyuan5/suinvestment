@@ -202,25 +202,28 @@
     let comparison = null;
     let candleNote = "Live quote; daily candles unavailable";
 
-    try {
-      const candle = await fetchJson(candleUrl);
-     if (candle.s === "ok" && Array.isArray(candle.c) && candle.c.length >= 2) {
+   try {
 
-    const closes = candle.c;
+    const candle =
+        await fetchJson(candleUrl);
 
-    const latestClose = closes[closes.length-1];
-    const previousClose = closes[closes.length-2];
+    if (
+        candle.s === "ok" &&
+        Array.isArray(candle.c) &&
+        candle.c.length >= 6
+    ) {
 
-    comparison =
-        ((latestClose - previousClose) / previousClose) * 100;
+        const closes =
+            candle.c.filter(isFiniteNumber);
 
-    candleNote = "Weekly change auto";
+        comparison =
+            calculateWeeklyChange(closes);
 
-}
+        candleNote =
+            "Live quote and 7D candles";
+    }
 
-      const closes = candle.c.filter(isFiniteNumber);
-      comparison = calculateWeeklyChange(closes);
-      candleNote = "Live quote and daily candles";
+} catch (error) {
     } catch (error) {
       console.warn("Finnhub candles failed for", symbol, error);
     }
@@ -264,36 +267,50 @@
     };
   }
 
- function calculateWeeklyChange(closes) {
+function calculateWeeklyChange(closes) {
 
-    if (!Array.isArray(closes) || closes.length < 2) {
+    if (
+        !Array.isArray(closes) ||
+        closes.length < 6
+    ) {
         return {
             latestClose: null,
             weekAgoClose: null,
-            weeklyChange: 0
+            weeklyChange: null
         };
     }
 
-    const latestClose = closes[closes.length - 1];
-
-    const lookback =
-        closes.length >= 6
-        ? 5
-        : 1;
+    const latestClose =
+        closes[closes.length - 1];
 
     const weekAgoClose =
-        closes[closes.length - 1 - lookback];
+        closes[
+            Math.max(
+                0,
+                closes.length - 6
+            )
+        ];
 
-    const weeklyChange =
-        round2(
-            ((latestClose - weekAgoClose)
-            / weekAgoClose) * 100
-        );
+    if (
+        !isFiniteNumber(latestClose) ||
+        !isFiniteNumber(weekAgoClose)
+    ) {
+        return {
+            latestClose: null,
+            weekAgoClose: null,
+            weeklyChange: null
+        };
+    }
 
     return {
         latestClose,
         weekAgoClose,
-        weeklyChange
+        weeklyChange: round2(
+            (
+                (latestClose - weekAgoClose)
+                / weekAgoClose
+            ) * 100
+        )
     };
 }
 
@@ -431,12 +448,15 @@ if (isFiniteNumber(weekly)) {
 } else if (
     row &&
     isFiniteNumber(row.price) &&
-    isFiniteNumber(row.previousClose)
+    isFiniteNumber(row.weekAgoClose)
 ) {
 
     const proxyWeekly =
-        ((row.price - row.previousClose)
-        / row.previousClose) * 100;
+        (
+(row.latestClose - row.weekAgoClose)
+/
+row.weekAgoClose
+)
 
     weeklyEl.textContent =
         formatSigned(proxyWeekly) + "%";
