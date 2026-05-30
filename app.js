@@ -203,24 +203,34 @@
     let candleNote = "Live quote; daily candles unavailable";
 
     try {
-      const candle = await fetchJson(candleUrl);
-     if (candle.s === "ok" && Array.isArray(candle.c) && candle.c.length >= 2) {
 
-    const closes = candle.c;
+const candle = await fetchJson(candleUrl);
+
+if (
+    candle.s === "ok" &&
+    Array.isArray(candle.c) &&
+    candle.c.length >= 2
+) {
+
+    const closes = candle.c.filter(isFiniteNumber);
 
     const latestClose = closes[closes.length-1];
     const previousClose = closes[closes.length-2];
 
-    comparison =
-        ((latestClose - previousClose) / previousClose) * 100;
+    comparison = {
+        latestClose,
+        weekAgoClose: previousClose,
+        weeklyChange:
+            ((latestClose - previousClose) / previousClose) * 100
+    };
 
     candleNote = "Weekly change auto";
-
 }
 
-      const closes = candle.c.filter(isFiniteNumber);
-      comparison = calculateWeeklyChange(closes);
-      candleNote = "Live quote and daily candles";
+} catch (error) {
+
+    candleNote = "Live quote only";
+}
     } catch (error) {
       console.warn("Finnhub candles failed for", symbol, error);
     }
