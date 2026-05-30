@@ -225,16 +225,10 @@ if (
     };
 
     candleNote = "Weekly change auto";
-}
-
-} catch (error) {
-
-    candleNote = "Live quote only";
-}
+    }
     } catch (error) {
       console.warn("Finnhub candles failed for", symbol, error);
     }
-
     return {
       symbol,
       price: quote.c,
