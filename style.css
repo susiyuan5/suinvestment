@@ -320,18 +320,41 @@ input::placeholder {
 
 .cards-grid {
   display: grid;
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 8px;
   padding: 0 10px 10px;
 }
 
 .stock-card {
   display: grid;
-  gap: 14px;
+  grid-template-areas:
+    "topline"
+    "values"
+    "price"
+    "override";
+  gap: 12px;
   min-width: 0;
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel-2);
+}
+
+.stock-topline {
+  grid-area: topline;
+  min-width: 0;
+}
+
+.stock-values {
+  grid-area: values;
+}
+
+.price-row {
+  grid-area: price;
+}
+
+.override-row {
+  grid-area: override;
 }
 
 .stock-topline,
@@ -494,8 +517,34 @@ input::placeholder {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .cards-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .stock-card {
+    grid-template-columns: minmax(124px, 0.78fr) minmax(280px, 1.65fr) minmax(170px, 0.85fr);
+    grid-template-areas:
+      "topline values price"
+      "override override override";
+    align-items: center;
+    gap: 12px 16px;
+    padding: 12px 14px;
+  }
+
+  .stock-topline {
+    display: grid;
+    gap: 8px;
+  }
+
+  .source-badge {
+    width: fit-content;
+  }
+
+  .price-row {
+    display: grid;
+    justify-items: end;
+    gap: 6px;
+  }
+
+  .override-row {
+    grid-template-columns: minmax(0, 1fr) minmax(248px, 0.48fr);
+    align-items: center;
   }
 }
 
@@ -507,7 +556,7 @@ input::placeholder {
 
   .settings-panel,
   #panicBanner,
-  .panel:first-of-type {
+  section[aria-labelledby="holdings-title"] {
     grid-column: 1 / -1;
   }
 
