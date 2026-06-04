@@ -12,21 +12,21 @@
     qqqPanicThreshold: -10,
     panicMultiplier: 1.3,
     panicSymbols: new Set(["MSFT", "NVDA", "AAPL", "ASML"]),
-    stocks: [
-      { symbol: "BYDDY", allocation: 0.3 },
-      { symbol: "MSFT", allocation: 0.22 },
-      { symbol: "NVDA", allocation: 0.18 },
-      { symbol: "AAPL", allocation: 0.15 },
-      { symbol: "ASML", allocation: 0.1 },
-      { symbol: "KO", allocation: 0.05 }
-    ],
-    marketSymbols: ["BYDDY", "MSFT", "NVDA", "AAPL", "ASML", "KO", "QQQ"]
+    defaultStocks: [
+      { symbol: "BYDDY", name: "BYD Company Limited", allocation: 0.3 },
+      { symbol: "MSFT", name: "Microsoft Corporation", allocation: 0.22 },
+      { symbol: "NVDA", name: "NVIDIA Corporation", allocation: 0.18 },
+      { symbol: "AAPL", name: "Apple Inc.", allocation: 0.15 },
+      { symbol: "ASML", name: "ASML Holding N.V.", allocation: 0.1 },
+      { symbol: "KO", name: "The Coca-Cola Company", allocation: 0.05 }
+    ]
   };
 
   const STORAGE_KEYS = {
     apiKey: "su-investment-pro:finnhub-key",
     cache: "su-investment-pro:market-cache",
-    overrides: "su-investment-pro:manual-overrides"
+    overrides: "su-investment-pro:manual-overrides",
+    portfolio: "su-investment-pro:portfolio"
   };
 
   const state = {
@@ -37,6 +37,7 @@
     loading: false,
     pendingRefresh: false,
     weeklySnapshot: null,
+    portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultStocks), { allowCustom: true }),
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {})
   };
@@ -53,7 +54,16 @@
   const lastUpdatedEl = document.getElementById("lastUpdated");
   const panicBanner = document.getElementById("panicBanner");
   const template = document.getElementById("stockCardTemplate");
+  const stockSearchInput = document.getElementById("stockSearchInput");
+  const stockAllocationInput = document.getElementById("stockAllocationInput");
+  const stockSearchBtn = document.getElementById("stockSearchBtn");
+  const stockSearchResultsEl = document.getElementById("stockSearchResults");
+  const portfolioTotalEl = document.getElementById("portfolioTotal");
   let apiKeyRefreshTimer = 0;
+
+  if (!state.portfolio.length) {
+    state.portfolio = normalizePortfolio(CONFIG.defaultStocks, { allowCustom: true });
+  }
 
   apiKeyInput.value = localStorage.getItem(STORAGE_KEYS.apiKey) || "";
 
@@ -83,7 +93,12 @@
 
   refreshBtn.addEventListener("click", refreshMarketData);
   copyBtn.addEventListener("click", copyOrderList);
+  stockSearchBtn.addEventListener("click", searchStocks);
+  stockSearchInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") searchStocks();
+  });
 
+  renderPortfolioTotal();
   renderSkeleton();
   refreshMarketData();
 
@@ -103,7 +118,9 @@
 
     state.weeklySnapshot = await fetchWeeklySnapshot();
 
-    const symbols = CONFIG.marketSymbols;
+    const symbols = Array.from(new Set(state.portfolio.map(function (stock) {
+      return stock.symbol;
+    }).concat("QQQ")));
     const results = await Promise.all(symbols.map(fetchSymbolSnapshot));
 
     results.forEach(function (result) {
@@ -136,6 +153,147 @@
   function closeSettings() {
     settingsModal.classList.add("hidden");
     openSettingsBtn.focus();
+  }
+
+  async function searchStocks() {
+    const query = stockSearchInput.value.trim();
+    if (!query) {
+      renderSearchMessage("Enter a ticker or company name.");
+      return;
+    }
+
+    stockSearchBtn.disabled = true;
+    stockSearchBtn.textContent = "Searching...";
+    renderSearchMessage("Searching...");
+
+    try {
+      const results = await fetchStockSearchResults(query);
+      renderSearchResults(results, query);
+    } catch (error) {
+      console.warn("Stock search failed", error);
+      const fallbackSymbol = normalizeSymbol(query);
+      if (fallbackSymbol) {
+        renderSearchResults([{ symbol: fallbackSymbol, name: "Add exact ticker", exchange: "Manual" }], query);
+      } else {
+        renderSearchMessage("Search failed. Try a ticker like TSLA or V.");
+      }
+    } finally {
+      stockSearchBtn.disabled = false;
+      stockSearchBtn.textContent = "Search";
+    }
+  }
+
+  async function fetchStockSearchResults(query) {
+    const url = "https://query1.finance.yahoo.com/v1/finance/search?q=" + encodeURIComponent(query) + "&quotesCount=8&newsCount=0";
+    const payload = await fetchJson(url);
+    const quotes = Array.isArray(payload.quotes) ? payload.quotes : [];
+    const seen = new Set();
+
+    return quotes.reduce(function (items, quote) {
+      const symbol = normalizeSymbol(quote.symbol);
+      if (!symbol || seen.has(symbol)) return items;
+
+      const quoteType = String(quote.quoteType || "").toUpperCase();
+      if (quoteType && !["EQUITY", "ETF", "MUTUALFUND"].includes(quoteType)) return items;
+
+      seen.add(symbol);
+      items.push({
+        symbol,
+        name: quote.longname || quote.shortname || quote.name || symbol,
+        exchange: quote.exchDisp || quote.exchange || quoteType || "Market"
+      });
+      return items;
+    }, []);
+  }
+
+  function renderSearchResults(results, query) {
+    stockSearchResultsEl.innerHTML = "";
+
+    const exactSymbol = normalizeSymbol(query);
+    if (exactSymbol && !results.some(function (item) { return item.symbol === exactSymbol; })) {
+      results.unshift({ symbol: exactSymbol, name: "Add exact ticker", exchange: "Manual" });
+    }
+
+    if (!results.length) {
+      renderSearchMessage("No matching stocks found.");
+      return;
+    }
+
+    results.slice(0, 8).forEach(function (result) {
+      const button = document.createElement("button");
+      button.className = "search-result";
+      button.type = "button";
+      button.innerHTML = "<strong></strong><span></span><em></em>";
+      button.querySelector("strong").textContent = result.symbol;
+      button.querySelector("span").textContent = result.name;
+      button.querySelector("em").textContent = result.exchange;
+      button.addEventListener("click", function () {
+        addStock(result);
+      });
+      stockSearchResultsEl.appendChild(button);
+    });
+  }
+
+  function renderSearchMessage(message) {
+    stockSearchResultsEl.innerHTML = "";
+    const note = document.createElement("p");
+    note.className = "search-message";
+    note.textContent = message;
+    stockSearchResultsEl.appendChild(note);
+  }
+
+  function addStock(result) {
+    const symbol = normalizeSymbol(result.symbol);
+    if (!symbol) return;
+
+    const allocation = parseAllocation(stockAllocationInput.value);
+    const existing = state.portfolio.find(function (stock) {
+      return stock.symbol === symbol;
+    });
+
+    if (existing) {
+      existing.name = result.name || existing.name || symbol;
+      if (allocation > 0) existing.allocation = allocation;
+      copyStatusEl.textContent = symbol + " updated.";
+    } else {
+      state.portfolio.push({
+        symbol,
+        name: result.name || symbol,
+        allocation
+      });
+      copyStatusEl.textContent = symbol + " added. Set allocation if needed.";
+    }
+
+    state.portfolio = normalizePortfolio(state.portfolio, { allowCustom: true });
+    savePortfolio();
+    stockSearchInput.value = "";
+    stockAllocationInput.value = "";
+    stockSearchResultsEl.innerHTML = "";
+    renderPortfolioTotal();
+    renderSkeleton();
+    refreshMarketData();
+  }
+
+  function removeStock(symbol) {
+    if (state.portfolio.length <= 1) {
+      copyStatusEl.textContent = "Keep at least one stock in the portfolio.";
+      return;
+    }
+
+    state.portfolio = state.portfolio.filter(function (stock) {
+      return stock.symbol !== symbol;
+    });
+    delete state.overrides[symbol];
+    delete state.cache[symbol];
+    state.marketRows.delete(symbol);
+    state.rows.delete(symbol);
+    savePortfolio();
+    saveOverrides();
+    saveJson(STORAGE_KEYS.cache, state.cache);
+    renderPortfolioTotal();
+    renderSkeleton();
+    refreshMarketData();
+    copyStatusEl.textContent = symbol + " removed.";
   }
 
   async function fetchSymbolSnapshot(symbol) {
@@ -323,7 +481,7 @@
   }
 
   function applyManualOverrides() {
-    CONFIG.stocks.forEach(function (stock) {
+    state.portfolio.forEach(function (stock) {
       const base = state.marketRows.get(stock.symbol) || {
         symbol: stock.symbol,
         price: null,
@@ -348,25 +506,28 @@
 
   function renderSkeleton() {
     cardsEl.innerHTML = "";
-    CONFIG.stocks.forEach(function (stock) {
+    state.portfolio.forEach(function (stock) {
       const card = template.content.firstElementChild.cloneNode(true);
       card.dataset.symbol = stock.symbol;
       card.querySelector("h3").textContent = stock.symbol;
       card.querySelector(".allocation").textContent = formatPercent(stock.allocation * 100) + " allocation";
 
-    const input = card.querySelector(".override-input");
-    input.value = state.overrides[stock.symbol] === undefined ? "" : formatSignedInput(state.overrides[stock.symbol]);
-    card.querySelector(".source-badge").textContent = "Loading";
-    card.querySelector(".weekly-change").textContent = "Loading";
-    card.querySelector(".multiplier").textContent = "1x";
-    card.querySelector(".buy-amount").textContent = "CAD " + round2(CONFIG.weeklyDeployment * stock.allocation).toFixed(2);
-    card.querySelector(".price").textContent = "Price loading";
+      const input = card.querySelector(".override-input");
+      input.value = state.overrides[stock.symbol] === undefined ? "" : formatSignedInput(state.overrides[stock.symbol]);
+      card.querySelector(".source-badge").textContent = "Loading";
+      card.querySelector(".weekly-change").textContent = "Loading";
+      card.querySelector(".multiplier").textContent = "1x";
+      card.querySelector(".buy-amount").textContent = "CAD " + round2(CONFIG.weeklyDeployment * stock.allocation).toFixed(2);
+      card.querySelector(".price").textContent = "Price loading";
 
       card.querySelector(".apply-override").addEventListener("click", function () {
         applyOverride(stock.symbol, input.value);
       });
       card.querySelector(".clear-override").addEventListener("click", function () {
         clearOverride(stock.symbol);
+      });
+      card.querySelector(".remove-stock").addEventListener("click", function () {
+        removeStock(stock.symbol);
       });
       input.addEventListener("keydown", function (event) {
         if (event.key === "Enter") applyOverride(stock.symbol, input.value);
@@ -393,7 +554,7 @@
     let roundedTotal = 0;
     let latestTimestamp = 0;
 
-    CONFIG.stocks.forEach(function (stock) {
+    state.portfolio.forEach(function (stock) {
       const row = state.rows.get(stock.symbol);
       const weekly = row ? row.weeklyChange : null;
       const normalMultiplier = getMultiplier(weekly);
@@ -417,7 +578,7 @@
     entries.forEach(function (entry) {
       const card = cardsEl.querySelector('[data-symbol="' + entry.stock.symbol + '"]');
       updateCard(card, entry.row, entry.stock, entry.weekly, entry.multiplier, entry.amount);
-      orderLines.push(entry.stock.symbol + " — CAD " + entry.amount.toFixed(2));
+      orderLines.push(entry.stock.symbol + " - CAD " + entry.amount.toFixed(2));
     });
 
     orderLines.push("");
@@ -425,6 +586,7 @@
     orderLines.push("CAD " + targetTotal.toFixed(2));
     orderTextEl.textContent = orderLines.join("\n");
     lastUpdatedEl.textContent = latestTimestamp ? "Updated " + formatDateTime(latestTimestamp) : "No live data yet";
+    renderPortfolioTotal();
   }
 
   function updateCard(card, row, stock, weekly, multiplier, amount) {
@@ -491,7 +653,7 @@
       ...snapshot,
       fetchedAt: Date.now()
     };
-    localStorage.setItem(STORAGE_KEYS.cache, JSON.stringify(state.cache));
+    saveJson(STORAGE_KEYS.cache, state.cache);
   }
 
   function getValidCache(symbol) {
@@ -503,8 +665,58 @@
     return cached;
   }
 
+  function normalizePortfolio(items, options) {
+    const allowCustom = options && options.allowCustom;
+    const defaultSymbols = new Set(CONFIG.defaultStocks.map(function (stock) { return stock.symbol; }));
+    const seen = new Set();
+    return (Array.isArray(items) ? items : []).reduce(function (portfolio, item) {
+      const symbol = normalizeSymbol(item && item.symbol);
+      const allocation = Number(item && item.allocation);
+      const supported = defaultSymbols.has(symbol);
+      if (!symbol || (!supported && !allowCustom) || seen.has(symbol) || !Number.isFinite(allocation) || allocation < 0) {
+        return portfolio;
+      }
+
+      seen.add(symbol);
+      portfolio.push({
+        symbol,
+        name: String(item.name || symbol).trim() || symbol,
+        allocation: round2(allocation * 100) / 100
+      });
+      return portfolio;
+    }, []);
+  }
+
+  function normalizeSymbol(value) {
+    const symbol = String(value || "").trim().toUpperCase();
+    if (!/^[A-Z0-9.-]{1,12}$/.test(symbol)) return "";
+    return symbol;
+  }
+
+  function parseAllocation(value) {
+    const number = Number(String(value).trim().replace("%", ""));
+    if (!Number.isFinite(number) || number < 0) return 0;
+    return round2(number) / 100;
+  }
+
+  function renderPortfolioTotal() {
+    const total = state.portfolio.reduce(function (sum, stock) {
+      return sum + stock.allocation;
+    }, 0);
+    portfolioTotalEl.textContent = "Total allocation " + formatPercent(total * 100);
+    portfolioTotalEl.classList.toggle("warning", Math.abs(total - 1) > 0.001);
+  }
+
+  function savePortfolio() {
+    saveJson(STORAGE_KEYS.portfolio, state.portfolio);
+  }
+
   function saveOverrides() {
-    localStorage.setItem(STORAGE_KEYS.overrides, JSON.stringify(state.overrides));
+    saveJson(STORAGE_KEYS.overrides, state.overrides);
+  }
+
+  function saveJson(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
   }
 
   function loadJson(key, fallback) {
@@ -566,7 +778,8 @@
   }
 
   function formatPercent(value) {
-    return value.toFixed(0) + "%";
+    const rounded = round2(value);
+    return (Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(2)) + "%";
   }
 
   function formatPrice(value) {
