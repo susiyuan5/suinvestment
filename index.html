@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
     <title>Su Investment Pro</title>
-    <link rel="stylesheet" href="style.css?v=stock-row-layout-1">
+    <link rel="stylesheet" href="style.css?v=stock-search-1">
   </head>
   <body>
     <div class="app-shell">
@@ -64,6 +64,22 @@
               <h2 id="holdings-title">This Tuesday</h2>
             </div>
             <div id="lastUpdated" class="last-updated">Waiting for data</div>
+          </div>
+
+          <div class="stock-search-panel" aria-label="Add stock">
+            <div class="stock-search-grid">
+              <label for="stockSearchInput">
+                <span>Search stock</span>
+                <input id="stockSearchInput" type="search" autocomplete="off" placeholder="Ticker or name, e.g. TSLA or Visa">
+              </label>
+              <label for="stockAllocationInput">
+                <span>Allocation %</span>
+                <input id="stockAllocationInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+              </label>
+              <button id="stockSearchBtn" class="secondary-button" type="button">Search</button>
+            </div>
+            <div id="portfolioTotal" class="portfolio-total">Total allocation 100%</div>
+            <div id="stockSearchResults" class="stock-search-results" aria-live="polite"></div>
           </div>
 
           <div id="cards" class="cards-grid"></div>
@@ -132,7 +148,10 @@
             <h3></h3>
             <span class="allocation"></span>
           </div>
-          <span class="source-badge"></span>
+          <div class="stock-actions">
+            <span class="source-badge"></span>
+            <button class="remove-stock" type="button" aria-label="Remove stock">Remove</button>
+          </div>
         </div>
 
         <div class="stock-values">
@@ -165,6 +184,6 @@
       </article>
     </template>
 
-    <script src="app.js?v=weekly-snapshot-1"></script>
+    <script src="app.js?v=stock-search-1"></script>
   </body>
 </html>
