@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#080d14">
     <title>Su Investment Pro</title>
     <link rel="stylesheet" href="style.css?v=stock-search-1">
-    <link rel="stylesheet" href="stock-search.css?v=stock-search-1">
+    <link rel="stylesheet" href="stock-search.css?v=order-row-1">
   </head>
   <body>
     <div class="app-shell">
@@ -94,7 +94,8 @@
             </div>
             <button id="copyBtn" class="secondary-button" type="button">Copy</button>
           </div>
-          <pre id="orderText" class="order-text"></pre>
+          <div id="orderRows" class="order-rows" aria-live="polite"></div>
+          <pre id="orderText" class="order-text copy-buffer"></pre>
           <p id="copyStatus" class="status-line" role="status"></p>
         </section>
 
@@ -186,5 +187,6 @@
     </template>
 
     <script src="app.js?v=stock-search-1"></script>
+    <script src="order-panel.js?v=order-row-1"></script>
   </body>
 </html>
