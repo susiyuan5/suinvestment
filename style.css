@@ -781,6 +781,79 @@ input::placeholder {
   line-height: 1.45;
 }
 
+.backtest-summary {
+  display: grid;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.backtest-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.backtest-metric,
+.backtest-note {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.backtest-metric span,
+.backtest-note span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.backtest-metric strong,
+.backtest-note strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.backtest-table-wrap {
+  overflow-x: auto;
+}
+
+.backtest-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #090f17;
+}
+
+.backtest-table th,
+.backtest-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--soft);
+  font-size: 0.84rem;
+  text-align: left;
+}
+
+.backtest-table th {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.backtest-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.backtest-table strong {
+  color: var(--text);
+}
+
 .risk-low {
   color: var(--accent);
 }
@@ -848,6 +921,10 @@ input::placeholder {
 
   .risk-metrics-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .backtest-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .stock-card {
@@ -987,9 +1064,15 @@ input::placeholder {
 
   .order-text,
   .order-rows,
+  .backtest-summary,
   .source-list,
   .fine-print {
     margin-left: 0;
     margin-right: 0;
+  }
+
+  .backtest-summary {
+    padding-left: 14px;
+    padding-right: 14px;
   }
 }

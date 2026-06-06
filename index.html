@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=deployment-edit-1">
+    <link rel="stylesheet" href="style.css?v=backtest-compare-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
   </head>
@@ -87,6 +87,19 @@
             </div>
 
             <div id="cards" class="cards-grid"></div>
+          </section>
+
+          <section class="panel backtest-panel" aria-labelledby="backtest-title">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Backtest comparison</p>
+                <h2 id="backtest-title">Dip-buy vs Fixed DCA</h2>
+              </div>
+              <button id="runBacktestBtn" class="secondary-button" type="button">Run Backtest</button>
+            </div>
+            <div id="backtestSummary" class="backtest-summary" aria-live="polite">
+              <p class="fine-print">Compare the current weekly dip-buy strategy with fixed weekly DCA using current tickers, allocations, and deployment settings.</p>
+            </div>
           </section>
 
           <details class="panel data-panel">
@@ -261,7 +274,7 @@
     </template>
 
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="app.js?v=deployment-edit-1"></script>
+    <script src="app.js?v=backtest-compare-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
   </body>

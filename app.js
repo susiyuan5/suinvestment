@@ -4,6 +4,7 @@
   const CONFIG = {
     cacheHours: 24,
     weeklySnapshotUrl: "data/market-data.json",
+    backtestSnapshotUrl: "data/backtest-prices.json",
     requestTimeoutMs: 9000,
     qqqPanicThreshold: -10,
     panicMultiplier: 1.3,
@@ -56,6 +57,27 @@
       deploymentSaved: "Deployment settings saved.",
       deploymentReset: "Deployment settings reset to defaults.",
       invalidDeploymentInput: "Enter a valid non-negative number.",
+      backtestEyebrow: "Backtest comparison",
+      backtestTitle: "Dip-buy vs Fixed DCA",
+      runBacktest: "Run Backtest",
+      backtestIntro: "Compare the current weekly dip-buy strategy with fixed weekly DCA using current tickers, allocations, and deployment settings.",
+      backtestRunning: "Running backtest...",
+      backtestFailed: "Backtest failed. Historical data may be unavailable.",
+      backtestNeedData: "Need at least two weekly prices per ticker.",
+      dipBuyStrategy: "Weekly dip-buy",
+      fixedDcaStrategy: "Fixed weekly DCA",
+      finalValue: "Final Value",
+      totalReturn: "Total Return",
+      maxDrawdown: "Max Drawdown",
+      numberOfBuys: "Number of Buys",
+      avgBuyPrice: "Avg Buy Price",
+      beatsDca: "Beats Fixed DCA",
+      yes: "Yes",
+      no: "No",
+      strategy: "Strategy",
+      ticker: "Ticker",
+      invested: "Invested",
+      backtestWindow: "Backtest window",
       panicTitle: "PANIC MODE ACTIVE",
       panicBody: "QQQ buy signal is at or below -10%",
       allocations: "Allocations",
@@ -214,6 +236,27 @@
       deploymentSaved: "投入设置已保存。",
       deploymentReset: "已恢复默认投入设置。",
       invalidDeploymentInput: "请输入有效的非负数字。",
+      backtestEyebrow: "回测比较",
+      backtestTitle: "逢低买入 vs 固定定投",
+      runBacktest: "运行回测",
+      backtestIntro: "使用当前股票、配置比例和投入设置，对比逢低买入策略与固定每周定投。",
+      backtestRunning: "正在回测...",
+      backtestFailed: "回测失败，可能缺少历史数据。",
+      backtestNeedData: "每只股票至少需要两条周线价格。",
+      dipBuyStrategy: "每周逢低买入",
+      fixedDcaStrategy: "固定每周定投",
+      finalValue: "最终价值",
+      totalReturn: "总收益率",
+      maxDrawdown: "最大回撤",
+      numberOfBuys: "买入次数",
+      avgBuyPrice: "平均买入价",
+      beatsDca: "是否跑赢定投",
+      yes: "是",
+      no: "否",
+      strategy: "策略",
+      ticker: "股票",
+      invested: "投入金额",
+      backtestWindow: "回测区间",
       panicTitle: "恐慌模式已开启",
       panicBody: "QQQ 买入信号小于或等于 -10%",
       allocations: "配置",
@@ -359,10 +402,12 @@
     marketRows: new Map(),
     rows: new Map(),
     qqqSignal: null,
+    backtestResult: null,
     panicActive: false,
     loading: false,
     pendingRefresh: false,
     weeklySnapshot: null,
+    backtestSnapshot: null,
     portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultStocks), { allowCustom: true }),
     portfolioRiskInput: normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {})),
     deployment: normalizeDeployment(loadJson(STORAGE_KEYS.deployment, DEFAULT_DEPLOYMENT)),
@@ -392,6 +437,8 @@
   const savePortfolioRiskBtn = document.getElementById("savePortfolioRiskBtn");
   const portfolioPositionInputsEl = document.getElementById("portfolioPositionInputs");
   const portfolioRiskSummaryEl = document.getElementById("portfolioRiskSummary");
+  const runBacktestBtn = document.getElementById("runBacktestBtn");
+  const backtestSummaryEl = document.getElementById("backtestSummary");
   const languageToggle = document.getElementById("languageToggle");
   const deploymentStatusEl = document.getElementById("deploymentStatus");
   const saveDeploymentBtn = document.getElementById("saveDeploymentBtn");
@@ -436,6 +483,7 @@
 
   refreshBtn.addEventListener("click", refreshMarketData);
   copyBtn.addEventListener("click", copyOrderList);
+  if (runBacktestBtn) runBacktestBtn.addEventListener("click", runBacktestComparison);
   if (languageToggle) languageToggle.addEventListener("click", toggleLanguage);
   if (saveDeploymentBtn) saveDeploymentBtn.addEventListener("click", saveDeploymentFromForm);
   if (resetDeploymentBtn) resetDeploymentBtn.addEventListener("click", resetDeploymentDefaults);
@@ -627,6 +675,7 @@
 
     state.portfolio = normalizePortfolio(state.portfolio, { allowCustom: true });
     savePortfolio();
+    clearBacktestResult();
     stockSearchInput.value = "";
     stockAllocationInput.value = "";
     stockSearchResultsEl.innerHTML = "";
@@ -652,6 +701,7 @@
     savePortfolio();
     saveOverrides();
     saveJson(STORAGE_KEYS.cache, state.cache);
+    clearBacktestResult();
     renderPortfolioTotal();
     renderPortfolioRiskInputs();
     renderSkeleton();
@@ -849,6 +899,47 @@
       note: "Yahoo Finance fallback",
       fetchedAt: Date.now()
     };
+  }
+
+  async function fetchBacktestWeeklyPrices(symbol) {
+    const snapshot = await fetchBacktestSnapshot();
+    const staticRows = snapshot && snapshot.symbols ? snapshot.symbols[symbol] : null;
+    if (Array.isArray(staticRows) && staticRows.length >= 2) {
+      return staticRows.map(function (row) {
+        return { date: row.date, close: Number(row.close) };
+      }).filter(function (row) {
+        return row.date && Number.isFinite(row.close) && row.close > 0;
+      });
+    }
+
+    const url = "https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(symbol) + "?range=5y&interval=1wk";
+    const payload = await fetchJson(url);
+    const result = payload.chart && payload.chart.result && payload.chart.result[0];
+    const timestamps = result && Array.isArray(result.timestamp) ? result.timestamp : [];
+    const quote = result && result.indicators && result.indicators.quote ? result.indicators.quote[0] || {} : {};
+    const closes = Array.isArray(quote.close) ? quote.close : [];
+
+    return timestamps.reduce(function (items, timestamp, index) {
+      const close = Number(closes[index]);
+      if (!Number.isFinite(close) || close <= 0) return items;
+      items.push({
+        date: new Date(timestamp * 1000).toISOString().slice(0, 10),
+        close
+      });
+      return items;
+    }, []);
+  }
+
+  async function fetchBacktestSnapshot() {
+    if (state.backtestSnapshot) return state.backtestSnapshot;
+    try {
+      state.backtestSnapshot = await fetchJson(CONFIG.backtestSnapshotUrl + "?v=" + Date.now());
+      return state.backtestSnapshot;
+    } catch (error) {
+      console.warn("Backtest snapshot failed", error);
+      state.backtestSnapshot = { symbols: {} };
+      return state.backtestSnapshot;
+    }
   }
 
   function calculateMarketSignals(closes) {
@@ -1350,6 +1441,234 @@
     signal.warning = parts.length ? joinWarnings(parts) : t("none");
   }
 
+  async function runBacktestComparison() {
+    if (!backtestSummaryEl || !runBacktestBtn) return;
+    runBacktestBtn.disabled = true;
+    runBacktestBtn.textContent = t("backtestRunning");
+    renderBacktestMessage(t("backtestRunning"));
+
+    try {
+      const priceSets = await Promise.all(state.portfolio.map(async function (stock) {
+        const prices = await fetchBacktestWeeklyPrices(stock.symbol);
+        return { stock, prices };
+      }));
+      const result = calculateBacktestComparison(priceSets);
+      state.backtestResult = result;
+      renderBacktestResult(result);
+    } catch (error) {
+      console.warn("Backtest failed", error);
+      renderBacktestMessage(t("backtestFailed"), true);
+    } finally {
+      runBacktestBtn.disabled = false;
+      runBacktestBtn.textContent = t("runBacktest");
+    }
+  }
+
+  function calculateBacktestComparison(priceSets) {
+    const validSets = priceSets.filter(function (item) {
+      return item.prices.length >= 2;
+    });
+    if (validSets.length !== state.portfolio.length) {
+      throw new Error(t("backtestNeedData"));
+    }
+
+    const commonLength = Math.min.apply(null, validSets.map(function (item) {
+      return item.prices.length;
+    }));
+    if (commonLength < 2) throw new Error(t("backtestNeedData"));
+
+    const aligned = validSets.map(function (item) {
+      return {
+        stock: item.stock,
+        prices: item.prices.slice(item.prices.length - commonLength)
+      };
+    });
+
+    const dip = simulateBacktestStrategy(aligned, "dip");
+    const dca = simulateBacktestStrategy(aligned, "dca");
+    const beats = dip.final_value > dca.final_value;
+
+    return {
+      start_date: aligned[0].prices[1].date,
+      end_date: aligned[0].prices[commonLength - 1].date,
+      dip,
+      dca,
+      beats_dca: beats
+    };
+  }
+
+  function simulateBacktestStrategy(aligned, mode) {
+    const positions = aligned.reduce(function (items, item) {
+      items[item.stock.symbol] = {
+        shares: 0,
+        invested: 0,
+        buys: 0,
+        avg_buy_price: 0
+      };
+      return items;
+    }, {});
+    const history = [];
+    let totalInvested = 0;
+    let totalBuys = 0;
+    let weightedAverageNumerator = 0;
+    let peakValue = 0;
+    let maxDrawdown = 0;
+
+    for (let index = 1; index < aligned[0].prices.length; index += 1) {
+      aligned.forEach(function (item) {
+        const symbol = item.stock.symbol;
+        const current = item.prices[index].close;
+        const previous = item.prices[index - 1].close;
+        const weeklyReturn = previous > 0 ? ((current - previous) / previous) * 100 : 0;
+        const baseAmount = state.deployment.weeklyDeployment * item.stock.allocation;
+        const amount = mode === "dip" ? baseAmount * getMultiplier(weeklyReturn) : baseAmount;
+        if (amount <= 0 || current <= 0) return;
+
+        const sharesBought = amount / current;
+        const position = positions[symbol];
+        position.shares += sharesBought;
+        position.invested += amount;
+        position.buys += 1;
+        totalInvested += amount;
+        totalBuys += 1;
+      });
+
+      const value = aligned.reduce(function (sum, item) {
+        return sum + positions[item.stock.symbol].shares * item.prices[index].close;
+      }, 0);
+      peakValue = Math.max(peakValue, value);
+      const drawdown = peakValue > 0 ? ((peakValue - value) / peakValue) * 100 : 0;
+      maxDrawdown = Math.max(maxDrawdown, drawdown);
+      history.push({ date: aligned[0].prices[index].date, value });
+    }
+
+    const finalValue = history.length ? history[history.length - 1].value : 0;
+    const tickerRows = aligned.map(function (item) {
+      const position = positions[item.stock.symbol];
+      const avgBuyPrice = position.shares > 0 ? position.invested / position.shares : 0;
+      position.avg_buy_price = avgBuyPrice;
+      weightedAverageNumerator += avgBuyPrice * position.invested;
+      return {
+        symbol: item.stock.symbol,
+        invested: round2(position.invested),
+        buys: position.buys,
+        avg_buy_price: round2(avgBuyPrice),
+        final_value: round2(position.shares * item.prices[item.prices.length - 1].close)
+      };
+    });
+
+    return {
+      final_value: round2(finalValue),
+      total_invested: round2(totalInvested),
+      total_return: totalInvested > 0 ? round2(((finalValue - totalInvested) / totalInvested) * 100) : 0,
+      max_drawdown: round2(maxDrawdown),
+      number_of_buys: totalBuys,
+      average_buy_price: totalInvested > 0 ? round2(weightedAverageNumerator / totalInvested) : 0,
+      tickers: tickerRows
+    };
+  }
+
+  function renderBacktestMessage(message, warning) {
+    if (!backtestSummaryEl) return;
+    backtestSummaryEl.dataset.hasResult = "false";
+    backtestSummaryEl.innerHTML = "";
+    const note = document.createElement("p");
+    note.className = "fine-print";
+    note.textContent = message;
+    if (warning) note.classList.add("risk-high");
+    backtestSummaryEl.appendChild(note);
+  }
+
+  function renderBacktestIntro() {
+    if (!backtestSummaryEl || backtestSummaryEl.dataset.hasResult === "true") return;
+    renderBacktestMessage(t("backtestIntro"));
+  }
+
+  function clearBacktestResult() {
+    state.backtestResult = null;
+    if (backtestSummaryEl) {
+      backtestSummaryEl.dataset.hasResult = "false";
+      renderBacktestMessage(t("backtestIntro"));
+    }
+  }
+
+  function renderBacktestResult(result) {
+    if (!backtestSummaryEl) return;
+    backtestSummaryEl.dataset.hasResult = "true";
+    backtestSummaryEl.innerHTML = "";
+
+    const metrics = document.createElement("div");
+    metrics.className = "backtest-metrics";
+    [
+      [t("backtestWindow"), result.start_date + " - " + result.end_date],
+      [t("beatsDca"), result.beats_dca ? t("yes") : t("no")],
+      [t("finalValue") + " (" + t("dipBuyStrategy") + ")", formatCurrency(result.dip.final_value)],
+      [t("finalValue") + " (" + t("fixedDcaStrategy") + ")", formatCurrency(result.dca.final_value)],
+      [t("totalReturn") + " (" + t("dipBuyStrategy") + ")", formatPercent(result.dip.total_return)],
+      [t("totalReturn") + " (" + t("fixedDcaStrategy") + ")", formatPercent(result.dca.total_return)],
+      [t("maxDrawdown") + " (" + t("dipBuyStrategy") + ")", formatPercent(result.dip.max_drawdown)],
+      [t("maxDrawdown") + " (" + t("fixedDcaStrategy") + ")", formatPercent(result.dca.max_drawdown)]
+    ].forEach(function (item) {
+      const metric = document.createElement("div");
+      metric.className = "backtest-metric";
+      metric.innerHTML = "<span></span><strong></strong>";
+      metric.querySelector("span").textContent = item[0];
+      metric.querySelector("strong").textContent = item[1];
+      metrics.appendChild(metric);
+    });
+    backtestSummaryEl.appendChild(metrics);
+
+    backtestSummaryEl.appendChild(createBacktestStrategyTable(result));
+  }
+
+  function createBacktestStrategyTable(result) {
+    const wrap = document.createElement("div");
+    wrap.className = "backtest-table-wrap";
+    const table = document.createElement("table");
+    table.className = "backtest-table";
+    table.innerHTML = [
+      "<thead><tr>",
+      "<th>" + escapeHtml(t("strategy")) + "</th>",
+      "<th>" + escapeHtml(t("finalValue")) + "</th>",
+      "<th>" + escapeHtml(t("invested")) + "</th>",
+      "<th>" + escapeHtml(t("totalReturn")) + "</th>",
+      "<th>" + escapeHtml(t("maxDrawdown")) + "</th>",
+      "<th>" + escapeHtml(t("numberOfBuys")) + "</th>",
+      "<th>" + escapeHtml(t("avgBuyPrice")) + "</th>",
+      "</tr></thead><tbody></tbody>"
+    ].join("");
+    const tbody = table.querySelector("tbody");
+    [createBacktestRow(t("dipBuyStrategy"), result.dip), createBacktestRow(t("fixedDcaStrategy"), result.dca)].forEach(function (row) {
+      tbody.appendChild(row);
+    });
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  function createBacktestRow(label, data) {
+    const row = document.createElement("tr");
+    [
+      label,
+      formatCurrency(data.final_value),
+      formatCurrency(data.total_invested),
+      formatPercent(data.total_return),
+      formatPercent(data.max_drawdown),
+      String(data.number_of_buys),
+      formatPrice(data.average_buy_price)
+    ].forEach(function (value, index) {
+      const cell = document.createElement("td");
+      if (index === 0) {
+        const strong = document.createElement("strong");
+        strong.textContent = value;
+        cell.appendChild(strong);
+      } else {
+        cell.textContent = value;
+      }
+      row.appendChild(cell);
+    });
+    return row;
+  }
+
   function render() {
     panicBanner.classList.toggle("hidden", !state.panicActive);
     renderDeploymentSummary();
@@ -1660,6 +1979,7 @@
 
     state.deployment = normalizeDeployment({ normalPool, crashFund });
     saveDeployment();
+    clearBacktestResult();
     renderDeploymentSettings(field);
     showDeploymentStatus(t("deploymentSaved"), false);
     applyManualOverrides();
@@ -1670,6 +1990,7 @@
   function resetDeploymentDefaults() {
     state.deployment = normalizeDeployment(DEFAULT_DEPLOYMENT);
     saveDeployment();
+    clearBacktestResult();
     renderDeploymentSettings();
     showDeploymentStatus(t("deploymentReset"), false);
     applyManualOverrides();
@@ -1698,6 +2019,7 @@
       crashFund: parsed.crashFund
     });
     saveDeployment();
+    clearBacktestResult();
     renderDeploymentSettings();
     showDeploymentStatus(t("deploymentSaved"), false);
     applyManualOverrides();
@@ -1950,6 +2272,11 @@
     setText("#panicBanner strong", t("panicBody"));
     setText(".signals-panel .eyebrow", t("allocations"));
     setText("#holdings-title", t("thisTuesday"));
+    setText(".backtest-panel .eyebrow", t("backtestEyebrow"));
+    setText("#backtest-title", t("backtestTitle"));
+    setText("#runBacktestBtn", t("runBacktest"));
+    if (state.backtestResult) renderBacktestResult(state.backtestResult);
+    else renderBacktestIntro();
     setText("label[for='stockSearchInput'] span", t("searchStock"));
     setText("label[for='stockAllocationInput'] span", t("allocationPercent"));
     setText("#stockSearchBtn", state.loading ? t("searching") : t("search"));
