@@ -1,6 +1,8 @@
 # Su Investment Pro
 
-Su Investment Pro is a weekly investment calculator and historical backtesting toolkit. The live calculator is built with vanilla HTML, CSS, and JavaScript and runs directly on GitHub Pages with no build step. The Python backtester is for historical simulation only and does not place real-money trades or submit orders.
+Su Investment Pro is a weekly investment calculator, historical backtesting toolkit, and live market decision-support assistant. It is not an automatic trading bot. It never places real orders, never logs in to a brokerage account, and never submits buy or sell instructions through a broker API.
+
+All suggestions are for manual review only. The final trading decision and any brokerage order must be placed manually by the user.
 
 ## Files
 
@@ -16,8 +18,11 @@ Su Investment Pro is a weekly investment calculator and historical backtesting t
 - `benchmarks.py` - Fixed DCA, lump sum, and current strategy comparison
 - `optimization.py` - Simple parameter search
 - `visualization.py` - Optional PNG chart output
+- `portfolio.py` - Manual portfolio CSV loading for analysis risk checks
+- `analysis.py` - Live or near-live market analysis and suggestion output
 - `main.py` - Command-line backtest entry point
 - `tests/` - Basic strategy and cash-safety tests
+- `data/manual_portfolio.csv` - Example manual portfolio input file
 
 ## Settings
 
@@ -125,23 +130,23 @@ python -m pip install -r requirements.txt
 ## Backtest Usage
 
 ```bash
-python main.py --ticker SPY --start 2015-01-01 --end 2025-12-31 --mode dip_buy
+python main.py --trading-mode backtest --ticker SPY --start 2015-01-01 --end 2025-12-31 --mode dip_buy
 ```
 
 ```bash
-python main.py --ticker QQQ --start 2018-01-01 --end 2025-12-31 --mode momentum --base-buy 100 --sensitivity 5
+python main.py --trading-mode backtest --ticker QQQ --start 2018-01-01 --end 2025-12-31 --mode momentum --base-buy 100 --sensitivity 5
 ```
 
 Run parameter optimization:
 
 ```bash
-python main.py --ticker SPY --start 2015-01-01 --end 2025-12-31 --optimize
+python main.py --trading-mode backtest --ticker SPY --start 2015-01-01 --end 2025-12-31 --optimize
 ```
 
 Skip charts:
 
 ```bash
-python main.py --ticker SPY --start 2015-01-01 --end 2025-12-31 --no-charts
+python main.py --trading-mode backtest --ticker SPY --start 2015-01-01 --end 2025-12-31 --no-charts
 ```
 
 ## Backtest Outputs
@@ -185,6 +190,140 @@ The comparison table includes:
 
 Each benchmark reports final portfolio value, total return, max drawdown, and Sharpe ratio.
 
+## Trading Modes
+
+Default mode:
+
+```text
+trading_mode = analysis
+```
+
+Supported modes:
+
+- `analysis` - live or near-live market analysis and manual trade suggestions only
+- `backtest` - historical simulation using past market data
+- `paper` - simulated analysis mode only; no real orders
+- `live_disabled` - disabled placeholder that exits immediately
+
+The project intentionally does not include live broker execution. Functions such as `place_market_buy_order`, `place_market_sell_order`, and `submit_order` are not used or created.
+
+## Live Analysis Usage
+
+Single ticker:
+
+```bash
+python main.py --trading-mode analysis --ticker SPY
+```
+
+Multiple tickers:
+
+```bash
+python main.py --trading-mode analysis --tickers SPY QQQ VOO
+```
+
+Manual cash input:
+
+```bash
+python main.py --trading-mode analysis --ticker SPY --available-cash 10000
+```
+
+Manual portfolio CSV:
+
+```bash
+python main.py --trading-mode analysis --tickers SPY QQQ VOO --portfolio data/manual_portfolio.csv
+```
+
+Backtest mode remains available:
+
+```bash
+python main.py --trading-mode backtest --ticker SPY --start 2015-01-01 --end 2025-12-31 --mode dip_buy
+```
+
+## Manual Portfolio Input
+
+The project never connects to a brokerage account. To include current holdings in analysis risk checks, edit:
+
+```text
+data/manual_portfolio.csv
+```
+
+Columns:
+
+- `ticker`
+- `shares`
+- `average_cost`
+- `current_value`
+- `target_allocation`
+- `notes`
+
+This file is manually maintained by the user and is used only for decision-support risk checks.
+
+## Live Analysis Outputs
+
+Analysis mode writes:
+
+- `results/live_analysis.csv`
+- `results/manual_trade_checklist.csv`
+- `results/analysis_report.txt`
+
+Each analysis row includes:
+
+- date
+- ticker
+- latest price
+- weekly return
+- strategy mode
+- buy multiplier
+- suggested buy amount
+- suggested sell amount
+- suggested action
+- risk level
+- reason
+- warning
+- manual trade note
+
+Possible suggested actions:
+
+- `BUY`
+- `REDUCE_BUY`
+- `HOLD`
+- `CONSIDER_SELL`
+- `DO_NOT_BUY`
+
+Manual checklist before acting on any suggestion:
+
+1. Confirm the ticker is correct.
+2. Confirm the latest price.
+3. Confirm available cash.
+4. Confirm suggested buy amount.
+5. Confirm portfolio concentration.
+6. Confirm current market risk.
+7. Confirm this is not financial advice.
+8. Place the order manually only if you decide to do so.
+
+## Live Analysis Risk Controls
+
+Default risk parameters are stored in `config.py`:
+
+- `max_cash_usage_per_trade = 0.30`
+- `max_single_trade_amount = 500`
+- `max_position_pct_per_ticker = 0.30`
+- `max_total_equity_exposure = 0.95`
+- `large_drawdown_threshold = 0.30`
+- `consecutive_decline_weeks_limit = 4`
+- `stale_data_limit_hours = 24`
+
+The system will block or warn when:
+
+- ticker is not in `allowed_tickers`
+- market data is missing or stale
+- cash is too low
+- ticker exposure is too high
+- total equity exposure is too high
+- price is down more than 30% from recent high
+- there are more than 4 consecutive weekly declines
+- volatility is unusually high
+
 ## Deploy to GitHub Pages
 
 1. Push these files to a GitHub repository.
@@ -212,7 +351,9 @@ python -m unittest discover tests
 
 ## Risk Warning
 
-This project is for education, historical backtesting, and simulation only. It does not provide financial advice and does not execute trades. Historical results do not guarantee future performance.
+This project is for education, historical backtesting, market analysis, and decision support only. It does not provide financial advice and does not execute trades. Historical results and live suggestions do not guarantee future performance.
+
+Never enter brokerage passwords into this project. Never connect strategy output directly to broker order execution. Review every suggestion manually before taking any action in your brokerage account.
 
 ## Future Improvement Plan
 
