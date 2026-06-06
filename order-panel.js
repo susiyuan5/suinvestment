@@ -75,7 +75,7 @@
     if (/manual decision[- ]support/i.test(line)) return null;
     if (/手动决策支持|自动交易|券商登录|真实订单/.test(line)) return null;
 
-    const rich = line.match(/^(\S+)\s+-\s+([A-Z_]+)\s+-\s+CAD\s+([0-9]+(?:\.[0-9]{1,2})?)\s+-\s+(?:Score|分数)\s+(\d+)\s+-\s+(?:Risk|风险)\s+(.+)$/i);
+    const rich = line.match(/^(\S+)\s+-\s+(.+?)\s+-\s+CAD\s+([0-9]+(?:\.[0-9]{1,2})?)\s+-\s+(?:Score|分数)\s+(\d+)\s+-\s+(?:Risk|风险)\s+(.+)$/i);
     if (rich) {
       return {
         symbol: rich[1],
