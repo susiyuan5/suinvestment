@@ -32,7 +32,7 @@
   const state = {
     marketRows: new Map(),
     rows: new Map(),
-    qqqWeekly: null,
+    qqqSignal: null,
     panicActive: false,
     loading: false,
     pendingRefresh: false,
@@ -126,13 +126,13 @@
     results.forEach(function (result) {
       if (!result) return;
       if (result.symbol === "QQQ") {
-        state.qqqWeekly = result.weeklyChange;
+        state.qqqSignal = getDecisionChange(result);
       } else {
         state.marketRows.set(result.symbol, result);
       }
     });
 
-    state.panicActive = typeof state.qqqWeekly === "number" && state.qqqWeekly <= CONFIG.qqqPanicThreshold;
+    state.panicActive = typeof state.qqqSignal === "number" && state.qqqSignal <= CONFIG.qqqPanicThreshold;
     applyManualOverrides();
     render();
 
@@ -329,10 +329,13 @@
         symbol,
         price: weeklyData.price,
         latestClose: weeklyData.latestClose,
+        previousClose: weeklyData.previousClose,
         weekAgoClose: weeklyData.weekAgoClose,
+        dailyChange: weeklyData.dailyChange,
         weeklyChange: weeklyData.weeklyChange,
+        decisionChange: weeklyData.decisionChange,
         source: "Weekly",
-        note: "Weekly close snapshot",
+        note: "Scheduled close snapshot",
         fetchedAt: weeklyData.fetchedAt
       };
     }
@@ -372,20 +375,34 @@
     return {
       price: isFiniteNumber(item.price) ? item.price : null,
       latestClose: isFiniteNumber(item.latestClose) ? item.latestClose : null,
+      previousClose: isFiniteNumber(item.previousClose) ? item.previousClose : null,
       weekAgoClose: isFiniteNumber(item.weekAgoClose) ? item.weekAgoClose : null,
+      dailyChange: isFiniteNumber(item.dailyChange) ? item.dailyChange : null,
       weeklyChange: item.weeklyChange,
+      decisionChange: isFiniteNumber(item.decisionChange) ? item.decisionChange : calculateDecisionChange(item.weeklyChange, item.dailyChange),
       fetchedAt: state.weeklySnapshot.generatedAt ? Date.parse(state.weeklySnapshot.generatedAt) : Date.now()
     };
   }
 
   function mergeWeeklySnapshot(row, weeklyData) {
-    if (!weeklyData || isFiniteNumber(row.weeklyChange)) return row;
+    if (!weeklyData) return row;
+    if (isFiniteNumber(row.weeklyChange) && isFiniteNumber(row.dailyChange) && !isFiniteNumber(weeklyData.dailyChange)) {
+      return {
+        ...row,
+        decisionChange: calculateDecisionChange(row.weeklyChange, row.dailyChange)
+      };
+    }
+    const mergedDailyChange = calculateDecisionChange(row.dailyChange, weeklyData.dailyChange);
+    const mergedWeeklyChange = isFiniteNumber(row.weeklyChange) ? row.weeklyChange : weeklyData.weeklyChange;
     return {
       ...row,
-      latestClose: weeklyData.latestClose,
-      weekAgoClose: weeklyData.weekAgoClose,
-      weeklyChange: weeklyData.weeklyChange,
-      note: row.note + "; weekly snapshot"
+      latestClose: isFiniteNumber(row.latestClose) ? row.latestClose : weeklyData.latestClose,
+      previousClose: isFiniteNumber(row.previousClose) ? row.previousClose : weeklyData.previousClose,
+      weekAgoClose: isFiniteNumber(row.weekAgoClose) ? row.weekAgoClose : weeklyData.weekAgoClose,
+      dailyChange: mergedDailyChange,
+      weeklyChange: mergedWeeklyChange,
+      decisionChange: calculateDecisionChange(mergedWeeklyChange, mergedDailyChange, weeklyData.decisionChange),
+      note: row.note + "; scheduled snapshot"
     };
   }
 
@@ -410,6 +427,7 @@
     }
 
     let comparison = null;
+    const quoteDailyChange = isFiniteNumber(quote.pc) && quote.pc > 0 ? round2(((quote.c - quote.pc) / quote.pc) * 100) : null;
     let candleNote = "Live quote; daily candles unavailable";
 
     try {
@@ -419,7 +437,7 @@
       }
 
       const closes = candle.c.filter(isFiniteNumber);
-      comparison = calculateWeeklyChange(closes);
+      comparison = calculateMarketSignals(closes);
       candleNote = "Live quote and daily candles";
     } catch (error) {
       console.warn("Finnhub candles failed for", symbol, error);
@@ -429,8 +447,11 @@
       symbol,
       price: quote.c,
       latestClose: comparison ? comparison.latestClose : null,
+      previousClose: comparison ? comparison.previousClose : isFiniteNumber(quote.pc) ? quote.pc : null,
       weekAgoClose: comparison ? comparison.weekAgoClose : null,
+      dailyChange: comparison ? comparison.dailyChange : quoteDailyChange,
       weeklyChange: comparison ? comparison.weeklyChange : null,
+      decisionChange: comparison ? comparison.decisionChange : quoteDailyChange,
       source: "Finnhub",
       note: candleNote,
       fetchedAt: Date.now()
@@ -449,27 +470,45 @@
     const closes = (quote.close || []).filter(isFiniteNumber);
     if (closes.length < 6) throw new Error("Yahoo returned insufficient candles");
 
-    const comparison = calculateWeeklyChange(closes);
+    const comparison = calculateMarketSignals(closes);
     const metaPrice = result.meta && result.meta.regularMarketPrice;
 
     return {
       symbol,
       price: isFiniteNumber(metaPrice) ? metaPrice : comparison.latestClose,
       latestClose: comparison.latestClose,
+      previousClose: comparison.previousClose,
       weekAgoClose: comparison.weekAgoClose,
+      dailyChange: comparison.dailyChange,
       weeklyChange: comparison.weeklyChange,
+      decisionChange: comparison.decisionChange,
       source: "Yahoo",
       note: "Yahoo Finance fallback",
       fetchedAt: Date.now()
     };
   }
 
-  function calculateWeeklyChange(closes) {
+  function calculateMarketSignals(closes) {
     const latestClose = closes[closes.length - 1];
+    const previousClose = closes[closes.length - 2];
     const lookback = Math.min(5, closes.length - 1);
     const weekAgoClose = closes[closes.length - 1 - lookback];
+    const dailyChange = round2(((latestClose - previousClose) / previousClose) * 100);
     const weeklyChange = round2(((latestClose - weekAgoClose) / weekAgoClose) * 100);
-    return { latestClose, weekAgoClose, weeklyChange };
+    const decisionChange = calculateDecisionChange(weeklyChange, dailyChange);
+    return { latestClose, previousClose, weekAgoClose, dailyChange, weeklyChange, decisionChange };
+  }
+
+  function calculateDecisionChange() {
+    const values = Array.prototype.slice.call(arguments).filter(isFiniteNumber);
+    if (!values.length) return null;
+    return Math.min.apply(null, values);
+  }
+
+  function getDecisionChange(row) {
+    if (!row) return null;
+    if (isFiniteNumber(row.decisionChange)) return row.decisionChange;
+    return calculateDecisionChange(row.weeklyChange, row.dailyChange);
   }
 
   function getMultiplier(weeklyChange) {
@@ -495,6 +534,8 @@
         state.rows.set(stock.symbol, {
           ...base,
           weeklyChange: override,
+          dailyChange: null,
+          decisionChange: override,
           source: "Manual",
           note: "Manual override active"
         });
@@ -556,14 +597,14 @@
 
     state.portfolio.forEach(function (stock) {
       const row = state.rows.get(stock.symbol);
-      const weekly = row ? row.weeklyChange : null;
-      const normalMultiplier = getMultiplier(weekly);
+      const signal = getDecisionChange(row);
+      const normalMultiplier = getMultiplier(signal);
       const panicMultiplier = state.panicActive && CONFIG.panicSymbols.has(stock.symbol) ? CONFIG.panicMultiplier : 1;
       const multiplier = normalMultiplier * panicMultiplier;
       const rawAmount = CONFIG.weeklyDeployment * stock.allocation * multiplier;
       const amount = round2(rawAmount);
 
-      entries.push({ stock, row, weekly, multiplier, amount, rawAmount });
+      entries.push({ stock, row, signal, multiplier, amount, rawAmount });
       rawTotal += rawAmount;
       roundedTotal = round2(roundedTotal + amount);
       latestTimestamp = Math.max(latestTimestamp, row && row.fetchedAt ? row.fetchedAt : 0);
@@ -577,7 +618,7 @@
 
     entries.forEach(function (entry) {
       const card = cardsEl.querySelector('[data-symbol="' + entry.stock.symbol + '"]');
-      updateCard(card, entry.row, entry.stock, entry.weekly, entry.multiplier, entry.amount);
+      updateCard(card, entry.row, entry.stock, entry.signal, entry.multiplier, entry.amount);
       orderLines.push(entry.stock.symbol + " - CAD " + entry.amount.toFixed(2));
     });
 
@@ -589,7 +630,7 @@
     renderPortfolioTotal();
   }
 
-  function updateCard(card, row, stock, weekly, multiplier, amount) {
+  function updateCard(card, row, stock, signal, multiplier, amount) {
     const badge = card.querySelector(".source-badge");
     const weeklyEl = card.querySelector(".weekly-change");
 
@@ -597,9 +638,9 @@
     badge.className = "source-badge " + sourceClass(row ? row.source : "Unavailable");
 
     weeklyEl.className = "weekly-change";
-    if (isFiniteNumber(weekly)) {
-      weeklyEl.textContent = formatSigned(weekly) + "%";
-      weeklyEl.classList.add(weekly < 0 ? "negative" : "positive");
+    if (isFiniteNumber(signal)) {
+      weeklyEl.textContent = formatSigned(signal) + "%";
+      weeklyEl.classList.add(signal < 0 ? "negative" : "positive");
     } else {
       weeklyEl.textContent = "Manual needed";
     }
@@ -609,7 +650,17 @@
     card.querySelector(".price").textContent = row && isFiniteNumber(row.price) ? "Price " + formatPrice(row.price) : "Price unavailable";
 
     const panicText = state.panicActive && CONFIG.panicSymbols.has(stock.symbol) ? " + panic 1.3x" : "";
-    card.querySelector(".note").textContent = (row && row.note ? row.note : "") + panicText;
+    const signalText = row && !isFiniteNumber(state.overrides[stock.symbol]) ? formatSignalNote(row) : "";
+    card.querySelector(".note").textContent = [row && row.note ? row.note : "", signalText, panicText.trim()]
+      .filter(Boolean)
+      .join("; ");
+  }
+
+  function formatSignalNote(row) {
+    const parts = [];
+    if (isFiniteNumber(row.dailyChange)) parts.push("1d " + formatSigned(row.dailyChange) + "%");
+    if (isFiniteNumber(row.weeklyChange)) parts.push("5d " + formatSigned(row.weeklyChange) + "%");
+    return parts.length ? parts.join(" / ") : "";
   }
 
   function applyOverride(symbol, rawValue) {
