@@ -65,6 +65,7 @@ input:focus-visible {
 }
 
 .hero {
+  position: relative;
   display: grid;
   gap: 18px;
   padding: max(24px, env(safe-area-inset-top)) 4px 20px;
@@ -137,6 +138,23 @@ h3 {
 
 .schedule-card strong {
   font-size: 1.55rem;
+}
+
+.language-toggle {
+  width: fit-content;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--soft);
+  background: rgba(16, 23, 34, 0.86);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.language-toggle:hover {
+  border-color: rgba(79, 195, 161, 0.62);
+  color: var(--text);
 }
 
 .dashboard-layout {
@@ -624,7 +642,7 @@ input::placeholder {
 }
 
 .data-panel summary::after {
-  content: "Details";
+  content: attr(data-label);
   justify-self: start;
   padding: 5px 9px;
   border: 1px solid var(--line);
@@ -636,7 +654,7 @@ input::placeholder {
 }
 
 .data-panel[open] summary::after {
-  content: "Hide";
+  content: attr(data-open-label);
 }
 
 .portfolio-risk-form {
@@ -740,6 +758,12 @@ input::placeholder {
     grid-template-columns: 1fr 220px;
     align-items: end;
     padding-bottom: 28px;
+  }
+
+  .language-toggle {
+    position: absolute;
+    top: 34px;
+    right: 4px;
   }
 
   .section-heading,

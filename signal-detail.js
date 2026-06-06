@@ -2,6 +2,7 @@
   "use strict";
 
   // This file only formats note display. Signal calculation is handled in app.js.
+  const LANGUAGE_KEY = "su-investment-pro:language";
   const cardsEl = document.getElementById("cards");
   if (!cardsEl) return;
 
@@ -70,8 +71,8 @@
     const lowerText = text.toLowerCase();
     const warnings = [];
 
-    if (lowerText.includes("panic")) warnings.push("Panic multiplier active");
-    if (lowerText.includes("daily candles unavailable")) warnings.push("Daily candles unavailable");
+    if (lowerText.includes("panic") || text.includes("恐慌")) warnings.push(textFor("panicMultiplier"));
+    if (lowerText.includes("daily candles unavailable")) warnings.push(textFor("dailyCandlesUnavailable"));
 
     if (daily === null && weekly === null && !warnings.length) return null;
 
@@ -85,12 +86,12 @@
 
   function sourceLabel(text) {
     const lowerText = text.toLowerCase();
-    if (lowerText.includes("manual override")) return "Manual override";
-    if (lowerText.includes("cache")) return "Cached snapshot";
-    if (lowerText.includes("scheduled snapshot")) return "Market data + scheduled snapshot";
-    if (lowerText.includes("yahoo")) return "Yahoo Finance fallback";
-    if (lowerText.includes("finnhub")) return "Finnhub live quote";
-    return "Market data";
+    if (lowerText.includes("manual override") || text.includes("手动覆盖")) return textFor("manualOverride");
+    if (lowerText.includes("cache")) return textFor("cachedSnapshot");
+    if (lowerText.includes("scheduled snapshot")) return textFor("scheduledSnapshot");
+    if (lowerText.includes("yahoo")) return textFor("yahooFallback");
+    if (lowerText.includes("finnhub")) return textFor("finnhubQuote");
+    return textFor("marketData");
   }
 
   function matchSignal(text, pattern) {
@@ -107,5 +108,35 @@
 
   function formatSigned(value) {
     return (value > 0 ? "+" : "") + value.toFixed(2);
+  }
+
+  function language() {
+    return localStorage.getItem(LANGUAGE_KEY) === "zh" ? "zh" : "en";
+  }
+
+  function textFor(key) {
+    const dictionary = {
+      en: {
+        panicMultiplier: "Panic multiplier active",
+        dailyCandlesUnavailable: "Daily candles unavailable",
+        manualOverride: "Manual override",
+        cachedSnapshot: "Cached snapshot",
+        scheduledSnapshot: "Market data + scheduled snapshot",
+        yahooFallback: "Yahoo Finance fallback",
+        finnhubQuote: "Finnhub live quote",
+        marketData: "Market data"
+      },
+      zh: {
+        panicMultiplier: "恐慌倍数已启用",
+        dailyCandlesUnavailable: "日线数据不可用",
+        manualOverride: "手动覆盖",
+        cachedSnapshot: "缓存快照",
+        scheduledSnapshot: "市场数据 + 计划快照",
+        yahooFallback: "Yahoo Finance 备用",
+        finnhubQuote: "Finnhub 实时报价",
+        marketData: "市场数据"
+      }
+    };
+    return dictionary[language()][key] || dictionary.en[key] || key;
   }
 })();

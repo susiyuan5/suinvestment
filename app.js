@@ -27,7 +27,301 @@
     cache: "su-investment-pro:market-cache",
     overrides: "su-investment-pro:manual-overrides",
     portfolio: "su-investment-pro:portfolio",
-    portfolioRisk: "su-investment-pro:portfolio-risk"
+    portfolioRisk: "su-investment-pro:portfolio-risk",
+    language: "su-investment-pro:language"
+  };
+
+  const I18N = {
+    en: {
+      pageTitle: "Quant Decision Dashboard",
+      heroEyebrow: "Quant decision support",
+      heroTitle: "Quant Decision Dashboard",
+      heroCopy: "Review signals, portfolio risk, and manual trade plans before placing your own orders.",
+      scheduleLabel: "Every Tuesday",
+      monthlySettings: "Monthly settings",
+      deploymentPlan: "Deployment Plan",
+      settings: "Settings",
+      monthlyBudget: "Monthly Budget",
+      normalPool: "Normal Pool",
+      crashFund: "Crash Fund",
+      weeklyDeployment: "Weekly Deployment",
+      panicTitle: "PANIC MODE ACTIVE",
+      panicBody: "QQQ buy signal is at or below -10%",
+      allocations: "Allocations",
+      thisTuesday: "This Tuesday",
+      searchStock: "Search stock",
+      searchPlaceholder: "Ticker or name, e.g. TSLA or Visa",
+      allocationPercent: "Allocation %",
+      search: "Search",
+      dataSourcePriority: "Data source priority",
+      liveMarketData: "Live Market Data",
+      finnhub: "Finnhub",
+      yahooFallback: "Yahoo Finance fallback",
+      cache: "Cache",
+      manualOverride: "Manual Override",
+      dataFinePrint: "Buy signal uses the lower of the latest 1-day and 5-day moves. Manual overrides always take priority for that stock.",
+      portfolioRiskDashboard: "Portfolio risk dashboard",
+      portfolioRisk: "Portfolio Risk",
+      savePortfolio: "Save Portfolio",
+      availableCash: "Available Cash",
+      availableCashPlaceholder: "CAD available cash",
+      copyOrderList: "Copy order list",
+      manualTradePlan: "Manual Trade Plan",
+      copy: "Copy",
+      liveMarketDataEyebrow: "Live market data",
+      priceSettings: "Price Settings",
+      closePriceSettings: "Close price settings",
+      finnhubApiKey: "Finnhub API Key",
+      apiKeyPlaceholder: "Enter key for live prices",
+      refreshPrices: "Refresh Prices",
+      sourcePriority: "Source priority",
+      sourcePriorityLine: "Finnhub → Yahoo fallback → Cache → Manual Override",
+      signalScore: "signal_score",
+      signalStrength: "signal_strength",
+      riskLevel: "risk_level",
+      multiplier: "Multiplier",
+      buy: "Buy",
+      reason: "reason",
+      warning: "warning",
+      overridePlaceholder: "Manual weekly %, e.g. -9.2",
+      applyOverride: "Apply Override",
+      clearOverride: "Clear Override",
+      remove: "Remove",
+      loading: "Loading",
+      priceLoading: "Price loading",
+      waitingForMarketData: "Waiting for market data.",
+      fetchingMarketData: "Fetching market data",
+      refreshingMarketData: "Refreshing market data.",
+      refreshing: "Refreshing...",
+      updated: "Updated",
+      noLiveData: "No live data yet",
+      price: "Price",
+      priceUnavailable: "Price unavailable",
+      allocation: "allocation",
+      totalAllocation: "Total allocation",
+      none: "None",
+      notProvided: "Not provided",
+      totalPortfolioValue: "Total Portfolio Value",
+      plannedBuyTotal: "Planned Buy Total",
+      plannedCashUsage: "Planned Cash Usage",
+      largestPosition: "Largest Position",
+      overallRisk: "Overall Risk",
+      overAllocated: "Over-allocated",
+      underAllocated: "Under-allocated",
+      riskWarnings: "Risk warnings",
+      shares: "Shares",
+      avgCost: "Avg Cost",
+      currentValue: "Current Value",
+      targetPercent: "Target %",
+      notes: "Notes",
+      manualPlanHeader: "MANUAL TRADE PLAN",
+      reasonLabel: "Reason",
+      warningLabel: "Warning",
+      total: "Total",
+      scoreLabel: "Score",
+      riskLabel: "Risk",
+      safetyDisclaimer: "This is manual decision support only. It does not place trades automatically, does not require broker login, and does not execute real orders. Review all signals, prices, risks, and available cash before placing any order yourself.",
+      enterTicker: "Enter a ticker or company name.",
+      searching: "Searching...",
+      addExactTicker: "Add exact ticker",
+      manual: "Manual",
+      searchFailed: "Search failed. Try a ticker like TSLA or V.",
+      noMatches: "No matching stocks found.",
+      updatedSymbol: "{symbol} updated.",
+      addedSymbol: "{symbol} added. Set allocation if needed.",
+      keepOneStock: "Keep at least one stock in the portfolio.",
+      removedSymbol: "{symbol} removed.",
+      overrideNumber: "{symbol} override must be a number like -9.2, +12, or 10.5.",
+      overrideApplied: "{symbol} manual override applied.",
+      overrideCleared: "{symbol} manual override cleared.",
+      orderCopied: "Order list copied.",
+      copyManually: "Select the order text and copy it manually.",
+      portfolioSaved: "Portfolio risk inputs saved.",
+      signalDataNeeded: "Data Needed",
+      signalStrong: "Strong",
+      signalPositive: "Positive",
+      signalNeutral: "Neutral",
+      signalReduced: "Reduced",
+      signalSellWatch: "Sell Watch",
+      signalAvoid: "Avoid",
+      riskLow: "Low",
+      riskMedium: "Medium",
+      riskHigh: "High",
+      riskExtreme: "Extreme",
+      marketUnavailableReason: "Market data is unavailable, so buying is blocked until fresh data is available.",
+      staleReason: "Market data is stale, so buying is blocked until fresh live or scheduled data is available.",
+      dropReason: "The stock dropped {move} based on the lower of 1D and 5D changes, so the dip-buy strategy increases the manual buy amount.",
+      riseReason: "The stock rose {move}, so the system reduces the manual buy amount to avoid chasing price strength.",
+      neutralReason: "Neutral signal; base buy amount is used for manual review.",
+      farAboveTargetReason: "Position is far above target allocation, so the portfolio risk rule blocks additional buying.",
+      aboveTargetReason: "Position is above target allocation, so the portfolio risk rule reduces the manual buy amount.",
+      belowTargetReason: "Position is below target allocation, so the favorable signal is allowed within risk limits.",
+      marketDataUnavailable: "Market data unavailable",
+      dataMayBeStale: "Data may be stale",
+      usingCacheData: "Using cache data",
+      manualOverrideActive: "Manual override active",
+      panicModeActive: "Panic mode active",
+      sharpWeeklyDrop: "Sharp weekly drop",
+      strongRecentRise: "Strong recent rise",
+      reducedByRiskRule: "Suggested buy amount reduced by risk rule",
+      positionAboveTarget: "Position is above target allocation",
+      availableCashTooLow: "Available cash is too low",
+      plannedExceedsCashRule: "Planned buy amount exceeds portfolio cash rule",
+      availableCashBelow5: "Available cash is below 5% of portfolio value",
+      plannedExceedsCash: "Planned buy amount exceeds available cash",
+      plannedExceeds30: "Planned buy amount exceeds 30% of available cash",
+      tickerAbove30: "One ticker is above 30% of portfolio value",
+      equityAbove95: "Total equity exposure is above 95%",
+      multipleHighRisk: "Multiple tickers are High or Extreme risk",
+      useManualOverride: "Use manual override",
+      details: "Details",
+      hide: "Hide"
+    },
+    zh: {
+      pageTitle: "量化决策仪表盘",
+      heroEyebrow: "量化决策支持",
+      heroTitle: "量化决策仪表盘",
+      heroCopy: "在自己下单前，先检查信号、组合风险和手动交易计划。",
+      scheduleLabel: "每周二",
+      monthlySettings: "月度设置",
+      deploymentPlan: "投入计划",
+      settings: "设置",
+      monthlyBudget: "月度预算",
+      normalPool: "常规资金池",
+      crashFund: "下跌备用金",
+      weeklyDeployment: "每周投入",
+      panicTitle: "恐慌模式已开启",
+      panicBody: "QQQ 买入信号小于或等于 -10%",
+      allocations: "配置",
+      thisTuesday: "本周二",
+      searchStock: "搜索股票",
+      searchPlaceholder: "股票代码或名称，例如 TSLA 或 Visa",
+      allocationPercent: "配置比例 %",
+      search: "搜索",
+      dataSourcePriority: "数据源优先级",
+      liveMarketData: "实时市场数据",
+      finnhub: "Finnhub",
+      yahooFallback: "Yahoo Finance 备用",
+      cache: "缓存",
+      manualOverride: "手动覆盖",
+      dataFinePrint: "买入信号使用最新 1 日和 5 日变化中的较低值。单只股票的手动覆盖始终优先。",
+      portfolioRiskDashboard: "组合风险仪表盘",
+      portfolioRisk: "组合风险",
+      savePortfolio: "保存组合",
+      availableCash: "可用现金",
+      availableCashPlaceholder: "CAD 可用现金",
+      copyOrderList: "复制交易清单",
+      manualTradePlan: "手动交易计划",
+      copy: "复制",
+      liveMarketDataEyebrow: "实时市场数据",
+      priceSettings: "价格设置",
+      closePriceSettings: "关闭价格设置",
+      finnhubApiKey: "Finnhub API Key",
+      apiKeyPlaceholder: "输入实时价格 API Key",
+      refreshPrices: "刷新价格",
+      sourcePriority: "数据源优先级",
+      sourcePriorityLine: "Finnhub → Yahoo 备用 → 缓存 → 手动覆盖",
+      signalScore: "信号分数",
+      signalStrength: "信号强度",
+      riskLevel: "风险等级",
+      multiplier: "倍数",
+      buy: "买入",
+      reason: "原因",
+      warning: "警告",
+      overridePlaceholder: "手动周变化 %, 例如 -9.2",
+      applyOverride: "应用覆盖",
+      clearOverride: "清除覆盖",
+      remove: "移除",
+      loading: "加载中",
+      priceLoading: "价格加载中",
+      waitingForMarketData: "等待市场数据。",
+      fetchingMarketData: "正在获取市场数据",
+      refreshingMarketData: "正在刷新市场数据。",
+      refreshing: "刷新中...",
+      updated: "已更新",
+      noLiveData: "暂无实时数据",
+      price: "价格",
+      priceUnavailable: "价格不可用",
+      allocation: "配置",
+      totalAllocation: "总配置",
+      none: "无",
+      notProvided: "未提供",
+      totalPortfolioValue: "组合总价值",
+      plannedBuyTotal: "计划买入总额",
+      plannedCashUsage: "计划现金使用率",
+      largestPosition: "最大持仓",
+      overallRisk: "总体风险",
+      overAllocated: "超配",
+      underAllocated: "低配",
+      riskWarnings: "风险警告",
+      shares: "股数",
+      avgCost: "平均成本",
+      currentValue: "当前价值",
+      targetPercent: "目标 %",
+      notes: "备注",
+      manualPlanHeader: "手动交易计划",
+      reasonLabel: "原因",
+      warningLabel: "警告",
+      total: "合计",
+      scoreLabel: "分数",
+      riskLabel: "风险",
+      safetyDisclaimer: "这只是手动决策支持计划。它不会自动交易，不需要券商登录，也不会执行真实订单。请在自己下单前复核所有信号、价格、风险和可用现金。",
+      enterTicker: "请输入股票代码或公司名称。",
+      searching: "搜索中...",
+      addExactTicker: "添加精确代码",
+      manual: "手动",
+      searchFailed: "搜索失败。可以尝试 TSLA 或 V 这样的代码。",
+      noMatches: "没有找到匹配的股票。",
+      updatedSymbol: "{symbol} 已更新。",
+      addedSymbol: "{symbol} 已添加。如有需要请设置配置比例。",
+      keepOneStock: "组合中至少保留一只股票。",
+      removedSymbol: "{symbol} 已移除。",
+      overrideNumber: "{symbol} 的覆盖值必须是数字，例如 -9.2、+12 或 10.5。",
+      overrideApplied: "{symbol} 手动覆盖已应用。",
+      overrideCleared: "{symbol} 手动覆盖已清除。",
+      orderCopied: "交易清单已复制。",
+      copyManually: "请选择交易文本并手动复制。",
+      portfolioSaved: "组合风险输入已保存。",
+      signalDataNeeded: "需要数据",
+      signalStrong: "强",
+      signalPositive: "偏强",
+      signalNeutral: "中性",
+      signalReduced: "降低",
+      signalSellWatch: "卖出观察",
+      signalAvoid: "避免",
+      riskLow: "低",
+      riskMedium: "中",
+      riskHigh: "高",
+      riskExtreme: "极高",
+      marketUnavailableReason: "市场数据不可用，因此在获得新鲜数据前阻止买入。",
+      staleReason: "市场数据已过期，因此在获得新的实时或计划数据前阻止买入。",
+      dropReason: "股票基于 1 日和 5 日变化中的较低值下跌 {move}，因此逢低买入策略提高本次手动买入金额。",
+      riseReason: "股票上涨 {move}，系统降低本次手动买入金额，以避免追高。",
+      neutralReason: "信号中性；使用基础买入金额供手动复核。",
+      farAboveTargetReason: "持仓远高于目标配置，因此组合风险规则阻止继续买入。",
+      aboveTargetReason: "持仓高于目标配置，因此组合风险规则降低本次手动买入金额。",
+      belowTargetReason: "持仓低于目标配置，因此在风险限制内允许采用有利信号。",
+      marketDataUnavailable: "市场数据不可用",
+      dataMayBeStale: "数据可能已过期",
+      usingCacheData: "正在使用缓存数据",
+      manualOverrideActive: "手动覆盖已启用",
+      panicModeActive: "恐慌模式已启用",
+      sharpWeeklyDrop: "周跌幅较大",
+      strongRecentRise: "近期涨幅较强",
+      reducedByRiskRule: "建议买入金额已被风险规则降低",
+      positionAboveTarget: "持仓高于目标配置",
+      availableCashTooLow: "可用现金过低",
+      plannedExceedsCashRule: "计划买入金额超过组合现金规则",
+      availableCashBelow5: "可用现金低于组合价值的 5%",
+      plannedExceedsCash: "计划买入金额超过可用现金",
+      plannedExceeds30: "计划买入金额超过可用现金的 30%",
+      tickerAbove30: "单只股票超过组合价值的 30%",
+      equityAbove95: "股票仓位超过 95%",
+      multipleHighRisk: "多只股票为高风险或极高风险",
+      useManualOverride: "使用手动覆盖",
+      details: "详情",
+      hide: "收起"
+    }
   };
 
   const state = {
@@ -41,7 +335,8 @@
     portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultStocks), { allowCustom: true }),
     portfolioRiskInput: normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {})),
     cache: loadJson(STORAGE_KEYS.cache, {}),
-    overrides: loadJson(STORAGE_KEYS.overrides, {})
+    overrides: loadJson(STORAGE_KEYS.overrides, {}),
+    language: normalizeLanguage(localStorage.getItem(STORAGE_KEYS.language))
   };
 
   const cardsEl = document.getElementById("cards");
@@ -65,6 +360,7 @@
   const savePortfolioRiskBtn = document.getElementById("savePortfolioRiskBtn");
   const portfolioPositionInputsEl = document.getElementById("portfolioPositionInputs");
   const portfolioRiskSummaryEl = document.getElementById("portfolioRiskSummary");
+  const languageToggle = document.getElementById("languageToggle");
   let apiKeyRefreshTimer = 0;
 
   if (!state.portfolio.length) {
@@ -99,6 +395,7 @@
 
   refreshBtn.addEventListener("click", refreshMarketData);
   copyBtn.addEventListener("click", copyOrderList);
+  if (languageToggle) languageToggle.addEventListener("click", toggleLanguage);
   stockSearchBtn.addEventListener("click", searchStocks);
   savePortfolioRiskBtn.addEventListener("click", savePortfolioRiskForm);
   availableCashInput.addEventListener("change", savePortfolioRiskForm);
@@ -109,6 +406,7 @@
     if (event.key === "Enter") searchStocks();
   });
 
+  applyLanguage();
   renderPortfolioTotal();
   renderPortfolioRiskInputs();
   renderSkeleton();
@@ -123,8 +421,8 @@
     state.loading = true;
     state.pendingRefresh = false;
     refreshBtn.disabled = true;
-    refreshBtn.textContent = "Refreshing...";
-    lastUpdatedEl.textContent = "Refreshing market data...";
+    refreshBtn.textContent = t("refreshing");
+    lastUpdatedEl.textContent = t("refreshingMarketData");
     copyStatusEl.textContent = "";
     markCardsLoading();
 
@@ -150,7 +448,7 @@
 
     state.loading = false;
     refreshBtn.disabled = false;
-    refreshBtn.textContent = "Refresh Prices";
+    refreshBtn.textContent = t("refreshPrices");
 
     if (state.pendingRefresh) {
       refreshMarketData();
@@ -170,13 +468,13 @@
   async function searchStocks() {
     const query = stockSearchInput.value.trim();
     if (!query) {
-      renderSearchMessage("Enter a ticker or company name.");
+      renderSearchMessage(t("enterTicker"));
       return;
     }
 
     stockSearchBtn.disabled = true;
-    stockSearchBtn.textContent = "Searching...";
-    renderSearchMessage("Searching...");
+    stockSearchBtn.textContent = t("searching");
+    renderSearchMessage(t("searching"));
 
     try {
       const results = await fetchStockSearchResults(query);
@@ -185,13 +483,13 @@
       console.warn("Stock search failed", error);
       const fallbackSymbol = normalizeSymbol(query);
       if (fallbackSymbol) {
-        renderSearchResults([{ symbol: fallbackSymbol, name: "Add exact ticker", exchange: "Manual" }], query);
+        renderSearchResults([{ symbol: fallbackSymbol, name: t("addExactTicker"), exchange: t("manual") }], query);
       } else {
-        renderSearchMessage("Search failed. Try a ticker like TSLA or V.");
+        renderSearchMessage(t("searchFailed"));
       }
     } finally {
       stockSearchBtn.disabled = false;
-      stockSearchBtn.textContent = "Search";
+      stockSearchBtn.textContent = t("search");
     }
   }
 
@@ -227,7 +525,7 @@
     }
 
     if (!results.length) {
-      renderSearchMessage("No matching stocks found.");
+      renderSearchMessage(t("noMatches"));
       return;
     }
 
@@ -266,14 +564,14 @@
     if (existing) {
       existing.name = result.name || existing.name || symbol;
       if (allocation > 0) existing.allocation = allocation;
-      copyStatusEl.textContent = symbol + " updated.";
+      copyStatusEl.textContent = t("updatedSymbol", { symbol });
     } else {
       state.portfolio.push({
         symbol,
         name: result.name || symbol,
         allocation
       });
-      copyStatusEl.textContent = symbol + " added. Set allocation if needed.";
+      copyStatusEl.textContent = t("addedSymbol", { symbol });
     }
 
     state.portfolio = normalizePortfolio(state.portfolio, { allowCustom: true });
@@ -289,7 +587,7 @@
 
   function removeStock(symbol) {
     if (state.portfolio.length <= 1) {
-      copyStatusEl.textContent = "Keep at least one stock in the portfolio.";
+      copyStatusEl.textContent = t("keepOneStock");
       return;
     }
 
@@ -307,7 +605,7 @@
     renderPortfolioRiskInputs();
     renderSkeleton();
     refreshMarketData();
-    copyStatusEl.textContent = symbol + " removed.";
+    copyStatusEl.textContent = t("removedSymbol", { symbol });
   }
 
   async function fetchSymbolSnapshot(symbol) {
@@ -554,7 +852,7 @@
       base_buy_amount: baseBuyAmount,
       suggested_buy_amount: suggestedBuyAmount,
       signal_score: 0,
-      signal_strength: "Data Needed",
+      signal_strength: t("signalDataNeeded"),
       suggested_action: "DO_NOT_BUY",
       risk_level: "High",
       reason: "",
@@ -635,12 +933,12 @@
   }
 
   function getSignalStrength(signal) {
-    if (signal.suggested_action === "STRONG_BUY") return "Strong";
-    if (signal.suggested_action === "BUY") return "Positive";
-    if (signal.suggested_action === "NORMAL_BUY") return "Neutral";
-    if (signal.suggested_action === "REDUCE_BUY") return "Reduced";
-    if (signal.suggested_action === "CONSIDER_SELL") return "Sell Watch";
-    return "Avoid";
+    if (signal.suggested_action === "STRONG_BUY") return t("signalStrong");
+    if (signal.suggested_action === "BUY") return t("signalPositive");
+    if (signal.suggested_action === "NORMAL_BUY") return t("signalNeutral");
+    if (signal.suggested_action === "REDUCE_BUY") return t("signalReduced");
+    if (signal.suggested_action === "CONSIDER_SELL") return t("signalSellWatch");
+    return t("signalAvoid");
   }
 
   function calculateRiskAdjustedBuyAmount(signal) {
@@ -675,40 +973,40 @@
 
   function generateSignalReason(signal) {
     if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || !isFiniteNumber(signal.decision_change)) {
-      return "Market data is unavailable, so buying is blocked until fresh data is available.";
+      return t("marketUnavailableReason");
     }
     if (signal.data_freshness === "stale") {
-      return "Market data is stale, so buying is blocked until fresh live or scheduled data is available.";
+      return t("staleReason");
     }
 
     const move = Math.abs(signal.decision_change).toFixed(1) + "%";
     if (signal.decision_change <= -8) {
-      return "The stock dropped " + move + " based on the lower of 1D and 5D changes, so the dip-buy strategy increases the manual buy amount.";
+      return t("dropReason", { move });
     }
     if (signal.decision_change >= 10) {
-      return "The stock rose " + move + ", so the system reduces the manual buy amount to avoid chasing price strength.";
+      return t("riseReason", { move });
     }
-    return "Neutral signal; base buy amount is used for manual review.";
+    return t("neutralReason");
   }
 
   function generateSignalWarning(signal) {
     const warnings = [];
-    if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || !isFiniteNumber(signal.decision_change)) warnings.push("Market data unavailable");
-    if (signal.data_freshness === "stale") warnings.push("Data may be stale");
-    if (/cache/i.test(signal.data_source)) warnings.push("Using cache data");
-    if (signal.manual_override_active) warnings.push("Manual override active");
-    if (signal.panic_active) warnings.push("Panic mode active");
-    if (isFiniteNumber(signal.weekly_change) && signal.weekly_change <= -15) warnings.push("Sharp weekly drop");
-    if (isFiniteNumber(signal.decision_change) && signal.decision_change >= 10) warnings.push("Strong recent rise");
+    if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || !isFiniteNumber(signal.decision_change)) warnings.push(t("marketDataUnavailable"));
+    if (signal.data_freshness === "stale") warnings.push(t("dataMayBeStale"));
+    if (/cache/i.test(signal.data_source)) warnings.push(t("usingCacheData"));
+    if (signal.manual_override_active) warnings.push(t("manualOverrideActive"));
+    if (signal.panic_active) warnings.push(t("panicModeActive"));
+    if (isFiniteNumber(signal.weekly_change) && signal.weekly_change <= -15) warnings.push(t("sharpWeeklyDrop"));
+    if (isFiniteNumber(signal.decision_change) && signal.decision_change >= 10) warnings.push(t("strongRecentRise"));
     if (
       signal.suggested_action === "REDUCE_BUY" ||
       signal.suggested_action === "CONSIDER_SELL" ||
       signal.suggested_action === "DO_NOT_BUY" ||
       signal.suggested_buy_amount < round2(signal.base_buy_amount * signal.multiplier)
     ) {
-      warnings.push("Suggested buy amount reduced by risk rule");
+      warnings.push(t("reducedByRiskRule"));
     }
-    return warnings.length ? warnings.join("; ") : "None";
+    return warnings.length ? joinWarnings(warnings) : t("none");
   }
 
   function getDataFreshness(row, dataAgeHours) {
@@ -724,7 +1022,7 @@
         price: null,
         weeklyChange: null,
         source: "Unavailable",
-        note: "Use manual override"
+        note: t("useManualOverride")
       };
 
       const override = state.overrides[stock.symbol];
@@ -735,7 +1033,7 @@
           dailyChange: null,
           decisionChange: override,
           source: "Manual",
-          note: "Manual override active"
+          note: t("manualOverrideActive")
         });
       } else {
         state.rows.set(stock.symbol, base);
@@ -750,19 +1048,19 @@
       ensureSignalFields(card);
       card.dataset.symbol = stock.symbol;
       card.querySelector("h3").textContent = stock.symbol;
-      card.querySelector(".allocation").textContent = formatPercent(stock.allocation * 100) + " allocation";
+      card.querySelector(".allocation").textContent = formatPercent(stock.allocation * 100) + " " + t("allocation");
 
       const input = card.querySelector(".override-input");
       input.value = state.overrides[stock.symbol] === undefined ? "" : formatSignedInput(state.overrides[stock.symbol]);
-      card.querySelector(".source-badge").textContent = "Loading";
-      card.querySelector(".weekly-change").textContent = "Loading";
-      card.querySelector(".signal-strength").textContent = "Loading";
-      card.querySelector(".risk-level").textContent = "Loading";
+      card.querySelector(".source-badge").textContent = t("loading");
+      card.querySelector(".weekly-change").textContent = t("loading");
+      card.querySelector(".signal-strength").textContent = t("loading");
+      card.querySelector(".risk-level").textContent = t("loading");
       card.querySelector(".multiplier").textContent = "1x";
       card.querySelector(".buy-amount").textContent = "CAD " + round2(CONFIG.weeklyDeployment * stock.allocation).toFixed(2);
-      card.querySelector(".price").textContent = "Price loading";
-      card.querySelector(".decision-reason").textContent = "Waiting for market data.";
-      card.querySelector(".decision-warning").textContent = "None";
+      card.querySelector(".price").textContent = t("priceLoading");
+      card.querySelector(".decision-reason").textContent = t("waitingForMarketData");
+      card.querySelector(".decision-warning").textContent = t("none");
 
       card.querySelector(".apply-override").addEventListener("click", function () {
         applyOverride(stock.symbol, input.value);
@@ -779,18 +1077,19 @@
 
       cardsEl.appendChild(card);
     });
+    translateTemplateLabels();
   }
 
   function markCardsLoading() {
     cardsEl.querySelectorAll(".stock-card").forEach(function (card) {
-      card.querySelector(".source-badge").textContent = "Loading";
+      card.querySelector(".source-badge").textContent = t("loading");
       card.querySelector(".source-badge").className = "source-badge";
-      card.querySelector(".note").textContent = "Fetching market data";
-      card.querySelector(".weekly-change").textContent = "Loading";
-      card.querySelector(".signal-strength").textContent = "Loading";
-      card.querySelector(".risk-level").textContent = "Loading";
-      card.querySelector(".decision-reason").textContent = "Refreshing market data.";
-      card.querySelector(".decision-warning").textContent = "None";
+      card.querySelector(".note").textContent = t("fetchingMarketData");
+      card.querySelector(".weekly-change").textContent = t("loading");
+      card.querySelector(".signal-strength").textContent = t("loading");
+      card.querySelector(".risk-level").textContent = t("loading");
+      card.querySelector(".decision-reason").textContent = t("refreshingMarketData");
+      card.querySelector(".decision-warning").textContent = t("none");
     });
   }
 
@@ -877,9 +1176,9 @@
         signal.suggested_buy_amount = 0;
         signal.suggested_action = position.allocation_drift >= 10 ? "CONSIDER_SELL" : "DO_NOT_BUY";
         signal.signal_strength = getSignalStrength(signal);
-        addSignalReason(signal, "Position is far above target allocation, so the portfolio risk rule blocks additional buying.");
-        addSignalWarning(signal, "Position is above target allocation");
-        addSignalWarning(signal, "Suggested buy amount reduced by risk rule");
+        addSignalReason(signal, t("farAboveTargetReason"));
+        addSignalWarning(signal, t("positionAboveTarget"));
+        addSignalWarning(signal, t("reducedByRiskRule"));
         return;
       }
 
@@ -889,14 +1188,14 @@
           signal.suggested_action = "REDUCE_BUY";
           signal.signal_strength = getSignalStrength(signal);
         }
-        addSignalReason(signal, "Position is above target allocation, so the portfolio risk rule reduces the manual buy amount.");
-        addSignalWarning(signal, "Position is above target allocation");
+        addSignalReason(signal, t("aboveTargetReason"));
+        addSignalWarning(signal, t("positionAboveTarget"));
       } else if (position.allocation_drift < -2 && ["STRONG_BUY", "BUY", "NORMAL_BUY"].includes(signal.suggested_action)) {
-        addSignalReason(signal, "Position is below target allocation, so the favorable signal is allowed within risk limits.");
+        addSignalReason(signal, t("belowTargetReason"));
       }
 
       if (signal.suggested_buy_amount < originalAmount) {
-        addSignalWarning(signal, "Suggested buy amount reduced by risk rule");
+        addSignalWarning(signal, t("reducedByRiskRule"));
       }
     });
 
@@ -916,8 +1215,8 @@
         entry.signal.suggested_buy_amount = 0;
         entry.signal.suggested_action = "DO_NOT_BUY";
         entry.signal.signal_strength = getSignalStrength(entry.signal);
-        addSignalWarning(entry.signal, "Available cash is too low");
-        addSignalWarning(entry.signal, "Suggested buy amount reduced by risk rule");
+        addSignalWarning(entry.signal, t("availableCashTooLow"));
+        addSignalWarning(entry.signal, t("reducedByRiskRule"));
       });
       return;
     }
@@ -933,8 +1232,8 @@
         entry.signal.suggested_action = "REDUCE_BUY";
         entry.signal.signal_strength = getSignalStrength(entry.signal);
       }
-      addSignalWarning(entry.signal, "Planned buy amount exceeds portfolio cash rule");
-      addSignalWarning(entry.signal, "Suggested buy amount reduced by risk rule");
+      addSignalWarning(entry.signal, t("plannedExceedsCashRule"));
+      addSignalWarning(entry.signal, t("reducedByRiskRule"));
     });
   }
 
@@ -944,13 +1243,13 @@
       return entry.signal.risk_level === "High" || entry.signal.risk_level === "Extreme";
     }).length;
 
-    if (portfolioRisk.available_cash_provided && portfolioRisk.available_cash <= 0) warnings.push("Available cash is too low");
-    else if (portfolioRisk.available_cash_provided && portfolioRisk.cash_percentage < 5) warnings.push("Available cash is below 5% of portfolio value");
-    if (portfolioRisk.available_cash_provided && portfolioRisk.total_planned_buy_amount > portfolioRisk.available_cash) warnings.push("Planned buy amount exceeds available cash");
-    if (portfolioRisk.available_cash_provided && portfolioRisk.available_cash > 0 && portfolioRisk.planned_cash_usage_percentage > 30) warnings.push("Planned buy amount exceeds 30% of available cash");
-    if (portfolioRisk.largest_position.current_allocation > 30) warnings.push("One ticker is above 30% of portfolio value");
-    if (portfolioRisk.equity_exposure_percentage > 95) warnings.push("Total equity exposure is above 95%");
-    if (highRiskCount >= 2) warnings.push("Multiple tickers are High or Extreme risk");
+    if (portfolioRisk.available_cash_provided && portfolioRisk.available_cash <= 0) warnings.push(t("availableCashTooLow"));
+    else if (portfolioRisk.available_cash_provided && portfolioRisk.cash_percentage < 5) warnings.push(t("availableCashBelow5"));
+    if (portfolioRisk.available_cash_provided && portfolioRisk.total_planned_buy_amount > portfolioRisk.available_cash) warnings.push(t("plannedExceedsCash"));
+    if (portfolioRisk.available_cash_provided && portfolioRisk.available_cash > 0 && portfolioRisk.planned_cash_usage_percentage > 30) warnings.push(t("plannedExceeds30"));
+    if (portfolioRisk.largest_position.current_allocation > 30) warnings.push(t("tickerAbove30"));
+    if (portfolioRisk.equity_exposure_percentage > 95) warnings.push(t("equityAbove95"));
+    if (highRiskCount >= 2) warnings.push(t("multipleHighRisk"));
 
     portfolioRisk.risk_warnings = warnings;
     portfolioRisk.portfolio_risk_level = calculatePortfolioRiskLevel(portfolioRisk, highRiskCount);
@@ -995,15 +1294,15 @@
 
   function addSignalWarning(signal, text) {
     if (!text) return;
-    const parts = signal.warning && signal.warning !== "None" ? signal.warning.split("; ") : [];
+    const parts = signal.warning && signal.warning !== t("none") ? splitWarnings(signal.warning) : [];
     if (!parts.includes(text)) parts.push(text);
-    signal.warning = parts.length ? parts.join("; ") : "None";
+    signal.warning = parts.length ? joinWarnings(parts) : t("none");
   }
 
   function render() {
     panicBanner.classList.toggle("hidden", !state.panicActive);
 
-    const orderLines = ["MANUAL TRADE PLAN", ""];
+    const orderLines = [t("manualPlanHeader"), ""];
     const entries = [];
     let rawTotal = 0;
     let roundedTotal = 0;
@@ -1053,12 +1352,12 @@
     window.__SUINVESTMENT_PORTFOLIO_RISK__ = portfolioRisk;
 
     orderLines.push("");
-    orderLines.push("Total:");
+    orderLines.push(t("total") + ":");
     orderLines.push("CAD " + targetTotal.toFixed(2));
     orderLines.push("");
-    orderLines.push("This is manual decision support only. It does not place trades automatically, does not require broker login, and does not execute real orders. Review all signals, prices, risks, and available cash before placing any order yourself.");
+    orderLines.push(t("safetyDisclaimer"));
     orderTextEl.textContent = orderLines.join("\n");
-    lastUpdatedEl.textContent = latestTimestamp ? "Updated " + formatDateTime(latestTimestamp) : "No live data yet";
+    lastUpdatedEl.textContent = latestTimestamp ? t("updated") + " " + formatDateTime(latestTimestamp) : t("noLiveData");
     renderPortfolioTotal();
     renderPortfolioRiskSummary(portfolioRisk);
   }
@@ -1080,10 +1379,10 @@
     }
 
     card.querySelector(".signal-strength").textContent = signal.signal_strength;
-    card.querySelector(".risk-level").textContent = signal.risk_level;
+    card.querySelector(".risk-level").textContent = displayRiskLevel(signal.risk_level);
     card.querySelector(".multiplier").textContent = formatMultiplier(signal.multiplier);
     card.querySelector(".buy-amount").textContent = "CAD " + signal.suggested_buy_amount.toFixed(2);
-    card.querySelector(".price").textContent = isFiniteNumber(signal.latest_price) ? "Price " + formatPrice(signal.latest_price) : "Price unavailable";
+    card.querySelector(".price").textContent = isFiniteNumber(signal.latest_price) ? t("price") + " " + formatPrice(signal.latest_price) : t("priceUnavailable");
     card.querySelector(".decision-reason").textContent = signal.reason;
     card.querySelector(".decision-warning").textContent = signal.warning;
 
@@ -1099,23 +1398,23 @@
     if (stockValues) {
       const signalScore = stockValues.querySelector(".weekly-change");
       if (signalScore && signalScore.previousElementSibling) {
-        signalScore.previousElementSibling.textContent = "signal_score";
+        signalScore.previousElementSibling.textContent = t("signalScore");
       }
 
       if (!stockValues.querySelector(".signal-strength")) {
-        stockValues.insertBefore(createMetric("signal_strength", "signal-strength"), stockValues.children[1] || null);
+        stockValues.insertBefore(createMetric(t("signalStrength"), "signal-strength"), stockValues.children[1] || null);
       }
 
       if (!stockValues.querySelector(".risk-level")) {
-        stockValues.insertBefore(createMetric("risk_level", "risk-level"), stockValues.children[2] || null);
+        stockValues.insertBefore(createMetric(t("riskLevel"), "risk-level"), stockValues.children[2] || null);
       }
     }
 
     if (!card.querySelector(".decision-context")) {
       const context = document.createElement("div");
       context.className = "decision-context";
-      context.appendChild(createTextBlock("reason", "decision-reason"));
-      context.appendChild(createTextBlock("warning", "decision-warning"));
+      context.appendChild(createTextBlock(t("reason"), "decision-reason"));
+      context.appendChild(createTextBlock(t("warning"), "decision-warning"));
       const priceRow = card.querySelector(".price-row");
       card.insertBefore(context, priceRow || null);
     }
@@ -1127,7 +1426,7 @@
     const valueEl = document.createElement("strong");
     labelEl.textContent = label;
     valueEl.className = className;
-    valueEl.textContent = "Loading";
+    valueEl.textContent = t("loading");
     wrapper.appendChild(labelEl);
     wrapper.appendChild(valueEl);
     return wrapper;
@@ -1139,7 +1438,7 @@
     const valueEl = document.createElement("p");
     labelEl.textContent = label;
     valueEl.className = className;
-    valueEl.textContent = "Waiting for market data.";
+    valueEl.textContent = t("waitingForMarketData");
     wrapper.appendChild(labelEl);
     wrapper.appendChild(valueEl);
     return wrapper;
@@ -1147,9 +1446,9 @@
 
   function formatManualTradePlanEntry(signal) {
     return [
-      signal.symbol + " - " + signal.suggested_action + " - CAD " + signal.suggested_buy_amount.toFixed(2) + " - Score " + signal.signal_score + " - Risk " + signal.risk_level,
-      "Reason: " + signal.reason,
-      "Warning: " + signal.warning + "."
+      signal.symbol + " - " + signal.suggested_action + " - CAD " + signal.suggested_buy_amount.toFixed(2) + " - " + t("scoreLabel") + " " + signal.signal_score + " - " + t("riskLabel") + " " + displayRiskLevel(signal.risk_level),
+      t("reasonLabel") + ": " + signal.reason,
+      t("warningLabel") + ": " + signal.warning + sentenceEnd()
     ].join("\n");
   }
 
@@ -1163,7 +1462,7 @@
   function applyOverride(symbol, rawValue) {
     const normalized = String(rawValue).trim().replace("%", "");
     if (!/^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(normalized)) {
-      copyStatusEl.textContent = symbol + " override must be a number like -9.2, +12, or 10.5.";
+      copyStatusEl.textContent = t("overrideNumber", { symbol });
       return;
     }
 
@@ -1171,7 +1470,7 @@
     saveOverrides();
     applyManualOverrides();
     render();
-    copyStatusEl.textContent = symbol + " manual override applied.";
+    copyStatusEl.textContent = t("overrideApplied", { symbol });
   }
 
   function clearOverride(symbol) {
@@ -1183,16 +1482,16 @@
 
     applyManualOverrides();
     render();
-    copyStatusEl.textContent = symbol + " manual override cleared.";
+    copyStatusEl.textContent = t("overrideCleared", { symbol });
   }
 
   async function copyOrderList() {
     copyStatusEl.textContent = "";
     try {
       await navigator.clipboard.writeText(orderTextEl.textContent);
-      copyStatusEl.textContent = "Order list copied.";
+      copyStatusEl.textContent = t("orderCopied");
     } catch (error) {
-      copyStatusEl.textContent = "Select the order text and copy it manually.";
+      copyStatusEl.textContent = t("copyManually");
     }
   }
 
@@ -1293,11 +1592,11 @@
       row.innerHTML = [
         "<h3></h3>",
         "<div class=\"portfolio-position-fields\">",
-        "<label><span>Shares</span><input data-field=\"shares\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
-        "<label><span>Avg Cost</span><input data-field=\"average_cost\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
-        "<label><span>Current Value</span><input data-field=\"current_value\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
-        "<label><span>Target %</span><input data-field=\"target_allocation\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
-        "<label><span>Notes</span><input data-field=\"notes\" type=\"text\" autocomplete=\"off\"></label>",
+        "<label><span>" + escapeHtml(t("shares")) + "</span><input data-field=\"shares\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
+        "<label><span>" + escapeHtml(t("avgCost")) + "</span><input data-field=\"average_cost\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
+        "<label><span>" + escapeHtml(t("currentValue")) + "</span><input data-field=\"current_value\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
+        "<label><span>" + escapeHtml(t("targetPercent")) + "</span><input data-field=\"target_allocation\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
+        "<label><span>" + escapeHtml(t("notes")) + "</span><input data-field=\"notes\" type=\"text\" autocomplete=\"off\"></label>",
         "</div>"
       ].join("");
 
@@ -1339,7 +1638,7 @@
     saveJson(STORAGE_KEYS.portfolioRisk, state.portfolioRiskInput);
     applyManualOverrides();
     render();
-    copyStatusEl.textContent = "Portfolio risk inputs saved.";
+    copyStatusEl.textContent = t("portfolioSaved");
   }
 
   function renderPortfolioRiskSummary(portfolioRisk) {
@@ -1348,26 +1647,26 @@
     const metrics = document.createElement("div");
     metrics.className = "risk-metrics-grid";
     [
-      ["Available Cash", portfolioRisk.available_cash_provided ? "CAD " + portfolioRisk.available_cash.toFixed(2) : "Not provided"],
-      ["Total Portfolio Value", "CAD " + portfolioRisk.total_portfolio_value.toFixed(2)],
-      ["Planned Buy Total", "CAD " + portfolioRisk.total_planned_buy_amount.toFixed(2)],
-      ["Planned Cash Usage", portfolioRisk.available_cash_provided && isFiniteNumber(portfolioRisk.planned_cash_usage_percentage) ? portfolioRisk.planned_cash_usage_percentage.toFixed(2) + "%" : "Not provided"],
-      ["Largest Position", portfolioRisk.largest_position.symbol + " " + portfolioRisk.largest_position.current_allocation.toFixed(2) + "%"],
-      ["Overall Risk", portfolioRisk.portfolio_risk_level]
+      [t("availableCash"), portfolioRisk.available_cash_provided ? "CAD " + portfolioRisk.available_cash.toFixed(2) : t("notProvided")],
+      [t("totalPortfolioValue"), "CAD " + portfolioRisk.total_portfolio_value.toFixed(2)],
+      [t("plannedBuyTotal"), "CAD " + portfolioRisk.total_planned_buy_amount.toFixed(2)],
+      [t("plannedCashUsage"), portfolioRisk.available_cash_provided && isFiniteNumber(portfolioRisk.planned_cash_usage_percentage) ? portfolioRisk.planned_cash_usage_percentage.toFixed(2) + "%" : t("notProvided")],
+      [t("largestPosition"), portfolioRisk.largest_position.symbol + " " + portfolioRisk.largest_position.current_allocation.toFixed(2) + "%"],
+      [t("overallRisk"), displayRiskLevel(portfolioRisk.portfolio_risk_level)]
     ].forEach(function (item) {
       const metric = document.createElement("div");
       metric.className = "risk-metric";
       metric.innerHTML = "<span></span><strong></strong>";
       metric.querySelector("span").textContent = item[0];
       metric.querySelector("strong").textContent = item[1];
-      if (item[0] === "Overall Risk") metric.querySelector("strong").className = "risk-" + portfolioRisk.portfolio_risk_level.toLowerCase();
+      if (item[0] === t("overallRisk")) metric.querySelector("strong").className = "risk-" + portfolioRisk.portfolio_risk_level.toLowerCase();
       metrics.appendChild(metric);
     });
 
     portfolioRiskSummaryEl.appendChild(metrics);
-    portfolioRiskSummaryEl.appendChild(createRiskList("Over-allocated", portfolioRisk.over_allocated_tickers));
-    portfolioRiskSummaryEl.appendChild(createRiskList("Under-allocated", portfolioRisk.under_allocated_tickers));
-    portfolioRiskSummaryEl.appendChild(createRiskList("Risk warnings", portfolioRisk.risk_warnings));
+    portfolioRiskSummaryEl.appendChild(createRiskList(t("overAllocated"), portfolioRisk.over_allocated_tickers));
+    portfolioRiskSummaryEl.appendChild(createRiskList(t("underAllocated"), portfolioRisk.under_allocated_tickers));
+    portfolioRiskSummaryEl.appendChild(createRiskList(t("riskWarnings"), portfolioRisk.risk_warnings));
   }
 
   function createRiskList(label, items) {
@@ -1375,7 +1674,7 @@
     block.className = "risk-list";
     block.innerHTML = "<span></span><p></p>";
     block.querySelector("span").textContent = label;
-    block.querySelector("p").textContent = items.length ? items.join(", ") : "None";
+    block.querySelector("p").textContent = items.length ? items.join(", ") : t("none");
     return block;
   }
 
@@ -1394,7 +1693,7 @@
     const total = state.portfolio.reduce(function (sum, stock) {
       return sum + stock.allocation;
     }, 0);
-    portfolioTotalEl.textContent = "Total allocation " + formatPercent(total * 100);
+    portfolioTotalEl.textContent = t("totalAllocation") + " " + formatPercent(total * 100);
     portfolioTotalEl.classList.toggle("warning", Math.abs(total - 1) > 0.001);
   }
 
@@ -1416,6 +1715,165 @@
     } catch (error) {
       return fallback;
     }
+  }
+
+  function normalizeLanguage(value) {
+    return value === "zh" ? "zh" : "en";
+  }
+
+  function toggleLanguage() {
+    state.language = state.language === "en" ? "zh" : "en";
+    localStorage.setItem(STORAGE_KEYS.language, state.language);
+    applyLanguage();
+    applyManualOverrides();
+    renderPortfolioRiskInputs();
+    renderSkeleton();
+    render();
+  }
+
+  function t(key, params) {
+    const table = I18N[state.language] || I18N.en;
+    const fallback = I18N.en[key] || key;
+    let value = table[key] || fallback;
+    if (params) {
+      Object.keys(params).forEach(function (name) {
+        value = value.replace(new RegExp("\\{" + name + "\\}", "g"), params[name]);
+      });
+    }
+    return value;
+  }
+
+  function applyLanguage() {
+    document.documentElement.lang = state.language === "zh" ? "zh-Hans" : "en";
+    document.title = t("pageTitle");
+    setText(".hero > div .eyebrow", t("heroEyebrow"));
+    setText(".hero h1", t("heroTitle"));
+    setText(".hero-copy", t("heroCopy"));
+    setText(".schedule-card span", t("scheduleLabel"));
+    setText("#settings-title", t("deploymentPlan"));
+    setText(".settings-panel .eyebrow", t("monthlySettings"));
+    setText("#openSettingsBtn", t("settings"));
+    setMetricLabel(0, t("monthlyBudget"));
+    setMetricLabel(1, t("normalPool"));
+    setMetricLabel(2, t("crashFund"));
+    setMetricLabel(3, t("weeklyDeployment"));
+    setText("#panicBanner span", t("panicTitle"));
+    setText("#panicBanner strong", t("panicBody"));
+    setText(".signals-panel .eyebrow", t("allocations"));
+    setText("#holdings-title", t("thisTuesday"));
+    setText("label[for='stockSearchInput'] span", t("searchStock"));
+    setText("label[for='stockAllocationInput'] span", t("allocationPercent"));
+    setText("#stockSearchBtn", state.loading ? t("searching") : t("search"));
+    setPlaceholder("#stockSearchInput", t("searchPlaceholder"));
+    setText(".data-panel .eyebrow", t("dataSourcePriority"));
+    setText("#data-title", t("liveMarketData"));
+    const dataSummary = document.querySelector(".data-panel summary");
+    if (dataSummary) {
+      dataSummary.setAttribute("data-label", t("details"));
+      dataSummary.setAttribute("data-open-label", t("hide"));
+    }
+    setSourceList();
+    setText(".data-panel .fine-print", t("dataFinePrint"));
+    setText(".portfolio-risk-panel .eyebrow", t("portfolioRiskDashboard"));
+    setText("#portfolio-risk-title", t("portfolioRisk"));
+    setText("#savePortfolioRiskBtn", t("savePortfolio"));
+    setText("label[for='availableCashInput'] span", t("availableCash"));
+    setPlaceholder("#availableCashInput", t("availableCashPlaceholder"));
+    setText(".order-panel .eyebrow", t("copyOrderList"));
+    setText("#order-title", t("manualTradePlan"));
+    setText("#copyBtn", t("copy"));
+    setText(".modal-heading .eyebrow", t("liveMarketDataEyebrow"));
+    setText("#price-settings-title", t("priceSettings"));
+    setText(".api-key-row span", t("finnhubApiKey"));
+    setText("#refreshBtn", state.loading ? t("refreshing") : t("refreshPrices"));
+    setText(".modal-note strong", t("sourcePriority"));
+    setText(".modal-note span", t("sourcePriorityLine"));
+    setPlaceholder("#apiKey", t("apiKeyPlaceholder"));
+    setAria("#closeSettingsBtn", t("closePriceSettings"));
+    if (languageToggle) languageToggle.textContent = "中文 / EN";
+    translateTemplateLabels();
+  }
+
+  function setText(selector, value) {
+    const element = document.querySelector(selector);
+    if (element) element.textContent = value;
+  }
+
+  function setPlaceholder(selector, value) {
+    const element = document.querySelector(selector);
+    if (element) element.placeholder = value;
+  }
+
+  function setAria(selector, value) {
+    const element = document.querySelector(selector);
+    if (element) element.setAttribute("aria-label", value);
+  }
+
+  function setMetricLabel(index, value) {
+    const element = document.querySelectorAll(".metrics-grid .metric span")[index];
+    if (element) element.textContent = value;
+  }
+
+  function setSourceList() {
+    const labels = [t("finnhub"), t("yahooFallback"), t("cache"), t("manualOverride")];
+    document.querySelectorAll(".source-list li").forEach(function (item, index) {
+      item.textContent = labels[index] || item.textContent;
+    });
+  }
+
+  function translateTemplateLabels() {
+    document.querySelectorAll(".stock-card").forEach(function (card) {
+      const labels = card.querySelectorAll(".stock-values span");
+      if (labels[0]) labels[0].textContent = t("signalScore");
+      if (labels[1]) labels[1].textContent = t("signalStrength");
+      if (labels[2]) labels[2].textContent = t("riskLevel");
+      if (labels[3]) labels[3].textContent = t("multiplier");
+      if (labels[4]) labels[4].textContent = t("buy");
+      const reason = card.querySelector(".decision-reason");
+      const warning = card.querySelector(".decision-warning");
+      if (reason && reason.previousElementSibling) reason.previousElementSibling.textContent = t("reason");
+      if (warning && warning.previousElementSibling) warning.previousElementSibling.textContent = t("warning");
+      const input = card.querySelector(".override-input");
+      if (input) input.placeholder = t("overridePlaceholder");
+      const apply = card.querySelector(".apply-override");
+      if (apply) apply.textContent = t("applyOverride");
+      const clear = card.querySelector(".clear-override");
+      if (clear) clear.textContent = t("clearOverride");
+      const remove = card.querySelector(".remove-stock");
+      if (remove) remove.textContent = t("remove");
+    });
+  }
+
+  function displayRiskLevel(level) {
+    if (level === "Low") return t("riskLow");
+    if (level === "Medium") return t("riskMedium");
+    if (level === "High") return t("riskHigh");
+    if (level === "Extreme") return t("riskExtreme");
+    return level;
+  }
+
+  function joinWarnings(items) {
+    return items.join(state.language === "zh" ? "；" : "; ");
+  }
+
+  function splitWarnings(value) {
+    return String(value || "").split(/; |；/).filter(Boolean);
+  }
+
+  function sentenceEnd() {
+    return state.language === "zh" ? "。" : ".";
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (char) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+      }[char];
+    });
   }
 
   async function fetchJson(url) {
