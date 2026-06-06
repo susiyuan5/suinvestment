@@ -4,17 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
-    <title>Su Investment Pro</title>
+    <title>Quant Decision Dashboard</title>
     <link rel="stylesheet" href="style.css?v=stock-search-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
-    <link rel="stylesheet" href="signal-detail.css?v=2">
+    <link rel="stylesheet" href="signal-detail.css?v=phase1-decision-1">
   </head>
   <body>
     <div class="app-shell">
       <header class="hero">
         <div>
           <p class="eyebrow">Weekly investment calculator</p>
-          <h1>Su Investment Pro</h1>
+          <h1>Quant Decision Dashboard</h1>
           <p class="hero-copy">Determine how much to buy this Tuesday.</p>
         </div>
         <div class="schedule-card" aria-label="Execution schedule">
@@ -91,7 +91,7 @@
           <div class="section-heading compact">
             <div>
               <p class="eyebrow">Copy order list</p>
-              <h2 id="order-title">This Week Order</h2>
+              <h2 id="order-title">Manual Trade Plan</h2>
             </div>
             <button id="copyBtn" class="secondary-button" type="button">Copy</button>
           </div>
@@ -159,8 +159,16 @@
 
         <div class="stock-values">
           <div>
-            <span>Signal</span>
+            <span>signal_score</span>
             <strong class="weekly-change"></strong>
+          </div>
+          <div>
+            <span>signal_strength</span>
+            <strong class="signal-strength"></strong>
+          </div>
+          <div>
+            <span>risk_level</span>
+            <strong class="risk-level"></strong>
           </div>
           <div>
             <span>Multiplier</span>
@@ -169,6 +177,17 @@
           <div>
             <span>Buy</span>
             <strong class="buy-amount"></strong>
+          </div>
+        </div>
+
+        <div class="decision-context">
+          <div>
+            <span>reason</span>
+            <p class="decision-reason"></p>
+          </div>
+          <div>
+            <span>warning</span>
+            <p class="decision-warning"></p>
           </div>
         </div>
 
@@ -188,7 +207,7 @@
     </template>
 
     <script src="app.js?v=signal-1"></script>
-    <script src="signal-detail.js?v=2"></script>
+    <script src="signal-detail.js?v=phase1-decision-1"></script>
     <script src="order-panel.js?v=order-row-1"></script>
   </body>
 </html>
