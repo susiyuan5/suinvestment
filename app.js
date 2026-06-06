@@ -26,7 +26,8 @@
     apiKey: "su-investment-pro:finnhub-key",
     cache: "su-investment-pro:market-cache",
     overrides: "su-investment-pro:manual-overrides",
-    portfolio: "su-investment-pro:portfolio"
+    portfolio: "su-investment-pro:portfolio",
+    portfolioRisk: "su-investment-pro:portfolio-risk"
   };
 
   const state = {
@@ -38,6 +39,7 @@
     pendingRefresh: false,
     weeklySnapshot: null,
     portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultStocks), { allowCustom: true }),
+    portfolioRiskInput: normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {})),
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {})
   };
@@ -59,6 +61,10 @@
   const stockSearchBtn = document.getElementById("stockSearchBtn");
   const stockSearchResultsEl = document.getElementById("stockSearchResults");
   const portfolioTotalEl = document.getElementById("portfolioTotal");
+  const availableCashInput = document.getElementById("availableCashInput");
+  const savePortfolioRiskBtn = document.getElementById("savePortfolioRiskBtn");
+  const portfolioPositionInputsEl = document.getElementById("portfolioPositionInputs");
+  const portfolioRiskSummaryEl = document.getElementById("portfolioRiskSummary");
   let apiKeyRefreshTimer = 0;
 
   if (!state.portfolio.length) {
@@ -94,11 +100,17 @@
   refreshBtn.addEventListener("click", refreshMarketData);
   copyBtn.addEventListener("click", copyOrderList);
   stockSearchBtn.addEventListener("click", searchStocks);
+  savePortfolioRiskBtn.addEventListener("click", savePortfolioRiskForm);
+  availableCashInput.addEventListener("change", savePortfolioRiskForm);
+  availableCashInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") savePortfolioRiskForm();
+  });
   stockSearchInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") searchStocks();
   });
 
   renderPortfolioTotal();
+  renderPortfolioRiskInputs();
   renderSkeleton();
   refreshMarketData();
 
@@ -270,6 +282,7 @@
     stockAllocationInput.value = "";
     stockSearchResultsEl.innerHTML = "";
     renderPortfolioTotal();
+    renderPortfolioRiskInputs();
     renderSkeleton();
     refreshMarketData();
   }
@@ -291,6 +304,7 @@
     saveOverrides();
     saveJson(STORAGE_KEYS.cache, state.cache);
     renderPortfolioTotal();
+    renderPortfolioRiskInputs();
     renderSkeleton();
     refreshMarketData();
     copyStatusEl.textContent = symbol + " removed.";
@@ -780,6 +794,208 @@
     });
   }
 
+  function calculatePortfolioRisk(entries) {
+    const availableCash = readPositiveNumber(state.portfolioRiskInput.available_cash);
+    const positions = {};
+    let totalStockValue = 0;
+
+    entries.forEach(function (entry) {
+      const input = getPositionInput(entry.stock.symbol, entry.stock);
+      const shares = readPositiveNumber(input.shares);
+      const averageCost = readPositiveNumber(input.average_cost);
+      const manualCurrentValue = readPositiveNumber(input.current_value);
+      const estimatedCurrentValue = isFiniteNumber(entry.signal.latest_price) ? round2(entry.signal.latest_price * shares) : 0;
+      const currentValue = manualCurrentValue > 0 ? manualCurrentValue : estimatedCurrentValue;
+      const targetAllocation = clampPercent(readPositiveNumber(input.target_allocation), entry.stock.allocation * 100);
+
+      positions[entry.stock.symbol] = {
+        symbol: entry.stock.symbol,
+        shares,
+        average_cost: averageCost,
+        current_value: round2(currentValue),
+        target_allocation: round2(targetAllocation),
+        target_allocation_ratio: targetAllocation / 100,
+        current_allocation: 0,
+        allocation_drift: 0,
+        notes: String(input.notes || "")
+      };
+      totalStockValue += currentValue;
+    });
+
+    const totalPortfolioValue = round2(totalStockValue + availableCash);
+    const symbols = Object.keys(positions);
+    let largestPosition = { symbol: "None", current_value: 0, current_allocation: 0 };
+
+    symbols.forEach(function (symbol) {
+      const position = positions[symbol];
+      position.current_allocation = totalPortfolioValue > 0 ? round2((position.current_value / totalPortfolioValue) * 100) : 0;
+      position.allocation_drift = round2(position.current_allocation - position.target_allocation);
+      if (position.current_allocation > largestPosition.current_allocation) {
+        largestPosition = {
+          symbol,
+          current_value: position.current_value,
+          current_allocation: position.current_allocation
+        };
+      }
+    });
+
+    return {
+      total_portfolio_value: totalPortfolioValue,
+      total_stock_value: round2(totalStockValue),
+      available_cash: availableCash,
+      cash_percentage: totalPortfolioValue > 0 ? round2((availableCash / totalPortfolioValue) * 100) : 0,
+      equity_exposure_percentage: totalPortfolioValue > 0 ? round2((totalStockValue / totalPortfolioValue) * 100) : 0,
+      positions,
+      largest_position: largestPosition,
+      total_planned_buy_amount: 0,
+      planned_cash_usage_percentage: 0,
+      portfolio_risk_level: "Low",
+      over_allocated_tickers: symbols.filter(function (symbol) { return positions[symbol].allocation_drift > 2; }),
+      under_allocated_tickers: symbols.filter(function (symbol) { return positions[symbol].allocation_drift < -2; }),
+      risk_warnings: []
+    };
+  }
+
+  function applyPortfolioRiskAdjustments(entries, portfolioRisk) {
+    entries.forEach(function (entry) {
+      const signal = entry.signal;
+      const position = portfolioRisk.positions[signal.symbol];
+      if (!position) return;
+
+      signal.portfolio = {
+        current_allocation: position.current_allocation,
+        target_allocation: position.target_allocation,
+        allocation_drift: position.allocation_drift,
+        current_value: position.current_value,
+        available_cash: portfolioRisk.available_cash
+      };
+
+      const originalAmount = signal.suggested_buy_amount;
+      if (position.allocation_drift >= 10 || position.current_allocation >= 30) {
+        signal.suggested_buy_amount = 0;
+        signal.suggested_action = position.allocation_drift >= 10 ? "CONSIDER_SELL" : "DO_NOT_BUY";
+        signal.signal_strength = getSignalStrength(signal);
+        addSignalReason(signal, "Position is far above target allocation, so the portfolio risk rule blocks additional buying.");
+        addSignalWarning(signal, "Position is above target allocation");
+        addSignalWarning(signal, "Suggested buy amount reduced by risk rule");
+        return;
+      }
+
+      if (position.allocation_drift > 2) {
+        signal.suggested_buy_amount = round2(Math.min(signal.suggested_buy_amount, signal.base_buy_amount * 0.5));
+        if (["STRONG_BUY", "BUY", "NORMAL_BUY"].includes(signal.suggested_action)) {
+          signal.suggested_action = "REDUCE_BUY";
+          signal.signal_strength = getSignalStrength(signal);
+        }
+        addSignalReason(signal, "Position is above target allocation, so the portfolio risk rule reduces the manual buy amount.");
+        addSignalWarning(signal, "Position is above target allocation");
+      } else if (position.allocation_drift < -2 && ["STRONG_BUY", "BUY", "NORMAL_BUY"].includes(signal.suggested_action)) {
+        addSignalReason(signal, "Position is below target allocation, so the favorable signal is allowed within risk limits.");
+      }
+
+      if (signal.suggested_buy_amount < originalAmount) {
+        addSignalWarning(signal, "Suggested buy amount reduced by risk rule");
+      }
+    });
+
+    enforcePortfolioCashLimits(entries, portfolioRisk);
+  }
+
+  function enforcePortfolioCashLimits(entries, portfolioRisk) {
+    const maxCashUse = portfolioRisk.available_cash > 0 ? round2(portfolioRisk.available_cash * 0.3) : 0;
+    let planned = round2(entries.reduce(function (sum, entry) {
+      return sum + entry.signal.suggested_buy_amount;
+    }, 0));
+
+    if (portfolioRisk.available_cash <= 0 && planned > 0) {
+      entries.forEach(function (entry) {
+        entry.signal.suggested_buy_amount = 0;
+        entry.signal.suggested_action = "DO_NOT_BUY";
+        entry.signal.signal_strength = getSignalStrength(entry.signal);
+        addSignalWarning(entry.signal, "Available cash is too low");
+        addSignalWarning(entry.signal, "Suggested buy amount reduced by risk rule");
+      });
+      return;
+    }
+
+    const cashLimit = Math.min(portfolioRisk.available_cash, maxCashUse);
+    if (planned <= cashLimit || cashLimit <= 0) return;
+
+    const ratio = cashLimit / planned;
+    entries.forEach(function (entry) {
+      if (entry.signal.suggested_buy_amount <= 0) return;
+      entry.signal.suggested_buy_amount = round2(entry.signal.suggested_buy_amount * ratio);
+      if (entry.signal.suggested_action === "STRONG_BUY" || entry.signal.suggested_action === "BUY") {
+        entry.signal.suggested_action = "REDUCE_BUY";
+        entry.signal.signal_strength = getSignalStrength(entry.signal);
+      }
+      addSignalWarning(entry.signal, "Planned buy amount exceeds portfolio cash rule");
+      addSignalWarning(entry.signal, "Suggested buy amount reduced by risk rule");
+    });
+  }
+
+  function finalizePortfolioRisk(portfolioRisk, entries) {
+    const warnings = [];
+    const highRiskCount = entries.filter(function (entry) {
+      return entry.signal.risk_level === "High" || entry.signal.risk_level === "Extreme";
+    }).length;
+
+    if (portfolioRisk.available_cash <= 0) warnings.push("Available cash is too low");
+    else if (portfolioRisk.cash_percentage < 5) warnings.push("Available cash is below 5% of portfolio value");
+    if (portfolioRisk.total_planned_buy_amount > portfolioRisk.available_cash) warnings.push("Planned buy amount exceeds available cash");
+    if (portfolioRisk.available_cash > 0 && portfolioRisk.planned_cash_usage_percentage > 30) warnings.push("Planned buy amount exceeds 30% of available cash");
+    if (portfolioRisk.largest_position.current_allocation > 30) warnings.push("One ticker is above 30% of portfolio value");
+    if (portfolioRisk.equity_exposure_percentage > 95) warnings.push("Total equity exposure is above 95%");
+    if (highRiskCount >= 2) warnings.push("Multiple tickers are High or Extreme risk");
+
+    portfolioRisk.risk_warnings = warnings;
+    portfolioRisk.portfolio_risk_level = calculatePortfolioRiskLevel(portfolioRisk, highRiskCount);
+  }
+
+  function calculatePortfolioRiskLevel(portfolioRisk, highRiskCount) {
+    if (
+      portfolioRisk.total_planned_buy_amount > portfolioRisk.available_cash ||
+      portfolioRisk.largest_position.current_allocation > 40 ||
+      portfolioRisk.equity_exposure_percentage > 98 ||
+      highRiskCount >= 4
+    ) {
+      return "Extreme";
+    }
+
+    if (
+      portfolioRisk.planned_cash_usage_percentage > 30 ||
+      portfolioRisk.largest_position.current_allocation > 30 ||
+      portfolioRisk.equity_exposure_percentage > 95 ||
+      portfolioRisk.cash_percentage < 5 ||
+      highRiskCount >= 2
+    ) {
+      return "High";
+    }
+
+    if (
+      portfolioRisk.planned_cash_usage_percentage > 15 ||
+      portfolioRisk.largest_position.current_allocation > 25 ||
+      highRiskCount === 1 ||
+      portfolioRisk.over_allocated_tickers.length > 0
+    ) {
+      return "Medium";
+    }
+
+    return "Low";
+  }
+
+  function addSignalReason(signal, text) {
+    if (!text) return;
+    signal.reason = signal.reason ? signal.reason + " " + text : text;
+  }
+
+  function addSignalWarning(signal, text) {
+    if (!text) return;
+    const parts = signal.warning && signal.warning !== "None" ? signal.warning.split("; ") : [];
+    if (!parts.includes(text)) parts.push(text);
+    signal.warning = parts.length ? parts.join("; ") : "None";
+  }
+
   function render() {
     panicBanner.classList.toggle("hidden", !state.panicActive);
 
@@ -792,14 +1008,27 @@
     state.portfolio.forEach(function (stock) {
       const row = state.rows.get(stock.symbol);
       const signal = buildSignalObject(stock, row);
-      const rawAmount = signal.suggested_buy_amount;
-      const amount = round2(rawAmount);
+      entries.push({ stock, row, signal, rawAmount: signal.suggested_buy_amount });
+      latestTimestamp = Math.max(latestTimestamp, row && row.fetchedAt ? row.fetchedAt : 0);
+    });
 
-      signal.suggested_buy_amount = amount;
-      entries.push({ stock, row, signal, rawAmount });
+    const portfolioRisk = calculatePortfolioRisk(entries);
+    applyPortfolioRiskAdjustments(entries, portfolioRisk);
+    portfolioRisk.total_planned_buy_amount = round2(entries.reduce(function (sum, entry) {
+      return sum + entry.signal.suggested_buy_amount;
+    }, 0));
+    portfolioRisk.planned_cash_usage_percentage = portfolioRisk.available_cash > 0
+      ? round2((portfolioRisk.total_planned_buy_amount / portfolioRisk.available_cash) * 100)
+      : 0;
+    finalizePortfolioRisk(portfolioRisk, entries);
+
+    entries.forEach(function (entry) {
+      const rawAmount = entry.signal.suggested_buy_amount;
+      const amount = round2(rawAmount);
+      entry.rawAmount = rawAmount;
+      entry.signal.suggested_buy_amount = amount;
       rawTotal += rawAmount;
       roundedTotal = round2(roundedTotal + amount);
-      latestTimestamp = Math.max(latestTimestamp, row && row.fetchedAt ? row.fetchedAt : 0);
     });
 
     const targetTotal = round2(rawTotal);
@@ -817,15 +1046,17 @@
     window.__SUINVESTMENT_SIGNALS__ = entries.map(function (entry) {
       return entry.signal;
     });
+    window.__SUINVESTMENT_PORTFOLIO_RISK__ = portfolioRisk;
 
     orderLines.push("");
     orderLines.push("Total:");
     orderLines.push("CAD " + targetTotal.toFixed(2));
     orderLines.push("");
-    orderLines.push("This is a manual decision-support plan only. It does not place trades automatically. Review all signals, prices, risks, and available cash before placing any order yourself.");
+    orderLines.push("This is manual decision support only. It does not place trades automatically, does not require broker login, and does not execute real orders. Review all signals, prices, risks, and available cash before placing any order yourself.");
     orderTextEl.textContent = orderLines.join("\n");
     lastUpdatedEl.textContent = latestTimestamp ? "Updated " + formatDateTime(latestTimestamp) : "No live data yet";
     renderPortfolioTotal();
+    renderPortfolioRiskSummary(portfolioRisk);
   }
 
   function updateCard(card, signal) {
@@ -1010,6 +1241,147 @@
     const number = Number(String(value).trim().replace("%", ""));
     if (!Number.isFinite(number) || number < 0) return 0;
     return round2(number) / 100;
+  }
+
+  function normalizePortfolioRiskInput(value) {
+    const input = value && typeof value === "object" ? value : {};
+    const positions = input.positions && typeof input.positions === "object" ? input.positions : {};
+    const hasAvailableCash = Object.prototype.hasOwnProperty.call(input, "available_cash") && String(input.available_cash).trim() !== "";
+    return {
+      available_cash: hasAvailableCash ? readPositiveNumber(input.available_cash) : CONFIG.weeklyDeployment,
+      positions: Object.keys(positions).reduce(function (items, symbol) {
+        const normalizedSymbol = normalizeSymbol(symbol);
+        if (!normalizedSymbol) return items;
+        const position = positions[symbol] || {};
+        items[normalizedSymbol] = {
+          shares: readPositiveNumber(position.shares),
+          average_cost: readPositiveNumber(position.average_cost),
+          current_value: readPositiveNumber(position.current_value),
+          target_allocation: readPositiveNumber(position.target_allocation),
+          notes: String(position.notes || "")
+        };
+        return items;
+      }, {})
+    };
+  }
+
+  function getPositionInput(symbol, stock) {
+    const existing = state.portfolioRiskInput.positions[symbol] || {};
+    return {
+      shares: existing.shares || 0,
+      average_cost: existing.average_cost || 0,
+      current_value: existing.current_value || 0,
+      target_allocation: existing.target_allocation || round2(stock.allocation * 100),
+      notes: existing.notes || ""
+    };
+  }
+
+  function renderPortfolioRiskInputs() {
+    availableCashInput.value = state.portfolioRiskInput.available_cash || "";
+    portfolioPositionInputsEl.innerHTML = "";
+
+    state.portfolio.forEach(function (stock) {
+      const input = getPositionInput(stock.symbol, stock);
+      const row = document.createElement("div");
+      row.className = "portfolio-position-row";
+      row.dataset.symbol = stock.symbol;
+      row.innerHTML = [
+        "<h3></h3>",
+        "<div class=\"portfolio-position-fields\">",
+        "<label><span>Shares</span><input data-field=\"shares\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
+        "<label><span>Avg Cost</span><input data-field=\"average_cost\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
+        "<label><span>Current Value</span><input data-field=\"current_value\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
+        "<label><span>Target %</span><input data-field=\"target_allocation\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
+        "<label><span>Notes</span><input data-field=\"notes\" type=\"text\" autocomplete=\"off\"></label>",
+        "</div>"
+      ].join("");
+
+      row.querySelector("h3").textContent = stock.symbol;
+      row.querySelector('[data-field="shares"]').value = input.shares || "";
+      row.querySelector('[data-field="average_cost"]').value = input.average_cost || "";
+      row.querySelector('[data-field="current_value"]').value = input.current_value || "";
+      row.querySelector('[data-field="target_allocation"]').value = input.target_allocation || "";
+      row.querySelector('[data-field="notes"]').value = input.notes || "";
+      row.querySelectorAll("input").forEach(function (field) {
+        field.addEventListener("change", savePortfolioRiskForm);
+        field.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") savePortfolioRiskForm();
+        });
+      });
+      portfolioPositionInputsEl.appendChild(row);
+    });
+  }
+
+  function savePortfolioRiskForm() {
+    const next = {
+      available_cash: availableCashInput.value.trim() === "" ? "" : readPositiveNumber(availableCashInput.value),
+      positions: {}
+    };
+
+    portfolioPositionInputsEl.querySelectorAll(".portfolio-position-row").forEach(function (row) {
+      const symbol = row.dataset.symbol;
+      next.positions[symbol] = {
+        shares: readPositiveNumber(row.querySelector('[data-field="shares"]').value),
+        average_cost: readPositiveNumber(row.querySelector('[data-field="average_cost"]').value),
+        current_value: readPositiveNumber(row.querySelector('[data-field="current_value"]').value),
+        target_allocation: readPositiveNumber(row.querySelector('[data-field="target_allocation"]').value),
+        notes: row.querySelector('[data-field="notes"]').value.trim()
+      };
+    });
+
+    state.portfolioRiskInput = normalizePortfolioRiskInput(next);
+    saveJson(STORAGE_KEYS.portfolioRisk, state.portfolioRiskInput);
+    applyManualOverrides();
+    render();
+    copyStatusEl.textContent = "Portfolio risk inputs saved.";
+  }
+
+  function renderPortfolioRiskSummary(portfolioRisk) {
+    if (!portfolioRiskSummaryEl) return;
+    portfolioRiskSummaryEl.innerHTML = "";
+    const metrics = document.createElement("div");
+    metrics.className = "risk-metrics-grid";
+    [
+      ["Available Cash", "CAD " + portfolioRisk.available_cash.toFixed(2)],
+      ["Total Portfolio Value", "CAD " + portfolioRisk.total_portfolio_value.toFixed(2)],
+      ["Planned Buy Total", "CAD " + portfolioRisk.total_planned_buy_amount.toFixed(2)],
+      ["Planned Cash Usage", portfolioRisk.planned_cash_usage_percentage.toFixed(2) + "%"],
+      ["Largest Position", portfolioRisk.largest_position.symbol + " " + portfolioRisk.largest_position.current_allocation.toFixed(2) + "%"],
+      ["Overall Risk", portfolioRisk.portfolio_risk_level]
+    ].forEach(function (item) {
+      const metric = document.createElement("div");
+      metric.className = "risk-metric";
+      metric.innerHTML = "<span></span><strong></strong>";
+      metric.querySelector("span").textContent = item[0];
+      metric.querySelector("strong").textContent = item[1];
+      if (item[0] === "Overall Risk") metric.querySelector("strong").className = "risk-" + portfolioRisk.portfolio_risk_level.toLowerCase();
+      metrics.appendChild(metric);
+    });
+
+    portfolioRiskSummaryEl.appendChild(metrics);
+    portfolioRiskSummaryEl.appendChild(createRiskList("Over-allocated", portfolioRisk.over_allocated_tickers));
+    portfolioRiskSummaryEl.appendChild(createRiskList("Under-allocated", portfolioRisk.under_allocated_tickers));
+    portfolioRiskSummaryEl.appendChild(createRiskList("Risk warnings", portfolioRisk.risk_warnings));
+  }
+
+  function createRiskList(label, items) {
+    const block = document.createElement("div");
+    block.className = "risk-list";
+    block.innerHTML = "<span></span><p></p>";
+    block.querySelector("span").textContent = label;
+    block.querySelector("p").textContent = items.length ? items.join(", ") : "None";
+    return block;
+  }
+
+  function readPositiveNumber(value) {
+    const normalized = String(value || "").replace(/[$,%CADcad\s]/g, "");
+    const number = Number(normalized);
+    return Number.isFinite(number) && number > 0 ? round2(number) : 0;
+  }
+
+  function clampPercent(value, fallback) {
+    const number = Number.isFinite(value) && value > 0 ? value : fallback;
+    return clamp(round2(number), 0, 100);
   }
 
   function renderPortfolioTotal() {
