@@ -796,6 +796,7 @@
 
   function calculatePortfolioRisk(entries) {
     const availableCash = readPositiveNumber(state.portfolioRiskInput.available_cash);
+    const availableCashProvided = state.portfolioRiskInput.available_cash_provided === true;
     const positions = {};
     let totalStockValue = 0;
 
@@ -843,6 +844,7 @@
       total_portfolio_value: totalPortfolioValue,
       total_stock_value: round2(totalStockValue),
       available_cash: availableCash,
+      available_cash_provided: availableCashProvided,
       cash_percentage: totalPortfolioValue > 0 ? round2((availableCash / totalPortfolioValue) * 100) : 0,
       equity_exposure_percentage: totalPortfolioValue > 0 ? round2((totalStockValue / totalPortfolioValue) * 100) : 0,
       positions,
@@ -902,6 +904,8 @@
   }
 
   function enforcePortfolioCashLimits(entries, portfolioRisk) {
+    if (!portfolioRisk.available_cash_provided) return;
+
     const maxCashUse = portfolioRisk.available_cash > 0 ? round2(portfolioRisk.available_cash * 0.3) : 0;
     let planned = round2(entries.reduce(function (sum, entry) {
       return sum + entry.signal.suggested_buy_amount;
@@ -940,10 +944,10 @@
       return entry.signal.risk_level === "High" || entry.signal.risk_level === "Extreme";
     }).length;
 
-    if (portfolioRisk.available_cash <= 0) warnings.push("Available cash is too low");
-    else if (portfolioRisk.cash_percentage < 5) warnings.push("Available cash is below 5% of portfolio value");
-    if (portfolioRisk.total_planned_buy_amount > portfolioRisk.available_cash) warnings.push("Planned buy amount exceeds available cash");
-    if (portfolioRisk.available_cash > 0 && portfolioRisk.planned_cash_usage_percentage > 30) warnings.push("Planned buy amount exceeds 30% of available cash");
+    if (portfolioRisk.available_cash_provided && portfolioRisk.available_cash <= 0) warnings.push("Available cash is too low");
+    else if (portfolioRisk.available_cash_provided && portfolioRisk.cash_percentage < 5) warnings.push("Available cash is below 5% of portfolio value");
+    if (portfolioRisk.available_cash_provided && portfolioRisk.total_planned_buy_amount > portfolioRisk.available_cash) warnings.push("Planned buy amount exceeds available cash");
+    if (portfolioRisk.available_cash_provided && portfolioRisk.available_cash > 0 && portfolioRisk.planned_cash_usage_percentage > 30) warnings.push("Planned buy amount exceeds 30% of available cash");
     if (portfolioRisk.largest_position.current_allocation > 30) warnings.push("One ticker is above 30% of portfolio value");
     if (portfolioRisk.equity_exposure_percentage > 95) warnings.push("Total equity exposure is above 95%");
     if (highRiskCount >= 2) warnings.push("Multiple tickers are High or Extreme risk");
@@ -954,7 +958,7 @@
 
   function calculatePortfolioRiskLevel(portfolioRisk, highRiskCount) {
     if (
-      portfolioRisk.total_planned_buy_amount > portfolioRisk.available_cash ||
+      (portfolioRisk.available_cash_provided && portfolioRisk.total_planned_buy_amount > portfolioRisk.available_cash) ||
       portfolioRisk.largest_position.current_allocation > 40 ||
       portfolioRisk.equity_exposure_percentage > 98 ||
       highRiskCount >= 4
@@ -963,17 +967,17 @@
     }
 
     if (
-      portfolioRisk.planned_cash_usage_percentage > 30 ||
+      (portfolioRisk.available_cash_provided && portfolioRisk.planned_cash_usage_percentage > 30) ||
       portfolioRisk.largest_position.current_allocation > 30 ||
       portfolioRisk.equity_exposure_percentage > 95 ||
-      portfolioRisk.cash_percentage < 5 ||
+      (portfolioRisk.available_cash_provided && portfolioRisk.cash_percentage < 5) ||
       highRiskCount >= 2
     ) {
       return "High";
     }
 
     if (
-      portfolioRisk.planned_cash_usage_percentage > 15 ||
+      (portfolioRisk.available_cash_provided && portfolioRisk.planned_cash_usage_percentage > 15) ||
       portfolioRisk.largest_position.current_allocation > 25 ||
       highRiskCount === 1 ||
       portfolioRisk.over_allocated_tickers.length > 0
@@ -1017,9 +1021,9 @@
     portfolioRisk.total_planned_buy_amount = round2(entries.reduce(function (sum, entry) {
       return sum + entry.signal.suggested_buy_amount;
     }, 0));
-    portfolioRisk.planned_cash_usage_percentage = portfolioRisk.available_cash > 0
+    portfolioRisk.planned_cash_usage_percentage = portfolioRisk.available_cash_provided && portfolioRisk.available_cash > 0
       ? round2((portfolioRisk.total_planned_buy_amount / portfolioRisk.available_cash) * 100)
-      : 0;
+      : null;
     finalizePortfolioRisk(portfolioRisk, entries);
 
     entries.forEach(function (entry) {
@@ -1248,7 +1252,8 @@
     const positions = input.positions && typeof input.positions === "object" ? input.positions : {};
     const hasAvailableCash = Object.prototype.hasOwnProperty.call(input, "available_cash") && String(input.available_cash).trim() !== "";
     return {
-      available_cash: hasAvailableCash ? readPositiveNumber(input.available_cash) : CONFIG.weeklyDeployment,
+      available_cash: hasAvailableCash ? readPositiveNumber(input.available_cash) : 0,
+      available_cash_provided: hasAvailableCash,
       positions: Object.keys(positions).reduce(function (items, symbol) {
         const normalizedSymbol = normalizeSymbol(symbol);
         if (!normalizedSymbol) return items;
@@ -1277,7 +1282,7 @@
   }
 
   function renderPortfolioRiskInputs() {
-    availableCashInput.value = state.portfolioRiskInput.available_cash || "";
+    availableCashInput.value = state.portfolioRiskInput.available_cash_provided ? state.portfolioRiskInput.available_cash : "";
     portfolioPositionInputsEl.innerHTML = "";
 
     state.portfolio.forEach(function (stock) {
@@ -1315,6 +1320,7 @@
   function savePortfolioRiskForm() {
     const next = {
       available_cash: availableCashInput.value.trim() === "" ? "" : readPositiveNumber(availableCashInput.value),
+      available_cash_provided: availableCashInput.value.trim() !== "",
       positions: {}
     };
 
@@ -1342,10 +1348,10 @@
     const metrics = document.createElement("div");
     metrics.className = "risk-metrics-grid";
     [
-      ["Available Cash", "CAD " + portfolioRisk.available_cash.toFixed(2)],
+      ["Available Cash", portfolioRisk.available_cash_provided ? "CAD " + portfolioRisk.available_cash.toFixed(2) : "Not provided"],
       ["Total Portfolio Value", "CAD " + portfolioRisk.total_portfolio_value.toFixed(2)],
       ["Planned Buy Total", "CAD " + portfolioRisk.total_planned_buy_amount.toFixed(2)],
-      ["Planned Cash Usage", portfolioRisk.planned_cash_usage_percentage.toFixed(2) + "%"],
+      ["Planned Cash Usage", portfolioRisk.available_cash_provided && isFiniteNumber(portfolioRisk.planned_cash_usage_percentage) ? portfolioRisk.planned_cash_usage_percentage.toFixed(2) + "%" : "Not provided"],
       ["Largest Position", portfolioRisk.largest_position.symbol + " " + portfolioRisk.largest_position.current_allocation.toFixed(2) + "%"],
       ["Overall Risk", portfolioRisk.portfolio_risk_level]
     ].forEach(function (item) {
