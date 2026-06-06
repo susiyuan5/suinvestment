@@ -17,7 +17,7 @@ async function main() {
   const result = {
     generatedAt: new Date().toISOString(),
     source: "Yahoo Finance chart via GitHub Actions",
-    comparison: "latest close vs 5 trading sessions earlier",
+    comparison: "decision signal uses the lower of latest close vs previous close and latest close vs 5 trading sessions earlier",
     symbols: {},
     errors: {}
   };
@@ -119,8 +119,11 @@ async function fetchYahooWeekly(symbol) {
   }
 
   const latest = points[points.length - 1];
+  const previous = points[points.length - 2];
   const weekAgo = points[points.length - 6];
+  const dailyChange = round2(((latest.close - previous.close) / previous.close) * 100);
   const weeklyChange = round2(((latest.close - weekAgo.close) / weekAgo.close) * 100);
+  const decisionChange = Math.min(weeklyChange, dailyChange);
   const metaPrice = yahooResult.meta && yahooResult.meta.regularMarketPrice;
 
   return {
@@ -128,9 +131,13 @@ async function fetchYahooWeekly(symbol) {
     price: Number.isFinite(metaPrice) ? round2(metaPrice) : round2(latest.close),
     latestClose: round2(latest.close),
     latestDate: latest.date,
+    previousClose: round2(previous.close),
+    previousDate: previous.date,
     weekAgoClose: round2(weekAgo.close),
     weekAgoDate: weekAgo.date,
-    weeklyChange
+    dailyChange,
+    weeklyChange,
+    decisionChange
   };
 }
 
