@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=phase3-i18n-1">
+    <link rel="stylesheet" href="style.css?v=deployment-edit-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
   </head>
@@ -155,6 +155,35 @@
           <button id="closeSettingsBtn" class="icon-button" type="button" aria-label="Close price settings">×</button>
         </div>
 
+        <section class="deployment-form" aria-labelledby="deployment-settings-title">
+          <div class="modal-subheading">
+            <h3 id="deployment-settings-title">Deployment Settings</h3>
+            <div class="deployment-actions">
+              <button id="saveDeploymentBtn" class="secondary-button" type="button">Save</button>
+              <button id="resetDeploymentBtn" class="secondary-button" type="button">Reset</button>
+            </div>
+          </div>
+          <div class="deployment-input-grid">
+            <label for="monthlyBudgetInput">
+              <span>Monthly Budget</span>
+              <input id="monthlyBudgetInput" data-deployment-field="monthlyBudget" type="text" inputmode="decimal" autocomplete="off">
+            </label>
+            <label for="normalPoolInput">
+              <span>Normal Pool</span>
+              <input id="normalPoolInput" data-deployment-field="normalPool" type="text" inputmode="decimal" autocomplete="off">
+            </label>
+            <label for="crashFundInput">
+              <span>Crash Fund</span>
+              <input id="crashFundInput" data-deployment-field="crashFund" type="text" inputmode="decimal" autocomplete="off">
+            </label>
+            <label for="weeklyDeploymentInput">
+              <span>Weekly Deployment</span>
+              <input id="weeklyDeploymentInput" data-deployment-field="weeklyDeployment" type="text" inputmode="decimal" autocomplete="off">
+            </label>
+          </div>
+          <p id="deploymentStatus" class="status-line deployment-status" role="status"></p>
+        </section>
+
         <label class="api-key-row" for="apiKey">
           <span>Finnhub API Key</span>
           <input id="apiKey" type="password" autocomplete="off" placeholder="Enter key for live prices">
@@ -232,7 +261,7 @@
     </template>
 
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="app.js?v=phase3-i18n-1"></script>
+    <script src="app.js?v=deployment-edit-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
   </body>

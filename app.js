@@ -2,10 +2,6 @@
   "use strict";
 
   const CONFIG = {
-    monthlyBudget: 400,
-    normalPool: 300,
-    crashFund: 100,
-    weeklyDeployment: 69.23,
     cacheHours: 24,
     weeklySnapshotUrl: "data/market-data.json",
     requestTimeoutMs: 9000,
@@ -28,8 +24,17 @@
     overrides: "su-investment-pro:manual-overrides",
     portfolio: "su-investment-pro:portfolio",
     portfolioRisk: "su-investment-pro:portfolio-risk",
-    language: "su-investment-pro:language"
+    language: "su-investment-pro:language",
+    deployment: "su-investment-pro:deployment"
   };
+
+  const DEFAULT_DEPLOYMENT = {
+    monthlyBudget: 400,
+    normalPool: 300,
+    crashFund: 100
+  };
+
+  const WEEKS_PER_MONTH = 52 / 12;
 
   const I18N = {
     en: {
@@ -45,6 +50,12 @@
       normalPool: "Normal Pool",
       crashFund: "Crash Fund",
       weeklyDeployment: "Weekly Deployment",
+      deploymentSettings: "Deployment Settings",
+      save: "Save",
+      resetDefaults: "Reset",
+      deploymentSaved: "Deployment settings saved.",
+      deploymentReset: "Deployment settings reset to defaults.",
+      invalidDeploymentInput: "Enter a valid non-negative number.",
       panicTitle: "PANIC MODE ACTIVE",
       panicBody: "QQQ buy signal is at or below -10%",
       allocations: "Allocations",
@@ -194,9 +205,15 @@
       deploymentPlan: "投入计划",
       settings: "设置",
       monthlyBudget: "月度预算",
-      normalPool: "常规资金",
+      normalPool: "常规资金池",
       crashFund: "下跌备用金",
       weeklyDeployment: "每周投入",
+      deploymentSettings: "投入设置",
+      save: "保存",
+      resetDefaults: "恢复默认",
+      deploymentSaved: "投入设置已保存。",
+      deploymentReset: "已恢复默认投入设置。",
+      invalidDeploymentInput: "请输入有效的非负数字。",
       panicTitle: "恐慌模式已开启",
       panicBody: "QQQ 买入信号小于或等于 -10%",
       allocations: "配置",
@@ -348,6 +365,7 @@
     weeklySnapshot: null,
     portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultStocks), { allowCustom: true }),
     portfolioRiskInput: normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {})),
+    deployment: normalizeDeployment(loadJson(STORAGE_KEYS.deployment, DEFAULT_DEPLOYMENT)),
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {}),
     language: normalizeLanguage(localStorage.getItem(STORAGE_KEYS.language))
@@ -375,6 +393,15 @@
   const portfolioPositionInputsEl = document.getElementById("portfolioPositionInputs");
   const portfolioRiskSummaryEl = document.getElementById("portfolioRiskSummary");
   const languageToggle = document.getElementById("languageToggle");
+  const deploymentStatusEl = document.getElementById("deploymentStatus");
+  const saveDeploymentBtn = document.getElementById("saveDeploymentBtn");
+  const resetDeploymentBtn = document.getElementById("resetDeploymentBtn");
+  const deploymentInputs = {
+    monthlyBudget: document.getElementById("monthlyBudgetInput"),
+    normalPool: document.getElementById("normalPoolInput"),
+    crashFund: document.getElementById("crashFundInput"),
+    weeklyDeployment: document.getElementById("weeklyDeploymentInput")
+  };
   let apiKeyRefreshTimer = 0;
 
   if (!state.portfolio.length) {
@@ -410,6 +437,15 @@
   refreshBtn.addEventListener("click", refreshMarketData);
   copyBtn.addEventListener("click", copyOrderList);
   if (languageToggle) languageToggle.addEventListener("click", toggleLanguage);
+  if (saveDeploymentBtn) saveDeploymentBtn.addEventListener("click", saveDeploymentFromForm);
+  if (resetDeploymentBtn) resetDeploymentBtn.addEventListener("click", resetDeploymentDefaults);
+  Object.keys(deploymentInputs).forEach(function (field) {
+    const input = deploymentInputs[field];
+    if (!input) return;
+    input.addEventListener("input", function () {
+      updateDeploymentFromInput(field, input.value);
+    });
+  });
   stockSearchBtn.addEventListener("click", searchStocks);
   savePortfolioRiskBtn.addEventListener("click", savePortfolioRiskForm);
   availableCashInput.addEventListener("change", savePortfolioRiskForm);
@@ -421,6 +457,7 @@
   });
 
   applyLanguage();
+  renderDeploymentSettings();
   renderPortfolioTotal();
   renderPortfolioRiskInputs();
   renderSkeleton();
@@ -852,7 +889,7 @@
     const normalMultiplier = getMultiplier(decisionChange);
     const panicMultiplier = panicSupported ? CONFIG.panicMultiplier : 1;
     const multiplier = normalMultiplier * panicMultiplier;
-    const baseBuyAmount = round2(CONFIG.weeklyDeployment * stock.allocation);
+    const baseBuyAmount = round2(state.deployment.weeklyDeployment * stock.allocation);
     const suggestedBuyAmount = round2(baseBuyAmount * multiplier);
     const dataAgeHours = row && row.fetchedAt ? (Date.now() - row.fetchedAt) / (60 * 60 * 1000) : null;
 
@@ -1071,7 +1108,7 @@
       card.querySelector(".signal-strength").textContent = t("loading");
       card.querySelector(".risk-level").textContent = t("loading");
       card.querySelector(".multiplier").textContent = "1x";
-      card.querySelector(".buy-amount").textContent = "CAD " + round2(CONFIG.weeklyDeployment * stock.allocation).toFixed(2);
+      card.querySelector(".buy-amount").textContent = "CAD " + round2(state.deployment.weeklyDeployment * stock.allocation).toFixed(2);
       card.querySelector(".price").textContent = t("priceLoading");
       card.querySelector(".decision-reason").textContent = t("waitingForMarketData");
       card.querySelector(".decision-warning").textContent = t("none");
@@ -1315,6 +1352,7 @@
 
   function render() {
     panicBanner.classList.toggle("hidden", !state.panicActive);
+    renderDeploymentSummary();
 
     const orderLines = [t("manualPlanHeader"), ""];
     const entries = [];
@@ -1583,6 +1621,136 @@
     };
   }
 
+  function normalizeDeployment(value) {
+    const input = value && typeof value === "object" ? value : {};
+    const normalPool = readNonNegativeNumber(input.normalPool, DEFAULT_DEPLOYMENT.normalPool);
+    const crashFund = readNonNegativeNumber(input.crashFund, DEFAULT_DEPLOYMENT.crashFund);
+    const monthlyBudget = round2(normalPool + crashFund);
+    return {
+      monthlyBudget,
+      normalPool,
+      crashFund,
+      weeklyDeployment: round2(normalPool / WEEKS_PER_MONTH)
+    };
+  }
+
+  function updateDeploymentFromInput(field, value) {
+    const parsed = parseDeploymentNumber(value);
+    if (!parsed.valid) {
+      showDeploymentStatus(t("invalidDeploymentInput"), true);
+      return;
+    }
+
+    const current = state.deployment;
+    let normalPool = current.normalPool;
+    let crashFund = current.crashFund;
+
+    if (field === "monthlyBudget") {
+      const total = current.normalPool + current.crashFund;
+      const normalRatio = total > 0 ? current.normalPool / total : 0.75;
+      normalPool = round2(parsed.value * normalRatio);
+      crashFund = round2(parsed.value - normalPool);
+    } else if (field === "normalPool") {
+      normalPool = parsed.value;
+    } else if (field === "crashFund") {
+      crashFund = parsed.value;
+    } else if (field === "weeklyDeployment") {
+      normalPool = round2(parsed.value * WEEKS_PER_MONTH);
+    }
+
+    state.deployment = normalizeDeployment({ normalPool, crashFund });
+    saveDeployment();
+    renderDeploymentSettings(field);
+    showDeploymentStatus(t("deploymentSaved"), false);
+    applyManualOverrides();
+    renderSkeleton();
+    render();
+  }
+
+  function resetDeploymentDefaults() {
+    state.deployment = normalizeDeployment(DEFAULT_DEPLOYMENT);
+    saveDeployment();
+    renderDeploymentSettings();
+    showDeploymentStatus(t("deploymentReset"), false);
+    applyManualOverrides();
+    renderSkeleton();
+    render();
+  }
+
+  function saveDeploymentFromForm() {
+    const parsed = {};
+    const fields = Object.keys(deploymentInputs);
+    for (let index = 0; index < fields.length; index += 1) {
+      const field = fields[index];
+      const input = deploymentInputs[field];
+      if (!input) continue;
+      const value = parseDeploymentNumber(input.value);
+      if (!value.valid) {
+        showDeploymentStatus(t("invalidDeploymentInput"), true);
+        input.focus();
+        return;
+      }
+      parsed[field] = value.value;
+    }
+
+    state.deployment = normalizeDeployment({
+      normalPool: parsed.normalPool,
+      crashFund: parsed.crashFund
+    });
+    saveDeployment();
+    renderDeploymentSettings();
+    showDeploymentStatus(t("deploymentSaved"), false);
+    applyManualOverrides();
+    renderSkeleton();
+    render();
+  }
+
+  function parseDeploymentNumber(value) {
+    const text = String(value || "").trim().replace(/CAD/ig, "").replace(/,/g, "");
+    if (!/^\d*(?:\.\d*)?$/.test(text) || text === "" || text === ".") {
+      return { valid: false, value: 0 };
+    }
+    const number = Number(text);
+    if (!Number.isFinite(number) || number < 0) return { valid: false, value: 0 };
+    return { valid: true, value: round2(number) };
+  }
+
+  function readNonNegativeNumber(value, fallback) {
+    const parsed = parseDeploymentNumber(value);
+    return parsed.valid ? parsed.value : fallback;
+  }
+
+  function saveDeployment() {
+    saveJson(STORAGE_KEYS.deployment, {
+      monthlyBudget: state.deployment.monthlyBudget,
+      normalPool: state.deployment.normalPool,
+      crashFund: state.deployment.crashFund,
+      weeklyDeployment: state.deployment.weeklyDeployment
+    });
+  }
+
+  function renderDeploymentSettings(activeField) {
+    Object.keys(deploymentInputs).forEach(function (field) {
+      const input = deploymentInputs[field];
+      if (!input || field === activeField) return;
+      input.value = state.deployment[field].toFixed(2);
+    });
+    renderDeploymentSummary();
+  }
+
+  function renderDeploymentSummary() {
+    setMetricValue(0, formatCurrency(state.deployment.monthlyBudget));
+    setMetricValue(1, formatCurrency(state.deployment.normalPool));
+    setMetricValue(2, formatCurrency(state.deployment.crashFund));
+    setMetricValue(3, formatCurrency(state.deployment.weeklyDeployment));
+  }
+
+  function showDeploymentStatus(message, warning) {
+    if (!deploymentStatusEl) return;
+    deploymentStatusEl.textContent = message;
+    deploymentStatusEl.classList.toggle("warning", warning);
+  }
+
   function getPositionInput(symbol, stock) {
     const existing = state.portfolioRiskInput.positions[symbol] || {};
     return {
@@ -1771,6 +1939,13 @@
     setMetricLabel(1, t("normalPool"));
     setMetricLabel(2, t("crashFund"));
     setMetricLabel(3, t("weeklyDeployment"));
+    setText("#deployment-settings-title", t("deploymentSettings"));
+    setText("#saveDeploymentBtn", t("save"));
+    setText("#resetDeploymentBtn", t("resetDefaults"));
+    setDeploymentInputLabel("monthlyBudget", t("monthlyBudget"));
+    setDeploymentInputLabel("normalPool", t("normalPool"));
+    setDeploymentInputLabel("crashFund", t("crashFund"));
+    setDeploymentInputLabel("weeklyDeployment", t("weeklyDeployment"));
     setText("#panicBanner span", t("panicTitle"));
     setText("#panicBanner strong", t("panicBody"));
     setText(".signals-panel .eyebrow", t("allocations"));
@@ -1826,6 +2001,19 @@
   function setMetricLabel(index, value) {
     const element = document.querySelectorAll(".metrics-grid .metric span")[index];
     if (element) element.textContent = value;
+  }
+
+  function setMetricValue(index, value) {
+    const element = document.querySelectorAll(".metrics-grid .metric strong")[index];
+    if (element) element.textContent = value;
+  }
+
+  function setDeploymentInputLabel(field, value) {
+    const input = deploymentInputs[field];
+    if (!input) return;
+    const label = input.closest("label");
+    const span = label ? label.querySelector("span") : null;
+    if (span) span.textContent = value;
   }
 
   function setSourceList() {
@@ -1962,6 +2150,10 @@
 
   function formatPrice(value) {
     return Number(value).toFixed(2);
+  }
+
+  function formatCurrency(value) {
+    return "CAD " + Number(value).toFixed(2);
   }
 
   function formatDateTime(timestamp) {

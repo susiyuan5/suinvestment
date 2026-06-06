@@ -352,6 +352,51 @@ input::placeholder {
   color: var(--text);
 }
 
+.deployment-form {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.modal-subheading {
+  display: grid;
+  gap: 10px;
+}
+
+.deployment-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.modal-subheading h3 {
+  font-size: 1rem;
+}
+
+.deployment-input-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.deployment-input-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--soft);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.deployment-status {
+  margin: 0;
+}
+
+.deployment-status.warning {
+  color: #ffd5df;
+}
+
 .cards-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -788,6 +833,17 @@ input::placeholder {
 
   .portfolio-position-fields {
     grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .modal-subheading,
+  .deployment-input-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .deployment-actions {
+    justify-self: end;
+    width: min(220px, 100%);
   }
 
   .risk-metrics-grid {
