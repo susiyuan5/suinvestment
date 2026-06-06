@@ -152,7 +152,8 @@ main {
 
 .settings-panel,
 .order-panel,
-.data-panel {
+.data-panel,
+.portfolio-risk-panel {
   padding: 16px;
 }
 
@@ -491,6 +492,97 @@ input::placeholder {
   margin: 0 16px 2px;
 }
 
+.portfolio-risk-form {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.portfolio-risk-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--soft);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.portfolio-position-inputs {
+  display: grid;
+  gap: 8px;
+}
+
+.portfolio-position-row {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.portfolio-position-row h3 {
+  font-size: 1rem;
+}
+
+.portfolio-position-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.portfolio-risk-summary {
+  display: grid;
+  gap: 10px;
+}
+
+.risk-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.risk-metric,
+.risk-list {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.risk-metric span,
+.risk-list span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.risk-metric strong,
+.risk-list strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.risk-list p {
+  margin: 6px 0 0;
+  color: var(--soft);
+  font-size: 0.88rem;
+}
+
+.risk-low {
+  color: var(--accent);
+}
+
+.risk-medium {
+  color: #f6d779;
+}
+
+.risk-high,
+.risk-extreme {
+  color: var(--danger);
+}
+
 @media (min-width: 720px) {
   .app-shell {
     padding: 34px 22px 64px;
@@ -515,6 +607,19 @@ input::placeholder {
 
   .metrics-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .portfolio-position-row {
+    grid-template-columns: 110px minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .portfolio-position-fields {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .risk-metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .stock-card {
@@ -561,7 +666,8 @@ input::placeholder {
   }
 
   .order-panel,
-  .data-panel {
+  .data-panel,
+  .portfolio-risk-panel {
     grid-column: 2;
   }
 }

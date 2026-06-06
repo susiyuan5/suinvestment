@@ -71,7 +71,7 @@
 
   function parseOrderLine(line) {
     if (/^(Reason|Warning|Total):?/i.test(line)) return null;
-    if (/manual decision-support plan/i.test(line)) return null;
+    if (/manual decision[- ]support/i.test(line)) return null;
 
     const rich = line.match(/^(\S+)\s+-\s+([A-Z_]+)\s+-\s+CAD\s+([0-9]+(?:\.[0-9]{1,2})?)\s+-\s+Score\s+(\d+)\s+-\s+Risk\s+([A-Za-z]+)$/i);
     if (rich) {
