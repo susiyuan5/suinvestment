@@ -1,0 +1,252 @@
+name: Phase 2.6 merge
+
+on:
+  push:
+    paths:
+      - .github/workflows/phase2-6-merge.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Merge Phase 2.6 into static files
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          let app = fs.readFileSync('app.js', 'utf8');
+          let index = fs.readFileSync('index.html', 'utf8');
+
+          function replaceFunction(source, name, replacement) {
+            const start = source.indexOf('  function ' + name + '(');
+            if (start < 0) throw new Error('Missing function ' + name);
+            const next = source.indexOf('\n  function ', start + 1);
+            if (next < 0) throw new Error('Missing next function after ' + name);
+            return source.slice(0, start) + replacement + source.slice(next);
+          }
+
+          app = app.replace(
+          `    signal.signal_score = calculateSignalScore({
+              decisionChange: signal.decision_change,
+              weeklyChange: signal.weekly_change,
+              dailyChange: signal.daily_change,
+              multiplier: signal.multiplier,
+              panicActive: signal.panic_active,
+              dataSource: signal.data_source,
+              dataAgeHours: signal.data_age_hours,
+              manualOverrideActive: signal.manual_override_active
+            });
+            signal.suggested_action = getSuggestedAction(signal);
+            signal.signal_strength = getSignalStrength(signal);
+            signal.risk_level = calculateRiskLevel(signal);
+            signal.suggested_buy_amount = calculateRiskAdjustedBuyAmount(signal);
+            signal.reason = generateSignalReason(signal);
+            signal.warning = generateSignalWarning(signal);`,
+          `    signal.signal_score = calculateSignalScore({
+              decisionChange: signal.decision_change,
+              weeklyChange: signal.weekly_change,
+              dailyChange: signal.daily_change,
+              multiplier: signal.multiplier,
+              panicActive: signal.panic_active,
+              dataSource: signal.data_source,
+              dataAgeHours: signal.data_age_hours,
+              manualOverrideActive: signal.manual_override_active
+            });
+            signal.risk_level = calculateRiskLevel(signal);
+            signal.suggested_action = getSuggestedAction(signal);
+            signal.signal_strength = getSignalStrength(signal);
+            signal.suggested_buy_amount = calculateRiskAdjustedBuyAmount(signal);
+            signal.reason = generateSignalReason(signal);
+            signal.warning = generateSignalWarning(signal);`);
+
+          app = replaceFunction(app, 'getSuggestedAction', `  function getSuggestedAction(signal) {
+            if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || signal.data_freshness === "stale") return "DO_NOT_BUY";
+            if (!isFiniteNumber(signal.decision_change)) return "DO_NOT_BUY";
+            if (signal.decision_change >= 15) return "CONSIDER_SELL";
+            if (signal.risk_level === "Extreme") return "DO_NOT_BUY";
+            if (signal.signal_score <= 20) return "DO_NOT_BUY";
+            if (signal.signal_score <= 40) return "REDUCE_BUY";
+            if (signal.signal_score <= 60) return "NORMAL_BUY";
+            if (signal.signal_score <= 80) return "BUY";
+            return "STRONG_BUY";
+          }
+`);
+
+          app = replaceFunction(app, 'calculateRiskAdjustedBuyAmount', `  function calculateRiskAdjustedBuyAmount(signal) {
+            const strategyAmount = signal.base_buy_amount * signal.multiplier;
+            if (signal.risk_level === "Extreme") return 0;
+            if (signal.suggested_action === "DO_NOT_BUY" || signal.suggested_action === "CONSIDER_SELL") return 0;
+
+            let amount = strategyAmount;
+            if (signal.suggested_action === "REDUCE_BUY") amount = Math.min(strategyAmount, signal.base_buy_amount * 0.5);
+            if (signal.suggested_action === "NORMAL_BUY") amount = signal.base_buy_amount;
+            if (signal.risk_level === "High") amount *= 0.5;
+            return round2(amount);
+          }
+`);
+
+          app = replaceFunction(app, 'calculateRiskLevel', `  function calculateRiskLevel(signal) {
+            if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || !isFiniteNumber(signal.decision_change)) return "Extreme";
+            if (signal.data_freshness === "stale") return "High";
+
+            let risk = 0;
+            if (/cache|manual/i.test(signal.data_source) || signal.manual_override_active) risk += 1;
+            if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 15) risk += 2;
+            else if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 8) risk += 1;
+            if (signal.panic_active) risk += 1;
+            if (signal.multiplier >= 2) risk += 2;
+            else if (signal.multiplier > 1.5) risk += 1;
+
+            if (risk >= 5) return "Extreme";
+            if (risk >= 3) return "High";
+            if (risk >= 1) return "Medium";
+            return "Low";
+          }
+`);
+
+          app = replaceFunction(app, 'generateSignalReason', `  function generateSignalReason(signal) {
+            if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || !isFiniteNumber(signal.decision_change)) {
+              return "Market data is unavailable, so buying is blocked until fresh data is available.";
+            }
+            if (signal.data_freshness === "stale") {
+              return "Market data is stale, so buying is blocked until fresh live or scheduled data is available.";
+            }
+
+            const move = Math.abs(signal.decision_change).toFixed(1) + "%";
+            if (signal.decision_change <= -8) {
+              return "The stock dropped " + move + " based on the lower of 1D and 5D changes, so the dip-buy strategy increases the manual buy amount.";
+            }
+            if (signal.decision_change >= 10) {
+              return "The stock rose " + move + ", so the system reduces the manual buy amount to avoid chasing price strength.";
+            }
+            return "Neutral signal; base buy amount is used for manual review.";
+          }
+`);
+
+          app = app.replace(
+            'if (signal.data_source === "Unavailable" || !isFiniteNumber(signal.decision_change)) warnings.push("Market data unavailable");',
+            'if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || !isFiniteNumber(signal.decision_change)) warnings.push("Market data unavailable");'
+          );
+
+          if (!app.includes('window.__SUINVESTMENT_SIGNALS__')) {
+            app = app.replace(
+          `    entries.forEach(function (entry) {
+              const card = cardsEl.querySelector('[data-symbol="' + entry.stock.symbol + '"]');
+              updateCard(card, entry.signal);
+              orderLines.push(formatManualTradePlanEntry(entry.signal));
+            });
+
+            orderLines.push("");`,
+          `    entries.forEach(function (entry) {
+              const card = cardsEl.querySelector('[data-symbol="' + entry.stock.symbol + '"]');
+              updateCard(card, entry.signal);
+              orderLines.push(formatManualTradePlanEntry(entry.signal));
+            });
+
+            window.__SUINVESTMENT_SIGNALS__ = entries.map(function (entry) {
+              return entry.signal;
+            });
+
+            orderLines.push("");`);
+          }
+
+          if (!app.includes('manual decision-support plan only')) {
+            app = app.replace(
+              '    orderLines.push("CAD " + targetTotal.toFixed(2));\n    orderTextEl.textContent = orderLines.join("\\n");',
+              '    orderLines.push("CAD " + targetTotal.toFixed(2));\n    orderLines.push("");\n    orderLines.push("This is a manual decision-support plan only. It does not place trades automatically. Review all signals, prices, risks, and available cash before placing any order yourself.");\n    orderTextEl.textContent = orderLines.join("\\n");'
+            );
+          }
+
+          if (!app.includes('function ensureSignalFields')) {
+            app = app.replace(
+              '      const card = template.content.firstElementChild.cloneNode(true);\n      card.dataset.symbol = stock.symbol;',
+              '      const card = template.content.firstElementChild.cloneNode(true);\n      ensureSignalFields(card);\n      card.dataset.symbol = stock.symbol;'
+            );
+            app = app.replace(
+              '  function updateCard(card, signal) {\n    const badge = card.querySelector(".source-badge");',
+              '  function updateCard(card, signal) {\n    ensureSignalFields(card);\n    const badge = card.querySelector(".source-badge");'
+            );
+            app = app.replace(
+              '\n  function formatManualTradePlanEntry(signal) {',
+              `
+          function ensureSignalFields(card) {
+            const stockValues = card.querySelector(".stock-values");
+            if (stockValues) {
+              const signalScore = stockValues.querySelector(".weekly-change");
+              if (signalScore && signalScore.previousElementSibling) {
+                signalScore.previousElementSibling.textContent = "signal_score";
+              }
+
+              if (!stockValues.querySelector(".signal-strength")) {
+                stockValues.insertBefore(createMetric("signal_strength", "signal-strength"), stockValues.children[1] || null);
+              }
+
+              if (!stockValues.querySelector(".risk-level")) {
+                stockValues.insertBefore(createMetric("risk_level", "risk-level"), stockValues.children[2] || null);
+              }
+            }
+
+            if (!card.querySelector(".decision-context")) {
+              const context = document.createElement("div");
+              context.className = "decision-context";
+              context.appendChild(createTextBlock("reason", "decision-reason"));
+              context.appendChild(createTextBlock("warning", "decision-warning"));
+              const priceRow = card.querySelector(".price-row");
+              card.insertBefore(context, priceRow || null);
+            }
+          }
+
+          function createMetric(label, className) {
+            const wrapper = document.createElement("div");
+            const labelEl = document.createElement("span");
+            const valueEl = document.createElement("strong");
+            labelEl.textContent = label;
+            valueEl.className = className;
+            valueEl.textContent = "Loading";
+            wrapper.appendChild(labelEl);
+            wrapper.appendChild(valueEl);
+            return wrapper;
+          }
+
+          function createTextBlock(label, className) {
+            const wrapper = document.createElement("div");
+            const labelEl = document.createElement("span");
+            const valueEl = document.createElement("p");
+            labelEl.textContent = label;
+            valueEl.className = className;
+            valueEl.textContent = "Waiting for market data.";
+            wrapper.appendChild(labelEl);
+            wrapper.appendChild(valueEl);
+            return wrapper;
+          }
+
+          function formatManualTradePlanEntry(signal) {`
+            );
+          }
+
+          index = index.replace(/    <script src="phase2-template-compat\.js\?v=phase2-5-stable-1"><\/script>\n    <script src="phase2-5-app-loader\.js\?v=phase2-5-stable-1"><\/script>\n    <script src="signal-detail\.js\?v=phase2-5-stable-1"><\/script>\n    <script src="order-panel\.js\?v=phase2-5-stable-1"><\/script>|    <script src="app\.js\?v=phase2-signal-engine-1"><\/script>\n    <script src="signal-detail\.js\?v=phase2-signal-engine-1"><\/script>\n    <script src="order-panel\.js\?v=order-row-1"><\/script>/,
+          `    <script src="phase2-template-compat.js?v=phase2-6-merged"></script>
+              <script src="app.js?v=phase2-6-merged"></script>
+              <script src="signal-detail.js?v=phase2-6-merged"></script>
+              <script src="order-panel.js?v=phase2-6-merged"></script>`);
+
+          if (index.includes('phase2-5-app-loader')) throw new Error('index still loads phase2-5-app-loader');
+          if (!app.includes('window.__SUINVESTMENT_SIGNALS__')) throw new Error('debug export missing');
+          if (!app.includes('signal.risk_level = calculateRiskLevel(signal);\n    signal.suggested_action = getSuggestedAction(signal);')) throw new Error('calculation order not merged');
+
+          fs.writeFileSync('app.js', app);
+          fs.writeFileSync('index.html', index);
+          fs.unlinkSync('.github/workflows/phase2-6-merge.yml');
+          NODE
+      - name: Commit merged files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js index.html .github/workflows/phase2-6-merge.yml
+          git commit -m "Merge phase 2.6 signal engine into app" || exit 0
+          git push
