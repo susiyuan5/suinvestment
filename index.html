@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=phase3-portfolio-risk">
+    <link rel="stylesheet" href="style.css?v=phase3-layout-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
-    <link rel="stylesheet" href="signal-detail.css?v=phase1-decision-1">
+    <link rel="stylesheet" href="signal-detail.css?v=phase3-layout-1">
   </head>
   <body>
     <div class="app-shell">
@@ -23,120 +23,124 @@
         </div>
       </header>
 
-      <main>
-        <section class="panel settings-panel" aria-labelledby="settings-title">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Monthly settings</p>
-              <h2 id="settings-title">Deployment Plan</h2>
+      <main class="dashboard-layout">
+        <div class="main-column">
+          <section class="panel settings-panel" aria-labelledby="settings-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Monthly settings</p>
+                <h2 id="settings-title">Deployment Plan</h2>
+              </div>
+              <button id="openSettingsBtn" class="primary-button" type="button">Settings</button>
             </div>
-            <button id="openSettingsBtn" class="primary-button" type="button">Settings</button>
-          </div>
 
-          <div class="metrics-grid">
-            <article class="metric">
-              <span>Monthly Budget</span>
-              <strong>CAD 400.00</strong>
-            </article>
-            <article class="metric">
-              <span>Normal Pool</span>
-              <strong>CAD 300.00</strong>
-            </article>
-            <article class="metric">
-              <span>Crash Fund</span>
-              <strong>CAD 100.00</strong>
-            </article>
-            <article class="metric">
-              <span>Weekly Deployment</span>
-              <strong>CAD 69.23</strong>
-            </article>
-          </div>
-
-        </section>
-
-        <section id="panicBanner" class="panic-banner hidden" aria-live="polite">
-          <span>PANIC MODE ACTIVE</span>
-          <strong>QQQ buy signal is at or below -10%</strong>
-        </section>
-
-        <section class="panel" aria-labelledby="holdings-title">
-          <div class="section-heading compact">
-            <div>
-              <p class="eyebrow">Allocations</p>
-              <h2 id="holdings-title">This Tuesday</h2>
+            <div class="metrics-grid">
+              <article class="metric">
+                <span>Monthly Budget</span>
+                <strong>CAD 400.00</strong>
+              </article>
+              <article class="metric">
+                <span>Normal Pool</span>
+                <strong>CAD 300.00</strong>
+              </article>
+              <article class="metric">
+                <span>Crash Fund</span>
+                <strong>CAD 100.00</strong>
+              </article>
+              <article class="metric">
+                <span>Weekly Deployment</span>
+                <strong>CAD 69.23</strong>
+              </article>
             </div>
-            <div id="lastUpdated" class="last-updated">Waiting for data</div>
-          </div>
 
-          <div class="stock-search-panel" aria-label="Add stock">
-            <div class="stock-search-grid">
-              <label for="stockSearchInput">
-                <span>Search stock</span>
-                <input id="stockSearchInput" type="search" autocomplete="off" placeholder="Ticker or name, e.g. TSLA or Visa">
+          </section>
+
+          <section id="panicBanner" class="panic-banner hidden" aria-live="polite">
+            <span>PANIC MODE ACTIVE</span>
+            <strong>QQQ buy signal is at or below -10%</strong>
+          </section>
+
+          <section class="panel signals-panel" aria-labelledby="holdings-title">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Allocations</p>
+                <h2 id="holdings-title">This Tuesday</h2>
+              </div>
+              <div id="lastUpdated" class="last-updated">Waiting for data</div>
+            </div>
+
+            <div class="stock-search-panel" aria-label="Add stock">
+              <div class="stock-search-grid">
+                <label for="stockSearchInput">
+                  <span>Search stock</span>
+                  <input id="stockSearchInput" type="search" autocomplete="off" placeholder="Ticker or name, e.g. TSLA or Visa">
+                </label>
+                <label for="stockAllocationInput">
+                  <span>Allocation %</span>
+                  <input id="stockAllocationInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+                </label>
+                <button id="stockSearchBtn" class="secondary-button" type="button">Search</button>
+              </div>
+              <div id="portfolioTotal" class="portfolio-total">Total allocation 100%</div>
+              <div id="stockSearchResults" class="stock-search-results" aria-live="polite"></div>
+            </div>
+
+            <div id="cards" class="cards-grid"></div>
+          </section>
+
+          <details class="panel data-panel">
+            <summary>
+              <span>
+                <span class="eyebrow">Data source priority</span>
+                <strong id="data-title">Live Market Data</strong>
+              </span>
+            </summary>
+            <ol class="source-list">
+              <li>Finnhub</li>
+              <li>Yahoo Finance fallback</li>
+              <li>Cache</li>
+              <li>Manual Override</li>
+            </ol>
+            <p class="fine-print">
+              Buy signal uses the lower of the latest 1-day and 5-day moves. Manual overrides always take priority for that stock.
+            </p>
+          </details>
+        </div>
+
+        <aside class="dashboard-sidebar" aria-label="Portfolio risk and manual plan">
+          <section class="panel portfolio-risk-panel" aria-labelledby="portfolio-risk-title">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Portfolio risk dashboard</p>
+                <h2 id="portfolio-risk-title">Portfolio Risk</h2>
+              </div>
+              <button id="savePortfolioRiskBtn" class="secondary-button" type="button">Save Portfolio</button>
+            </div>
+
+            <div class="portfolio-risk-form">
+              <label for="availableCashInput">
+                <span>Available Cash</span>
+                <input id="availableCashInput" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD available cash">
               </label>
-              <label for="stockAllocationInput">
-                <span>Allocation %</span>
-                <input id="stockAllocationInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
-              </label>
-              <button id="stockSearchBtn" class="secondary-button" type="button">Search</button>
+              <div id="portfolioPositionInputs" class="portfolio-position-inputs" aria-live="polite"></div>
             </div>
-            <div id="portfolioTotal" class="portfolio-total">Total allocation 100%</div>
-            <div id="stockSearchResults" class="stock-search-results" aria-live="polite"></div>
-          </div>
 
-          <div id="cards" class="cards-grid"></div>
-        </section>
+            <div id="portfolioRiskSummary" class="portfolio-risk-summary" aria-live="polite"></div>
+          </section>
 
-        <section class="panel portfolio-risk-panel" aria-labelledby="portfolio-risk-title">
-          <div class="section-heading compact">
-            <div>
-              <p class="eyebrow">Portfolio risk dashboard</p>
-              <h2 id="portfolio-risk-title">Portfolio Risk</h2>
+          <section class="panel order-panel" aria-labelledby="order-title">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Copy order list</p>
+                <h2 id="order-title">Manual Trade Plan</h2>
+              </div>
+              <button id="copyBtn" class="secondary-button" type="button">Copy</button>
             </div>
-            <button id="savePortfolioRiskBtn" class="secondary-button" type="button">Save Portfolio</button>
-          </div>
-
-          <div class="portfolio-risk-form">
-            <label for="availableCashInput">
-              <span>Available Cash</span>
-              <input id="availableCashInput" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD available cash">
-            </label>
-            <div id="portfolioPositionInputs" class="portfolio-position-inputs" aria-live="polite"></div>
-          </div>
-
-          <div id="portfolioRiskSummary" class="portfolio-risk-summary" aria-live="polite"></div>
-        </section>
-
-        <section class="panel order-panel" aria-labelledby="order-title">
-          <div class="section-heading compact">
-            <div>
-              <p class="eyebrow">Copy order list</p>
-              <h2 id="order-title">Manual Trade Plan</h2>
-            </div>
-            <button id="copyBtn" class="secondary-button" type="button">Copy</button>
-          </div>
-          <div id="orderRows" class="order-rows" aria-live="polite"></div>
-          <pre id="orderText" class="order-text copy-buffer"></pre>
-          <p id="copyStatus" class="status-line" role="status"></p>
-        </section>
-
-        <section class="panel data-panel" aria-labelledby="data-title">
-          <div class="section-heading compact">
-            <div>
-              <p class="eyebrow">Data source priority</p>
-              <h2 id="data-title">Live Market Data</h2>
-            </div>
-          </div>
-          <ol class="source-list">
-            <li>Finnhub</li>
-            <li>Yahoo Finance fallback</li>
-            <li>Cache</li>
-            <li>Manual Override</li>
-          </ol>
-          <p class="fine-print">
-            Buy signal uses the lower of the latest 1-day and 5-day moves. Manual overrides always take priority for that stock.
-          </p>
-        </section>
+            <div id="orderRows" class="order-rows" aria-live="polite"></div>
+            <pre id="orderText" class="order-text copy-buffer"></pre>
+            <p id="copyStatus" class="status-line" role="status"></p>
+          </section>
+        </aside>
       </main>
     </div>
 

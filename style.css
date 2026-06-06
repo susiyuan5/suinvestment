@@ -29,6 +29,7 @@ body {
   min-height: 100%;
   margin: 0;
   color: var(--text);
+  overflow-x: hidden;
   background:
     radial-gradient(circle at top left, rgba(79, 195, 161, 0.16), transparent 34rem),
     linear-gradient(180deg, #080d14 0%, #0b111a 58%, #090d13 100%);
@@ -58,7 +59,7 @@ input:focus-visible {
 }
 
 .app-shell {
-  width: min(1120px, 100%);
+  width: min(1280px, 100%);
   margin: 0 auto;
   padding: 20px 14px 48px;
 }
@@ -87,7 +88,7 @@ p {
 
 h1 {
   margin: 0;
-  font-size: clamp(2.25rem, 12vw, 5.4rem);
+  font-size: clamp(2.45rem, 8vw, 5.35rem);
   line-height: 0.94;
   letter-spacing: 0;
 }
@@ -138,12 +139,21 @@ h3 {
   font-size: 1.55rem;
 }
 
-main {
+.dashboard-layout {
   display: grid;
   gap: 14px;
 }
 
+.main-column,
+.dashboard-sidebar {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  align-self: start;
+}
+
 .panel {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(16, 23, 34, 0.92);
@@ -166,6 +176,11 @@ main {
 .section-heading.compact {
   padding: 16px 16px 0;
   margin-bottom: 14px;
+}
+
+.order-panel .section-heading.compact,
+.portfolio-risk-panel .section-heading.compact {
+  padding: 0;
 }
 
 .primary-button,
@@ -322,8 +337,8 @@ input::placeholder {
 .cards-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
-  padding: 0 10px 10px;
+  gap: 10px;
+  padding: 0 10px 12px;
 }
 
 .stock-card {
@@ -331,9 +346,10 @@ input::placeholder {
   grid-template-areas:
     "topline"
     "values"
+    "context"
     "price"
     "override";
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
   padding: 14px;
   border: 1px solid var(--line);
@@ -346,8 +362,20 @@ input::placeholder {
   min-width: 0;
 }
 
+.stock-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
 .stock-values {
   grid-area: values;
+}
+
+.decision-context {
+  grid-area: context;
 }
 
 .price-row {
@@ -417,13 +445,15 @@ input::placeholder {
 
 .stock-values {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-.stock-values > div {
+.stock-values > div,
+.decision-context > div {
   min-width: 0;
   padding: 12px;
+  border: 1px solid rgba(36, 49, 68, 0.72);
   border-radius: 8px;
   background: var(--panel-3);
 }
@@ -446,6 +476,31 @@ input::placeholder {
   color: #f6d779;
 }
 
+.decision-context {
+  display: grid;
+  gap: 8px;
+}
+
+.decision-context span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.decision-context p {
+  margin: 0;
+  color: var(--soft);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.decision-warning {
+  color: #ffd5df;
+}
+
 .note {
   text-align: right;
 }
@@ -463,21 +518,75 @@ input::placeholder {
 }
 
 .order-text {
-  min-height: 228px;
+  min-height: 180px;
+  max-height: 320px;
   margin: 0 16px 12px;
   padding: 14px;
-  overflow-x: auto;
+  overflow: auto;
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--text);
   background: #090f17;
-  font: 700 0.96rem/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  white-space: pre;
+  font: 700 0.88rem/1.62 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .status-line {
   min-height: 20px;
   margin: 0 16px 2px;
+}
+
+.order-panel .order-rows,
+.order-panel .order-text,
+.order-panel .status-line {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.order-rows {
+  display: grid;
+  gap: 8px;
+  margin: 0 16px 12px;
+}
+
+.order-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.order-row strong {
+  min-width: 0;
+  font-size: 0.98rem;
+}
+
+.order-row span {
+  min-width: 0;
+  color: var(--soft);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.order-row span:nth-child(2) {
+  color: #f6d779;
+}
+
+.order-row.empty {
+  display: block;
+  color: var(--muted);
+}
+
+.order-row.total {
+  border-color: rgba(79, 195, 161, 0.45);
+  background: rgba(79, 195, 161, 0.08);
 }
 
 .source-list {
@@ -490,6 +599,44 @@ input::placeholder {
 
 .fine-print {
   margin: 0 16px 2px;
+}
+
+.data-panel .source-list,
+.data-panel .fine-print {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.data-panel summary {
+  display: grid;
+  gap: 4px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.data-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.data-panel summary strong {
+  display: block;
+  font-size: 1.08rem;
+}
+
+.data-panel summary::after {
+  content: "Details";
+  justify-self: start;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: #0c1320;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.data-panel[open] summary::after {
+  content: "Hide";
 }
 
 .portfolio-risk-form {
@@ -568,6 +715,7 @@ input::placeholder {
   margin: 6px 0 0;
   color: var(--soft);
   font-size: 0.88rem;
+  line-height: 1.45;
 }
 
 .risk-low {
@@ -623,18 +771,28 @@ input::placeholder {
   }
 
   .stock-card {
-    grid-template-columns: minmax(124px, 0.78fr) minmax(280px, 1.65fr) minmax(170px, 0.85fr);
+    grid-template-columns: minmax(160px, 0.72fr) minmax(0, 1.55fr);
     grid-template-areas:
-      "topline values price"
-      "override override override";
-    align-items: center;
+      "topline values"
+      "price values"
+      "context context"
+      "override override";
+    align-items: start;
     gap: 12px 16px;
-    padding: 12px 14px;
+    padding: 14px;
   }
 
   .stock-topline {
     display: grid;
     gap: 8px;
+  }
+
+  .stock-values {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .decision-context {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .source-badge {
@@ -643,7 +801,7 @@ input::placeholder {
 
   .price-row {
     display: grid;
-    justify-items: end;
+    justify-items: start;
     gap: 6px;
   }
 
@@ -653,21 +811,105 @@ input::placeholder {
   }
 }
 
-@media (min-width: 980px) {
-  main {
-    grid-template-columns: 1fr 360px;
+@media (min-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: minmax(0, 1fr) 384px;
     align-items: start;
+    gap: 18px;
+  }
+
+  .dashboard-sidebar {
+    position: sticky;
+    top: 18px;
+    max-height: calc(100vh - 36px);
+    overflow: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+  }
+
+  .dashboard-sidebar .section-heading.compact {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .dashboard-sidebar .risk-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-sidebar .portfolio-position-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-sidebar .portfolio-position-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sidebar .secondary-button {
+    width: auto;
+  }
+
+  .order-text {
+    max-height: 260px;
+  }
+}
+
+@media (max-width: 719px) {
+  .section-heading.compact {
+    padding: 14px 14px 0;
+  }
+
+  .order-panel .section-heading.compact,
+  .portfolio-risk-panel .section-heading.compact {
+    padding: 0;
   }
 
   .settings-panel,
-  #panicBanner,
-  section[aria-labelledby="holdings-title"] {
-    grid-column: 1 / -1;
-  }
-
   .order-panel,
   .data-panel,
   .portfolio-risk-panel {
-    grid-column: 2;
+    padding: 14px;
+  }
+
+  .stock-search-grid,
+  .portfolio-position-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .stock-topline,
+  .price-row,
+  .override-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .stock-actions {
+    justify-content: stretch;
+  }
+
+  .stock-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .override-actions button,
+  .stock-search-grid button,
+  #copyBtn,
+  #savePortfolioRiskBtn {
+    width: 100%;
+  }
+
+  .note,
+  .order-row span {
+    text-align: left;
+  }
+
+  .order-row {
+    grid-template-columns: 1fr;
+  }
+
+  .order-text,
+  .order-rows,
+  .source-list,
+  .fine-print {
+    margin-left: 0;
+    margin-right: 0;
   }
 }
