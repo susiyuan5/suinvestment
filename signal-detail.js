@@ -4,15 +4,35 @@
   const cardsEl = document.getElementById("cards");
   if (!cardsEl) return;
 
-  const observer = new MutationObserver(applyDashboardDetails);
-  observer.observe(cardsEl, { childList: true, characterData: true, subtree: true });
+  let isApplying = false;
+  let applyTimer = 0;
+  const observer = new MutationObserver(scheduleDashboardDetails);
+  observeCards();
   applyDashboardDetails();
 
+  function observeCards() {
+    observer.observe(cardsEl, { childList: true, characterData: true, subtree: true });
+  }
+
+  function scheduleDashboardDetails() {
+    if (isApplying) return;
+    window.clearTimeout(applyTimer);
+    applyTimer = window.setTimeout(applyDashboardDetails, 50);
+  }
+
   function applyDashboardDetails() {
-    renameDashboard();
-    formatSignalDetails();
-    updateDecisionCards();
-    renameManualTradePlan();
+    if (isApplying) return;
+    isApplying = true;
+    observer.disconnect();
+    try {
+      renameDashboard();
+      formatSignalDetails();
+      updateDecisionCards();
+      renameManualTradePlan();
+    } finally {
+      isApplying = false;
+      observeCards();
+    }
   }
 
   function renameDashboard() {
