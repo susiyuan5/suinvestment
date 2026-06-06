@@ -6,6 +6,48 @@
   text-align: right;
 }
 
+.stock-card .stock-values {
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+}
+
+.signal-strength,
+.risk-level {
+  color: var(--soft);
+}
+
+.risk-level {
+  text-transform: capitalize;
+}
+
+.decision-context {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.decision-context > div {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0c1320;
+}
+
+.decision-context span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.decision-context p {
+  margin: 6px 0 0;
+  color: var(--soft);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .signal-source,
 .signal-warning {
   color: var(--muted);
