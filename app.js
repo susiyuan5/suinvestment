@@ -563,9 +563,9 @@
       dataAgeHours: signal.data_age_hours,
       manualOverrideActive: signal.manual_override_active
     });
+    signal.risk_level = calculateRiskLevel(signal);
     signal.suggested_action = getSuggestedAction(signal);
     signal.signal_strength = getSignalStrength(signal);
-    signal.risk_level = calculateRiskLevel(signal);
     signal.suggested_buy_amount = calculateRiskAdjustedBuyAmount(signal);
     signal.reason = generateSignalReason(signal);
     signal.warning = generateSignalWarning(signal);
@@ -609,8 +609,10 @@
   }
 
   function getSuggestedAction(signal) {
-    if (signal.data_source === "Unavailable" || !isFiniteNumber(signal.decision_change)) return "DO_NOT_BUY";
+    if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || signal.data_freshness === "stale") return "DO_NOT_BUY";
+    if (!isFiniteNumber(signal.decision_change)) return "DO_NOT_BUY";
     if (signal.decision_change >= 15) return "CONSIDER_SELL";
+    if (signal.risk_level === "Extreme") return "DO_NOT_BUY";
     if (signal.signal_score <= 20) return "DO_NOT_BUY";
     if (signal.signal_score <= 40) return "REDUCE_BUY";
     if (signal.signal_score <= 60) return "NORMAL_BUY";
@@ -629,17 +631,21 @@
 
   function calculateRiskAdjustedBuyAmount(signal) {
     const strategyAmount = signal.base_buy_amount * signal.multiplier;
-    if (signal.suggested_action === "DO_NOT_BUY" || signal.suggested_action === "CONSIDER_SELL") return 0;
     if (signal.risk_level === "Extreme") return 0;
-    if (signal.suggested_action === "REDUCE_BUY") return round2(Math.min(strategyAmount, signal.base_buy_amount * 0.5));
-    if (signal.risk_level === "High") return round2(strategyAmount * 0.5);
-    return round2(strategyAmount);
+    if (signal.suggested_action === "DO_NOT_BUY" || signal.suggested_action === "CONSIDER_SELL") return 0;
+
+    let amount = strategyAmount;
+    if (signal.suggested_action === "REDUCE_BUY") amount = Math.min(strategyAmount, signal.base_buy_amount * 0.5);
+    if (signal.suggested_action === "NORMAL_BUY") amount = signal.base_buy_amount;
+    if (signal.risk_level === "High") amount *= 0.5;
+    return round2(amount);
   }
 
   function calculateRiskLevel(signal) {
+    if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || !isFiniteNumber(signal.decision_change)) return "Extreme";
+    if (signal.data_freshness === "stale") return "High";
+
     let risk = 0;
-    if (signal.data_source === "Unavailable" || !isFiniteNumber(signal.decision_change)) risk += 3;
-    if (signal.data_freshness === "stale") risk += 2;
     if (/cache|manual/i.test(signal.data_source) || signal.manual_override_active) risk += 1;
     if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 15) risk += 2;
     else if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 8) risk += 1;
@@ -654,8 +660,11 @@
   }
 
   function generateSignalReason(signal) {
-    if (signal.data_source === "Unavailable" || !isFiniteNumber(signal.decision_change)) {
-      return "Market data is unavailable or stale, so the system does not suggest buying.";
+    if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || !isFiniteNumber(signal.decision_change)) {
+      return "Market data is unavailable, so buying is blocked until fresh data is available.";
+    }
+    if (signal.data_freshness === "stale") {
+      return "Market data is stale, so buying is blocked until fresh live or scheduled data is available.";
     }
 
     const move = Math.abs(signal.decision_change).toFixed(1) + "%";
@@ -670,7 +679,7 @@
 
   function generateSignalWarning(signal) {
     const warnings = [];
-    if (signal.data_source === "Unavailable" || !isFiniteNumber(signal.decision_change)) warnings.push("Market data unavailable");
+    if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || !isFiniteNumber(signal.decision_change)) warnings.push("Market data unavailable");
     if (signal.data_freshness === "stale") warnings.push("Data may be stale");
     if (/cache/i.test(signal.data_source)) warnings.push("Using cache data");
     if (signal.manual_override_active) warnings.push("Manual override active");
@@ -724,6 +733,7 @@
     cardsEl.innerHTML = "";
     state.portfolio.forEach(function (stock) {
       const card = template.content.firstElementChild.cloneNode(true);
+      ensureSignalFields(card);
       card.dataset.symbol = stock.symbol;
       card.querySelector("h3").textContent = stock.symbol;
       card.querySelector(".allocation").textContent = formatPercent(stock.allocation * 100) + " allocation";
@@ -804,15 +814,22 @@
       orderLines.push(formatManualTradePlanEntry(entry.signal));
     });
 
+    window.__SUINVESTMENT_SIGNALS__ = entries.map(function (entry) {
+      return entry.signal;
+    });
+
     orderLines.push("");
     orderLines.push("Total:");
     orderLines.push("CAD " + targetTotal.toFixed(2));
+    orderLines.push("");
+    orderLines.push("This is a manual decision-support plan only. It does not place trades automatically. Review all signals, prices, risks, and available cash before placing any order yourself.");
     orderTextEl.textContent = orderLines.join("\n");
     lastUpdatedEl.textContent = latestTimestamp ? "Updated " + formatDateTime(latestTimestamp) : "No live data yet";
     renderPortfolioTotal();
   }
 
   function updateCard(card, signal) {
+    ensureSignalFields(card);
     const badge = card.querySelector(".source-badge");
     const weeklyEl = card.querySelector(".weekly-change");
 
@@ -840,6 +857,57 @@
     card.querySelector(".note").textContent = [signal.note, signalText, panicText.trim()]
       .filter(Boolean)
       .join("; ");
+  }
+
+  function ensureSignalFields(card) {
+    const stockValues = card.querySelector(".stock-values");
+    if (stockValues) {
+      const signalScore = stockValues.querySelector(".weekly-change");
+      if (signalScore && signalScore.previousElementSibling) {
+        signalScore.previousElementSibling.textContent = "signal_score";
+      }
+
+      if (!stockValues.querySelector(".signal-strength")) {
+        stockValues.insertBefore(createMetric("signal_strength", "signal-strength"), stockValues.children[1] || null);
+      }
+
+      if (!stockValues.querySelector(".risk-level")) {
+        stockValues.insertBefore(createMetric("risk_level", "risk-level"), stockValues.children[2] || null);
+      }
+    }
+
+    if (!card.querySelector(".decision-context")) {
+      const context = document.createElement("div");
+      context.className = "decision-context";
+      context.appendChild(createTextBlock("reason", "decision-reason"));
+      context.appendChild(createTextBlock("warning", "decision-warning"));
+      const priceRow = card.querySelector(".price-row");
+      card.insertBefore(context, priceRow || null);
+    }
+  }
+
+  function createMetric(label, className) {
+    const wrapper = document.createElement("div");
+    const labelEl = document.createElement("span");
+    const valueEl = document.createElement("strong");
+    labelEl.textContent = label;
+    valueEl.className = className;
+    valueEl.textContent = "Loading";
+    wrapper.appendChild(labelEl);
+    wrapper.appendChild(valueEl);
+    return wrapper;
+  }
+
+  function createTextBlock(label, className) {
+    const wrapper = document.createElement("div");
+    const labelEl = document.createElement("span");
+    const valueEl = document.createElement("p");
+    labelEl.textContent = label;
+    valueEl.className = className;
+    valueEl.textContent = "Waiting for market data.";
+    wrapper.appendChild(labelEl);
+    wrapper.appendChild(valueEl);
+    return wrapper;
   }
 
   function formatManualTradePlanEntry(signal) {
