@@ -24,11 +24,11 @@
       source.textContent = detail.source;
       noteEl.appendChild(source);
 
-      if (detail.daily || detail.weekly) {
+      if (detail.daily !== null || detail.weekly !== null) {
         const breakdown = document.createElement("span");
         breakdown.className = "signal-breakdown";
-        if (detail.daily) breakdown.appendChild(createPill("1D", detail.daily));
-        if (detail.weekly) breakdown.appendChild(createPill("5D", detail.weekly));
+        if (detail.daily !== null) breakdown.appendChild(createPill("1D", detail.daily));
+        if (detail.weekly !== null) breakdown.appendChild(createPill("5D", detail.weekly));
         noteEl.appendChild(breakdown);
       }
 
@@ -50,7 +50,7 @@
     if (lowerText.includes("panic")) warnings.push("Panic multiplier active");
     if (lowerText.includes("daily candles unavailable")) warnings.push("Daily candles unavailable");
 
-    if (!daily && !weekly && !warnings.length) return null;
+    if (daily === null && weekly === null && !warnings.length) return null;
 
     return {
       daily,
