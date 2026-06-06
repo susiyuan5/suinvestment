@@ -28,3 +28,18 @@ class BacktestConfig:
     strategy: StrategyConfig = field(default_factory=StrategyConfig)
     risk: RiskConfig = field(default_factory=RiskConfig)
     results_dir: str = "results"
+
+
+@dataclass(frozen=True)
+class AnalysisConfig:
+    trading_mode: str = "analysis"
+    available_cash: float = 10000.0
+    allowed_tickers: tuple[str, ...] = ("SPY", "QQQ", "VOO", "VTI", "MSFT", "NVDA", "AAPL", "ASML", "KO", "BYDDY")
+    max_cash_usage_per_trade: float = 0.30
+    max_single_trade_amount: float = 500.0
+    max_position_pct_per_ticker: float = 0.30
+    max_total_equity_exposure: float = 0.95
+    large_drawdown_threshold: float = 0.30
+    consecutive_decline_weeks_limit: int = 4
+    stale_data_limit_hours: float = 24.0
+    high_volatility_weekly_threshold: float = 0.08
