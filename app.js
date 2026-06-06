@@ -519,6 +519,181 @@
     return 1;
   }
 
+  function buildSignalObject(stock, row) {
+    const decisionChange = getDecisionChange(row);
+    const manualOverrideActive = isFiniteNumber(state.overrides[stock.symbol]);
+    const panicSupported = state.panicActive && CONFIG.panicSymbols.has(stock.symbol);
+    const normalMultiplier = getMultiplier(decisionChange);
+    const panicMultiplier = panicSupported ? CONFIG.panicMultiplier : 1;
+    const multiplier = normalMultiplier * panicMultiplier;
+    const baseBuyAmount = round2(CONFIG.weeklyDeployment * stock.allocation);
+    const suggestedBuyAmount = round2(baseBuyAmount * multiplier);
+    const dataAgeHours = row && row.fetchedAt ? (Date.now() - row.fetchedAt) / (60 * 60 * 1000) : null;
+
+    const signal = {
+      symbol: stock.symbol,
+      latest_price: row && isFiniteNumber(row.price) ? row.price : null,
+      daily_change: row && isFiniteNumber(row.dailyChange) ? row.dailyChange : null,
+      weekly_change: row && isFiniteNumber(row.weeklyChange) ? row.weeklyChange : null,
+      decision_change: isFiniteNumber(decisionChange) ? decisionChange : null,
+      multiplier,
+      base_buy_amount: baseBuyAmount,
+      suggested_buy_amount: suggestedBuyAmount,
+      signal_score: 0,
+      signal_strength: "Data Needed",
+      suggested_action: "DO_NOT_BUY",
+      risk_level: "High",
+      reason: "",
+      warning: "",
+      data_source: row && row.source ? row.source : "Unavailable",
+      data_freshness: getDataFreshness(row, dataAgeHours),
+      data_age_hours: isFiniteNumber(dataAgeHours) ? round2(dataAgeHours) : null,
+      manual_override_active: manualOverrideActive,
+      panic_active: panicSupported,
+      note: row && row.note ? row.note : ""
+    };
+
+    signal.signal_score = calculateSignalScore({
+      decisionChange: signal.decision_change,
+      weeklyChange: signal.weekly_change,
+      dailyChange: signal.daily_change,
+      multiplier: signal.multiplier,
+      panicActive: signal.panic_active,
+      dataSource: signal.data_source,
+      dataAgeHours: signal.data_age_hours,
+      manualOverrideActive: signal.manual_override_active
+    });
+    signal.suggested_action = getSuggestedAction(signal);
+    signal.signal_strength = getSignalStrength(signal);
+    signal.risk_level = calculateRiskLevel(signal);
+    signal.suggested_buy_amount = calculateRiskAdjustedBuyAmount(signal);
+    signal.reason = generateSignalReason(signal);
+    signal.warning = generateSignalWarning(signal);
+    return signal;
+  }
+
+  function calculateSignalScore(input) {
+    if (!isFiniteNumber(input.decisionChange)) return 10;
+
+    let score = 50;
+    const move = input.decisionChange;
+
+    if (move <= -15) score += 35;
+    else if (move <= -8) score += 22;
+    else if (move < 0) score += 8;
+
+    if (isFiniteNumber(input.weeklyChange) && input.weeklyChange <= -20) score += 6;
+    if (isFiniteNumber(input.dailyChange) && input.dailyChange <= -8) score += 5;
+
+    if (move >= 15) score -= 35;
+    else if (move >= 10) score -= 25;
+    else if (move >= 5) score -= 10;
+
+    if (isFiniteNumber(input.dataAgeHours)) {
+      if (input.dataAgeHours > 24) score -= 20;
+      else if (input.dataAgeHours > 6) score -= 8;
+    } else {
+      score -= 25;
+    }
+
+    if (/cache/i.test(input.dataSource)) score -= 15;
+    if (/manual/i.test(input.dataSource) || input.manualOverrideActive) score -= 10;
+    if (/unavailable/i.test(input.dataSource)) score -= 45;
+
+    if (input.panicActive) score += 6;
+    if (input.multiplier >= 2) score += 8;
+    else if (input.multiplier > 1) score += 5;
+    else if (input.multiplier < 1) score -= 10;
+
+    return clamp(Math.round(score), 0, 100);
+  }
+
+  function getSuggestedAction(signal) {
+    if (signal.data_source === "Unavailable" || !isFiniteNumber(signal.decision_change)) return "DO_NOT_BUY";
+    if (signal.decision_change >= 15) return "CONSIDER_SELL";
+    if (signal.signal_score <= 20) return "DO_NOT_BUY";
+    if (signal.signal_score <= 40) return "REDUCE_BUY";
+    if (signal.signal_score <= 60) return "NORMAL_BUY";
+    if (signal.signal_score <= 80) return "BUY";
+    return "STRONG_BUY";
+  }
+
+  function getSignalStrength(signal) {
+    if (signal.suggested_action === "STRONG_BUY") return "Strong";
+    if (signal.suggested_action === "BUY") return "Positive";
+    if (signal.suggested_action === "NORMAL_BUY") return "Neutral";
+    if (signal.suggested_action === "REDUCE_BUY") return "Reduced";
+    if (signal.suggested_action === "CONSIDER_SELL") return "Sell Watch";
+    return "Avoid";
+  }
+
+  function calculateRiskAdjustedBuyAmount(signal) {
+    const strategyAmount = signal.base_buy_amount * signal.multiplier;
+    if (signal.suggested_action === "DO_NOT_BUY" || signal.suggested_action === "CONSIDER_SELL") return 0;
+    if (signal.risk_level === "Extreme") return 0;
+    if (signal.suggested_action === "REDUCE_BUY") return round2(Math.min(strategyAmount, signal.base_buy_amount * 0.5));
+    if (signal.risk_level === "High") return round2(strategyAmount * 0.5);
+    return round2(strategyAmount);
+  }
+
+  function calculateRiskLevel(signal) {
+    let risk = 0;
+    if (signal.data_source === "Unavailable" || !isFiniteNumber(signal.decision_change)) risk += 3;
+    if (signal.data_freshness === "stale") risk += 2;
+    if (/cache|manual/i.test(signal.data_source) || signal.manual_override_active) risk += 1;
+    if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 15) risk += 2;
+    else if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 8) risk += 1;
+    if (signal.panic_active) risk += 1;
+    if (signal.multiplier >= 2) risk += 2;
+    else if (signal.multiplier > 1.5) risk += 1;
+
+    if (risk >= 5) return "Extreme";
+    if (risk >= 3) return "High";
+    if (risk >= 1) return "Medium";
+    return "Low";
+  }
+
+  function generateSignalReason(signal) {
+    if (signal.data_source === "Unavailable" || !isFiniteNumber(signal.decision_change)) {
+      return "Market data is unavailable or stale, so the system does not suggest buying.";
+    }
+
+    const move = Math.abs(signal.decision_change).toFixed(1) + "%";
+    if (signal.decision_change <= -8) {
+      return "The stock dropped " + move + " based on the lower of 1D and 5D changes, so the dip-buy strategy increases the manual buy amount.";
+    }
+    if (signal.decision_change >= 10) {
+      return "The stock rose " + move + ", so the system reduces the manual buy amount to avoid chasing price strength.";
+    }
+    return "Neutral signal; base buy amount is used for manual review.";
+  }
+
+  function generateSignalWarning(signal) {
+    const warnings = [];
+    if (signal.data_source === "Unavailable" || !isFiniteNumber(signal.decision_change)) warnings.push("Market data unavailable");
+    if (signal.data_freshness === "stale") warnings.push("Data may be stale");
+    if (/cache/i.test(signal.data_source)) warnings.push("Using cache data");
+    if (signal.manual_override_active) warnings.push("Manual override active");
+    if (signal.panic_active) warnings.push("Panic mode active");
+    if (isFiniteNumber(signal.weekly_change) && signal.weekly_change <= -15) warnings.push("Sharp weekly drop");
+    if (isFiniteNumber(signal.decision_change) && signal.decision_change >= 10) warnings.push("Strong recent rise");
+    if (
+      signal.suggested_action === "REDUCE_BUY" ||
+      signal.suggested_action === "CONSIDER_SELL" ||
+      signal.suggested_action === "DO_NOT_BUY" ||
+      signal.suggested_buy_amount < round2(signal.base_buy_amount * signal.multiplier)
+    ) {
+      warnings.push("Suggested buy amount reduced by risk rule");
+    }
+    return warnings.length ? warnings.join("; ") : "None";
+  }
+
+  function getDataFreshness(row, dataAgeHours) {
+    if (!row || row.source === "Unavailable") return "missing";
+    if (isFiniteNumber(dataAgeHours) && dataAgeHours > CONFIG.cacheHours) return "stale";
+    return "fresh";
+  }
+
   function applyManualOverrides() {
     state.portfolio.forEach(function (stock) {
       const base = state.marketRows.get(stock.symbol) || {
@@ -557,9 +732,13 @@
       input.value = state.overrides[stock.symbol] === undefined ? "" : formatSignedInput(state.overrides[stock.symbol]);
       card.querySelector(".source-badge").textContent = "Loading";
       card.querySelector(".weekly-change").textContent = "Loading";
+      card.querySelector(".signal-strength").textContent = "Loading";
+      card.querySelector(".risk-level").textContent = "Loading";
       card.querySelector(".multiplier").textContent = "1x";
       card.querySelector(".buy-amount").textContent = "CAD " + round2(CONFIG.weeklyDeployment * stock.allocation).toFixed(2);
       card.querySelector(".price").textContent = "Price loading";
+      card.querySelector(".decision-reason").textContent = "Waiting for market data.";
+      card.querySelector(".decision-warning").textContent = "None";
 
       card.querySelector(".apply-override").addEventListener("click", function () {
         applyOverride(stock.symbol, input.value);
@@ -583,13 +762,18 @@
       card.querySelector(".source-badge").textContent = "Loading";
       card.querySelector(".source-badge").className = "source-badge";
       card.querySelector(".note").textContent = "Fetching market data";
+      card.querySelector(".weekly-change").textContent = "Loading";
+      card.querySelector(".signal-strength").textContent = "Loading";
+      card.querySelector(".risk-level").textContent = "Loading";
+      card.querySelector(".decision-reason").textContent = "Refreshing market data.";
+      card.querySelector(".decision-warning").textContent = "None";
     });
   }
 
   function render() {
     panicBanner.classList.toggle("hidden", !state.panicActive);
 
-    const orderLines = ["THIS WEEK ORDER", ""];
+    const orderLines = ["MANUAL TRADE PLAN", ""];
     const entries = [];
     let rawTotal = 0;
     let roundedTotal = 0;
@@ -597,14 +781,12 @@
 
     state.portfolio.forEach(function (stock) {
       const row = state.rows.get(stock.symbol);
-      const signal = getDecisionChange(row);
-      const normalMultiplier = getMultiplier(signal);
-      const panicMultiplier = state.panicActive && CONFIG.panicSymbols.has(stock.symbol) ? CONFIG.panicMultiplier : 1;
-      const multiplier = normalMultiplier * panicMultiplier;
-      const rawAmount = CONFIG.weeklyDeployment * stock.allocation * multiplier;
+      const signal = buildSignalObject(stock, row);
+      const rawAmount = signal.suggested_buy_amount;
       const amount = round2(rawAmount);
 
-      entries.push({ stock, row, signal, multiplier, amount, rawAmount });
+      signal.suggested_buy_amount = amount;
+      entries.push({ stock, row, signal, rawAmount });
       rawTotal += rawAmount;
       roundedTotal = round2(roundedTotal + amount);
       latestTimestamp = Math.max(latestTimestamp, row && row.fetchedAt ? row.fetchedAt : 0);
@@ -613,13 +795,13 @@
     const targetTotal = round2(rawTotal);
     const pennyDifference = round2(targetTotal - roundedTotal);
     if (pennyDifference !== 0 && entries.length) {
-      entries[0].amount = round2(entries[0].amount + pennyDifference);
+      entries[0].signal.suggested_buy_amount = round2(entries[0].signal.suggested_buy_amount + pennyDifference);
     }
 
     entries.forEach(function (entry) {
       const card = cardsEl.querySelector('[data-symbol="' + entry.stock.symbol + '"]');
-      updateCard(card, entry.row, entry.stock, entry.signal, entry.multiplier, entry.amount);
-      orderLines.push(entry.stock.symbol + " - CAD " + entry.amount.toFixed(2));
+      updateCard(card, entry.signal);
+      orderLines.push(formatManualTradePlanEntry(entry.signal));
     });
 
     orderLines.push("");
@@ -630,36 +812,48 @@
     renderPortfolioTotal();
   }
 
-  function updateCard(card, row, stock, signal, multiplier, amount) {
+  function updateCard(card, signal) {
     const badge = card.querySelector(".source-badge");
     const weeklyEl = card.querySelector(".weekly-change");
 
-    badge.textContent = row ? row.source : "Unavailable";
-    badge.className = "source-badge " + sourceClass(row ? row.source : "Unavailable");
+    badge.textContent = signal.data_source;
+    badge.className = "source-badge " + sourceClass(signal.data_source);
 
     weeklyEl.className = "weekly-change";
-    if (isFiniteNumber(signal)) {
-      weeklyEl.textContent = formatSigned(signal) + "%";
-      weeklyEl.classList.add(signal < 0 ? "negative" : "positive");
+    if (isFiniteNumber(signal.signal_score)) {
+      weeklyEl.textContent = String(signal.signal_score);
+      weeklyEl.classList.add(signal.signal_score >= 61 ? "positive" : "negative");
     } else {
-      weeklyEl.textContent = "Manual needed";
+      weeklyEl.textContent = "--";
     }
 
-    card.querySelector(".multiplier").textContent = formatMultiplier(multiplier);
-    card.querySelector(".buy-amount").textContent = "CAD " + amount.toFixed(2);
-    card.querySelector(".price").textContent = row && isFiniteNumber(row.price) ? "Price " + formatPrice(row.price) : "Price unavailable";
+    card.querySelector(".signal-strength").textContent = signal.signal_strength;
+    card.querySelector(".risk-level").textContent = signal.risk_level;
+    card.querySelector(".multiplier").textContent = formatMultiplier(signal.multiplier);
+    card.querySelector(".buy-amount").textContent = "CAD " + signal.suggested_buy_amount.toFixed(2);
+    card.querySelector(".price").textContent = isFiniteNumber(signal.latest_price) ? "Price " + formatPrice(signal.latest_price) : "Price unavailable";
+    card.querySelector(".decision-reason").textContent = signal.reason;
+    card.querySelector(".decision-warning").textContent = signal.warning;
 
-    const panicText = state.panicActive && CONFIG.panicSymbols.has(stock.symbol) ? " + panic 1.3x" : "";
-    const signalText = row && !isFiniteNumber(state.overrides[stock.symbol]) ? formatSignalNote(row) : "";
-    card.querySelector(".note").textContent = [row && row.note ? row.note : "", signalText, panicText.trim()]
+    const panicText = signal.panic_active ? " + panic 1.3x" : "";
+    const signalText = formatSignalNote(signal);
+    card.querySelector(".note").textContent = [signal.note, signalText, panicText.trim()]
       .filter(Boolean)
       .join("; ");
   }
 
-  function formatSignalNote(row) {
+  function formatManualTradePlanEntry(signal) {
+    return [
+      signal.symbol + " - " + signal.suggested_action + " - CAD " + signal.suggested_buy_amount.toFixed(2) + " - Score " + signal.signal_score + " - Risk " + signal.risk_level,
+      "Reason: " + signal.reason,
+      "Warning: " + signal.warning + "."
+    ].join("\n");
+  }
+
+  function formatSignalNote(signal) {
     const parts = [];
-    if (isFiniteNumber(row.dailyChange)) parts.push("1d " + formatSigned(row.dailyChange) + "%");
-    if (isFiniteNumber(row.weeklyChange)) parts.push("5d " + formatSigned(row.weeklyChange) + "%");
+    if (isFiniteNumber(signal.daily_change)) parts.push("1d " + formatSigned(signal.daily_change) + "%");
+    if (isFiniteNumber(signal.weekly_change)) parts.push("5d " + formatSigned(signal.weekly_change) + "%");
     return parts.length ? parts.join(" / ") : "";
   }
 
@@ -810,6 +1004,10 @@
 
   function round2(value) {
     return Math.round((value + Number.EPSILON) * 100) / 100;
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
   }
 
   function isFiniteNumber(value) {
