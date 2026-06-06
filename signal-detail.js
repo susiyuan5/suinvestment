@@ -1,6 +1,7 @@
 (function () {
   "use strict";
 
+  // This file only formats note display. Signal calculation is handled in app.js.
   const cardsEl = document.getElementById("cards");
   if (!cardsEl) return;
 
