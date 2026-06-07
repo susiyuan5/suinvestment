@@ -1842,122 +1842,48 @@ input::placeholder {
     padding-right: 14px;
   }
 }
-/* Manual stock table layout fix */
-@media (min-width: 720px) {
+
+
+/* Final manual stock table tuning: taller rows, less horizontal scrolling */
+@media (min-width: 1024px) {
   .stock-list-shell {
-    --stock-table-columns: 90px 76px 100px 90px 70px 70px 60px 76px 64px 72px 96px 86px 82px;
-    overflow-x: auto;
-  }
-
-  .stock-list-header,
-  .stock-card {
-    display: grid;
-    grid-template-columns: var(--stock-table-columns);
-    align-items: center;
-    min-width: 1132px;
-  }
-
-  .stock-list-header {
-    gap: 0;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 0.74rem;
-    font-weight: 900;
-  }
-
-  .stock-card {
-    min-height: 66px;
-    padding: 8px 10px;
-    gap: 0;
-    border: 0;
-    border-bottom: 1px solid var(--line);
-    border-radius: 0;
-    background: #0b111a;
-  }
-
-  .stock-card > *,
-  .stock-list-header > * {
-    min-width: 0;
-    padding-right: 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .stock-topline,
-  .stock-values,
-  .price-row,
-  .stock-actions {
-    display: contents;
-  }
-
-  .decision-context,
-  .algorithm-details,
-  .override-row {
-    display: none !important;
-  }
-
-  .stock-details-row {
-    grid-column: 1 / -1;
-  }
-
-  .stock-details-row:not([open]) > :not(summary) {
-    display: none !important;
-  }
-
-  .stock-details-row > summary {
-    display: inline-flex;
-    width: fit-content;
-    min-height: 30px;
-    padding: 6px 10px;
-    margin-top: 6px;
-  }
-
-  .price,
-  .daily-change,
-  .five-day-change,
-  .weekly-change,
-  .signal-strength,
-  .risk-level,
-  .multiplier,
-  .buy-amount,
-  .source-badge,
-  .action-badge {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}/* Make stock table much wider to avoid cramped rows */
-@media (min-width: 720px) {
-  .stock-list-shell {
-    --stock-table-columns: 180px 152px 200px 180px 140px 140px 120px 152px 128px 144px 192px 172px 164px;
-    overflow-x: auto;
-    overflow-y: hidden;
+    --stock-table-columns: 120px 88px 120px 90px 80px 80px 64px 88px 68px 84px 110px 90px 90px !important;
+    --stock-table-content-width: 1252px !important;
+    --stock-table-width: 1272px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
   }
 
   .stock-list-header,
   .stock-card {
     grid-template-columns: var(--stock-table-columns) !important;
-    min-width: 2064px !important;
+    min-width: var(--stock-table-width) !important;
+  }
+
+  .stock-list-header {
+    min-height: 44px !important;
+    align-items: center !important;
   }
 
   .stock-card {
-    min-height: 64px;
-    align-items: center;
+    min-height: 120px !important;
+    padding-top: 18px !important;
+    padding-bottom: 18px !important;
+    align-items: center !important;
   }
 
   .stock-card > *,
   .stock-list-header > * {
+    min-width: 0 !important;
+    padding-right: 8px;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    align-self: center !important;
   }
 
-  .note {
-    display: none !important;
-  }
-
+  .stock-card h3,
+  .allocation,
   .price,
   .daily-change,
   .five-day-change,
@@ -1968,35 +1894,28 @@ input::placeholder {
   .buy-amount {
     white-space: nowrap !important;
     overflow: hidden !important;
-    text-overflow: clip !important;
+    text-overflow: ellipsis !important;
+    overflow-wrap: normal !important;
   }
-}/* Make each stock row taller and easier to read */
-@media (min-width: 720px) {
-  .stock-card {
-    min-height: 96px !important;
-    padding-top: 16px !important;
-    padding-bottom: 16px !important;
+
+  .note {
+    display: none !important;
+  }
+
+  .action-badge,
+  .source-badge {
+    min-height: 30px !important;
+    display: inline-flex !important;
     align-items: center !important;
-  }
-
-  .stock-list-header {
-    min-height: 42px !important;
-    align-items: center !important;
-  }
-
-  .stock-card > * {
-    align-self: center !important;
-  }
-
-  .source-badge,
-  .action-badge {
-    min-height: 30px;
-    display: inline-flex;
-    align-items: center;
+    justify-content: center !important;
   }
 
   .remove-stock,
   .stock-details-row > summary {
     min-height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }
+
