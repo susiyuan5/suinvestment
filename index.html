@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=lowfreq-algo-1">
+    <link rel="stylesheet" href="style.css?v=algorithm-test-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
   </head>
@@ -87,6 +87,26 @@
             </div>
 
             <div id="cards" class="cards-grid"></div>
+          </section>
+
+          <section class="panel algorithm-test-panel" aria-labelledby="algorithm-test-title">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Algorithm test</p>
+                <h2 id="algorithm-test-title">Algorithm Test Panel</h2>
+              </div>
+            </div>
+            <div class="algorithm-test-controls">
+              <label for="algorithmTestInput">
+                <span>decision_change</span>
+                <input id="algorithmTestInput" type="text" inputmode="decimal" autocomplete="off" value="-5">
+              </label>
+              <div id="algorithmTestPresets" class="algorithm-test-presets" aria-label="Preset decision_change values"></div>
+            </div>
+            <div id="algorithmTestResult" class="algorithm-test-result" aria-live="polite"></div>
+            <p class="fine-print algorithm-test-safety">
+              This test panel is manual decision support only. It does not change real portfolio data, market data, signals, or trade plans.
+            </p>
           </section>
 
           <section class="panel backtest-panel" aria-labelledby="backtest-title">
@@ -274,7 +294,7 @@
     </template>
 
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="app.js?v=backtest-labels-1"></script>
+    <script src="app.js?v=algorithm-test-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
   </body>

@@ -157,6 +157,13 @@
       marketBearWarning: "Bear market regime; multiplier capped",
       highVolatilityWarning: "High weekly volatility",
       severeDrawdownWarning: "Severe drawdown; manual review required",
+      algorithmTestEyebrow: "Algorithm test",
+      algorithmTestTitle: "Algorithm Test Panel",
+      algorithmTestInput: "decision_change",
+      algorithmTestSafety: "This test panel is manual decision support only. It does not change real portfolio data, market data, signals, or trade plans.",
+      invalidAlgorithmTestInput: "Enter a valid decision_change number.",
+      testScenario: "Test scenario",
+      testOnly: "Test only",
       smoothMultiplierReason: "Recent pullback is {move}, so the smooth dip-buy model set the multiplier to {multiplier}.",
       smoothRiseReason: "Recent strength is {move}, so the smooth model reduced the multiplier to {multiplier}.",
       smoothNeutralReason: "Recent move is mild, so the smooth model keeps the multiplier near {multiplier}.",
@@ -249,6 +256,7 @@
       total: "Total",
       scoreLabel: "Score",
       riskLabel: "Risk",
+      actionLabel: "suggested_action",
       safetyDisclaimer: "This is manual decision support only. It does not place trades automatically, does not require broker login, and does not execute real orders. Review all signals, prices, risks, and available cash before placing any order yourself.",
       enterTicker: "Enter a ticker or company name.",
       searching: "Searching...",
@@ -440,6 +448,7 @@
       total: "合计",
       scoreLabel: "分数",
       riskLabel: "风险",
+      actionLabel: "建议动作",
       safetyDisclaimer: "本工具只提供手动决策参考，不会自动下单，也不需要券商登录。实际买卖前，请自行确认信号、价格、风险和可用资金。",
       enterTicker: "请输入股票代码或公司名称。",
       searching: "搜索中...",
@@ -535,6 +544,13 @@
       marketBearWarning: "市场处于熊市阶段，买入倍数已限制",
       highVolatilityWarning: "周波动率偏高",
       severeDrawdownWarning: "回撤较深，请手动复核",
+      algorithmTestEyebrow: "算法测试",
+      algorithmTestTitle: "算法测试面板",
+      algorithmTestInput: "decision_change",
+      algorithmTestSafety: "此面板仅用于手动决策测试，不会修改真实组合、市场数据、信号或操作计划。",
+      invalidAlgorithmTestInput: "请输入有效的 decision_change 数字。",
+      testScenario: "测试场景",
+      testOnly: "仅测试",
       useManualOverride: "使用手动输入",
       details: "详情",
       hide: "收起"
@@ -583,6 +599,9 @@
   const portfolioRiskSummaryEl = document.getElementById("portfolioRiskSummary");
   const runBacktestBtn = document.getElementById("runBacktestBtn");
   const backtestSummaryEl = document.getElementById("backtestSummary");
+  const algorithmTestInput = document.getElementById("algorithmTestInput");
+  const algorithmTestPresetsEl = document.getElementById("algorithmTestPresets");
+  const algorithmTestResultEl = document.getElementById("algorithmTestResult");
   const languageToggle = document.getElementById("languageToggle");
   const deploymentStatusEl = document.getElementById("deploymentStatus");
   const saveDeploymentBtn = document.getElementById("saveDeploymentBtn");
@@ -610,6 +629,7 @@
   refreshBtn.addEventListener("click", refreshMarketData);
   copyBtn.addEventListener("click", copyOrderList);
   if (runBacktestBtn) runBacktestBtn.addEventListener("click", runBacktestComparison);
+  if (algorithmTestInput) algorithmTestInput.addEventListener("input", renderAlgorithmTestPanel);
   if (languageToggle) languageToggle.addEventListener("click", toggleLanguage);
   if (saveDeploymentBtn) saveDeploymentBtn.addEventListener("click", saveDeploymentFromForm);
   if (resetDeploymentBtn) resetDeploymentBtn.addEventListener("click", resetDeploymentDefaults);
@@ -636,6 +656,8 @@
   renderDeploymentSettings();
   renderPortfolioTotal();
   renderPortfolioRiskInputs();
+  renderAlgorithmTestPresets();
+  renderAlgorithmTestPanel();
   renderSkeleton();
   refreshMarketData();
 
@@ -674,6 +696,7 @@
     state.panicActive = typeof state.qqqSignal === "number" && state.qqqSignal <= CONFIG.qqqPanicThreshold;
     applyManualOverrides();
     render();
+    renderAlgorithmTestPanel();
 
     state.loading = false;
     refreshBtn.disabled = false;
@@ -1410,6 +1433,10 @@
     return t("regimeNeutral");
   }
 
+  function localizeMarketRegime(regime) {
+    return displayMarketRegime(regime && regime.type);
+  }
+
   function buildSignalObject(stock, row) {
     const decisionChange = getDecisionChange(row);
     const manualOverrideActive = isFiniteNumber(state.overrides[stock.symbol]);
@@ -1622,7 +1649,7 @@
     }
     if (signal.algorithm && signal.algorithm.market_regime) {
       reasons.push(t("marketRegimeReason", {
-        regime: signal.algorithm.market_regime.label,
+        regime: localizeMarketRegime(signal.algorithm.market_regime),
         cap: formatMultiplier(signal.algorithm.market_regime.max_multiplier)
       }));
     }
@@ -2191,6 +2218,135 @@
     renderBacktestMessage(t("backtestIntro"));
   }
 
+  function renderAlgorithmTestPresets() {
+    if (!algorithmTestPresetsEl) return;
+    algorithmTestPresetsEl.innerHTML = "";
+    [-2, -5, -10, -15, -25, 5, 10].forEach(function (value) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "algorithm-test-preset";
+      button.textContent = formatSignedInput(value);
+      button.addEventListener("click", function () {
+        if (algorithmTestInput) algorithmTestInput.value = String(value);
+        renderAlgorithmTestPanel();
+      });
+      algorithmTestPresetsEl.appendChild(button);
+    });
+  }
+
+  function renderAlgorithmTestPanel() {
+    if (!algorithmTestResultEl || !algorithmTestInput) return;
+    const decisionChange = Number(String(algorithmTestInput.value || "").replace("%", "").trim());
+    if (!Number.isFinite(decisionChange)) {
+      algorithmTestResultEl.innerHTML = "";
+      const note = document.createElement("p");
+      note.className = "fine-print risk-high";
+      note.textContent = t("invalidAlgorithmTestInput");
+      algorithmTestResultEl.appendChild(note);
+      return;
+    }
+
+    const signal = buildAlgorithmTestSignal(decisionChange);
+    const metrics = [
+      [t("testScenario"), formatSigned(decisionChange) + "%"],
+      [t("multiplier"), formatMultiplier(signal.multiplier)],
+      [t("signalScore"), String(signal.signal_score)],
+      [t("signalStrength"), signal.signal_strength],
+      [t("riskLevel"), displayRiskLevel(signal.risk_level)],
+      [t("actionLabel"), displayAction(signal.suggested_action)],
+      [t("marketRegime"), localizeMarketRegime(signal.algorithm.market_regime) + " / " + formatMultiplier(signal.algorithm.regime_adjustment)],
+      [t("trendStatus"), signal.algorithm.trend.label + " / " + formatMultiplier(signal.algorithm.trend_adjustment)],
+      [t("volatilityStatus"), formatMultiplier(signal.algorithm.volatility_adjustment)],
+      [t("drawdownStatus"), formatMultiplier(signal.algorithm.drawdown_adjustment)],
+      [t("finalMultiplier"), formatMultiplier(signal.final_multiplier)]
+    ];
+
+    algorithmTestResultEl.innerHTML = "";
+    const grid = document.createElement("div");
+    grid.className = "algorithm-test-grid";
+    metrics.forEach(function (item) {
+      const block = document.createElement("div");
+      block.innerHTML = "<span></span><strong></strong>";
+      block.querySelector("span").textContent = item[0];
+      block.querySelector("strong").textContent = item[1];
+      grid.appendChild(block);
+    });
+    algorithmTestResultEl.appendChild(grid);
+    algorithmTestResultEl.appendChild(createAlgorithmTestTextBlock(t("reason"), signal.reason));
+    algorithmTestResultEl.appendChild(createAlgorithmTestTextBlock(t("warning"), signal.warning));
+  }
+
+  function buildAlgorithmTestSignal(decisionChange) {
+    const marketRegime = state.marketRegime || getNeutralMarketRegime("QQQ");
+    const algorithm = calculateEnhancedLowFrequencyMultiplier(
+      "__TEST__",
+      decisionChange,
+      null,
+      decisionChange,
+      marketRegime
+    );
+    const baseBuyAmount = 100;
+    const signal = {
+      symbol: "__TEST__",
+      latest_price: null,
+      daily_change: null,
+      weekly_change: decisionChange,
+      decision_change: decisionChange,
+      multiplier: algorithm.multiplier,
+      base_buy_amount: baseBuyAmount,
+      suggested_buy_amount: round2(baseBuyAmount * algorithm.multiplier),
+      signal_score: 0,
+      signal_strength: t("signalDataNeeded"),
+      suggested_action: "DO_NOT_BUY",
+      risk_level: "Medium",
+      reason: "",
+      warning: "",
+      data_source: t("testOnly"),
+      data_freshness: "fresh",
+      data_age_hours: 0,
+      manual_override_active: false,
+      panic_active: false,
+      algorithm,
+      raw_smooth_multiplier: algorithm.raw_smooth_multiplier,
+      volatility_adjustment: algorithm.volatility_adjustment,
+      regime_adjustment: algorithm.regime_adjustment,
+      trend_adjustment: algorithm.trend_adjustment,
+      drawdown_adjustment: algorithm.drawdown_adjustment,
+      portfolio_adjustment: 1,
+      final_multiplier: algorithm.final_multiplier,
+      final_suggested_buy_amount: round2(baseBuyAmount * algorithm.final_multiplier),
+      note: ""
+    };
+    signal.signal_score = calculateSignalScore({
+      decisionChange: signal.decision_change,
+      weeklyChange: signal.weekly_change,
+      dailyChange: signal.daily_change,
+      multiplier: signal.multiplier,
+      panicActive: signal.panic_active,
+      dataSource: signal.data_source,
+      dataAgeHours: signal.data_age_hours,
+      manualOverrideActive: signal.manual_override_active,
+      algorithm: signal.algorithm
+    });
+    signal.risk_level = calculateRiskLevel(signal);
+    signal.suggested_action = getSuggestedAction(signal);
+    signal.signal_strength = getSignalStrength(signal);
+    signal.suggested_buy_amount = calculateRiskAdjustedBuyAmount(signal);
+    signal.final_suggested_buy_amount = signal.suggested_buy_amount;
+    signal.reason = generateSignalReason(signal);
+    signal.warning = generateSignalWarning(signal);
+    return signal;
+  }
+
+  function createAlgorithmTestTextBlock(label, value) {
+    const block = document.createElement("div");
+    block.className = "algorithm-test-note";
+    block.innerHTML = "<span></span><p></p>";
+    block.querySelector("span").textContent = label;
+    block.querySelector("p").textContent = value;
+    return block;
+  }
+
   function clearBacktestResult() {
     state.backtestResult = null;
     if (backtestSummaryEl) {
@@ -2446,7 +2602,7 @@
     if (labels[2]) labels[2].textContent = t("volatilityStatus");
     if (labels[3]) labels[3].textContent = t("drawdownStatus");
     if (labels[4]) labels[4].textContent = t("finalMultiplier");
-    setAlgoField(details, "market", signal.algorithm.market_regime ? signal.algorithm.market_regime.label : t("regimeNeutral"));
+    setAlgoField(details, "market", signal.algorithm.market_regime ? localizeMarketRegime(signal.algorithm.market_regime) : t("regimeNeutral"));
     setAlgoField(details, "trend", signal.algorithm.trend ? signal.algorithm.trend.label : t("trendMixed"));
     setAlgoField(details, "volatility", describeVolatility(signal.algorithm.realized_weekly_volatility));
     setAlgoField(details, "drawdown", describeDrawdown(signal.algorithm.drawdown));
@@ -2986,6 +3142,8 @@
     renderPortfolioRiskInputs();
     renderSkeleton();
     render();
+    renderAlgorithmTestPresets();
+    renderAlgorithmTestPanel();
   }
 
   function t(key, params) {
@@ -3025,6 +3183,11 @@
     setText("#panicBanner strong", t("panicBody"));
     setText(".signals-panel .eyebrow", t("allocations"));
     setText("#holdings-title", t("thisTuesday"));
+    setText(".algorithm-test-panel .eyebrow", t("algorithmTestEyebrow"));
+    setText("#algorithm-test-title", t("algorithmTestTitle"));
+    setText("label[for='algorithmTestInput'] span", t("algorithmTestInput"));
+    setText(".algorithm-test-safety", t("algorithmTestSafety"));
+    renderAlgorithmTestPanel();
     setText(".backtest-panel .eyebrow", t("backtestEyebrow"));
     setText("#backtest-title", t("backtestTitle"));
     setText("#runBacktestBtn", t("runBacktest"));

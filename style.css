@@ -838,6 +838,92 @@ input::placeholder {
   padding: 0 16px 16px;
 }
 
+.algorithm-test-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.algorithm-test-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+  gap: 10px;
+  padding: 0 16px;
+  align-items: end;
+}
+
+.algorithm-test-controls label {
+  display: grid;
+  gap: 6px;
+  color: var(--soft);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.algorithm-test-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.algorithm-test-preset {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: rgba(22, 37, 58, 0.78);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.algorithm-test-preset:hover {
+  border-color: rgba(94, 234, 212, 0.55);
+}
+
+.algorithm-test-result {
+  display: grid;
+  gap: 10px;
+  padding: 0 16px;
+}
+
+.algorithm-test-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.algorithm-test-grid div,
+.algorithm-test-note {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.algorithm-test-grid span,
+.algorithm-test-note span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.algorithm-test-grid strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.algorithm-test-note p {
+  margin: 6px 0 0;
+  color: var(--soft);
+  line-height: 1.45;
+}
+
+.algorithm-test-safety {
+  margin: 0 16px 16px;
+}
+
 .backtest-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1079,6 +1165,8 @@ input::placeholder {
 
   .stock-search-grid,
   .portfolio-position-fields,
+  .algorithm-test-controls,
+  .algorithm-test-grid,
   .algorithm-grid {
     grid-template-columns: 1fr;
   }
@@ -1116,6 +1204,8 @@ input::placeholder {
 
   .order-text,
   .order-rows,
+  .algorithm-test-controls,
+  .algorithm-test-result,
   .backtest-summary,
   .source-list,
   .fine-print {
