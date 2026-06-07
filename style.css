@@ -1919,3 +1919,105 @@ input::placeholder {
   }
 }
 
+/* Two-line stock row layout */
+@media (min-width: 1024px) {
+  .stock-card {
+    min-height: 180px !important;
+    grid-template-rows: 1fr 1fr !important;
+    align-content: center !important;
+    row-gap: 18px !important;
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
+  }
+
+  .stock-card h3 {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+  }
+
+  .allocation {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+  }
+
+  .action-badge {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+  }
+
+  .price-row {
+    grid-column: 4 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+  }
+
+  .source-badge {
+    grid-column: 12 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+  }
+
+  .remove-stock {
+    grid-column: 13 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+  }
+
+  .stock-values > div:nth-child(1) {
+    grid-column: 5 !important;
+    grid-row: 2 !important;
+  }
+
+  .stock-values > div:nth-child(2) {
+    grid-column: 6 !important;
+    grid-row: 2 !important;
+  }
+
+  .stock-values > div:nth-child(3) {
+    grid-column: 7 !important;
+    grid-row: 2 !important;
+  }
+
+  .stock-values > div:nth-child(4) {
+    grid-column: 8 !important;
+    grid-row: 2 !important;
+  }
+
+  .stock-values > div:nth-child(5) {
+    grid-column: 9 !important;
+    grid-row: 2 !important;
+  }
+
+  .stock-values > div:nth-child(6) {
+    grid-column: 10 !important;
+    grid-row: 2 !important;
+  }
+
+  .stock-values > div:nth-child(7) {
+    grid-column: 11 !important;
+    grid-row: 2 !important;
+  }
+
+  .stock-details-row {
+    grid-column: 1 / -1 !important;
+    grid-row: 1 / span 2 !important;
+    display: grid !important;
+    grid-template-columns: var(--stock-table-columns) !important;
+    grid-template-rows: 1fr 1fr !important;
+    pointer-events: none !important;
+  }
+
+  .stock-details-row > summary {
+    grid-column: 13 !important;
+    grid-row: 2 !important;
+    align-self: center !important;
+    pointer-events: auto !important;
+  }
+
+  .note {
+    display: none !important;
+  }
+}
