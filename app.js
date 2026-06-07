@@ -1772,6 +1772,8 @@
       input.value = state.overrides[stock.symbol] === undefined ? "" : formatSignedInput(state.overrides[stock.symbol]);
       card.querySelector(".source-badge").textContent = t("loading");
       card.querySelector(".weekly-change").textContent = t("loading");
+      card.querySelector(".daily-change").textContent = "--";
+      card.querySelector(".five-day-change").textContent = "--";
       card.querySelector(".signal-strength").textContent = t("loading");
       card.querySelector(".risk-level").textContent = t("loading");
       card.querySelector(".multiplier").textContent = "1x";
@@ -1804,6 +1806,10 @@
       card.querySelector(".source-badge").className = "source-badge";
       card.querySelector(".note").textContent = t("fetchingMarketData");
       card.querySelector(".weekly-change").textContent = t("loading");
+      const dailyMetric = card.querySelector(".daily-change");
+      const fiveDayMetric = card.querySelector(".five-day-change");
+      if (dailyMetric) dailyMetric.textContent = "--";
+      if (fiveDayMetric) fiveDayMetric.textContent = "--";
       card.querySelector(".signal-strength").textContent = t("loading");
       card.querySelector(".risk-level").textContent = t("loading");
       card.querySelector(".decision-reason").textContent = t("refreshingMarketData");
@@ -2571,14 +2577,16 @@
     card.querySelector(".risk-level").textContent = displayRiskLevel(signal.risk_level);
     card.querySelector(".multiplier").textContent = formatMultiplier(signal.multiplier);
     card.querySelector(".buy-amount").textContent = "CAD " + signal.suggested_buy_amount.toFixed(2);
-    card.querySelector(".price").textContent = isFiniteNumber(signal.latest_price) ? t("price") + " " + formatPrice(signal.latest_price) : t("priceUnavailable");
+    const priceText = isFiniteNumber(signal.latest_price) ? formatPrice(signal.latest_price) : "--";
+    card.querySelector(".price").textContent = isFiniteNumber(signal.latest_price) ? t("price") + " " + priceText : t("priceUnavailable");
+    setChangeMetric(card.querySelector(".daily-change"), signal.daily_change);
+    setChangeMetric(card.querySelector(".five-day-change"), signal.weekly_change);
     card.querySelector(".decision-reason").textContent = signal.reason;
     card.querySelector(".decision-warning").textContent = signal.warning;
     updateAlgorithmDetails(card, signal);
 
     const panicText = signal.panic_active ? " + panic 1.3x" : "";
-    const signalText = formatSignalNote(signal);
-    card.querySelector(".note").textContent = [signal.note, signalText, panicText.trim()]
+    card.querySelector(".note").textContent = [signal.note, panicText.trim()]
       .filter(Boolean)
       .join("; ");
   }
@@ -2586,6 +2594,14 @@
   function ensureSignalFields(card) {
     const stockValues = card.querySelector(".stock-values");
     if (stockValues) {
+      if (!stockValues.querySelector(".daily-change")) {
+        stockValues.insertBefore(createMetric("1D", "daily-change"), stockValues.firstChild || null);
+      }
+
+      if (!stockValues.querySelector(".five-day-change")) {
+        stockValues.insertBefore(createMetric("5D", "five-day-change"), stockValues.children[1] || null);
+      }
+
       const signalScore = stockValues.querySelector(".weekly-change");
       if (signalScore && signalScore.previousElementSibling) {
         signalScore.previousElementSibling.textContent = t("signalScore");
@@ -2617,8 +2633,8 @@
       context.appendChild(summary);
       context.appendChild(createTextBlock(t("reason"), "decision-reason"));
       context.appendChild(createTextBlock(t("warning"), "decision-warning"));
-      const priceRow = card.querySelector(".price-row");
-      card.insertBefore(context, priceRow || null);
+      const anchor = card.querySelector(".algorithm-details") || card.querySelector(".override-row");
+      card.insertBefore(context, anchor || null);
     }
 
     if (!card.querySelector(".algorithm-details")) {
@@ -2635,8 +2651,8 @@
         "</div>",
         "<p class=\"algorithm-explanation\"></p>"
       ].join("");
-      const priceRow = card.querySelector(".price-row");
-      card.insertBefore(details, priceRow || null);
+      const anchor = card.querySelector(".override-row");
+      card.insertBefore(details, anchor || null);
     }
   }
 
@@ -2662,6 +2678,17 @@
   function setAlgoField(root, field, value) {
     const element = root.querySelector('[data-algo-field="' + field + '"]');
     if (element) element.textContent = value;
+  }
+
+  function setChangeMetric(element, value) {
+    if (!element) return;
+    element.className = element.className.replace(/\bpositive\b|\bnegative\b/g, "").trim();
+    if (!isFiniteNumber(value)) {
+      element.textContent = "--";
+      return;
+    }
+    element.textContent = formatSigned(value) + "%";
+    element.classList.add(value >= 0 ? "positive" : "negative");
   }
 
   function describeVolatility(value) {
@@ -3378,11 +3405,13 @@
   function translateTemplateLabels() {
     document.querySelectorAll(".stock-card").forEach(function (card) {
       const labels = card.querySelectorAll(".stock-values span");
-      if (labels[0]) labels[0].textContent = t("signalScore");
-      if (labels[1]) labels[1].textContent = t("signalStrength");
-      if (labels[2]) labels[2].textContent = t("riskLevel");
-      if (labels[3]) labels[3].textContent = t("multiplier");
-      if (labels[4]) labels[4].textContent = t("buy");
+      if (labels[0]) labels[0].textContent = "1D";
+      if (labels[1]) labels[1].textContent = "5D";
+      if (labels[2]) labels[2].textContent = t("signalScore");
+      if (labels[3]) labels[3].textContent = t("signalStrength");
+      if (labels[4]) labels[4].textContent = t("riskLevel");
+      if (labels[5]) labels[5].textContent = t("multiplier");
+      if (labels[6]) labels[6].textContent = t("buy");
       const reason = card.querySelector(".decision-reason");
       const warning = card.querySelector(".decision-warning");
       if (reason && reason.previousElementSibling) reason.previousElementSibling.textContent = t("reason");

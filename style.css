@@ -467,7 +467,6 @@ input::placeholder {
     "values"
     "context"
     "algorithm"
-    "price"
     "override";
   gap: 8px;
   min-width: 0;
@@ -480,6 +479,10 @@ input::placeholder {
 .stock-topline {
   grid-area: topline;
   min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
 }
 
 .stock-actions {
@@ -566,10 +569,6 @@ input::placeholder {
   line-height: 1.45;
 }
 
-.price-row {
-  grid-area: price;
-}
-
 .override-row {
   grid-area: override;
 }
@@ -591,7 +590,6 @@ input::placeholder {
   display: none;
 }
 
-.stock-topline,
 .price-row,
 .override-actions {
   display: flex;
@@ -675,7 +673,7 @@ input::placeholder {
 
 .stock-values {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
   gap: 6px;
 }
 
@@ -694,11 +692,15 @@ input::placeholder {
   font-size: 0.95rem;
 }
 
-.weekly-change.negative {
+.weekly-change.negative,
+.daily-change.negative,
+.five-day-change.negative {
   color: var(--danger);
 }
 
-.weekly-change.positive {
+.weekly-change.positive,
+.daily-change.positive,
+.five-day-change.positive {
   color: var(--accent);
 }
 
@@ -1292,24 +1294,25 @@ input::placeholder {
   }
 
   .stock-card {
-    grid-template-columns: 250px minmax(0, 1fr);
     grid-template-areas:
-      "topline values"
-      "price values"
-      "override context"
-      "algorithm algorithm";
+      "topline"
+      "values"
+      "context"
+      "algorithm"
+      "override";
     align-items: start;
-    gap: 8px 14px;
+    gap: 8px;
     padding: 10px;
   }
 
   .stock-topline {
-    display: grid;
-    gap: 6px;
+    grid-template-columns: 250px minmax(0, 1fr) minmax(180px, 0.45fr);
+    align-items: center;
+    gap: 10px;
   }
 
   .stock-values {
-    grid-template-columns: repeat(5, minmax(110px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   }
 
   .decision-context {
@@ -1323,8 +1326,9 @@ input::placeholder {
 
   .price-row {
     display: grid;
-    justify-items: start;
-    gap: 6px;
+    justify-items: end;
+    gap: 4px;
+    text-align: right;
   }
 
   .override-row {

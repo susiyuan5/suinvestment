@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=desktop-proportions-1">
+    <link rel="stylesheet" href="style.css?v=stock-card-row-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
   </head>
@@ -279,7 +279,7 @@
     <template id="stockCardTemplate">
       <article class="stock-card">
         <div class="stock-topline">
-          <div>
+          <div class="stock-identity">
             <h3></h3>
             <span class="allocation"></span>
           </div>
@@ -287,9 +287,21 @@
             <span class="source-badge"></span>
             <button class="remove-stock" type="button" aria-label="Remove stock">Remove</button>
           </div>
+          <div class="price-row">
+            <span class="price"></span>
+            <span class="note"></span>
+          </div>
         </div>
 
         <div class="stock-values">
+          <div>
+            <span>1D</span>
+            <strong class="daily-change"></strong>
+          </div>
+          <div>
+            <span>5D</span>
+            <strong class="five-day-change"></strong>
+          </div>
           <div>
             <span>signal_score</span>
             <strong class="weekly-change"></strong>
@@ -324,11 +336,6 @@
           </div>
         </details>
 
-        <div class="price-row">
-          <span class="price"></span>
-          <span class="note"></span>
-        </div>
-
         <details class="override-row">
           <summary>Manual Override</summary>
           <input class="override-input" type="text" inputmode="decimal" autocomplete="off" placeholder="Manual weekly %, e.g. -9.2">
@@ -341,7 +348,7 @@
     </template>
 
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="app.js?v=desktop-proportions-1"></script>
+    <script src="app.js?v=stock-card-row-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
   </body>
