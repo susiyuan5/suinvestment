@@ -1842,3 +1842,90 @@ input::placeholder {
     padding-right: 14px;
   }
 }
+/* Manual stock table layout fix */
+@media (min-width: 720px) {
+  .stock-list-shell {
+    --stock-table-columns: 90px 76px 100px 90px 70px 70px 60px 76px 64px 72px 96px 86px 82px;
+    overflow-x: auto;
+  }
+
+  .stock-list-header,
+  .stock-card {
+    display: grid;
+    grid-template-columns: var(--stock-table-columns);
+    align-items: center;
+    min-width: 1132px;
+  }
+
+  .stock-list-header {
+    gap: 0;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-weight: 900;
+  }
+
+  .stock-card {
+    min-height: 66px;
+    padding: 8px 10px;
+    gap: 0;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: #0b111a;
+  }
+
+  .stock-card > *,
+  .stock-list-header > * {
+    min-width: 0;
+    padding-right: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stock-topline,
+  .stock-values,
+  .price-row,
+  .stock-actions {
+    display: contents;
+  }
+
+  .decision-context,
+  .algorithm-details,
+  .override-row {
+    display: none !important;
+  }
+
+  .stock-details-row {
+    grid-column: 1 / -1;
+  }
+
+  .stock-details-row:not([open]) > :not(summary) {
+    display: none !important;
+  }
+
+  .stock-details-row > summary {
+    display: inline-flex;
+    width: fit-content;
+    min-height: 30px;
+    padding: 6px 10px;
+    margin-top: 6px;
+  }
+
+  .price,
+  .daily-change,
+  .five-day-change,
+  .weekly-change,
+  .signal-strength,
+  .risk-level,
+  .multiplier,
+  .buy-amount,
+  .source-badge,
+  .action-badge {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
