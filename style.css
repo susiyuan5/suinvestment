@@ -488,9 +488,10 @@ input::placeholder {
 .stock-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 6px;
   min-width: 0;
+  justify-self: start;
 }
 
 .stock-values {
@@ -598,6 +599,10 @@ input::placeholder {
   gap: 8px;
 }
 
+.price-row {
+  justify-self: stretch;
+}
+
 .allocation {
   display: inline-block;
   margin-top: 2px;
@@ -673,7 +678,7 @@ input::placeholder {
 
 .stock-values {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 6px;
 }
 
@@ -1306,13 +1311,13 @@ input::placeholder {
   }
 
   .stock-topline {
-    grid-template-columns: 250px minmax(0, 1fr) minmax(180px, 0.45fr);
+    grid-template-columns: minmax(180px, max-content) auto minmax(220px, 1fr);
     align-items: center;
     gap: 10px;
   }
 
   .stock-values {
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   }
 
   .decision-context {
@@ -1433,11 +1438,15 @@ input::placeholder {
     grid-template-columns: 1fr;
   }
 
-  .stock-topline,
   .price-row,
   .override-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .stock-topline {
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .tool-details summary {
