@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=stock-card-full-width-1">
+    <link rel="stylesheet" href="style.css?v=stock-row-list-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
   </head>
@@ -116,7 +116,24 @@
               <div id="stockSearchResults" class="stock-search-results" aria-live="polite"></div>
             </div>
 
-            <div id="cards" class="cards-grid"></div>
+            <div class="stock-list-shell">
+              <div class="stock-list-header" aria-hidden="true">
+                <span>Symbol</span>
+                <span>Allocation</span>
+                <span>Action</span>
+                <span>Price</span>
+                <span>1D</span>
+                <span>5D</span>
+                <span>Score</span>
+                <span>Strength</span>
+                <span>Risk</span>
+                <span>Multiplier</span>
+                <span>Suggested Buy</span>
+                <span>Source</span>
+                <span>Controls</span>
+              </div>
+              <div id="cards" class="cards-grid"></div>
+            </div>
           </section>
 
           <section class="panel research-panel" aria-labelledby="research-title">
@@ -283,14 +300,13 @@
             <h3></h3>
             <span class="allocation"></span>
           </div>
-          <div class="stock-actions">
-            <span class="source-badge"></span>
-            <button class="remove-stock" type="button" aria-label="Remove stock">Remove</button>
-          </div>
+          <span class="action-badge"></span>
           <div class="price-row">
             <span class="price"></span>
             <span class="note"></span>
           </div>
+          <span class="source-badge"></span>
+          <button class="remove-stock" type="button" aria-label="Remove stock">Remove</button>
         </div>
 
         <div class="stock-values">
@@ -324,31 +340,44 @@
           </div>
         </div>
 
-        <details class="decision-context">
-          <summary>reason / warning</summary>
-          <div>
-            <span>reason</span>
-            <p class="decision-reason"></p>
-          </div>
-          <div>
-            <span>warning</span>
-            <p class="decision-warning"></p>
-          </div>
-        </details>
-
-        <details class="override-row">
-          <summary>Manual Override</summary>
-          <input class="override-input" type="text" inputmode="decimal" autocomplete="off" placeholder="Manual weekly %, e.g. -9.2">
-          <div class="override-actions">
-            <button class="apply-override" type="button">Apply Override</button>
-            <button class="clear-override" type="button">Clear Override</button>
-          </div>
+        <details class="stock-details-row">
+          <summary>Details</summary>
+          <details class="decision-context">
+            <summary>reason / warning</summary>
+            <div>
+              <span>reason</span>
+              <p class="decision-reason"></p>
+            </div>
+            <div>
+              <span>warning</span>
+              <p class="decision-warning"></p>
+            </div>
+          </details>
+          <details class="algorithm-details">
+            <summary>Algorithm Details</summary>
+            <div class="algorithm-grid">
+              <div><span></span><strong data-algo-field="market"></strong></div>
+              <div><span></span><strong data-algo-field="trend"></strong></div>
+              <div><span></span><strong data-algo-field="volatility"></strong></div>
+              <div><span></span><strong data-algo-field="drawdown"></strong></div>
+              <div><span></span><strong data-algo-field="final"></strong></div>
+            </div>
+            <p class="algorithm-explanation"></p>
+          </details>
+          <details class="override-row">
+            <summary>Manual Override</summary>
+            <input class="override-input" type="text" inputmode="decimal" autocomplete="off" placeholder="Manual weekly %, e.g. -9.2">
+            <div class="override-actions">
+              <button class="apply-override" type="button">Apply Override</button>
+              <button class="clear-override" type="button">Clear Override</button>
+            </div>
+          </details>
         </details>
       </article>
     </template>
 
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="app.js?v=stock-card-full-width-1"></script>
+    <script src="app.js?v=stock-row-list-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
   </body>

@@ -210,6 +210,11 @@
       riskLevel: "risk_level",
       multiplier: "Multiplier",
       buy: "Buy",
+      suggestedBuy: "Suggested Buy",
+      symbol: "Symbol",
+      action: "Action",
+      source: "Source",
+      controls: "Controls",
       reason: "reason",
       warning: "warning",
       overridePlaceholder: "Manual weekly %, e.g. -9.2",
@@ -410,6 +415,11 @@
       riskLevel: "风险等级",
       multiplier: "买入倍数",
       buy: "建议买入",
+      suggestedBuy: "建议买入",
+      symbol: "代码",
+      action: "建议",
+      source: "来源",
+      controls: "操作",
       reason: "原因",
       warning: "提示",
       overridePlaceholder: "手动周涨跌 %, 例如 -9.2",
@@ -1771,6 +1781,7 @@
       const input = card.querySelector(".override-input");
       input.value = state.overrides[stock.symbol] === undefined ? "" : formatSignedInput(state.overrides[stock.symbol]);
       card.querySelector(".source-badge").textContent = t("loading");
+      card.querySelector(".action-badge").textContent = t("loading");
       card.querySelector(".weekly-change").textContent = t("loading");
       card.querySelector(".daily-change").textContent = "--";
       card.querySelector(".five-day-change").textContent = "--";
@@ -1804,6 +1815,8 @@
     cardsEl.querySelectorAll(".stock-card").forEach(function (card) {
       card.querySelector(".source-badge").textContent = t("loading");
       card.querySelector(".source-badge").className = "source-badge";
+      card.querySelector(".action-badge").textContent = t("loading");
+      card.querySelector(".action-badge").className = "action-badge";
       card.querySelector(".note").textContent = t("fetchingMarketData");
       card.querySelector(".weekly-change").textContent = t("loading");
       const dailyMetric = card.querySelector(".daily-change");
@@ -2578,7 +2591,7 @@
     card.querySelector(".multiplier").textContent = formatMultiplier(signal.multiplier);
     card.querySelector(".buy-amount").textContent = "CAD " + signal.suggested_buy_amount.toFixed(2);
     const priceText = isFiniteNumber(signal.latest_price) ? formatPrice(signal.latest_price) : "--";
-    card.querySelector(".price").textContent = isFiniteNumber(signal.latest_price) ? t("price") + " " + priceText : t("priceUnavailable");
+    card.querySelector(".price").textContent = isFiniteNumber(signal.latest_price) ? priceText : "--";
     setChangeMetric(card.querySelector(".daily-change"), signal.daily_change);
     setChangeMetric(card.querySelector(".five-day-change"), signal.weekly_change);
     card.querySelector(".decision-reason").textContent = signal.reason;
@@ -3308,6 +3321,7 @@
     setText("label[for='stockAllocationInput'] span", t("allocationPercent"));
     setText("#stockSearchBtn", state.loading ? t("searching") : t("search"));
     setPlaceholder("#stockSearchInput", t("searchPlaceholder"));
+    setStockListHeaderLabels();
     setText(".data-panel .eyebrow", t("dataSourcePriority"));
     setText("#data-title", t("liveMarketData"));
     const dataSummary = document.querySelector(".data-panel summary");
@@ -3402,6 +3416,27 @@
     });
   }
 
+  function setStockListHeaderLabels() {
+    const labels = [
+      t("symbol"),
+      t("allocationPercent").replace(" %", ""),
+      t("action"),
+      t("price"),
+      "1D",
+      "5D",
+      t("scoreLabel"),
+      t("signalStrength"),
+      t("riskLabel"),
+      t("multiplier"),
+      t("suggestedBuy"),
+      t("source"),
+      t("controls")
+    ];
+    document.querySelectorAll(".stock-list-header span").forEach(function (item, index) {
+      item.textContent = labels[index] || item.textContent;
+    });
+  }
+
   function translateTemplateLabels() {
     document.querySelectorAll(".stock-card").forEach(function (card) {
       const labels = card.querySelectorAll(".stock-values span");
@@ -3411,7 +3446,9 @@
       if (labels[3]) labels[3].textContent = t("signalStrength");
       if (labels[4]) labels[4].textContent = t("riskLevel");
       if (labels[5]) labels[5].textContent = t("multiplier");
-      if (labels[6]) labels[6].textContent = t("buy");
+      if (labels[6]) labels[6].textContent = t("suggestedBuy");
+      const rowSummary = card.querySelector(".stock-details-row > summary");
+      if (rowSummary) rowSummary.textContent = t("details");
       const reason = card.querySelector(".decision-reason");
       const warning = card.querySelector(".decision-warning");
       if (reason && reason.previousElementSibling) reason.previousElementSibling.textContent = t("reason");
