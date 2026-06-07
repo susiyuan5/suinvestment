@@ -1970,4 +1970,33 @@ input::placeholder {
     overflow: hidden !important;
     text-overflow: clip !important;
   }
+}/* Make each stock row taller and easier to read */
+@media (min-width: 720px) {
+  .stock-card {
+    min-height: 96px !important;
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+    align-items: center !important;
+  }
+
+  .stock-list-header {
+    min-height: 42px !important;
+    align-items: center !important;
+  }
+
+  .stock-card > * {
+    align-self: center !important;
+  }
+
+  .source-badge,
+  .action-badge {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .remove-stock,
+  .stock-details-row > summary {
+    min-height: 32px !important;
+  }
 }
