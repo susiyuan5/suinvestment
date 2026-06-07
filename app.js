@@ -449,7 +449,6 @@
     crashFund: document.getElementById("crashFundInput"),
     weeklyDeployment: document.getElementById("weeklyDeploymentInput")
   };
-  let apiKeyRefreshTimer = 0;
 
   if (!state.portfolio.length) {
     state.portfolio = normalizePortfolio(CONFIG.defaultStocks, { allowCustom: true });
@@ -459,27 +458,10 @@
 
   apiKeyInput.addEventListener("input", function () {
     localStorage.setItem(STORAGE_KEYS.apiKey, apiKeyInput.value.trim());
-    window.clearTimeout(apiKeyRefreshTimer);
-    apiKeyRefreshTimer = window.setTimeout(refreshMarketData, 700);
-  });
-
-  apiKeyInput.addEventListener("keydown", function (event) {
-    if (event.key === "Enter") {
-      window.clearTimeout(apiKeyRefreshTimer);
-      refreshMarketData();
-    }
   });
 
   openSettingsBtn.addEventListener("click", openSettings);
   closeSettingsBtn.addEventListener("click", closeSettings);
-  settingsModal.addEventListener("click", function (event) {
-    if (event.target === settingsModal) closeSettings();
-  });
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && !settingsModal.classList.contains("hidden")) {
-      closeSettings();
-    }
-  });
 
   refreshBtn.addEventListener("click", refreshMarketData);
   copyBtn.addEventListener("click", copyOrderList);
@@ -490,9 +472,11 @@
   Object.keys(deploymentInputs).forEach(function (field) {
     const input = deploymentInputs[field];
     if (!input) return;
-    input.addEventListener("input", function () {
-      updateDeploymentFromInput(field, input.value);
+    input.addEventListener("input", clearDeploymentStatus);
+    input.addEventListener("focus", function () {
+      input.dataset.lastEditedAt = String(Date.now());
     });
+    input.addEventListener("keydown", handleDeploymentInputKeydown);
   });
   stockSearchBtn.addEventListener("click", searchStocks);
   savePortfolioRiskBtn.addEventListener("click", savePortfolioRiskForm);
@@ -1998,6 +1982,32 @@
     render();
   }
 
+  function handleDeploymentInputKeydown(event) {
+    if (event.ctrlKey || event.metaKey) {
+      const key = event.key.toLowerCase();
+      if (["a", "c", "v", "x"].includes(key)) return;
+    }
+
+    if ([
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowUp",
+      "ArrowDown",
+      "Home",
+      "End",
+      "Tab",
+      "Enter"
+    ].includes(event.key)) {
+      return;
+    }
+
+    if (/^\d$/.test(event.key)) return;
+    if (event.key === "." && !event.currentTarget.value.includes(".")) return;
+    event.preventDefault();
+  }
+
   function saveDeploymentFromForm() {
     const parsed = {};
     const fields = Object.keys(deploymentInputs);
@@ -2014,10 +2024,7 @@
       parsed[field] = value.value;
     }
 
-    state.deployment = normalizeDeployment({
-      normalPool: parsed.normalPool,
-      crashFund: parsed.crashFund
-    });
+    state.deployment = calculateDeploymentFromEditedField(getLastEditedDeploymentField(), parsed);
     saveDeployment();
     clearBacktestResult();
     renderDeploymentSettings();
@@ -2025,6 +2032,32 @@
     applyManualOverrides();
     renderSkeleton();
     render();
+  }
+
+  function calculateDeploymentFromEditedField(field, parsed) {
+    let normalPool = parsed.normalPool;
+    let crashFund = parsed.crashFund;
+
+    if (field === "monthlyBudget") {
+      const currentTotal = state.deployment.normalPool + state.deployment.crashFund;
+      const normalRatio = currentTotal > 0 ? state.deployment.normalPool / currentTotal : 0.75;
+      normalPool = round2(parsed.monthlyBudget * normalRatio);
+      crashFund = round2(parsed.monthlyBudget - normalPool);
+    } else if (field === "weeklyDeployment") {
+      normalPool = round2(parsed.weeklyDeployment * WEEKS_PER_MONTH);
+    }
+
+    return normalizeDeployment({ normalPool, crashFund });
+  }
+
+  function getLastEditedDeploymentField() {
+    return Object.keys(deploymentInputs).reduce(function (latestField, field) {
+      const input = deploymentInputs[field];
+      if (!input) return latestField;
+      const latestTime = deploymentInputs[latestField] ? Number(deploymentInputs[latestField].dataset.lastEditedAt || 0) : 0;
+      const fieldTime = Number(input.dataset.lastEditedAt || 0);
+      return fieldTime > latestTime ? field : latestField;
+    }, "monthlyBudget");
   }
 
   function parseDeploymentNumber(value) {
@@ -2071,6 +2104,12 @@
     if (!deploymentStatusEl) return;
     deploymentStatusEl.textContent = message;
     deploymentStatusEl.classList.toggle("warning", warning);
+  }
+
+  function clearDeploymentStatus() {
+    if (!deploymentStatusEl) return;
+    deploymentStatusEl.textContent = "";
+    deploymentStatusEl.classList.remove("warning");
   }
 
   function getPositionInput(symbol, stock) {
