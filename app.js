@@ -55,6 +55,23 @@
     farOverAllocationScorePenalty: 25
   };
 
+  const LOW_FREQ_ALGO_PARAMS = {
+    marketRegimeEnabled: true,
+    trendFilterEnabled: true,
+    volatilityAdjustmentEnabled: true,
+    drawdownFilterEnabled: true,
+    targetWeeklyVolatility: 0.04,
+    maxBullMultiplier: 2.0,
+    maxNeutralMultiplier: 1.5,
+    maxCorrectionMultiplier: 1.3,
+    maxBearMultiplier: 1.1,
+    maxDrawdown20Multiplier: 1.3,
+    maxDrawdown35Multiplier: 1.1,
+    overTargetReduceThreshold: 0.05,
+    overTargetBlockThreshold: 0.10,
+    overTargetSellWatchThreshold: 0.15
+  };
+
   const I18N = {
     en: {
       pageTitle: "Quant Decision Dashboard",
@@ -76,9 +93,9 @@
       deploymentReset: "Deployment settings reset to defaults.",
       invalidDeploymentInput: "Enter a valid non-negative number.",
       backtestEyebrow: "Backtest comparison",
-      backtestTitle: "Dip-buy vs Fixed DCA",
+      backtestTitle: "Low-frequency Strategy Comparison",
       runBacktest: "Run Backtest",
-      backtestIntro: "Compare the current weekly dip-buy strategy with fixed weekly DCA using current tickers, allocations, and deployment settings.",
+      backtestIntro: "Compare enhanced low-frequency dip-buy, current smooth dip-buy, old threshold dip-buy, and fixed weekly DCA using current tickers, allocations, and deployment settings.",
       backtestRunning: "Running backtest...",
       backtestFailed: "Backtest failed. Historical data may be unavailable.",
       backtestNeedData: "Need at least two weekly prices per ticker.",
@@ -96,8 +113,50 @@
       ticker: "Ticker",
       invested: "Invested",
       backtestWindow: "Backtest window",
+      enhancedDipBuyStrategy: "Enhanced low-frequency dip-buy",
+      smoothDipBuyStrategy: "Current smooth dip-buy",
       oldDipBuyStrategy: "Old threshold dip-buy",
       beatsOld: "Beats Old Strategy",
+      beatsSmooth: "Beats Smooth Strategy",
+      bestStrategy: "Best Strategy",
+      worstStrategy: "Worst Strategy",
+      volatility: "Volatility",
+      algorithmDetails: "Algorithm Details",
+      marketRegime: "Market regime",
+      trendStatus: "Trend status",
+      volatilityStatus: "Volatility status",
+      drawdownStatus: "Drawdown status",
+      finalMultiplier: "Final multiplier",
+      rawSmooth: "raw",
+      volAdj: "vol",
+      regimeCap: "regime cap",
+      trendCap: "trend cap",
+      drawdownCap: "drawdown cap",
+      portfolioAdj: "portfolio",
+      finalMultiplierShort: "final",
+      regimeBull: "Bull",
+      regimeNeutral: "Neutral",
+      regimeCorrection: "Correction",
+      regimeBear: "Bear",
+      trendHealthyPullback: "Pullback within uptrend",
+      trendStrongDowntrend: "Strong downtrend",
+      trendMixed: "Mixed trend",
+      volatilityLow: "Low volatility",
+      volatilityNormal: "Normal volatility",
+      volatilityHigh: "High volatility",
+      drawdownNormal: "Normal drawdown",
+      drawdownModerate: "Moderate drawdown",
+      drawdownDeep: "Deep drawdown",
+      drawdownSevere: "Severe drawdown",
+      pullbackWithinUptrendReason: "Pullback within uptrend supports the dip-buy amount.",
+      marketRegimeReason: "Market regime is {regime}, so the maximum multiplier is capped at {cap}.",
+      volatilityAdjustmentReason: "Realized weekly volatility adjusted the multiplier by {adjustment}.",
+      drawdownCapReason: "Recent drawdown is {drawdown}, so the multiplier is capped for risk control.",
+      enhancedAlgorithmSummary: "Recent pullback supports buying, but trend, volatility, drawdown, market regime, and portfolio rules may cap the final amount.",
+      marketCorrectionWarning: "Market correction regime; multiplier capped",
+      marketBearWarning: "Bear market regime; multiplier capped",
+      highVolatilityWarning: "High weekly volatility",
+      severeDrawdownWarning: "Severe drawdown; manual review required",
       smoothMultiplierReason: "Recent pullback is {move}, so the smooth dip-buy model set the multiplier to {multiplier}.",
       smoothRiseReason: "Recent strength is {move}, so the smooth model reduced the multiplier to {multiplier}.",
       smoothNeutralReason: "Recent move is mild, so the smooth model keeps the multiplier near {multiplier}.",
@@ -434,6 +493,48 @@
       tickerAbove30: "单只持仓超过组合总值的 30%",
       equityAbove95: "股票仓位超过 95%",
       multipleHighRisk: "多只股票风险偏高",
+      enhancedDipBuyStrategy: "增强低频逢低买入",
+      smoothDipBuyStrategy: "当前平滑逢低买入",
+      beatsSmooth: "是否跑赢当前平滑策略",
+      bestStrategy: "最佳策略",
+      worstStrategy: "最弱策略",
+      volatility: "波动率",
+      algorithmDetails: "算法细节",
+      marketRegime: "市场环境",
+      trendStatus: "趋势状态",
+      volatilityStatus: "波动状态",
+      drawdownStatus: "回撤状态",
+      finalMultiplier: "最终倍数",
+      rawSmooth: "原始",
+      volAdj: "波动",
+      regimeCap: "市场上限",
+      trendCap: "趋势上限",
+      drawdownCap: "回撤上限",
+      portfolioAdj: "组合",
+      finalMultiplierShort: "最终",
+      regimeBull: "牛市",
+      regimeNeutral: "震荡",
+      regimeCorrection: "调整",
+      regimeBear: "熊市",
+      trendHealthyPullback: "上升趋势中的回调",
+      trendStrongDowntrend: "明显下行趋势",
+      trendMixed: "趋势混合",
+      volatilityLow: "低波动",
+      volatilityNormal: "正常波动",
+      volatilityHigh: "高波动",
+      drawdownNormal: "回撤正常",
+      drawdownModerate: "中等回撤",
+      drawdownDeep: "较深回撤",
+      drawdownSevere: "严重回撤",
+      pullbackWithinUptrendReason: "属于上升趋势中的回调，可支持正常逢低买入。",
+      marketRegimeReason: "当前市场为{regime}，买入倍数上限为 {cap}。",
+      volatilityAdjustmentReason: "近期周波动率将买入倍数调整为 {adjustment}。",
+      drawdownCapReason: "近期回撤 {drawdown}，为控制风险已限制买入倍数。",
+      enhancedAlgorithmSummary: "近期回调支持买入，但趋势、波动、回撤、市场环境和组合风险会限制最终金额。",
+      marketCorrectionWarning: "市场处于调整阶段，买入倍数已限制",
+      marketBearWarning: "市场处于熊市阶段，买入倍数已限制",
+      highVolatilityWarning: "周波动率偏高",
+      severeDrawdownWarning: "回撤较深，请手动复核",
       useManualOverride: "使用手动输入",
       details: "详情",
       hide: "收起"
@@ -444,6 +545,7 @@
     marketRows: new Map(),
     rows: new Map(),
     qqqSignal: null,
+    marketRegime: null,
     backtestResult: null,
     panicActive: false,
     loading: false,
@@ -552,6 +654,8 @@
     markCardsLoading();
 
     state.weeklySnapshot = await fetchWeeklySnapshot();
+    state.backtestSnapshot = await fetchBacktestSnapshot();
+    state.marketRegime = await fetchMarketRegime();
 
     const symbols = Array.from(new Set(state.portfolio.map(function (stock) {
       return stock.symbol;
@@ -968,6 +1072,23 @@
     }
   }
 
+  async function fetchMarketRegime() {
+    if (!LOW_FREQ_ALGO_PARAMS.marketRegimeEnabled) return getNeutralMarketRegime("QQQ");
+    try {
+      const qqqRows = await fetchBacktestWeeklyPrices("QQQ");
+      if (qqqRows.length >= 50) return calculateMarketRegimeFromPrices(qqqRows, "QQQ");
+    } catch (error) {
+      console.warn("QQQ regime data failed", error);
+    }
+    try {
+      const spyRows = await fetchBacktestWeeklyPrices("SPY");
+      if (spyRows.length >= 50) return calculateMarketRegimeFromPrices(spyRows, "SPY");
+    } catch (error) {
+      console.warn("SPY regime data failed", error);
+    }
+    return getNeutralMarketRegime("QQQ");
+  }
+
   function calculateMarketSignals(closes) {
     const latestClose = closes[closes.length - 1];
     const previousClose = closes[closes.length - 2];
@@ -1049,18 +1170,261 @@
     };
   }
 
+  function calculateEnhancedLowFrequencyMultiplier(symbol, decisionChange, dailyChange, weeklyChange, marketRegime) {
+    const smooth = calculateSmoothMultiplier(decisionChange, dailyChange, weeklyChange);
+    const history = getHistoricalPriceRows(symbol);
+    const closes = history.map(function (row) { return row.close; });
+    const trend = analyzeTickerTrend(closes, decisionChange);
+    const realizedVolatility = calculateWeeklyVolatility(closes, 12);
+    const drawdown = calculateRecentDrawdown(closes, 52);
+
+    let multiplier = smooth.multiplier;
+    let volatilityAdjustment = 1;
+    let regimeCap = LOW_FREQ_ALGO_PARAMS.maxBullMultiplier;
+    let trendCap = ALGORITHM_PARAMS.maxMultiplier;
+    let drawdownCap = ALGORITHM_PARAMS.maxMultiplier;
+
+    if (LOW_FREQ_ALGO_PARAMS.volatilityAdjustmentEnabled && isFiniteNumber(realizedVolatility) && realizedVolatility > 0) {
+      volatilityAdjustment = clamp(
+        LOW_FREQ_ALGO_PARAMS.targetWeeklyVolatility / realizedVolatility,
+        0.7,
+        1.1
+      );
+      multiplier *= volatilityAdjustment;
+    }
+
+    if (LOW_FREQ_ALGO_PARAMS.marketRegimeEnabled) {
+      regimeCap = getMarketRegimeMultiplierCap(marketRegime && marketRegime.type);
+      multiplier = Math.min(multiplier, regimeCap);
+    }
+
+    if (LOW_FREQ_ALGO_PARAMS.trendFilterEnabled && trend.status === "strong_downtrend") {
+      trendCap = trend.severe ? ALGORITHM_PARAMS.severeDowntrendMultiplier : ALGORITHM_PARAMS.maxDowntrendMultiplier;
+      multiplier = Math.min(multiplier, trendCap);
+    }
+
+    if (LOW_FREQ_ALGO_PARAMS.drawdownFilterEnabled && isFiniteNumber(drawdown)) {
+      if (drawdown > 35) drawdownCap = LOW_FREQ_ALGO_PARAMS.maxDrawdown35Multiplier;
+      else if (drawdown >= 20) drawdownCap = LOW_FREQ_ALGO_PARAMS.maxDrawdown20Multiplier;
+      multiplier = Math.min(multiplier, drawdownCap);
+    }
+
+    const finalMultiplier = round2(clamp(multiplier, ALGORITHM_PARAMS.minMultiplier, ALGORITHM_PARAMS.maxMultiplier));
+    return {
+      multiplier: finalMultiplier,
+      rawMultiplier: smooth.rawMultiplier,
+      raw_smooth_multiplier: smooth.multiplier,
+      volatility_adjustment: round2(volatilityAdjustment),
+      regime_adjustment: round2(regimeCap),
+      trend_adjustment: round2(trendCap),
+      drawdown_adjustment: round2(drawdownCap),
+      portfolio_adjustment: 1,
+      final_multiplier: finalMultiplier,
+      volatilityReduced: smooth.volatilityReduced || volatilityAdjustment < 0.99,
+      downtrendCapped: smooth.downtrendCapped || trend.status === "strong_downtrend",
+      severeDowntrend: smooth.severeDowntrend || (trend.status === "strong_downtrend" && trend.severe),
+      crashBoostApplied: smooth.crashBoostApplied,
+      trend,
+      market_regime: marketRegime || getNeutralMarketRegime(),
+      realized_weekly_volatility: isFiniteNumber(realizedVolatility) ? round2(realizedVolatility * 100) : null,
+      drawdown: isFiniteNumber(drawdown) ? round2(drawdown) : null,
+      explanation: ""
+    };
+  }
+
+  function getHistoricalPriceRows(symbol) {
+    const rows = state.backtestSnapshot && state.backtestSnapshot.symbols
+      ? state.backtestSnapshot.symbols[symbol]
+      : null;
+    if (!Array.isArray(rows)) return [];
+    return rows.map(function (row) {
+      return { date: row.date, close: Number(row.close) };
+    }).filter(function (row) {
+      return row.date && Number.isFinite(row.close) && row.close > 0;
+    });
+  }
+
+  function analyzeTickerTrend(closes, decisionChange) {
+    if (!Array.isArray(closes) || closes.length < 21) {
+      return {
+        status: "mixed",
+        label: t("trendMixed"),
+        return_4w: null,
+        return_12w: null,
+        ma20_trend: null,
+        severe: false,
+        healthy_pullback: false
+      };
+    }
+
+    const latest = closes[closes.length - 1];
+    const return4 = percentChangeFromCloses(closes, 4);
+    const return12 = percentChangeFromCloses(closes, 12);
+    const ma20 = movingAverage(closes, 20, 0);
+    const priorMa20 = movingAverage(closes, 20, 4);
+    const ma20Trend = isFiniteNumber(ma20) && isFiniteNumber(priorMa20) && priorMa20 > 0
+      ? ((ma20 - priorMa20) / priorMa20) * 100
+      : null;
+    const strongDowntrend = (
+      (isFiniteNumber(return4) && return4 <= -8 && isFiniteNumber(return12) && return12 <= -12) ||
+      (isFiniteNumber(ma20) && latest < ma20 && isFiniteNumber(ma20Trend) && ma20Trend < 0 && isFiniteNumber(return12) && return12 < 0)
+    );
+    const severe = isFiniteNumber(return12) && return12 <= -25;
+    const healthyPullback = (
+      isFiniteNumber(decisionChange) &&
+      decisionChange < 0 &&
+      isFiniteNumber(return12) &&
+      return12 > 5 &&
+      isFiniteNumber(ma20) &&
+      latest >= ma20 * 0.95 &&
+      (!isFiniteNumber(ma20Trend) || ma20Trend >= 0)
+    );
+
+    if (strongDowntrend) {
+      return {
+        status: "strong_downtrend",
+        label: t("trendStrongDowntrend"),
+        return_4w: round2(return4),
+        return_12w: round2(return12),
+        ma20_trend: isFiniteNumber(ma20Trend) ? round2(ma20Trend) : null,
+        severe,
+        healthy_pullback: false
+      };
+    }
+
+    if (healthyPullback) {
+      return {
+        status: "healthy_pullback",
+        label: t("trendHealthyPullback"),
+        return_4w: round2(return4),
+        return_12w: round2(return12),
+        ma20_trend: isFiniteNumber(ma20Trend) ? round2(ma20Trend) : null,
+        severe: false,
+        healthy_pullback: true
+      };
+    }
+
+    return {
+      status: "mixed",
+      label: t("trendMixed"),
+      return_4w: isFiniteNumber(return4) ? round2(return4) : null,
+      return_12w: isFiniteNumber(return12) ? round2(return12) : null,
+      ma20_trend: isFiniteNumber(ma20Trend) ? round2(ma20Trend) : null,
+      severe: false,
+      healthy_pullback: false
+    };
+  }
+
+  function calculateWeeklyVolatility(closes, periods) {
+    if (!Array.isArray(closes) || closes.length < 3) return null;
+    const start = Math.max(1, closes.length - periods);
+    const returns = [];
+    for (let index = start; index < closes.length; index += 1) {
+      const previous = closes[index - 1];
+      const current = closes[index];
+      if (previous > 0 && current > 0) returns.push((current - previous) / previous);
+    }
+    if (returns.length < 2) return null;
+    const average = returns.reduce(function (sum, value) { return sum + value; }, 0) / returns.length;
+    const variance = returns.reduce(function (sum, value) {
+      return sum + Math.pow(value - average, 2);
+    }, 0) / (returns.length - 1);
+    return Math.sqrt(variance);
+  }
+
+  function calculateRecentDrawdown(closes, lookback) {
+    if (!Array.isArray(closes) || !closes.length) return null;
+    const window = closes.slice(Math.max(0, closes.length - lookback));
+    const high = Math.max.apply(null, window);
+    const latest = closes[closes.length - 1];
+    return high > 0 ? ((high - latest) / high) * 100 : null;
+  }
+
+  function movingAverage(closes, length, offset) {
+    if (!Array.isArray(closes) || closes.length < length + offset) return null;
+    const end = closes.length - offset;
+    const slice = closes.slice(end - length, end);
+    return slice.reduce(function (sum, value) { return sum + value; }, 0) / slice.length;
+  }
+
+  function percentChangeFromCloses(closes, periods) {
+    if (!Array.isArray(closes) || closes.length <= periods) return null;
+    const current = closes[closes.length - 1];
+    const previous = closes[closes.length - 1 - periods];
+    return previous > 0 ? ((current - previous) / previous) * 100 : null;
+  }
+
+  function getMarketRegimeMultiplierCap(type) {
+    if (type === "Bull") return LOW_FREQ_ALGO_PARAMS.maxBullMultiplier;
+    if (type === "Correction") return LOW_FREQ_ALGO_PARAMS.maxCorrectionMultiplier;
+    if (type === "Bear") return LOW_FREQ_ALGO_PARAMS.maxBearMultiplier;
+    return LOW_FREQ_ALGO_PARAMS.maxNeutralMultiplier;
+  }
+
+  function calculateMarketRegimeFromPrices(rows, proxy) {
+    const closes = Array.isArray(rows) ? rows.map(function (row) { return Number(row.close); }).filter(function (value) {
+      return Number.isFinite(value) && value > 0;
+    }) : [];
+    if (closes.length < 50) return getNeutralMarketRegime(proxy);
+
+    const latest = closes[closes.length - 1];
+    const ma20 = movingAverage(closes, 20, 0);
+    const ma50 = movingAverage(closes, 50, 0);
+    const drawdown = calculateRecentDrawdown(closes, 52);
+    let type = "Neutral";
+
+    if (isFiniteNumber(drawdown) && drawdown > 20) type = "Bear";
+    else if (isFiniteNumber(ma50) && latest < ma50) type = "Bear";
+    else if (isFiniteNumber(ma20) && isFiniteNumber(ma50) && latest > ma20 && ma20 > ma50) type = "Bull";
+    else if (isFiniteNumber(ma20) && latest < ma20) type = "Correction";
+
+    return {
+      type,
+      label: displayMarketRegime(type),
+      proxy: proxy || "QQQ",
+      latest_price: round2(latest),
+      ma20: round2(ma20),
+      ma50: round2(ma50),
+      drawdown: isFiniteNumber(drawdown) ? round2(drawdown) : null,
+      max_multiplier: getMarketRegimeMultiplierCap(type)
+    };
+  }
+
+  function getNeutralMarketRegime(proxy) {
+    return {
+      type: "Neutral",
+      label: displayMarketRegime("Neutral"),
+      proxy: proxy || "QQQ",
+      latest_price: null,
+      ma20: null,
+      ma50: null,
+      drawdown: null,
+      max_multiplier: LOW_FREQ_ALGO_PARAMS.maxNeutralMultiplier
+    };
+  }
+
+  function displayMarketRegime(type) {
+    if (type === "Bull") return t("regimeBull");
+    if (type === "Correction") return t("regimeCorrection");
+    if (type === "Bear") return t("regimeBear");
+    return t("regimeNeutral");
+  }
+
   function buildSignalObject(stock, row) {
     const decisionChange = getDecisionChange(row);
     const manualOverrideActive = isFiniteNumber(state.overrides[stock.symbol]);
     const panicSupported = state.panicActive && CONFIG.panicSymbols.has(stock.symbol);
-    const smoothMultiplier = calculateSmoothMultiplier(
+    const enhancedMultiplier = calculateEnhancedLowFrequencyMultiplier(
+      stock.symbol,
       decisionChange,
       row && isFiniteNumber(row.dailyChange) ? row.dailyChange : null,
-      row && isFiniteNumber(row.weeklyChange) ? row.weeklyChange : null
+      row && isFiniteNumber(row.weeklyChange) ? row.weeklyChange : null,
+      state.marketRegime
     );
-    const normalMultiplier = smoothMultiplier.multiplier;
+    const normalMultiplier = enhancedMultiplier.multiplier;
     const panicMultiplier = panicSupported ? CONFIG.panicMultiplier : 1;
     const multiplier = round2(clamp(normalMultiplier * panicMultiplier, ALGORITHM_PARAMS.minMultiplier, ALGORITHM_PARAMS.maxMultiplier));
+    enhancedMultiplier.final_multiplier = multiplier;
     const baseBuyAmount = round2(state.deployment.weeklyDeployment * stock.allocation);
     const suggestedBuyAmount = round2(baseBuyAmount * multiplier);
     const dataAgeHours = row && row.fetchedAt ? (Date.now() - row.fetchedAt) / (60 * 60 * 1000) : null;
@@ -1085,7 +1449,15 @@
       data_age_hours: isFiniteNumber(dataAgeHours) ? round2(dataAgeHours) : null,
       manual_override_active: manualOverrideActive,
       panic_active: panicSupported,
-      algorithm: smoothMultiplier,
+      algorithm: enhancedMultiplier,
+      raw_smooth_multiplier: enhancedMultiplier.raw_smooth_multiplier,
+      volatility_adjustment: enhancedMultiplier.volatility_adjustment,
+      regime_adjustment: enhancedMultiplier.regime_adjustment,
+      trend_adjustment: enhancedMultiplier.trend_adjustment,
+      drawdown_adjustment: enhancedMultiplier.drawdown_adjustment,
+      portfolio_adjustment: enhancedMultiplier.portfolio_adjustment,
+      final_multiplier: multiplier,
+      final_suggested_buy_amount: suggestedBuyAmount,
       note: row && row.note ? row.note : ""
     };
 
@@ -1097,7 +1469,8 @@
       panicActive: signal.panic_active,
       dataSource: signal.data_source,
       dataAgeHours: signal.data_age_hours,
-      manualOverrideActive: signal.manual_override_active
+      manualOverrideActive: signal.manual_override_active,
+      algorithm: signal.algorithm
     });
     signal.risk_level = calculateRiskLevel(signal);
     signal.suggested_action = getSuggestedAction(signal);
@@ -1122,6 +1495,22 @@
     if (isFiniteNumber(input.weeklyChange) && Math.abs(input.weeklyChange) >= ALGORITHM_PARAMS.extremeWeeklyThreshold) score -= 12;
     if (isFiniteNumber(input.dailyChange) && Math.abs(input.dailyChange) >= ALGORITHM_PARAMS.volatilityDailyThreshold) score -= 5;
 
+    if (input.algorithm) {
+      const trend = input.algorithm.trend || {};
+      const regime = input.algorithm.market_regime || {};
+      if (trend.status === "healthy_pullback") score += 9;
+      if (trend.status === "strong_downtrend") score -= trend.severe ? 18 : 12;
+      if (isFiniteNumber(input.algorithm.realized_weekly_volatility) && input.algorithm.realized_weekly_volatility >= 6) score -= 8;
+      if (isFiniteNumber(input.algorithm.drawdown)) {
+        if (input.algorithm.drawdown > 35) score -= 20;
+        else if (input.algorithm.drawdown >= 20) score -= 10;
+        else if (input.algorithm.drawdown >= 10) score -= 3;
+      }
+      if (regime.type === "Bull") score += 4;
+      if (regime.type === "Correction") score -= 7;
+      if (regime.type === "Bear") score -= 15;
+    }
+
     if (isFiniteNumber(input.dataAgeHours)) {
       if (input.dataAgeHours > 24) score -= 20;
       else if (input.dataAgeHours > 6) score -= 8;
@@ -1144,10 +1533,13 @@
     if (!isFiniteNumber(signal.decision_change)) return "DO_NOT_BUY";
     if (signal.decision_change >= 15) return "CONSIDER_SELL";
     if (signal.risk_level === "Extreme") return "DO_NOT_BUY";
+    if (signal.algorithm && isFiniteNumber(signal.algorithm.drawdown) && signal.algorithm.drawdown > 35) return "DO_NOT_BUY";
+    if (signal.algorithm && signal.algorithm.trend && signal.algorithm.trend.status === "strong_downtrend" && signal.signal_score <= 60) return "REDUCE_BUY";
     if (signal.signal_score <= 20) return "DO_NOT_BUY";
     if (signal.signal_score <= 40) return "REDUCE_BUY";
     if (signal.signal_score <= 60) return "NORMAL_BUY";
     if (signal.signal_score <= 80) return "BUY";
+    if (signal.algorithm && signal.algorithm.market_regime && signal.algorithm.market_regime.type === "Bear") return "BUY";
     return "STRONG_BUY";
   }
 
@@ -1184,6 +1576,15 @@
     else if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 8) risk += 1;
     if (isFiniteNumber(signal.daily_change) && Math.abs(signal.daily_change) >= ALGORITHM_PARAMS.volatilityDailyThreshold) risk += 1;
     if (signal.algorithm && signal.algorithm.downtrendCapped) risk += 1;
+    if (signal.algorithm && signal.algorithm.trend && signal.algorithm.trend.status === "strong_downtrend") risk += signal.algorithm.trend.severe ? 2 : 1;
+    if (signal.algorithm && isFiniteNumber(signal.algorithm.realized_weekly_volatility) && signal.algorithm.realized_weekly_volatility >= 6) risk += 1;
+    if (signal.algorithm && isFiniteNumber(signal.algorithm.drawdown)) {
+      if (signal.algorithm.drawdown > 35) risk += 3;
+      else if (signal.algorithm.drawdown >= 20) risk += 2;
+      else if (signal.algorithm.drawdown >= 10) risk += 1;
+    }
+    if (signal.algorithm && signal.algorithm.market_regime && signal.algorithm.market_regime.type === "Correction") risk += 1;
+    if (signal.algorithm && signal.algorithm.market_regime && signal.algorithm.market_regime.type === "Bear") risk += 2;
     if (signal.panic_active) risk += 1;
     if (signal.multiplier >= 2) risk += 2;
     else if (signal.multiplier > 1.5) risk += 1;
@@ -1216,6 +1617,25 @@
 
     if (signal.algorithm && signal.algorithm.volatilityReduced) reasons.push(t("volatilityReducedReason"));
     if (signal.algorithm && signal.algorithm.downtrendCapped) reasons.push(t("downtrendCappedReason"));
+    if (signal.algorithm && signal.algorithm.trend && signal.algorithm.trend.status === "healthy_pullback") {
+      reasons.push(t("pullbackWithinUptrendReason"));
+    }
+    if (signal.algorithm && signal.algorithm.market_regime) {
+      reasons.push(t("marketRegimeReason", {
+        regime: signal.algorithm.market_regime.label,
+        cap: formatMultiplier(signal.algorithm.market_regime.max_multiplier)
+      }));
+    }
+    if (signal.algorithm && signal.algorithm.volatility_adjustment !== 1) {
+      reasons.push(t("volatilityAdjustmentReason", {
+        adjustment: formatMultiplier(signal.algorithm.volatility_adjustment)
+      }));
+    }
+    if (signal.algorithm && isFiniteNumber(signal.algorithm.drawdown) && signal.algorithm.drawdown >= 20) {
+      reasons.push(t("drawdownCapReason", {
+        drawdown: formatPercent(signal.algorithm.drawdown)
+      }));
+    }
     if (/cache|manual|unavailable/i.test(signal.data_source) || signal.manual_override_active) reasons.push(t("dataQualityReason"));
     return reasons.join(" ");
   }
@@ -1232,6 +1652,10 @@
     if (isFiniteNumber(signal.decision_change) && signal.decision_change >= 10) warnings.push(t("strongRecentRise"));
     if (signal.algorithm && signal.algorithm.volatilityReduced) warnings.push(t("volatilityReducedWarning"));
     if (signal.algorithm && signal.algorithm.downtrendCapped) warnings.push(t("downtrendCappedWarning"));
+    if (signal.algorithm && isFiniteNumber(signal.algorithm.realized_weekly_volatility) && signal.algorithm.realized_weekly_volatility >= 6) warnings.push(t("highVolatilityWarning"));
+    if (signal.algorithm && isFiniteNumber(signal.algorithm.drawdown) && signal.algorithm.drawdown > 35) warnings.push(t("severeDrawdownWarning"));
+    if (signal.algorithm && signal.algorithm.market_regime && signal.algorithm.market_regime.type === "Correction") warnings.push(t("marketCorrectionWarning"));
+    if (signal.algorithm && signal.algorithm.market_regime && signal.algorithm.market_regime.type === "Bear") warnings.push(t("marketBearWarning"));
     if (
       signal.suggested_action === "REDUCE_BUY" ||
       signal.suggested_action === "CONSIDER_SELL" ||
@@ -1406,10 +1830,13 @@
       };
 
       const originalAmount = signal.suggested_buy_amount;
-      if (position.allocation_drift >= 10 || position.current_allocation >= 30) {
+      const driftRatio = position.allocation_drift / 100;
+      if (driftRatio >= LOW_FREQ_ALGO_PARAMS.overTargetBlockThreshold || position.current_allocation >= 30) {
         signal.signal_score = clamp(signal.signal_score - ALGORITHM_PARAMS.farOverAllocationScorePenalty, 0, 100);
         signal.suggested_buy_amount = 0;
-        signal.suggested_action = position.allocation_drift >= 10 ? "CONSIDER_SELL" : "DO_NOT_BUY";
+        signal.portfolio_adjustment = 0;
+        if (signal.algorithm) signal.algorithm.portfolio_adjustment = 0;
+        signal.suggested_action = driftRatio >= LOW_FREQ_ALGO_PARAMS.overTargetSellWatchThreshold ? "CONSIDER_SELL" : "DO_NOT_BUY";
         signal.signal_strength = getSignalStrength(signal);
         addSignalReason(signal, t("farAboveTargetReason"));
         addSignalWarning(signal, t("positionAboveTarget"));
@@ -1417,9 +1844,11 @@
         return;
       }
 
-      if (position.allocation_drift > 2) {
+      if (driftRatio >= LOW_FREQ_ALGO_PARAMS.overTargetReduceThreshold) {
         signal.signal_score = clamp(signal.signal_score - ALGORITHM_PARAMS.overAllocationScorePenalty, 0, 100);
         signal.suggested_buy_amount = round2(Math.min(signal.suggested_buy_amount, signal.base_buy_amount * 0.5));
+        signal.portfolio_adjustment = 0.5;
+        if (signal.algorithm) signal.algorithm.portfolio_adjustment = 0.5;
         if (["STRONG_BUY", "BUY", "NORMAL_BUY"].includes(signal.suggested_action)) {
           signal.suggested_action = "REDUCE_BUY";
           signal.signal_strength = getSignalStrength(signal);
@@ -1431,8 +1860,12 @@
         signal.suggested_action = getSuggestedAction(signal);
         signal.signal_strength = getSignalStrength(signal);
         signal.suggested_buy_amount = calculateRiskAdjustedBuyAmount(signal);
+        signal.portfolio_adjustment = 1;
+        if (signal.algorithm) signal.algorithm.portfolio_adjustment = 1;
         addSignalReason(signal, t("belowTargetReason"));
       } else {
+        signal.portfolio_adjustment = 1;
+        if (signal.algorithm) signal.algorithm.portfolio_adjustment = 1;
         addSignalReason(signal, t("portfolioNearTargetReason"));
       }
 
@@ -1584,18 +2017,32 @@
       };
     });
 
-    const dip = simulateBacktestStrategy(aligned, "dip");
+    const enhanced = simulateBacktestStrategy(aligned, "enhanced");
+    const smooth = simulateBacktestStrategy(aligned, "smooth");
     const old = simulateBacktestStrategy(aligned, "old");
     const dca = simulateBacktestStrategy(aligned, "dca");
+    const strategies = [
+      { label: t("enhancedDipBuyStrategy"), data: enhanced },
+      { label: t("smoothDipBuyStrategy"), data: smooth },
+      { label: t("oldDipBuyStrategy"), data: old },
+      { label: t("fixedDcaStrategy"), data: dca }
+    ];
+    const ranked = strategies.slice().sort(function (left, right) {
+      return riskAdjustedBacktestScore(right.data) - riskAdjustedBacktestScore(left.data);
+    });
 
     return {
       start_date: aligned[0].prices[1].date,
       end_date: aligned[0].prices[commonLength - 1].date,
-      dip,
+      enhanced,
+      smooth,
       old,
       dca,
-      beats_dca: dip.final_value > dca.final_value,
-      beats_old: dip.final_value > old.final_value
+      beats_dca: enhanced.final_value > dca.final_value,
+      beats_old: enhanced.final_value > old.final_value,
+      beats_smooth: enhanced.final_value > smooth.final_value,
+      best_strategy: ranked[0].label,
+      worst_strategy: ranked[ranked.length - 1].label
     };
   }
 
@@ -1615,8 +2062,10 @@
     let weightedAverageNumerator = 0;
     let peakValue = 0;
     let maxDrawdown = 0;
+    const returnHistory = [];
 
     for (let index = 1; index < aligned[0].prices.length; index += 1) {
+      const marketRegime = calculateBacktestMarketRegime(aligned, index);
       aligned.forEach(function (item) {
         const symbol = item.stock.symbol;
         const current = item.prices[index].close;
@@ -1624,7 +2073,8 @@
         const weeklyReturn = previous > 0 ? ((current - previous) / previous) * 100 : 0;
         const baseAmount = state.deployment.weeklyDeployment * item.stock.allocation;
         let multiplier = 1;
-        if (mode === "dip") multiplier = getMultiplier(weeklyReturn, null, weeklyReturn);
+        if (mode === "enhanced") multiplier = calculateBacktestEnhancedMultiplier(item.prices, index, weeklyReturn, marketRegime);
+        else if (mode === "smooth") multiplier = getMultiplier(weeklyReturn, null, weeklyReturn);
         else if (mode === "old") multiplier = getOldHardThresholdMultiplier(weeklyReturn);
         const amount = mode === "dca" ? baseAmount : baseAmount * multiplier;
         if (amount <= 0 || current <= 0) return;
@@ -1641,6 +2091,8 @@
       const value = aligned.reduce(function (sum, item) {
         return sum + positions[item.stock.symbol].shares * item.prices[index].close;
       }, 0);
+      const previousValue = history.length ? history[history.length - 1].value : 0;
+      if (previousValue > 0) returnHistory.push((value - previousValue) / previousValue);
       peakValue = Math.max(peakValue, value);
       const drawdown = peakValue > 0 ? ((peakValue - value) / peakValue) * 100 : 0;
       maxDrawdown = Math.max(maxDrawdown, drawdown);
@@ -1667,10 +2119,60 @@
       total_invested: round2(totalInvested),
       total_return: totalInvested > 0 ? round2(((finalValue - totalInvested) / totalInvested) * 100) : 0,
       max_drawdown: round2(maxDrawdown),
+      volatility: round2(calculateReturnVolatility(returnHistory) * 100),
       number_of_buys: totalBuys,
       average_buy_price: totalInvested > 0 ? round2(weightedAverageNumerator / totalInvested) : 0,
       tickers: tickerRows
     };
+  }
+
+  function calculateBacktestEnhancedMultiplier(prices, index, weeklyReturn, marketRegime) {
+    const rows = prices.slice(0, index + 1);
+    const closes = rows.map(function (row) { return row.close; });
+    const smooth = calculateSmoothMultiplier(weeklyReturn, null, weeklyReturn);
+    const trend = analyzeTickerTrend(closes, weeklyReturn);
+    const volatility = calculateWeeklyVolatility(closes, 12);
+    const drawdown = calculateRecentDrawdown(closes, 52);
+    let multiplier = smooth.multiplier;
+
+    if (LOW_FREQ_ALGO_PARAMS.volatilityAdjustmentEnabled && isFiniteNumber(volatility) && volatility > 0) {
+      multiplier *= clamp(LOW_FREQ_ALGO_PARAMS.targetWeeklyVolatility / volatility, 0.7, 1.1);
+    }
+    if (LOW_FREQ_ALGO_PARAMS.marketRegimeEnabled) {
+      multiplier = Math.min(multiplier, getMarketRegimeMultiplierCap(marketRegime.type));
+    }
+    if (LOW_FREQ_ALGO_PARAMS.trendFilterEnabled && trend.status === "strong_downtrend") {
+      multiplier = Math.min(multiplier, trend.severe ? ALGORITHM_PARAMS.severeDowntrendMultiplier : ALGORITHM_PARAMS.maxDowntrendMultiplier);
+    }
+    if (LOW_FREQ_ALGO_PARAMS.drawdownFilterEnabled && isFiniteNumber(drawdown)) {
+      if (drawdown > 35) multiplier = Math.min(multiplier, LOW_FREQ_ALGO_PARAMS.maxDrawdown35Multiplier);
+      else if (drawdown >= 20) multiplier = Math.min(multiplier, LOW_FREQ_ALGO_PARAMS.maxDrawdown20Multiplier);
+    }
+    return round2(clamp(multiplier, ALGORITHM_PARAMS.minMultiplier, ALGORITHM_PARAMS.maxMultiplier));
+  }
+
+  function calculateBacktestMarketRegime(aligned, index) {
+    const synthetic = [];
+    for (let rowIndex = 0; rowIndex <= index; rowIndex += 1) {
+      const close = aligned.reduce(function (sum, item) {
+        return sum + item.prices[rowIndex].close * item.stock.allocation;
+      }, 0);
+      synthetic.push({ date: aligned[0].prices[rowIndex].date, close });
+    }
+    return calculateMarketRegimeFromPrices(synthetic, "Portfolio proxy");
+  }
+
+  function calculateReturnVolatility(returns) {
+    if (!Array.isArray(returns) || returns.length < 2) return 0;
+    const average = returns.reduce(function (sum, value) { return sum + value; }, 0) / returns.length;
+    const variance = returns.reduce(function (sum, value) {
+      return sum + Math.pow(value - average, 2);
+    }, 0) / (returns.length - 1);
+    return Math.sqrt(variance);
+  }
+
+  function riskAdjustedBacktestScore(data) {
+    return data.total_return - data.max_drawdown - data.volatility;
   }
 
   function renderBacktestMessage(message, warning) {
@@ -1708,13 +2210,19 @@
       [t("backtestWindow"), result.start_date + " - " + result.end_date],
       [t("beatsDca"), result.beats_dca ? t("yes") : t("no")],
       [t("beatsOld"), result.beats_old ? t("yes") : t("no")],
-      [t("finalValue") + " (" + t("dipBuyStrategy") + ")", formatCurrency(result.dip.final_value)],
+      [t("beatsSmooth"), result.beats_smooth ? t("yes") : t("no")],
+      [t("bestStrategy"), result.best_strategy],
+      [t("worstStrategy"), result.worst_strategy],
+      [t("finalValue") + " (" + t("enhancedDipBuyStrategy") + ")", formatCurrency(result.enhanced.final_value)],
+      [t("finalValue") + " (" + t("smoothDipBuyStrategy") + ")", formatCurrency(result.smooth.final_value)],
       [t("finalValue") + " (" + t("oldDipBuyStrategy") + ")", formatCurrency(result.old.final_value)],
       [t("finalValue") + " (" + t("fixedDcaStrategy") + ")", formatCurrency(result.dca.final_value)],
-      [t("totalReturn") + " (" + t("dipBuyStrategy") + ")", formatPercent(result.dip.total_return)],
+      [t("totalReturn") + " (" + t("enhancedDipBuyStrategy") + ")", formatPercent(result.enhanced.total_return)],
+      [t("totalReturn") + " (" + t("smoothDipBuyStrategy") + ")", formatPercent(result.smooth.total_return)],
       [t("totalReturn") + " (" + t("oldDipBuyStrategy") + ")", formatPercent(result.old.total_return)],
       [t("totalReturn") + " (" + t("fixedDcaStrategy") + ")", formatPercent(result.dca.total_return)],
-      [t("maxDrawdown") + " (" + t("dipBuyStrategy") + ")", formatPercent(result.dip.max_drawdown)],
+      [t("maxDrawdown") + " (" + t("enhancedDipBuyStrategy") + ")", formatPercent(result.enhanced.max_drawdown)],
+      [t("maxDrawdown") + " (" + t("smoothDipBuyStrategy") + ")", formatPercent(result.smooth.max_drawdown)],
       [t("maxDrawdown") + " (" + t("oldDipBuyStrategy") + ")", formatPercent(result.old.max_drawdown)],
       [t("maxDrawdown") + " (" + t("fixedDcaStrategy") + ")", formatPercent(result.dca.max_drawdown)]
     ].forEach(function (item) {
@@ -1742,13 +2250,15 @@
       "<th>" + escapeHtml(t("invested")) + "</th>",
       "<th>" + escapeHtml(t("totalReturn")) + "</th>",
       "<th>" + escapeHtml(t("maxDrawdown")) + "</th>",
+      "<th>" + escapeHtml(t("volatility")) + "</th>",
       "<th>" + escapeHtml(t("numberOfBuys")) + "</th>",
       "<th>" + escapeHtml(t("avgBuyPrice")) + "</th>",
       "</tr></thead><tbody></tbody>"
     ].join("");
     const tbody = table.querySelector("tbody");
     [
-      createBacktestRow(t("dipBuyStrategy"), result.dip),
+      createBacktestRow(t("enhancedDipBuyStrategy"), result.enhanced),
+      createBacktestRow(t("smoothDipBuyStrategy"), result.smooth),
       createBacktestRow(t("oldDipBuyStrategy"), result.old),
       createBacktestRow(t("fixedDcaStrategy"), result.dca)
     ].forEach(function (row) {
@@ -1766,6 +2276,7 @@
       formatCurrency(data.total_invested),
       formatPercent(data.total_return),
       formatPercent(data.max_drawdown),
+      formatPercent(data.volatility),
       String(data.number_of_buys),
       formatPrice(data.average_buy_price)
     ].forEach(function (value, index) {
@@ -1814,6 +2325,7 @@
       const amount = round2(rawAmount);
       entry.rawAmount = rawAmount;
       entry.signal.suggested_buy_amount = amount;
+      entry.signal.final_suggested_buy_amount = amount;
       rawTotal += rawAmount;
       roundedTotal = round2(roundedTotal + amount);
     });
@@ -1822,6 +2334,7 @@
     const pennyDifference = round2(targetTotal - roundedTotal);
     if (pennyDifference !== 0 && entries.length) {
       entries[0].signal.suggested_buy_amount = round2(entries[0].signal.suggested_buy_amount + pennyDifference);
+      entries[0].signal.final_suggested_buy_amount = entries[0].signal.suggested_buy_amount;
     }
 
     entries.forEach(function (entry) {
@@ -1869,6 +2382,7 @@
     card.querySelector(".price").textContent = isFiniteNumber(signal.latest_price) ? t("price") + " " + formatPrice(signal.latest_price) : t("priceUnavailable");
     card.querySelector(".decision-reason").textContent = signal.reason;
     card.querySelector(".decision-warning").textContent = signal.warning;
+    updateAlgorithmDetails(card, signal);
 
     const panicText = signal.panic_active ? " + panic 1.3x" : "";
     const signalText = formatSignalNote(signal);
@@ -1902,6 +2416,77 @@
       const priceRow = card.querySelector(".price-row");
       card.insertBefore(context, priceRow || null);
     }
+
+    if (!card.querySelector(".algorithm-details")) {
+      const details = document.createElement("details");
+      details.className = "algorithm-details";
+      details.innerHTML = [
+        "<summary></summary>",
+        "<div class=\"algorithm-grid\">",
+        "<div><span></span><strong data-algo-field=\"market\"></strong></div>",
+        "<div><span></span><strong data-algo-field=\"trend\"></strong></div>",
+        "<div><span></span><strong data-algo-field=\"volatility\"></strong></div>",
+        "<div><span></span><strong data-algo-field=\"drawdown\"></strong></div>",
+        "<div><span></span><strong data-algo-field=\"final\"></strong></div>",
+        "</div>",
+        "<p class=\"algorithm-explanation\"></p>"
+      ].join("");
+      const priceRow = card.querySelector(".price-row");
+      card.insertBefore(details, priceRow || null);
+    }
+  }
+
+  function updateAlgorithmDetails(card, signal) {
+    const details = card.querySelector(".algorithm-details");
+    if (!details || !signal.algorithm) return;
+    details.querySelector("summary").textContent = t("algorithmDetails");
+    const labels = details.querySelectorAll(".algorithm-grid span");
+    if (labels[0]) labels[0].textContent = t("marketRegime");
+    if (labels[1]) labels[1].textContent = t("trendStatus");
+    if (labels[2]) labels[2].textContent = t("volatilityStatus");
+    if (labels[3]) labels[3].textContent = t("drawdownStatus");
+    if (labels[4]) labels[4].textContent = t("finalMultiplier");
+    setAlgoField(details, "market", signal.algorithm.market_regime ? signal.algorithm.market_regime.label : t("regimeNeutral"));
+    setAlgoField(details, "trend", signal.algorithm.trend ? signal.algorithm.trend.label : t("trendMixed"));
+    setAlgoField(details, "volatility", describeVolatility(signal.algorithm.realized_weekly_volatility));
+    setAlgoField(details, "drawdown", describeDrawdown(signal.algorithm.drawdown));
+    setAlgoField(details, "final", formatMultiplier(signal.final_multiplier || signal.multiplier));
+    const explanation = details.querySelector(".algorithm-explanation");
+    if (explanation) explanation.textContent = buildAlgorithmExplanation(signal);
+  }
+
+  function setAlgoField(root, field, value) {
+    const element = root.querySelector('[data-algo-field="' + field + '"]');
+    if (element) element.textContent = value;
+  }
+
+  function describeVolatility(value) {
+    if (!isFiniteNumber(value)) return t("notProvided");
+    if (value >= 6) return t("volatilityHigh") + " " + formatPercent(value);
+    if (value <= 2.5) return t("volatilityLow") + " " + formatPercent(value);
+    return t("volatilityNormal") + " " + formatPercent(value);
+  }
+
+  function describeDrawdown(value) {
+    if (!isFiniteNumber(value)) return t("notProvided");
+    if (value > 35) return t("drawdownSevere") + " " + formatPercent(value);
+    if (value >= 20) return t("drawdownDeep") + " " + formatPercent(value);
+    if (value >= 10) return t("drawdownModerate") + " " + formatPercent(value);
+    return t("drawdownNormal") + " " + formatPercent(value);
+  }
+
+  function buildAlgorithmExplanation(signal) {
+    if (!signal.algorithm) return t("enhancedAlgorithmSummary");
+    const parts = [
+      t("rawSmooth") + " " + formatMultiplier(signal.algorithm.raw_smooth_multiplier || signal.multiplier),
+      t("volAdj") + " " + formatMultiplier(signal.algorithm.volatility_adjustment || 1),
+      t("regimeCap") + " " + formatMultiplier(signal.algorithm.regime_adjustment || LOW_FREQ_ALGO_PARAMS.maxNeutralMultiplier),
+      t("trendCap") + " " + formatMultiplier(signal.algorithm.trend_adjustment || ALGORITHM_PARAMS.maxMultiplier),
+      t("drawdownCap") + " " + formatMultiplier(signal.algorithm.drawdown_adjustment || ALGORITHM_PARAMS.maxMultiplier),
+      t("portfolioAdj") + " " + formatMultiplier(signal.portfolio_adjustment || 1),
+      t("finalMultiplierShort") + " " + formatMultiplier(signal.final_multiplier || signal.multiplier)
+    ];
+    return t("enhancedAlgorithmSummary") + " (" + parts.join(", ") + ")";
   }
 
   function createMetric(label, className) {
@@ -2530,6 +3115,9 @@
       const warning = card.querySelector(".decision-warning");
       if (reason && reason.previousElementSibling) reason.previousElementSibling.textContent = t("reason");
       if (warning && warning.previousElementSibling) warning.previousElementSibling.textContent = t("warning");
+      if (card.querySelector(".algorithm-details")) updateAlgorithmDetails(card, window.__SUINVESTMENT_SIGNALS__ && window.__SUINVESTMENT_SIGNALS__.find(function (signal) {
+        return signal.symbol === card.dataset.symbol;
+      }) || { algorithm: null, multiplier: 1 });
       const input = card.querySelector(".override-input");
       if (input) input.placeholder = t("overridePlaceholder");
       const apply = card.querySelector(".apply-override");

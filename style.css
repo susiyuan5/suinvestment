@@ -410,6 +410,7 @@ input::placeholder {
     "topline"
     "values"
     "context"
+    "algorithm"
     "price"
     "override";
   gap: 14px;
@@ -439,6 +440,56 @@ input::placeholder {
 
 .decision-context {
   grid-area: context;
+}
+
+.algorithm-details {
+  grid-area: algorithm;
+  border: 1px solid rgba(83, 120, 166, 0.38);
+  border-radius: 8px;
+  background: rgba(7, 15, 25, 0.42);
+}
+
+.algorithm-details summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.algorithm-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 12px 10px;
+}
+
+.algorithm-grid div {
+  min-width: 0;
+  border-radius: 8px;
+  padding: 8px;
+  background: rgba(22, 37, 58, 0.7);
+}
+
+.algorithm-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.algorithm-grid strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.algorithm-explanation {
+  margin: 0;
+  padding: 0 12px 12px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
 }
 
 .price-row {
@@ -1027,7 +1078,8 @@ input::placeholder {
   }
 
   .stock-search-grid,
-  .portfolio-position-fields {
+  .portfolio-position-fields,
+  .algorithm-grid {
     grid-template-columns: 1fr;
   }
 
