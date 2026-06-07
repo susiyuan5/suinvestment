@@ -312,7 +312,14 @@
       multipleHighRisk: "Multiple tickers are High or Extreme risk",
       useManualOverride: "Use manual override",
       details: "Details",
-      hide: "Hide"
+      hide: "Hide",
+      overview: "Overview",
+      dashboardSummary: "Dashboard Summary",
+      researchEyebrow: "Secondary tools",
+      researchTesting: "Research & Testing",
+      editHoldings: "Edit holdings",
+      showDetails: "Show details",
+      hideDetails: "Hide details"
     },
     zh: {
       pageTitle: "量化投资助手",
@@ -553,7 +560,14 @@
       testOnly: "仅测试",
       useManualOverride: "使用手动输入",
       details: "详情",
-      hide: "收起"
+      hide: "收起",
+      overview: "总览",
+      dashboardSummary: "面板总览",
+      researchEyebrow: "辅助工具",
+      researchTesting: "研究与测试",
+      editHoldings: "编辑持仓",
+      showDetails: "查看详情",
+      hideDetails: "收起详情"
     }
   };
 
@@ -597,6 +611,11 @@
   const savePortfolioRiskBtn = document.getElementById("savePortfolioRiskBtn");
   const portfolioPositionInputsEl = document.getElementById("portfolioPositionInputs");
   const portfolioRiskSummaryEl = document.getElementById("portfolioRiskSummary");
+  const overviewWeeklyDeploymentEl = document.getElementById("overviewWeeklyDeployment");
+  const overviewPlannedBuyTotalEl = document.getElementById("overviewPlannedBuyTotal");
+  const overviewOverallRiskEl = document.getElementById("overviewOverallRisk");
+  const overviewMarketRegimeEl = document.getElementById("overviewMarketRegime");
+  const overviewAvailableCashEl = document.getElementById("overviewAvailableCash");
   const runBacktestBtn = document.getElementById("runBacktestBtn");
   const backtestSummaryEl = document.getElementById("backtestSummary");
   const algorithmTestInput = document.getElementById("algorithmTestInput");
@@ -628,7 +647,13 @@
 
   refreshBtn.addEventListener("click", refreshMarketData);
   copyBtn.addEventListener("click", copyOrderList);
-  if (runBacktestBtn) runBacktestBtn.addEventListener("click", runBacktestComparison);
+  if (runBacktestBtn) runBacktestBtn.addEventListener("click", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const backtestDetails = runBacktestBtn.closest("details");
+    if (backtestDetails) backtestDetails.open = true;
+    runBacktestComparison();
+  });
   if (algorithmTestInput) algorithmTestInput.addEventListener("input", renderAlgorithmTestPanel);
   if (languageToggle) languageToggle.addEventListener("click", toggleLanguage);
   if (saveDeploymentBtn) saveDeploymentBtn.addEventListener("click", saveDeploymentFromForm);
@@ -650,6 +675,12 @@
   });
   stockSearchInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") searchStocks();
+  });
+  document.querySelectorAll(".holdings-details, .order-copy-details").forEach(function (details) {
+    details.addEventListener("toggle", function () {
+      setDetailLabels(".holdings-details", t("editHoldings"), t("hideDetails"));
+      setDetailLabels(".order-copy-details", t("showDetails"), t("hideDetails"));
+    });
   });
 
   applyLanguage();
@@ -2513,6 +2544,7 @@
     lastUpdatedEl.textContent = latestTimestamp ? t("updated") + " " + formatDateTime(latestTimestamp) : t("noLiveData");
     renderPortfolioTotal();
     renderPortfolioRiskSummary(portfolioRisk);
+    renderOverviewSummary(portfolioRisk);
   }
 
   function updateCard(card, signal) {
@@ -2532,6 +2564,8 @@
     }
 
     card.querySelector(".signal-strength").textContent = signal.signal_strength;
+    card.querySelector(".action-badge").textContent = displayAction(signal.suggested_action);
+    card.querySelector(".action-badge").className = "action-badge action-" + String(signal.suggested_action || "").toLowerCase().replace(/_/g, "-");
     card.querySelector(".risk-level").textContent = displayRiskLevel(signal.risk_level);
     card.querySelector(".multiplier").textContent = formatMultiplier(signal.multiplier);
     card.querySelector(".buy-amount").textContent = "CAD " + signal.suggested_buy_amount.toFixed(2);
@@ -2561,6 +2595,15 @@
 
       if (!stockValues.querySelector(".risk-level")) {
         stockValues.insertBefore(createMetric(t("riskLevel"), "risk-level"), stockValues.children[2] || null);
+      }
+    }
+
+    if (!card.querySelector(".action-badge")) {
+      const actions = card.querySelector(".stock-actions");
+      if (actions) {
+        const badge = document.createElement("span");
+        badge.className = "action-badge";
+        actions.insertBefore(badge, actions.firstChild);
       }
     }
 
@@ -2968,6 +3011,31 @@
     setMetricValue(1, formatCurrency(state.deployment.normalPool));
     setMetricValue(2, formatCurrency(state.deployment.crashFund));
     setMetricValue(3, formatCurrency(state.deployment.weeklyDeployment));
+    renderOverviewSummary();
+  }
+
+  function renderOverviewSummary(portfolioRisk) {
+    if (overviewWeeklyDeploymentEl) overviewWeeklyDeploymentEl.textContent = formatCurrency(state.deployment.weeklyDeployment);
+    if (overviewMarketRegimeEl) {
+      overviewMarketRegimeEl.textContent = localizeMarketRegime(state.marketRegime || getNeutralMarketRegime("QQQ"));
+    }
+    if (!portfolioRisk) {
+      if (overviewPlannedBuyTotalEl) overviewPlannedBuyTotalEl.textContent = formatCurrency(0);
+      if (overviewOverallRiskEl) {
+        overviewOverallRiskEl.textContent = t("loading");
+        overviewOverallRiskEl.className = "";
+      }
+      if (overviewAvailableCashEl) overviewAvailableCashEl.textContent = state.portfolioRiskInput.available_cash_provided ? formatCurrency(readPositiveNumber(state.portfolioRiskInput.available_cash)) : t("notProvided");
+      return;
+    }
+    if (overviewPlannedBuyTotalEl) overviewPlannedBuyTotalEl.textContent = formatCurrency(portfolioRisk.total_planned_buy_amount);
+    if (overviewOverallRiskEl) {
+      overviewOverallRiskEl.textContent = displayRiskLevel(portfolioRisk.portfolio_risk_level);
+      overviewOverallRiskEl.className = "risk-" + String(portfolioRisk.portfolio_risk_level || "").toLowerCase();
+    }
+    if (overviewAvailableCashEl) {
+      overviewAvailableCashEl.textContent = portfolioRisk.available_cash_provided ? formatCurrency(portfolioRisk.available_cash) : t("notProvided");
+    }
   }
 
   function showDeploymentStatus(message, warning) {
@@ -3165,6 +3233,13 @@
     setText(".hero h1", t("heroTitle"));
     setText(".hero-copy", t("heroCopy"));
     setText(".schedule-card span", t("scheduleLabel"));
+    setText(".overview-panel .eyebrow", t("overview"));
+    setText("#overview-title", t("dashboardSummary"));
+    setOverviewLabel(0, t("weeklyDeployment"));
+    setOverviewLabel(1, t("plannedBuyTotal"));
+    setOverviewLabel(2, t("overallRisk"));
+    setOverviewLabel(3, t("marketRegime"));
+    setOverviewLabel(4, t("availableCash"));
     setText("#settings-title", t("deploymentPlan"));
     setText(".settings-panel .eyebrow", t("monthlySettings"));
     setText("#openSettingsBtn", t("settings"));
@@ -3188,6 +3263,10 @@
     setText("label[for='algorithmTestInput'] span", t("algorithmTestInput"));
     setText(".algorithm-test-safety", t("algorithmTestSafety"));
     renderAlgorithmTestPanel();
+    setText(".research-panel > .section-heading .eyebrow", t("researchEyebrow"));
+    setText("#research-title", t("researchTesting"));
+    setToolDetailLabels(".algorithm-test-panel");
+    setToolDetailLabels(".backtest-panel");
     setText(".backtest-panel .eyebrow", t("backtestEyebrow"));
     setText("#backtest-title", t("backtestTitle"));
     setText("#runBacktestBtn", t("runBacktest"));
@@ -3211,6 +3290,8 @@
     setText("#savePortfolioRiskBtn", t("savePortfolio"));
     setText("label[for='availableCashInput'] span", t("availableCash"));
     setPlaceholder("#availableCashInput", t("availableCashPlaceholder"));
+    setDetailLabels(".holdings-details", t("editHoldings"), t("hideDetails"));
+    setDetailLabels(".order-copy-details", t("showDetails"), t("hideDetails"));
     setText(".order-panel .eyebrow", t("copyOrderList"));
     setText("#order-title", t("manualTradePlan"));
     setText("#copyBtn", t("copy"));
@@ -3224,6 +3305,7 @@
     setAria("#closeSettingsBtn", t("closePriceSettings"));
     if (languageToggle) languageToggle.textContent = "中文 / EN";
     translateTemplateLabels();
+    renderOverviewSummary(window.__SUINVESTMENT_PORTFOLIO_RISK__);
   }
 
   function setText(selector, value) {
@@ -3244,6 +3326,28 @@
   function setMetricLabel(index, value) {
     const element = document.querySelectorAll(".metrics-grid .metric span")[index];
     if (element) element.textContent = value;
+  }
+
+  function setOverviewLabel(index, value) {
+    const element = document.querySelectorAll(".overview-grid .overview-card span")[index];
+    if (element) element.textContent = value;
+  }
+
+  function setDetailLabels(selector, closedLabel, openLabel) {
+    const details = document.querySelector(selector);
+    const summary = details ? details.querySelector(":scope > summary") : null;
+    if (!summary) return;
+    summary.setAttribute("data-label", closedLabel);
+    summary.setAttribute("data-open-label", openLabel);
+    summary.textContent = details.open ? openLabel : closedLabel;
+  }
+
+  function setToolDetailLabels(selector) {
+    const details = document.querySelector(selector);
+    const summary = details ? details.querySelector(":scope > summary") : null;
+    if (!summary) return;
+    summary.setAttribute("data-label", t("showDetails"));
+    summary.setAttribute("data-open-label", t("hideDetails"));
   }
 
   function setMetricValue(index, value) {

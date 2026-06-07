@@ -59,16 +59,16 @@ input:focus-visible {
 }
 
 .app-shell {
-  width: min(1280px, 100%);
+  width: min(1320px, 100%);
   margin: 0 auto;
-  padding: 20px 14px 48px;
+  padding: 14px 14px 48px;
 }
 
 .hero {
   position: relative;
   display: grid;
-  gap: 18px;
-  padding: max(24px, env(safe-area-inset-top)) 4px 20px;
+  gap: 12px;
+  padding: max(16px, env(safe-area-inset-top)) 4px 14px;
 }
 
 .eyebrow {
@@ -89,8 +89,8 @@ p {
 
 h1 {
   margin: 0;
-  font-size: clamp(2.45rem, 8vw, 5.35rem);
-  line-height: 0.94;
+  font-size: clamp(2rem, 6vw, 4.25rem);
+  line-height: 0.96;
   letter-spacing: 0;
 }
 
@@ -109,7 +109,7 @@ h3 {
 
 .hero-copy {
   max-width: 38rem;
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: var(--soft);
   font-size: 1rem;
 }
@@ -118,7 +118,7 @@ h3 {
   align-self: end;
   display: grid;
   gap: 4px;
-  padding: 16px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(16, 23, 34, 0.82);
@@ -137,7 +137,7 @@ h3 {
 }
 
 .schedule-card strong {
-  font-size: 1.55rem;
+  font-size: 1.28rem;
 }
 
 .language-toggle {
@@ -162,6 +162,54 @@ h3 {
   gap: 14px;
 }
 
+.overview-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(16, 23, 34, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.overview-heading {
+  display: grid;
+  gap: 10px;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.overview-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.overview-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.overview-card strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.deployment-overview {
+  margin-bottom: 14px;
+}
+
 .main-column,
 .dashboard-sidebar {
   display: grid;
@@ -183,6 +231,14 @@ h3 {
 .data-panel,
 .portfolio-risk-panel {
   padding: 16px;
+}
+
+.deployment-overview .section-heading {
+  margin-bottom: 10px;
+}
+
+.deployment-overview .metric {
+  padding: 10px 12px;
 }
 
 .section-heading {
@@ -527,6 +583,31 @@ input::placeholder {
   font-weight: 900;
 }
 
+.action-badge {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid rgba(79, 195, 161, 0.55);
+  border-radius: 999px;
+  color: #b6ffeb;
+  background: rgba(79, 195, 161, 0.12);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.action-do-not-buy,
+.action-consider-sell {
+  border-color: rgba(255, 92, 122, 0.55);
+  color: #ffd5df;
+  background: rgba(255, 92, 122, 0.1);
+}
+
+.action-reduce-buy,
+.action-hold {
+  border-color: rgba(255, 200, 87, 0.55);
+  color: #ffe1a0;
+  background: rgba(255, 200, 87, 0.1);
+}
+
 .source-badge.finnhub {
   border-color: rgba(79, 195, 161, 0.6);
   color: #9ff1dc;
@@ -609,6 +690,10 @@ input::placeholder {
   color: var(--soft);
   font-size: 0.9rem;
   line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .decision-warning {
@@ -728,6 +813,74 @@ input::placeholder {
   list-style: none;
 }
 
+.tool-details,
+.holdings-details,
+.order-copy-details {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.tool-details + .tool-details {
+  margin-top: 10px;
+}
+
+.tool-details summary,
+.holdings-details summary,
+.order-copy-details summary {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tool-details summary::-webkit-details-marker,
+.holdings-details summary::-webkit-details-marker,
+.order-copy-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.tool-details summary {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.tool-details summary::after {
+  content: attr(data-label);
+  justify-self: start;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: #0c1320;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.tool-details[open] summary::after {
+  content: attr(data-open-label);
+}
+
+.holdings-details summary,
+.order-copy-details summary {
+  color: var(--soft);
+  font-weight: 900;
+}
+
+.holdings-details .portfolio-position-inputs {
+  padding: 0 10px 10px;
+}
+
+.order-copy-details {
+  margin-top: 8px;
+}
+
+.order-copy-details .order-text {
+  margin: 0 10px 10px;
+}
+
 .data-panel summary::-webkit-details-marker {
   display: none;
 }
@@ -756,7 +909,7 @@ input::placeholder {
 .portfolio-risk-form {
   display: grid;
   gap: 12px;
-  margin: 0 0 14px;
+  margin: 14px 0 0;
 }
 
 .portfolio-risk-form label {
@@ -841,6 +994,14 @@ input::placeholder {
 .algorithm-test-panel {
   display: grid;
   gap: 12px;
+}
+
+.research-panel {
+  padding-bottom: 14px;
+}
+
+.research-panel .tool-details {
+  margin: 0 14px;
 }
 
 .algorithm-test-controls {
@@ -1006,19 +1167,28 @@ input::placeholder {
 
 @media (min-width: 720px) {
   .app-shell {
-    padding: 34px 22px 64px;
+    padding: 20px 22px 64px;
   }
 
   .hero {
     grid-template-columns: 1fr 220px;
     align-items: end;
-    padding-bottom: 28px;
+    padding-bottom: 16px;
   }
 
   .language-toggle {
     position: absolute;
-    top: 34px;
+    top: 20px;
     right: 4px;
+  }
+
+  .overview-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .overview-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .section-heading,
@@ -1065,10 +1235,11 @@ input::placeholder {
   }
 
   .stock-card {
-    grid-template-columns: minmax(160px, 0.72fr) minmax(0, 1.55fr);
+    grid-template-columns: minmax(155px, 0.7fr) minmax(0, 1.6fr);
     grid-template-areas:
       "topline values"
       "price values"
+      "algorithm algorithm"
       "context context"
       "override override";
     align-items: start;
@@ -1107,7 +1278,7 @@ input::placeholder {
 
 @media (min-width: 1024px) {
   .dashboard-layout {
-    grid-template-columns: minmax(0, 1fr) 384px;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);
     align-items: start;
     gap: 18px;
   }
@@ -1142,11 +1313,19 @@ input::placeholder {
   }
 
   .order-text {
-    max-height: 260px;
+    max-height: 230px;
   }
 }
 
 @media (max-width: 719px) {
+  .hero {
+    padding-bottom: 10px;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 13vw, 3rem);
+  }
+
   .section-heading.compact {
     padding: 14px 14px 0;
   }
@@ -1178,6 +1357,14 @@ input::placeholder {
     flex-direction: column;
   }
 
+  .tool-details summary {
+    grid-template-columns: 1fr;
+  }
+
+  .tool-details summary .secondary-button {
+    width: 100%;
+  }
+
   .stock-actions {
     justify-content: stretch;
   }
@@ -1188,6 +1375,7 @@ input::placeholder {
 
   .override-actions button,
   .stock-search-grid button,
+  #openSettingsBtn,
   #copyBtn,
   #savePortfolioRiskBtn {
     width: 100%;

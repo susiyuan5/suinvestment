@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=algorithm-test-1">
+    <link rel="stylesheet" href="style.css?v=layout-hierarchy-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
   </head>
@@ -24,38 +24,68 @@
         <button id="languageToggle" class="language-toggle" type="button" aria-label="Switch language">中文 / EN</button>
       </header>
 
+      <section class="overview-panel" aria-labelledby="overview-title">
+        <div class="overview-heading">
+          <div>
+            <p class="eyebrow">Overview</p>
+            <h2 id="overview-title">Dashboard Summary</h2>
+          </div>
+          <button id="openSettingsBtn" class="primary-button" type="button">Settings</button>
+        </div>
+        <div class="overview-grid">
+          <article class="overview-card">
+            <span>Weekly Deployment</span>
+            <strong id="overviewWeeklyDeployment">CAD 69.23</strong>
+          </article>
+          <article class="overview-card">
+            <span>Planned Buy Total</span>
+            <strong id="overviewPlannedBuyTotal">CAD 0.00</strong>
+          </article>
+          <article class="overview-card">
+            <span>Overall Risk</span>
+            <strong id="overviewOverallRisk">Loading</strong>
+          </article>
+          <article class="overview-card">
+            <span>Market Regime</span>
+            <strong id="overviewMarketRegime">Neutral</strong>
+          </article>
+          <article class="overview-card">
+            <span>Available Cash</span>
+            <strong id="overviewAvailableCash">Not provided</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel settings-panel deployment-overview" aria-labelledby="settings-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Monthly settings</p>
+            <h2 id="settings-title">Deployment Plan</h2>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <article class="metric">
+            <span>Monthly Budget</span>
+            <strong>CAD 400.00</strong>
+          </article>
+          <article class="metric">
+            <span>Normal Pool</span>
+            <strong>CAD 300.00</strong>
+          </article>
+          <article class="metric">
+            <span>Crash Fund</span>
+            <strong>CAD 100.00</strong>
+          </article>
+          <article class="metric">
+            <span>Weekly Deployment</span>
+            <strong>CAD 69.23</strong>
+          </article>
+        </div>
+      </section>
+
       <main class="dashboard-layout">
         <div class="main-column">
-          <section class="panel settings-panel" aria-labelledby="settings-title">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">Monthly settings</p>
-                <h2 id="settings-title">Deployment Plan</h2>
-              </div>
-              <button id="openSettingsBtn" class="primary-button" type="button">Settings</button>
-            </div>
-
-            <div class="metrics-grid">
-              <article class="metric">
-                <span>Monthly Budget</span>
-                <strong>CAD 400.00</strong>
-              </article>
-              <article class="metric">
-                <span>Normal Pool</span>
-                <strong>CAD 300.00</strong>
-              </article>
-              <article class="metric">
-                <span>Crash Fund</span>
-                <strong>CAD 100.00</strong>
-              </article>
-              <article class="metric">
-                <span>Weekly Deployment</span>
-                <strong>CAD 69.23</strong>
-              </article>
-            </div>
-
-          </section>
-
           <section id="panicBanner" class="panic-banner hidden" aria-live="polite">
             <span>PANIC MODE ACTIVE</span>
             <strong>QQQ buy signal is at or below -10%</strong>
@@ -89,37 +119,46 @@
             <div id="cards" class="cards-grid"></div>
           </section>
 
-          <section class="panel algorithm-test-panel" aria-labelledby="algorithm-test-title">
+          <section class="panel research-panel" aria-labelledby="research-title">
             <div class="section-heading compact">
               <div>
-                <p class="eyebrow">Algorithm test</p>
-                <h2 id="algorithm-test-title">Algorithm Test Panel</h2>
+                <p class="eyebrow">Secondary tools</p>
+                <h2 id="research-title">Research & Testing</h2>
               </div>
             </div>
-            <div class="algorithm-test-controls">
-              <label for="algorithmTestInput">
-                <span>decision_change</span>
-                <input id="algorithmTestInput" type="text" inputmode="decimal" autocomplete="off" value="-5">
-              </label>
-              <div id="algorithmTestPresets" class="algorithm-test-presets" aria-label="Preset decision_change values"></div>
-            </div>
-            <div id="algorithmTestResult" class="algorithm-test-result" aria-live="polite"></div>
-            <p class="fine-print algorithm-test-safety">
-              This test panel is manual decision support only. It does not change real portfolio data, market data, signals, or trade plans.
-            </p>
-          </section>
 
-          <section class="panel backtest-panel" aria-labelledby="backtest-title">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">Backtest comparison</p>
-                <h2 id="backtest-title">Dip-buy vs Fixed DCA</h2>
+            <details class="tool-details algorithm-test-panel">
+              <summary>
+                <span>
+                  <span class="eyebrow">Algorithm test</span>
+                  <strong id="algorithm-test-title">Algorithm Test Panel</strong>
+                </span>
+              </summary>
+              <div class="algorithm-test-controls">
+                <label for="algorithmTestInput">
+                  <span>decision_change</span>
+                  <input id="algorithmTestInput" type="text" inputmode="decimal" autocomplete="off" value="-5">
+                </label>
+                <div id="algorithmTestPresets" class="algorithm-test-presets" aria-label="Preset decision_change values"></div>
               </div>
-              <button id="runBacktestBtn" class="secondary-button" type="button">Run Backtest</button>
-            </div>
-            <div id="backtestSummary" class="backtest-summary" aria-live="polite">
-              <p class="fine-print">Compare the current weekly dip-buy strategy with fixed weekly DCA using current tickers, allocations, and deployment settings.</p>
-            </div>
+              <div id="algorithmTestResult" class="algorithm-test-result" aria-live="polite"></div>
+              <p class="fine-print algorithm-test-safety">
+                This test panel is manual decision support only. It does not change real portfolio data, market data, signals, or trade plans.
+              </p>
+            </details>
+
+            <details class="tool-details backtest-panel">
+              <summary>
+                <span>
+                  <span class="eyebrow">Backtest comparison</span>
+                  <strong id="backtest-title">Dip-buy vs Fixed DCA</strong>
+                </span>
+                <button id="runBacktestBtn" class="secondary-button" type="button">Run Backtest</button>
+              </summary>
+              <div id="backtestSummary" class="backtest-summary" aria-live="polite">
+                <p class="fine-print">Compare the current weekly dip-buy strategy with fixed weekly DCA using current tickers, allocations, and deployment settings.</p>
+              </div>
+            </details>
           </section>
 
           <details class="panel data-panel">
@@ -151,15 +190,18 @@
               <button id="savePortfolioRiskBtn" class="secondary-button" type="button">Save Portfolio</button>
             </div>
 
+            <div id="portfolioRiskSummary" class="portfolio-risk-summary" aria-live="polite"></div>
+
             <div class="portfolio-risk-form">
               <label for="availableCashInput">
                 <span>Available Cash</span>
                 <input id="availableCashInput" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD available cash">
               </label>
-              <div id="portfolioPositionInputs" class="portfolio-position-inputs" aria-live="polite"></div>
+              <details class="holdings-details">
+                <summary>Edit holdings</summary>
+                <div id="portfolioPositionInputs" class="portfolio-position-inputs" aria-live="polite"></div>
+              </details>
             </div>
-
-            <div id="portfolioRiskSummary" class="portfolio-risk-summary" aria-live="polite"></div>
           </section>
 
           <section class="panel order-panel" aria-labelledby="order-title">
@@ -171,7 +213,10 @@
               <button id="copyBtn" class="secondary-button" type="button">Copy</button>
             </div>
             <div id="orderRows" class="order-rows" aria-live="polite"></div>
-            <pre id="orderText" class="order-text copy-buffer"></pre>
+            <details class="order-copy-details">
+              <summary>Show details</summary>
+              <pre id="orderText" class="order-text copy-buffer"></pre>
+            </details>
             <p id="copyStatus" class="status-line" role="status"></p>
           </section>
         </aside>
@@ -294,7 +339,7 @@
     </template>
 
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="app.js?v=algorithm-test-1"></script>
+    <script src="app.js?v=layout-hierarchy-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
   </body>
