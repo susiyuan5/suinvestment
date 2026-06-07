@@ -461,6 +461,9 @@ input::placeholder {
 }
 
 .stock-list-shell {
+  --stock-table-columns: 90px 76px 100px 90px 70px 70px 60px 76px 64px 72px 96px 86px 82px;
+  --stock-table-content-width: 1032px;
+  --stock-table-width: 1052px;
   min-width: 0;
 }
 
@@ -1352,9 +1355,7 @@ input::placeholder {
     grid-template-areas:
       "topline"
       "values"
-      "context"
-      "algorithm"
-      "override";
+      "details";
     align-items: start;
     gap: 8px;
     padding: 10px;
@@ -1395,36 +1396,27 @@ input::placeholder {
   .stock-list-shell {
     border: 1px solid rgba(36, 49, 68, 0.72);
     border-radius: 8px;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: visible;
     background: rgba(9, 16, 27, 0.55);
   }
 
   .stock-list-header,
   .stock-card {
-    grid-template-columns:
-      minmax(72px, 1fr)
-      minmax(70px, 0.8fr)
-      minmax(96px, 1fr)
-      minmax(92px, 0.95fr)
-      minmax(54px, 0.62fr)
-      minmax(54px, 0.62fr)
-      minmax(56px, 0.62fr)
-      minmax(78px, 0.82fr)
-      minmax(64px, 0.7fr)
-      minmax(66px, 0.72fr)
-      minmax(88px, 0.95fr)
-      minmax(68px, 0.72fr)
-      minmax(74px, 0.72fr);
+    grid-template-columns: var(--stock-table-columns);
+    min-width: var(--stock-table-width);
+    box-sizing: border-box;
   }
 
   .stock-list-header {
     display: grid;
-    gap: 6px;
+    gap: 0;
     align-items: center;
-    padding: 8px 10px;
+    min-height: 34px;
+    padding: 0 10px;
     border-bottom: 1px solid rgba(36, 49, 68, 0.72);
     color: var(--muted);
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     font-weight: 900;
     letter-spacing: 0;
     text-transform: uppercase;
@@ -1432,6 +1424,7 @@ input::placeholder {
 
   .stock-list-header span {
     min-width: 0;
+    padding-right: 8px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1445,10 +1438,10 @@ input::placeholder {
   .stock-card {
     display: grid;
     grid-template-areas: none;
-    gap: 6px;
+    gap: 0;
     align-items: center;
-    min-height: 64px;
-    padding: 8px 10px;
+    min-height: 60px;
+    padding: 6px 10px;
     border: 0;
     border-bottom: 1px solid rgba(36, 49, 68, 0.62);
     border-radius: 0;
@@ -1461,9 +1454,18 @@ input::placeholder {
 
   .stock-topline,
   .stock-identity,
-  .stock-values,
-  .stock-details-row {
+  .stock-values {
     display: contents;
+  }
+
+  .stock-details-row {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: var(--stock-table-columns);
+    align-items: center;
+    min-width: 0;
+    pointer-events: none;
   }
 
   .stock-card h3,
@@ -1475,12 +1477,14 @@ input::placeholder {
   .remove-stock,
   .stock-details-row > summary {
     min-width: 0;
+    grid-row: 1;
     align-self: center;
+    padding-right: 8px;
   }
 
   .stock-card h3 {
     grid-column: 1;
-    font-size: 1rem;
+    font-size: 0.98rem;
     line-height: 1.1;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1490,7 +1494,7 @@ input::placeholder {
   .allocation {
     grid-column: 2;
     margin: 0;
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1500,10 +1504,11 @@ input::placeholder {
   .action-badge {
     grid-column: 3;
     justify-self: start;
-    max-width: 100%;
-    min-height: 28px;
-    padding: 0 9px;
-    font-size: 0.72rem;
+    width: calc(100% - 8px);
+    max-width: none;
+    min-height: 26px;
+    padding: 0 8px;
+    font-size: 0.68rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1520,6 +1525,7 @@ input::placeholder {
   .price {
     color: var(--text);
     font-weight: 900;
+    font-size: 0.84rem;
   }
 
   .note {
@@ -1557,7 +1563,7 @@ input::placeholder {
 
   .stock-values strong {
     margin: 0;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1567,10 +1573,11 @@ input::placeholder {
   .source-badge {
     grid-column: 12;
     justify-self: start;
-    max-width: 100%;
-    min-height: 26px;
+    width: calc(100% - 8px);
+    max-width: none;
+    min-height: 24px;
     padding: 0 8px;
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1581,8 +1588,8 @@ input::placeholder {
     grid-row: 1;
     align-self: start;
     justify-self: stretch;
-    min-height: 24px;
-    padding: 0 6px;
+    min-height: 22px;
+    padding: 0 5px;
     font-size: 0.66rem;
   }
 
@@ -1591,8 +1598,8 @@ input::placeholder {
     grid-row: 1;
     align-self: end;
     justify-self: stretch;
-    min-height: 24px;
-    padding: 5px 6px;
+    min-height: 22px;
+    padding: 4px 5px;
     border-radius: 7px;
     font-size: 0.66rem;
     line-height: 1;
@@ -1600,12 +1607,17 @@ input::placeholder {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    pointer-events: auto;
   }
 
   .stock-details-row[open] > .decision-context,
   .stock-details-row[open] > .algorithm-details,
   .stock-details-row[open] > .override-row {
-    grid-column: 1 / -1;
+    grid-area: auto !important;
+    grid-column: 1 / -1 !important;
+    grid-row: auto;
+    width: var(--stock-table-content-width);
+    max-width: var(--stock-table-content-width);
     margin-top: 4px;
   }
 
