@@ -3394,6 +3394,8 @@
       }) || { algorithm: null, multiplier: 1 });
       const input = card.querySelector(".override-input");
       if (input) input.placeholder = t("overridePlaceholder");
+      const overrideSummary = card.querySelector(".override-row > summary");
+      if (overrideSummary) overrideSummary.textContent = t("manualOverride");
       const apply = card.querySelector(".apply-override");
       if (apply) apply.textContent = t("applyOverride");
       const clear = card.querySelector(".clear-override");

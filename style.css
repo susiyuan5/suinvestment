@@ -59,7 +59,7 @@ input:focus-visible {
 }
 
 .app-shell {
-  width: min(1320px, 100%);
+  width: min(1440px, 100%);
   margin: 0 auto;
   padding: 14px 14px 48px;
 }
@@ -574,6 +574,23 @@ input::placeholder {
   grid-area: override;
 }
 
+.override-row summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 8px 10px;
+  border: 1px solid rgba(36, 49, 68, 0.72);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--panel-3);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.override-row summary::-webkit-details-marker {
+  display: none;
+}
+
 .stock-topline,
 .price-row,
 .override-actions {
@@ -738,6 +755,10 @@ input::placeholder {
   gap: 6px;
 }
 
+.override-row:not([open]) {
+  gap: 0;
+}
+
 .override-actions button {
   flex: 1 1 0;
   min-width: 0;
@@ -789,6 +810,11 @@ input::placeholder {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel-2);
+}
+
+.order-row.total strong,
+.order-row.total span {
+  font-size: 0.95rem;
 }
 
 .order-row strong {
@@ -1266,15 +1292,14 @@ input::placeholder {
   }
 
   .stock-card {
-    grid-template-columns: minmax(150px, 0.64fr) minmax(0, 1.7fr);
+    grid-template-columns: 250px minmax(0, 1fr);
     grid-template-areas:
       "topline values"
       "price values"
-      "algorithm algorithm"
-      "context context"
-      "override override";
+      "override context"
+      "algorithm algorithm";
     align-items: start;
-    gap: 8px 12px;
+    gap: 8px 14px;
     padding: 10px;
   }
 
@@ -1284,11 +1309,12 @@ input::placeholder {
   }
 
   .stock-values {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(110px, 1fr));
   }
 
   .decision-context {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-self: stretch;
   }
 
   .source-badge {
@@ -1302,16 +1328,15 @@ input::placeholder {
   }
 
   .override-row {
-    grid-template-columns: minmax(0, 1fr) minmax(248px, 0.48fr);
-    align-items: center;
+    align-items: start;
   }
 }
 
 @media (min-width: 1024px) {
   .dashboard-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);
+    grid-template-columns: minmax(0, 1fr) 320px;
     align-items: start;
-    gap: 18px;
+    gap: 16px;
   }
 
   .dashboard-sidebar {
@@ -1338,6 +1363,32 @@ input::placeholder {
 
   .dashboard-sidebar .secondary-button {
     width: auto;
+  }
+
+  .dashboard-sidebar .portfolio-risk-panel,
+  .dashboard-sidebar .order-panel {
+    padding: 12px;
+  }
+
+  .dashboard-sidebar .section-heading.compact {
+    margin-bottom: 10px;
+  }
+
+  .dashboard-sidebar .risk-metric,
+  .dashboard-sidebar .risk-list,
+  .dashboard-sidebar .order-row {
+    padding: 7px 8px;
+  }
+
+  .dashboard-sidebar .risk-metric span,
+  .dashboard-sidebar .risk-list span,
+  .dashboard-sidebar .order-row span {
+    font-size: 0.72rem;
+  }
+
+  .dashboard-sidebar .risk-metric strong,
+  .dashboard-sidebar .order-row strong {
+    font-size: 0.86rem;
   }
 
   .order-text {
