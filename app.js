@@ -37,6 +37,24 @@
 
   const WEEKS_PER_MONTH = 52 / 12;
 
+  const ALGORITHM_PARAMS = {
+    sensitivity: 4,
+    minMultiplier: 0.3,
+    maxMultiplier: 2.0,
+    strongDropThreshold: -15,
+    strongRiseThreshold: 10,
+    volatilityDailyThreshold: 8,
+    volatilityWeeklyThreshold: 15,
+    extremeWeeklyThreshold: 25,
+    maxDowntrendMultiplier: 1.5,
+    severeDowntrendMultiplier: 1.2,
+    crashBoost: 0.12,
+    volatilityReduction: 0.9,
+    underAllocationScoreBonus: 5,
+    overAllocationScorePenalty: 10,
+    farOverAllocationScorePenalty: 25
+  };
+
   const I18N = {
     en: {
       pageTitle: "Quant Decision Dashboard",
@@ -64,7 +82,7 @@
       backtestRunning: "Running backtest...",
       backtestFailed: "Backtest failed. Historical data may be unavailable.",
       backtestNeedData: "Need at least two weekly prices per ticker.",
-      dipBuyStrategy: "Weekly dip-buy",
+      dipBuyStrategy: "Smooth weekly dip-buy",
       fixedDcaStrategy: "Fixed weekly DCA",
       finalValue: "Final Value",
       totalReturn: "Total Return",
@@ -78,6 +96,18 @@
       ticker: "Ticker",
       invested: "Invested",
       backtestWindow: "Backtest window",
+      oldDipBuyStrategy: "Old threshold dip-buy",
+      beatsOld: "Beats Old Strategy",
+      smoothMultiplierReason: "Recent pullback is {move}, so the smooth dip-buy model set the multiplier to {multiplier}.",
+      smoothRiseReason: "Recent strength is {move}, so the smooth model reduced the multiplier to {multiplier}.",
+      smoothNeutralReason: "Recent move is mild, so the smooth model keeps the multiplier near {multiplier}.",
+      volatilityReducedReason: "Large recent volatility reduced the multiplier by 10%.",
+      downtrendCappedReason: "Strong downtrend detected; buy amount capped.",
+      portfolioNearTargetReason: "Position is near target allocation, so no portfolio adjustment was applied.",
+      dataQualityReason: "Data quality affected the score and action.",
+      volatilityReducedWarning: "Volatility reduced the buy amount",
+      downtrendCappedWarning: "Strong downtrend detected; buy amount capped",
+      extremeMoveWarning: "Extreme weekly move; manual review required",
       panicTitle: "PANIC MODE ACTIVE",
       panicBody: "QQQ buy signal is at or below -10%",
       allocations: "Allocations",
@@ -243,7 +273,7 @@
       backtestRunning: "正在回测...",
       backtestFailed: "回测失败，可能缺少历史数据。",
       backtestNeedData: "每只股票至少需要两条周线价格。",
-      dipBuyStrategy: "每周逢低买入",
+      dipBuyStrategy: "平滑逢低买入",
       fixedDcaStrategy: "固定每周定投",
       finalValue: "最终价值",
       totalReturn: "总收益率",
@@ -257,6 +287,18 @@
       ticker: "股票",
       invested: "投入金额",
       backtestWindow: "回测区间",
+      oldDipBuyStrategy: "旧阈值逢低买入",
+      beatsOld: "是否跑赢旧策略",
+      smoothMultiplierReason: "近期回调 {move}，平滑逢低买入模型将买入倍数调整为 {multiplier}。",
+      smoothRiseReason: "近期上涨 {move}，平滑模型将买入倍数降低为 {multiplier}。",
+      smoothNeutralReason: "近期波动不大，平滑模型将买入倍数保持在 {multiplier} 附近。",
+      volatilityReducedReason: "近期波动较大，买入倍数已下调 10%。",
+      downtrendCappedReason: "检测到较强下行趋势，已限制买入金额。",
+      portfolioNearTargetReason: "当前持仓接近目标配置，未进行组合风控调整。",
+      dataQualityReason: "数据质量已影响信号分和操作建议。",
+      volatilityReducedWarning: "波动较大，已降低买入金额",
+      downtrendCappedWarning: "下行趋势较强，买入金额已封顶",
+      extremeMoveWarning: "周波动极大，请手动复核",
       panicTitle: "恐慌模式已开启",
       panicBody: "QQQ 买入信号小于或等于 -10%",
       allocations: "配置",
@@ -949,21 +991,76 @@
     return calculateDecisionChange(row.weeklyChange, row.dailyChange);
   }
 
-  function getMultiplier(weeklyChange) {
-    if (!isFiniteNumber(weeklyChange)) return 1;
-    if (weeklyChange <= -15) return 2;
-    if (weeklyChange <= -8) return 1.5;
-    if (weeklyChange >= 10) return 0.5;
+  function getMultiplier(decisionChange, dailyChange, weeklyChange) {
+    return calculateSmoothMultiplier(decisionChange, dailyChange, weeklyChange).multiplier;
+  }
+
+  function getOldHardThresholdMultiplier(change) {
+    if (!isFiniteNumber(change)) return 1;
+    if (change <= -15) return 2;
+    if (change <= -8) return 1.5;
+    if (change >= 10) return 0.5;
     return 1;
+  }
+
+  function calculateSmoothMultiplier(decisionChange, dailyChange, weeklyChange) {
+    if (!isFiniteNumber(decisionChange)) {
+      return {
+        multiplier: 1,
+        rawMultiplier: 1,
+        volatilityReduced: false,
+        downtrendCapped: false,
+        severeDowntrend: false,
+        crashBoostApplied: false
+      };
+    }
+
+    let multiplier = 1 - ALGORITHM_PARAMS.sensitivity * decisionChange / 100;
+    const crashBoostApplied = decisionChange <= ALGORITHM_PARAMS.strongDropThreshold;
+    if (crashBoostApplied) multiplier += ALGORITHM_PARAMS.crashBoost;
+
+    const volatilityReduced = (
+      isFiniteNumber(dailyChange) && Math.abs(dailyChange) >= ALGORITHM_PARAMS.volatilityDailyThreshold
+    );
+    if (volatilityReduced) multiplier *= ALGORITHM_PARAMS.volatilityReduction;
+
+    const weeklyAbs = isFiniteNumber(weeklyChange) ? Math.abs(weeklyChange) : 0;
+    const severeDowntrend = isFiniteNumber(weeklyChange) && weeklyChange <= -ALGORITHM_PARAMS.extremeWeeklyThreshold;
+    const downtrendCapped = (
+      isFiniteNumber(weeklyChange) &&
+      isFiniteNumber(dailyChange) &&
+      weeklyChange <= -ALGORITHM_PARAMS.volatilityWeeklyThreshold &&
+      dailyChange < 0
+    );
+
+    if (severeDowntrend) {
+      multiplier = Math.min(multiplier, ALGORITHM_PARAMS.severeDowntrendMultiplier);
+    } else if (downtrendCapped || weeklyAbs >= ALGORITHM_PARAMS.extremeWeeklyThreshold) {
+      multiplier = Math.min(multiplier, ALGORITHM_PARAMS.maxDowntrendMultiplier);
+    }
+
+    return {
+      multiplier: round2(clamp(multiplier, ALGORITHM_PARAMS.minMultiplier, ALGORITHM_PARAMS.maxMultiplier)),
+      rawMultiplier: round2(multiplier),
+      volatilityReduced,
+      downtrendCapped: downtrendCapped || severeDowntrend,
+      severeDowntrend,
+      crashBoostApplied
+    };
   }
 
   function buildSignalObject(stock, row) {
     const decisionChange = getDecisionChange(row);
     const manualOverrideActive = isFiniteNumber(state.overrides[stock.symbol]);
     const panicSupported = state.panicActive && CONFIG.panicSymbols.has(stock.symbol);
-    const normalMultiplier = getMultiplier(decisionChange);
+    const smoothMultiplier = calculateSmoothMultiplier(
+      decisionChange,
+      row && isFiniteNumber(row.dailyChange) ? row.dailyChange : null,
+      row && isFiniteNumber(row.weeklyChange) ? row.weeklyChange : null
+    );
+    const normalMultiplier = smoothMultiplier.multiplier;
     const panicMultiplier = panicSupported ? CONFIG.panicMultiplier : 1;
-    const multiplier = normalMultiplier * panicMultiplier;
+    const multiplier = round2(clamp(normalMultiplier * panicMultiplier, ALGORITHM_PARAMS.minMultiplier, ALGORITHM_PARAMS.maxMultiplier));
     const baseBuyAmount = round2(state.deployment.weeklyDeployment * stock.allocation);
     const suggestedBuyAmount = round2(baseBuyAmount * multiplier);
     const dataAgeHours = row && row.fetchedAt ? (Date.now() - row.fetchedAt) / (60 * 60 * 1000) : null;
@@ -988,6 +1085,7 @@
       data_age_hours: isFiniteNumber(dataAgeHours) ? round2(dataAgeHours) : null,
       manual_override_active: manualOverrideActive,
       panic_active: panicSupported,
+      algorithm: smoothMultiplier,
       note: row && row.note ? row.note : ""
     };
 
@@ -1016,16 +1114,13 @@
     let score = 50;
     const move = input.decisionChange;
 
-    if (move <= -15) score += 35;
-    else if (move <= -8) score += 22;
-    else if (move < 0) score += 8;
+    if (move < 0) score += Math.min(36, Math.abs(move) * 2.4);
+    if (move > 0) score -= Math.min(36, move * 2.8);
 
-    if (isFiniteNumber(input.weeklyChange) && input.weeklyChange <= -20) score += 6;
-    if (isFiniteNumber(input.dailyChange) && input.dailyChange <= -8) score += 5;
-
-    if (move >= 15) score -= 35;
-    else if (move >= 10) score -= 25;
-    else if (move >= 5) score -= 10;
+    if (isFiniteNumber(input.weeklyChange) && input.weeklyChange <= -20) score += 4;
+    if (isFiniteNumber(input.dailyChange) && input.dailyChange <= -8) score += 3;
+    if (isFiniteNumber(input.weeklyChange) && Math.abs(input.weeklyChange) >= ALGORITHM_PARAMS.extremeWeeklyThreshold) score -= 12;
+    if (isFiniteNumber(input.dailyChange) && Math.abs(input.dailyChange) >= ALGORITHM_PARAMS.volatilityDailyThreshold) score -= 5;
 
     if (isFiniteNumber(input.dataAgeHours)) {
       if (input.dataAgeHours > 24) score -= 20;
@@ -1039,9 +1134,7 @@
     if (/unavailable/i.test(input.dataSource)) score -= 45;
 
     if (input.panicActive) score += 6;
-    if (input.multiplier >= 2) score += 8;
-    else if (input.multiplier > 1) score += 5;
-    else if (input.multiplier < 1) score -= 10;
+    score += (input.multiplier - 1) * 18;
 
     return clamp(Math.round(score), 0, 100);
   }
@@ -1085,8 +1178,12 @@
 
     let risk = 0;
     if (/cache|manual/i.test(signal.data_source) || signal.manual_override_active) risk += 1;
+    if (isFiniteNumber(signal.weekly_change) && Math.abs(signal.weekly_change) >= ALGORITHM_PARAMS.extremeWeeklyThreshold) risk += 3;
+    else if (isFiniteNumber(signal.weekly_change) && Math.abs(signal.weekly_change) >= ALGORITHM_PARAMS.volatilityWeeklyThreshold) risk += 2;
     if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 15) risk += 2;
     else if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 8) risk += 1;
+    if (isFiniteNumber(signal.daily_change) && Math.abs(signal.daily_change) >= ALGORITHM_PARAMS.volatilityDailyThreshold) risk += 1;
+    if (signal.algorithm && signal.algorithm.downtrendCapped) risk += 1;
     if (signal.panic_active) risk += 1;
     if (signal.multiplier >= 2) risk += 2;
     else if (signal.multiplier > 1.5) risk += 1;
@@ -1105,14 +1202,22 @@
       return t("staleReason");
     }
 
-    const move = Math.abs(signal.decision_change).toFixed(1) + "%";
-    if (signal.decision_change <= -8) {
-      return t("dropReason", { move });
+    const move = formatPercent(Math.abs(signal.decision_change));
+    const multiplier = formatMultiplier(signal.multiplier);
+    const reasons = [];
+
+    if (signal.decision_change < 0) {
+      reasons.push(t("smoothMultiplierReason", { move, multiplier }));
+    } else if (signal.decision_change > 0) {
+      reasons.push(t("smoothRiseReason", { move, multiplier }));
+    } else {
+      reasons.push(t("smoothNeutralReason", { move, multiplier }));
     }
-    if (signal.decision_change >= 10) {
-      return t("riseReason", { move });
-    }
-    return t("neutralReason");
+
+    if (signal.algorithm && signal.algorithm.volatilityReduced) reasons.push(t("volatilityReducedReason"));
+    if (signal.algorithm && signal.algorithm.downtrendCapped) reasons.push(t("downtrendCappedReason"));
+    if (/cache|manual|unavailable/i.test(signal.data_source) || signal.manual_override_active) reasons.push(t("dataQualityReason"));
+    return reasons.join(" ");
   }
 
   function generateSignalWarning(signal) {
@@ -1123,7 +1228,10 @@
     if (signal.manual_override_active) warnings.push(t("manualOverrideActive"));
     if (signal.panic_active) warnings.push(t("panicModeActive"));
     if (isFiniteNumber(signal.weekly_change) && signal.weekly_change <= -15) warnings.push(t("sharpWeeklyDrop"));
+    if (isFiniteNumber(signal.weekly_change) && Math.abs(signal.weekly_change) >= ALGORITHM_PARAMS.extremeWeeklyThreshold) warnings.push(t("extremeMoveWarning"));
     if (isFiniteNumber(signal.decision_change) && signal.decision_change >= 10) warnings.push(t("strongRecentRise"));
+    if (signal.algorithm && signal.algorithm.volatilityReduced) warnings.push(t("volatilityReducedWarning"));
+    if (signal.algorithm && signal.algorithm.downtrendCapped) warnings.push(t("downtrendCappedWarning"));
     if (
       signal.suggested_action === "REDUCE_BUY" ||
       signal.suggested_action === "CONSIDER_SELL" ||
@@ -1299,6 +1407,7 @@
 
       const originalAmount = signal.suggested_buy_amount;
       if (position.allocation_drift >= 10 || position.current_allocation >= 30) {
+        signal.signal_score = clamp(signal.signal_score - ALGORITHM_PARAMS.farOverAllocationScorePenalty, 0, 100);
         signal.suggested_buy_amount = 0;
         signal.suggested_action = position.allocation_drift >= 10 ? "CONSIDER_SELL" : "DO_NOT_BUY";
         signal.signal_strength = getSignalStrength(signal);
@@ -1309,6 +1418,7 @@
       }
 
       if (position.allocation_drift > 2) {
+        signal.signal_score = clamp(signal.signal_score - ALGORITHM_PARAMS.overAllocationScorePenalty, 0, 100);
         signal.suggested_buy_amount = round2(Math.min(signal.suggested_buy_amount, signal.base_buy_amount * 0.5));
         if (["STRONG_BUY", "BUY", "NORMAL_BUY"].includes(signal.suggested_action)) {
           signal.suggested_action = "REDUCE_BUY";
@@ -1317,7 +1427,13 @@
         addSignalReason(signal, t("aboveTargetReason"));
         addSignalWarning(signal, t("positionAboveTarget"));
       } else if (position.allocation_drift < -2 && ["STRONG_BUY", "BUY", "NORMAL_BUY"].includes(signal.suggested_action)) {
+        signal.signal_score = clamp(signal.signal_score + ALGORITHM_PARAMS.underAllocationScoreBonus, 0, 100);
+        signal.suggested_action = getSuggestedAction(signal);
+        signal.signal_strength = getSignalStrength(signal);
+        signal.suggested_buy_amount = calculateRiskAdjustedBuyAmount(signal);
         addSignalReason(signal, t("belowTargetReason"));
+      } else {
+        addSignalReason(signal, t("portfolioNearTargetReason"));
       }
 
       if (signal.suggested_buy_amount < originalAmount) {
@@ -1469,15 +1585,17 @@
     });
 
     const dip = simulateBacktestStrategy(aligned, "dip");
+    const old = simulateBacktestStrategy(aligned, "old");
     const dca = simulateBacktestStrategy(aligned, "dca");
-    const beats = dip.final_value > dca.final_value;
 
     return {
       start_date: aligned[0].prices[1].date,
       end_date: aligned[0].prices[commonLength - 1].date,
       dip,
+      old,
       dca,
-      beats_dca: beats
+      beats_dca: dip.final_value > dca.final_value,
+      beats_old: dip.final_value > old.final_value
     };
   }
 
@@ -1505,7 +1623,10 @@
         const previous = item.prices[index - 1].close;
         const weeklyReturn = previous > 0 ? ((current - previous) / previous) * 100 : 0;
         const baseAmount = state.deployment.weeklyDeployment * item.stock.allocation;
-        const amount = mode === "dip" ? baseAmount * getMultiplier(weeklyReturn) : baseAmount;
+        let multiplier = 1;
+        if (mode === "dip") multiplier = getMultiplier(weeklyReturn, null, weeklyReturn);
+        else if (mode === "old") multiplier = getOldHardThresholdMultiplier(weeklyReturn);
+        const amount = mode === "dca" ? baseAmount : baseAmount * multiplier;
         if (amount <= 0 || current <= 0) return;
 
         const sharesBought = amount / current;
@@ -1586,11 +1707,15 @@
     [
       [t("backtestWindow"), result.start_date + " - " + result.end_date],
       [t("beatsDca"), result.beats_dca ? t("yes") : t("no")],
+      [t("beatsOld"), result.beats_old ? t("yes") : t("no")],
       [t("finalValue") + " (" + t("dipBuyStrategy") + ")", formatCurrency(result.dip.final_value)],
+      [t("finalValue") + " (" + t("oldDipBuyStrategy") + ")", formatCurrency(result.old.final_value)],
       [t("finalValue") + " (" + t("fixedDcaStrategy") + ")", formatCurrency(result.dca.final_value)],
       [t("totalReturn") + " (" + t("dipBuyStrategy") + ")", formatPercent(result.dip.total_return)],
+      [t("totalReturn") + " (" + t("oldDipBuyStrategy") + ")", formatPercent(result.old.total_return)],
       [t("totalReturn") + " (" + t("fixedDcaStrategy") + ")", formatPercent(result.dca.total_return)],
       [t("maxDrawdown") + " (" + t("dipBuyStrategy") + ")", formatPercent(result.dip.max_drawdown)],
+      [t("maxDrawdown") + " (" + t("oldDipBuyStrategy") + ")", formatPercent(result.old.max_drawdown)],
       [t("maxDrawdown") + " (" + t("fixedDcaStrategy") + ")", formatPercent(result.dca.max_drawdown)]
     ].forEach(function (item) {
       const metric = document.createElement("div");
@@ -1622,7 +1747,11 @@
       "</tr></thead><tbody></tbody>"
     ].join("");
     const tbody = table.querySelector("tbody");
-    [createBacktestRow(t("dipBuyStrategy"), result.dip), createBacktestRow(t("fixedDcaStrategy"), result.dca)].forEach(function (row) {
+    [
+      createBacktestRow(t("dipBuyStrategy"), result.dip),
+      createBacktestRow(t("oldDipBuyStrategy"), result.old),
+      createBacktestRow(t("fixedDcaStrategy"), result.dca)
+    ].forEach(function (row) {
       tbody.appendChild(row);
     });
     wrap.appendChild(table);
