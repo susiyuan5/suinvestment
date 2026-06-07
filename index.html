@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=layout-hierarchy-1">
+    <link rel="stylesheet" href="style.css?v=layout-density-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
   </head>
@@ -214,7 +214,7 @@
             </div>
             <div id="orderRows" class="order-rows" aria-live="polite"></div>
             <details class="order-copy-details">
-              <summary>Show details</summary>
+              <summary>Copy text details</summary>
               <pre id="orderText" class="order-text copy-buffer"></pre>
             </details>
             <p id="copyStatus" class="status-line" role="status"></p>
@@ -312,7 +312,8 @@
           </div>
         </div>
 
-        <div class="decision-context">
+        <details class="decision-context">
+          <summary>reason / warning</summary>
           <div>
             <span>reason</span>
             <p class="decision-reason"></p>
@@ -321,7 +322,7 @@
             <span>warning</span>
             <p class="decision-warning"></p>
           </div>
-        </div>
+        </details>
 
         <div class="price-row">
           <span class="price"></span>
@@ -339,7 +340,7 @@
     </template>
 
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="app.js?v=layout-hierarchy-1"></script>
+    <script src="app.js?v=layout-density-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
   </body>

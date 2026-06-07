@@ -318,6 +318,7 @@
       researchEyebrow: "Secondary tools",
       researchTesting: "Research & Testing",
       editHoldings: "Edit holdings",
+      copyTextDetails: "Copy text details",
       showDetails: "Show details",
       hideDetails: "Hide details"
     },
@@ -566,6 +567,7 @@
       researchEyebrow: "辅助工具",
       researchTesting: "研究与测试",
       editHoldings: "编辑持仓",
+      copyTextDetails: "复制文本详情",
       showDetails: "查看详情",
       hideDetails: "收起详情"
     }
@@ -679,7 +681,7 @@
   document.querySelectorAll(".holdings-details, .order-copy-details").forEach(function (details) {
     details.addEventListener("toggle", function () {
       setDetailLabels(".holdings-details", t("editHoldings"), t("hideDetails"));
-      setDetailLabels(".order-copy-details", t("showDetails"), t("hideDetails"));
+      setDetailLabels(".order-copy-details", t("copyTextDetails"), t("hideDetails"));
     });
   });
 
@@ -2608,8 +2610,11 @@
     }
 
     if (!card.querySelector(".decision-context")) {
-      const context = document.createElement("div");
+      const context = document.createElement("details");
       context.className = "decision-context";
+      const summary = document.createElement("summary");
+      summary.textContent = t("reason") + " / " + t("warning");
+      context.appendChild(summary);
       context.appendChild(createTextBlock(t("reason"), "decision-reason"));
       context.appendChild(createTextBlock(t("warning"), "decision-warning"));
       const priceRow = card.querySelector(".price-row");
@@ -3291,7 +3296,7 @@
     setText("label[for='availableCashInput'] span", t("availableCash"));
     setPlaceholder("#availableCashInput", t("availableCashPlaceholder"));
     setDetailLabels(".holdings-details", t("editHoldings"), t("hideDetails"));
-    setDetailLabels(".order-copy-details", t("showDetails"), t("hideDetails"));
+    setDetailLabels(".order-copy-details", t("copyTextDetails"), t("hideDetails"));
     setText(".order-panel .eyebrow", t("copyOrderList"));
     setText("#order-title", t("manualTradePlan"));
     setText("#copyBtn", t("copy"));
@@ -3382,6 +3387,8 @@
       const warning = card.querySelector(".decision-warning");
       if (reason && reason.previousElementSibling) reason.previousElementSibling.textContent = t("reason");
       if (warning && warning.previousElementSibling) warning.previousElementSibling.textContent = t("warning");
+      const decisionSummary = card.querySelector(".decision-context > summary");
+      if (decisionSummary) decisionSummary.textContent = t("reason") + " / " + t("warning");
       if (card.querySelector(".algorithm-details")) updateAlgorithmDetails(card, window.__SUINVESTMENT_SIGNALS__ && window.__SUINVESTMENT_SIGNALS__.find(function (signal) {
         return signal.symbol === card.dataset.symbol;
       }) || { algorithm: null, multiplier: 1 });

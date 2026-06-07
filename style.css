@@ -456,8 +456,8 @@ input::placeholder {
 .cards-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
-  padding: 0 10px 12px;
+  gap: 8px;
+  padding: 0 8px 10px;
 }
 
 .stock-card {
@@ -469,9 +469,9 @@ input::placeholder {
     "algorithm"
     "price"
     "override";
-  gap: 14px;
+  gap: 8px;
   min-width: 0;
-  padding: 14px;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel-2);
@@ -486,7 +486,7 @@ input::placeholder {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -498,6 +498,23 @@ input::placeholder {
   grid-area: context;
 }
 
+.decision-context summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 8px 10px;
+  border: 1px solid rgba(36, 49, 68, 0.72);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--panel-3);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.decision-context summary::-webkit-details-marker {
+  display: none;
+}
+
 .algorithm-details {
   grid-area: algorithm;
   border: 1px solid rgba(83, 120, 166, 0.38);
@@ -507,22 +524,23 @@ input::placeholder {
 
 .algorithm-details summary {
   cursor: pointer;
-  padding: 10px 12px;
+  padding: 8px 10px;
   color: var(--muted);
+  font-size: 0.82rem;
   font-weight: 800;
 }
 
 .algorithm-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
-  padding: 0 12px 10px;
+  gap: 6px;
+  padding: 0 10px 8px;
 }
 
 .algorithm-grid div {
   min-width: 0;
   border-radius: 8px;
-  padding: 8px;
+  padding: 7px;
   background: rgba(22, 37, 58, 0.7);
 }
 
@@ -542,7 +560,7 @@ input::placeholder {
 
 .algorithm-explanation {
   margin: 0;
-  padding: 0 12px 12px;
+  padding: 0 10px 10px;
   color: var(--muted);
   font-size: 0.86rem;
   line-height: 1.45;
@@ -562,7 +580,7 @@ input::placeholder {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
 .allocation {
@@ -574,7 +592,7 @@ input::placeholder {
 
 .source-badge {
   flex: 0 0 auto;
-  padding: 6px 9px;
+  padding: 5px 8px;
   border-radius: 999px;
   border: 1px solid var(--line);
   color: var(--soft);
@@ -585,7 +603,7 @@ input::placeholder {
 
 .action-badge {
   flex: 0 0 auto;
-  padding: 6px 10px;
+  padding: 5px 9px;
   border: 1px solid rgba(79, 195, 161, 0.55);
   border-radius: 999px;
   color: #b6ffeb;
@@ -641,13 +659,13 @@ input::placeholder {
 .stock-values {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .stock-values > div,
 .decision-context > div {
   min-width: 0;
-  padding: 12px;
+  padding: 8px 9px;
   border: 1px solid rgba(36, 49, 68, 0.72);
   border-radius: 8px;
   background: var(--panel-3);
@@ -655,8 +673,8 @@ input::placeholder {
 
 .stock-values strong {
   display: block;
-  margin-top: 5px;
-  font-size: 1rem;
+  margin-top: 3px;
+  font-size: 0.95rem;
 }
 
 .weekly-change.negative {
@@ -673,12 +691,16 @@ input::placeholder {
 
 .decision-context {
   display: grid;
-  gap: 8px;
+  gap: 6px;
+}
+
+.decision-context:not([open]) {
+  gap: 0;
 }
 
 .decision-context span {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   color: var(--muted);
   font-size: 0.74rem;
   font-weight: 900;
@@ -688,10 +710,10 @@ input::placeholder {
 .decision-context p {
   margin: 0;
   color: var(--soft);
-  font-size: 0.9rem;
-  line-height: 1.45;
+  font-size: 0.84rem;
+  line-height: 1.35;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -702,31 +724,39 @@ input::placeholder {
 
 .note {
   text-align: right;
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 0.78rem;
+  line-height: 1.3;
 }
 
 .override-row {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .override-actions button {
   flex: 1 1 0;
   min-width: 0;
   padding: 0 10px;
-  font-size: 0.86rem;
+  min-height: 38px;
+  font-size: 0.82rem;
 }
 
 .order-text {
-  min-height: 180px;
-  max-height: 320px;
+  min-height: 120px;
+  max-height: 240px;
   margin: 0 16px 12px;
-  padding: 14px;
+  padding: 10px;
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--text);
   background: #090f17;
-  font: 700 0.88rem/1.62 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font: 700 0.8rem/1.48 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
@@ -745,8 +775,8 @@ input::placeholder {
 
 .order-rows {
   display: grid;
-  gap: 8px;
-  margin: 0 16px 12px;
+  gap: 6px;
+  margin: 0 16px 8px;
 }
 
 .order-row {
@@ -755,7 +785,7 @@ input::placeholder {
   gap: 5px 10px;
   align-items: center;
   min-width: 0;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel-2);
@@ -763,13 +793,13 @@ input::placeholder {
 
 .order-row strong {
   min-width: 0;
-  font-size: 0.98rem;
+  font-size: 0.9rem;
 }
 
 .order-row span {
   min-width: 0;
   color: var(--soft);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 800;
   text-align: right;
 }
@@ -908,8 +938,8 @@ input::placeholder {
 
 .portfolio-risk-form {
   display: grid;
-  gap: 12px;
-  margin: 14px 0 0;
+  gap: 10px;
+  margin: 10px 0 0;
 }
 
 .portfolio-risk-form label {
@@ -952,13 +982,13 @@ input::placeholder {
 .risk-metrics-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .risk-metric,
 .risk-list {
   min-width: 0;
-  padding: 12px;
+  padding: 9px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel-2);
@@ -979,10 +1009,10 @@ input::placeholder {
 }
 
 .risk-list p {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: var(--soft);
-  font-size: 0.88rem;
-  line-height: 1.45;
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
 .backtest-summary {
@@ -1007,8 +1037,8 @@ input::placeholder {
 .algorithm-test-controls {
   display: grid;
   grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
-  gap: 10px;
-  padding: 0 16px;
+  gap: 8px;
+  padding: 0 12px;
   align-items: end;
 }
 
@@ -1027,8 +1057,8 @@ input::placeholder {
 }
 
 .algorithm-test-preset {
-  min-height: 38px;
-  padding: 0 12px;
+  min-height: 34px;
+  padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--text);
@@ -1043,20 +1073,20 @@ input::placeholder {
 
 .algorithm-test-result {
   display: grid;
-  gap: 10px;
-  padding: 0 16px;
+  gap: 8px;
+  padding: 0 12px;
 }
 
 .algorithm-test-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .algorithm-test-grid div,
 .algorithm-test-note {
   min-width: 0;
-  padding: 12px;
+  padding: 9px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel-2);
@@ -1076,13 +1106,14 @@ input::placeholder {
 }
 
 .algorithm-test-note p {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: var(--soft);
-  line-height: 1.45;
+  font-size: 0.84rem;
+  line-height: 1.35;
 }
 
 .algorithm-test-safety {
-  margin: 0 16px 16px;
+  margin: 0 12px 12px;
 }
 
 .backtest-metrics {
@@ -1235,7 +1266,7 @@ input::placeholder {
   }
 
   .stock-card {
-    grid-template-columns: minmax(155px, 0.7fr) minmax(0, 1.6fr);
+    grid-template-columns: minmax(150px, 0.64fr) minmax(0, 1.7fr);
     grid-template-areas:
       "topline values"
       "price values"
@@ -1243,13 +1274,13 @@ input::placeholder {
       "context context"
       "override override";
     align-items: start;
-    gap: 12px 16px;
-    padding: 14px;
+    gap: 8px 12px;
+    padding: 10px;
   }
 
   .stock-topline {
     display: grid;
-    gap: 8px;
+    gap: 6px;
   }
 
   .stock-values {
@@ -1286,10 +1317,7 @@ input::placeholder {
   .dashboard-sidebar {
     position: sticky;
     top: 18px;
-    max-height: calc(100vh - 36px);
-    overflow: auto;
     padding-right: 2px;
-    scrollbar-width: thin;
   }
 
   .dashboard-sidebar .section-heading.compact {
@@ -1313,7 +1341,7 @@ input::placeholder {
   }
 
   .order-text {
-    max-height: 230px;
+    max-height: 220px;
   }
 }
 
