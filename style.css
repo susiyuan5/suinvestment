@@ -1928,4 +1928,46 @@ input::placeholder {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+}/* Make stock table much wider to avoid cramped rows */
+@media (min-width: 720px) {
+  .stock-list-shell {
+    --stock-table-columns: 180px 152px 200px 180px 140px 140px 120px 152px 128px 144px 192px 172px 164px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .stock-list-header,
+  .stock-card {
+    grid-template-columns: var(--stock-table-columns) !important;
+    min-width: 2064px !important;
+  }
+
+  .stock-card {
+    min-height: 64px;
+    align-items: center;
+  }
+
+  .stock-card > *,
+  .stock-list-header > * {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .note {
+    display: none !important;
+  }
+
+  .price,
+  .daily-change,
+  .five-day-change,
+  .weekly-change,
+  .signal-strength,
+  .risk-level,
+  .multiplier,
+  .buy-amount {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+  }
 }
