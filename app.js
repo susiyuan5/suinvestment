@@ -622,7 +622,7 @@
       editHoldings: "编辑持仓",
       copyTextDetails: "复制文本详情",
       showDetails: "查看详情",
-      hideDetails: "收起详情"
+      hideDetails: "收起详情",
       newsSentiment: "新闻情绪",
       recentNews: "近期新闻",
       financialReports: "财务报告",
@@ -1961,6 +1961,7 @@
 
     // Build positive factors
     var posFactors = [];
+    var negFactors = [];
     if (ns.label && ns.label !== "Unavailable" && ns.label !== t("neutralNews")) {
       if (ns.label === t("positiveNews")) posFactors.push(t("newsSentiment") + ": " + ns.label);
       else negFactors.push(t("newsSentiment") + ": " + ns.label);
@@ -1979,7 +1980,6 @@
     if (m >= 0.40 && !(sc < 20 && wc < 0)) posFactors.push("未触发暂停买入条件");
 
     // Build negative factors
-    var negFactors = [];
     if (sc !== null && sc < 45) negFactors.push("信号分偏低（" + sc + "）");
     if (rl === "High" || rl === "Extreme") negFactors.push("风险等级较高（" + displayRiskLevel(rl) + "）");
     if (m < 1.00) negFactors.push("买入倍数低于 1.00x（" + m.toFixed(2) + "x）");
