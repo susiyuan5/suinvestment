@@ -71,6 +71,29 @@
     overTargetBlockThreshold: 0.10,
     overTargetSellWatchThreshold: 0.15
   };
+  const NEWS_FACTOR_PARAMS = {
+    enabled: true,
+    lookbackDays: 14,
+    materialNewsLookbackDays: 7,
+    positiveSentimentBonus: 5,
+    negativeSentimentPenalty: 10,
+    severeNegativePenalty: 20,
+    maxPositiveScoreBonus: 8,
+    maxNegativeScorePenalty: 25,
+    reduceBuyOnSevereNegativeNews: true
+  };
+
+  const FUNDAMENTAL_FACTOR_PARAMS = {
+    enabled: true,
+    revenueGrowthWeight: 0.25,
+    epsGrowthWeight: 0.25,
+    marginTrendWeight: 0.20,
+    debtRiskWeight: 0.15,
+    freeCashFlowWeight: 0.15,
+    strongFundamentalBonus: 8,
+    weakFundamentalPenalty: 15,
+    severeFundamentalPenalty: 25
+  };
 
   const I18N = {
     en: {
@@ -325,7 +348,27 @@
       editHoldings: "Edit holdings",
       copyTextDetails: "Copy text details",
       showDetails: "Show details",
-      hideDetails: "Hide details"
+      hideDetails: "Hide details",
+      newsSentiment: "News Sentiment",
+      recentNews: "Recent News",
+      financialReports: "Financial Reports",
+      fundamentals: "Fundamentals",
+      strongFundamentals: "Strong Fundamentals",
+      stableFundamentals: "Stable Fundamentals",
+      weakFundamentals: "Weak Fundamentals",
+      deterioratingFundamentals: "Deteriorating Fundamentals",
+      positiveNews: "Positive News",
+      neutralNews: "Neutral News",
+      negativeNews: "Negative News",
+      severeNegativeNews: "Severe Negative News",
+      upcomingEarningsRisk: "Upcoming earnings risk",
+      newsDataUnavailable: "News data unavailable",
+      fundamentalsDataUnavailable: "Fundamentals data unavailable",
+      externalFactorAdjustment: "External factor adjustment",
+      newsDelta: "News factor",
+      fundamentalsDelta: "Fundamentals factor",
+      upcomingEarningsDelta: "Earnings event risk"
+
     },
     zh: {
       pageTitle: "量化投资助手",
@@ -580,6 +623,25 @@
       copyTextDetails: "复制文本详情",
       showDetails: "查看详情",
       hideDetails: "收起详情"
+      newsSentiment: "新闻情绪",
+      recentNews: "近期新闻",
+      financialReports: "财务报告",
+      fundamentals: "基本面",
+      strongFundamentals: "基本面强",
+      stableFundamentals: "基本面稳定",
+      weakFundamentals: "基本面偏弱",
+      deterioratingFundamentals: "基本面恶化",
+      positiveNews: "新闻偏正面",
+      neutralNews: "新闻中性",
+      negativeNews: "新闻偏负面",
+      severeNegativeNews: "重大负面新闻",
+      upcomingEarningsRisk: "财报发布前事件风险",
+      newsDataUnavailable: "新闻数据暂不可用",
+      fundamentalsDataUnavailable: "基本面数据暂不可用",
+      externalFactorAdjustment: "外部因素调整",
+      newsDelta: "新闻因素",
+      fundamentalsDelta: "基本面因素",
+      upcomingEarningsDelta: "财报事件风险"
     }
   };
 
@@ -1480,6 +1542,170 @@
     return displayMarketRegime(regime && regime.type);
   }
 
+  function calculateNewsSignal(stock, row) {
+    if (!row || !row.news) {
+      return {
+        score: null,
+        label: "Unavailable",
+        sentiment_score: null,
+        article_count: null,
+        material_negative_count: null,
+        latest_headlines: [],
+        source: null,
+        explanation: t("newsDataUnavailable")
+      };
+    }
+    try {
+      var news = row.news;
+      var avgSentiment = isFiniteNumber(news.overall_sentiment_score) ? news.overall_sentiment_score : 0;
+      var articles = Array.isArray(news.articles) ? news.articles : [];
+      var headlineText = articles.map(function (a) { return a.title || ""; }).join(" ").toLowerCase();
+      var materialKeywords = ["fraud", "investigation", "lawsuit", "regulatory probe", "accounting issue", "guidance cut", "earnings miss", "recall", "sanction", "bankruptcy", "default", "downgrade", "supply chain issue"];
+      var materialCount = 0;
+      materialKeywords.forEach(function (kw) {
+        if (headlineText.indexOf(kw) >= 0) materialCount++;
+      });
+      var label, score;
+      if (avgSentiment > 0.25) { label = t("positiveNews"); score = 65; }
+      else if (avgSentiment >= -0.25) { label = t("neutralNews"); score = 50; }
+      else if (materialCount >= 2 || avgSentiment < -0.5) { label = t("severeNegativeNews"); score = 15; }
+      else { label = t("negativeNews"); score = 30; }
+      return {
+        score: score,
+        label: label,
+        sentiment_score: avgSentiment,
+        article_count: articles.length,
+        material_negative_count: materialCount,
+        latest_headlines: articles.slice(0, 3).map(function (a) { return a.title || ""; }),
+        source: news.source || "Alpha Vantage",
+        explanation: news.explanation || ""
+      };
+    } catch (e) {
+      return { score: null, label: "Unavailable", sentiment_score: null, article_count: null, material_negative_count: null, latest_headlines: [], source: null, explanation: t("newsDataUnavailable") };
+    }
+  }
+
+  function calculateFundamentalsSignal(stock, row) {
+    if (!row || !row.fundamentals) {
+      return {
+        score: null,
+        label: "Unavailable",
+        revenue_growth_yoy: null,
+        eps_growth_yoy: null,
+        gross_margin_trend: null,
+        operating_margin_trend: null,
+        free_cash_flow_trend: null,
+        debt_to_equity: null,
+        earnings_surprise: null,
+        next_earnings_date: null,
+        source: null,
+        explanation: t("fundamentalsDataUnavailable")
+      };
+    }
+    try {
+      var f = row.fundamentals;
+      var score = 50;
+      var revGrowth = isFiniteNumber(f.revenue_growth_yoy) ? f.revenue_growth_yoy : 0;
+      var epsGrowth = isFiniteNumber(f.eps_growth_yoy) ? f.eps_growth_yoy : 0;
+      var marginTrend = f.gross_margin_trend || "stable";
+      var fcfPositive = f.free_cash_flow_positive === true;
+      var debtEq = isFiniteNumber(f.debt_to_equity) ? f.debt_to_equity : null;
+      var earningsMiss = f.earnings_surprise === "miss";
+      var hasUpcomingEarnings = f.next_earnings_date && f.next_earnings_date.length > 0;
+
+      if (revGrowth > 0.05) score += 10;
+      else if (revGrowth < -0.05) score -= 10;
+      if (epsGrowth > 0.05) score += 10;
+      else if (epsGrowth < -0.05) score -= 10;
+      if (marginTrend === "improving") score += 8;
+      else if (marginTrend === "deteriorating") score -= 8;
+      if (fcfPositive) score += 8;
+      else score -= 10;
+      if (debtEq !== null && debtEq > 1.5) score -= 10;
+      if (earningsMiss) score -= 8;
+      if (isFiniteNumber(f.earnings_surprise_pct) && f.earnings_surprise_pct > 2) score += 5;
+
+      var label;
+      if (score >= 75) label = t("strongFundamentals");
+      else if (score >= 55) label = t("stableFundamentals");
+      else if (score >= 35) label = t("weakFundamentals");
+      else label = t("deterioratingFundamentals");
+
+      return {
+        score: score,
+        label: label,
+        revenue_growth_yoy: revGrowth,
+        eps_growth_yoy: epsGrowth,
+        gross_margin_trend: marginTrend,
+        operating_margin_trend: f.operating_margin_trend || null,
+        free_cash_flow_trend: fcfPositive ? "positive" : "negative",
+        debt_to_equity: debtEq,
+        earnings_surprise: f.earnings_surprise || null,
+        next_earnings_date: f.next_earnings_date || null,
+        source: f.source || "Fundamental data",
+        explanation: f.explanation || ""
+      };
+    } catch (e) {
+      return { score: null, label: "Unavailable", revenue_growth_yoy: null, eps_growth_yoy: null, gross_margin_trend: null, operating_margin_trend: null, free_cash_flow_trend: null, debt_to_equity: null, earnings_surprise: null, next_earnings_date: null, source: null, explanation: t("fundamentalsDataUnavailable") };
+    }
+  }
+
+  function calculateNewsFundamentalsScoreAdjustment(signal) {
+    var newsDelta = 0;
+    var fundamentalsDelta = 0;
+    var upcomingEarningsDelta = 0;
+    var newsSig = signal.news_signal || {};
+    var fundSig = signal.fundamentals_signal || {};
+    var explanations = [];
+
+    // News factor
+    if (newsSig.label === t("positiveNews")) {
+      newsDelta = NEWS_FACTOR_PARAMS.positiveSentimentBonus;
+      explanations.push(t("newsDelta") + " +" + newsDelta);
+    } else if (newsSig.label === t("negativeNews")) {
+      newsDelta = -NEWS_FACTOR_PARAMS.negativeSentimentPenalty;
+      explanations.push(t("newsDelta") + " " + newsDelta);
+    } else if (newsSig.label === t("severeNegativeNews")) {
+      newsDelta = -NEWS_FACTOR_PARAMS.severeNegativePenalty;
+      explanations.push(t("newsDelta") + " " + newsDelta);
+    }
+
+    // Fundamentals factor
+    var fundScore = fundSig.score;
+    if (fundScore !== null && fundScore >= 75) {
+      fundamentalsDelta = FUNDAMENTAL_FACTOR_PARAMS.strongFundamentalBonus;
+      explanations.push(t("fundamentalsDelta") + " +" + fundamentalsDelta);
+    } else if (fundScore !== null && fundScore <= 34) {
+      fundamentalsDelta = -FUNDAMENTAL_FACTOR_PARAMS.severeFundamentalPenalty;
+      explanations.push(t("fundamentalsDelta") + " " + fundamentalsDelta);
+    } else if (fundScore !== null && fundScore < 55) {
+      fundamentalsDelta = -FUNDAMENTAL_FACTOR_PARAMS.weakFundamentalPenalty;
+      explanations.push(t("fundamentalsDelta") + " " + fundamentalsDelta);
+    }
+
+    // Upcoming earnings risk
+    if (fundSig.next_earnings_date) {
+      var now = new Date();
+      var earningsDate = new Date(fundSig.next_earnings_date);
+      var daysUntil = (earningsDate - now) / (1000 * 60 * 60 * 24);
+      if (daysUntil >= 0 && daysUntil <= 7) {
+        upcomingEarningsDelta = -5;
+        explanations.push(t("upcomingEarningsDelta") + " " + upcomingEarningsDelta);
+      }
+    }
+
+    var totalDelta = newsDelta + fundamentalsDelta + upcomingEarningsDelta;
+    var explanation = explanations.length > 0 ? explanations.join("; ") + "，" + t("externalFactorAdjustment") + " " + totalDelta : t("externalFactorAdjustment") + " " + totalDelta;
+
+    return {
+      total_delta: totalDelta,
+      news_delta: newsDelta,
+      fundamentals_delta: fundamentalsDelta,
+      upcoming_earnings_delta: upcomingEarningsDelta,
+      explanation: explanation
+    };
+  }
+
   function buildSignalObject(stock, row) {
     const decisionChange = getDecisionChange(row);
     const manualOverrideActive = isFiniteNumber(state.overrides[stock.symbol]);
@@ -1528,7 +1754,9 @@
       portfolio_adjustment: enhancedMultiplier.portfolio_adjustment,
       final_multiplier: multiplier,
       final_suggested_buy_amount: suggestedBuyAmount,
-      note: row && row.note ? row.note : ""
+      note: row && row.note ? row.note : "",
+      news_signal: calculateNewsSignal(stock, row),
+      fundamentals_signal: calculateFundamentalsSignal(stock, row)
     };
 
     signal.signal_score = calculateSignalScore({
@@ -1542,6 +1770,10 @@
       manualOverrideActive: signal.manual_override_active,
       algorithm: signal.algorithm
     });
+    // External factor adjustment (news, fundamentals)
+    var externalAdjustment = calculateNewsFundamentalsScoreAdjustment(signal);
+    signal.news_fundamentals_adjustment = externalAdjustment;
+    signal.signal_score = clamp(signal.signal_score + externalAdjustment.total_delta, 0, 100);
     signal.risk_level = calculateRiskLevel(signal);
     signal.suggested_action = getSuggestedAction(signal);
     signal.signal_strength = getSignalStrength(signal);
@@ -1676,6 +1908,9 @@
     var rl = signal.risk_level || null;
     var dc = isFiniteNumber(signal.daily_change) ? signal.daily_change : null;
     var wc = isFiniteNumber(signal.weekly_change) ? signal.weekly_change : null;
+    var ns = signal.news_signal || {};
+    var fs = signal.fundamentals_signal || {};
+    var nfa = signal.news_fundamentals_adjustment || {};
 
     // Find portfolio allocation for this stock
     var allocPct = null;
@@ -1726,6 +1961,17 @@
 
     // Build positive factors
     var posFactors = [];
+    if (ns.label && ns.label !== "Unavailable" && ns.label !== t("neutralNews")) {
+      if (ns.label === t("positiveNews")) posFactors.push(t("newsSentiment") + ": " + ns.label);
+      else negFactors.push(t("newsSentiment") + ": " + ns.label);
+    }
+    if (fs.label && fs.label !== "Unavailable" && fs.label !== t("stableFundamentals")) {
+      if (fs.label === t("strongFundamentals")) posFactors.push(t("fundamentals") + ": " + fs.label);
+      else negFactors.push(t("fundamentals") + ": " + fs.label);
+    }
+    if (isFiniteNumber(nfa.upcoming_earnings_delta) && nfa.upcoming_earnings_delta < 0) {
+      negFactors.push(t("upcomingEarningsRisk"));
+    }
     if (wc !== null && wc > 0) posFactors.push("5D 表现仍为正（+" + wc.toFixed(2) + "%）");
     if (!isPaused) posFactors.push("当前仍允许保留部分买入计划");
     if (sc !== null && sc >= 45) posFactors.push("信号分较高（" + sc + "）");
@@ -1769,6 +2015,32 @@
       "<p class=\"explanation-reason\"></p>",
       "</div>",
       "<div class=\"explanation-section\">",
+      "<h4>新闻情绪</h4>",
+      "<div class=\"explanation-fields\">",
+      "<span class=\"field-label\">" + t("newsSentiment") + "</span><span class=\"field-value\" data-field=\"news-label\"></span>",
+      "<span class=\"field-label\">" + t("signalScore") + "</span><span class=\"field-value\" data-field=\"news-score\"></span>",
+      "<span class=\"field-label\">" + t("recentNews") + "</span><span class=\"field-value\" data-field=\"news-articles\"></span>",
+      "</div>",
+      "<p class=\"explanation-reason\" data-field=\"news-explanation\"></p>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>基本面</h4>",
+      "<div class=\"explanation-fields\">",
+      "<span class=\"field-label\">" + t("fundamentals") + "</span><span class=\"field-value\" data-field=\"fund-label\"></span>",
+      "<span class=\"field-label\">" + t("signalScore") + "</span><span class=\"field-value\" data-field=\"fund-score\"></span>",
+      "</div>",
+      "<p class=\"explanation-reason\" data-field=\"fund-explanation\"></p>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>" + t("externalFactorAdjustment") + "</h4>",
+      "<div class=\"explanation-fields\">",
+      "<span class=\"field-label\">" + t("newsDelta") + "</span><span class=\"field-value\" data-field=\"adj-news\"></span>",
+      "<span class=\"field-label\">" + t("fundamentalsDelta") + "</span><span class=\"field-value\" data-field=\"adj-fund\"></span>",
+      "<span class=\"field-label\">" + t("upcomingEarningsDelta") + "</span><span class=\"field-value\" data-field=\"adj-earnings\"></span>",
+      "<span class=\"field-label\">" + t("externalFactorAdjustment") + "</span><span class=\"field-value\" data-field=\"adj-total\"></span>",
+      "</div>",
+      "</div>",
+      "<div class=\"explanation-section\">",
       "<h4>正面因素</h4>",
       "<ul class=\"positive-factors\"></ul>",
       "</div>",
@@ -1790,7 +2062,31 @@
     el.querySelector('[data-field="final-action"]').textContent = action.label;
     el.querySelector(".explanation-reason").textContent = reasons.join(" ");
 
+    // Fill news sentiment data
+    el.querySelector('[data-field="news-label"]').textContent = ns.label === "Unavailable" ? t("newsDataUnavailable") : (ns.label || t("newsDataUnavailable"));
+    el.querySelector('[data-field="news-score"]').textContent = ns.sentiment_score !== null && ns.sentiment_score !== undefined ? ns.sentiment_score.toFixed(3) : t("newsDataUnavailable");
+    el.querySelector('[data-field="news-articles"]').textContent = ns.article_count !== null ? String(ns.article_count) + " articles" : t("newsDataUnavailable");
+    var newsExpl = el.querySelector('[data-field="news-explanation"]');
+    if (newsExpl) {
+      newsExpl.textContent = ns.explanation || (ns.label === "Unavailable" ? t("newsDataUnavailable") : "");
+    }
+
+    // Fill fundamentals data
+    el.querySelector('[data-field="fund-label"]').textContent = fs.label === "Unavailable" ? t("fundamentalsDataUnavailable") : (fs.label || t("fundamentalsDataUnavailable"));
+    el.querySelector('[data-field="fund-score"]').textContent = fs.score !== null && fs.score !== undefined ? String(fs.score) : t("fundamentalsDataUnavailable");
+    var fundExpl = el.querySelector('[data-field="fund-explanation"]');
+    if (fundExpl) {
+      fundExpl.textContent = fs.explanation || (fs.label === "Unavailable" ? t("fundamentalsDataUnavailable") : "");
+    }
+
+    // Fill external factor adjustment
+    el.querySelector('[data-field="adj-news"]').textContent = isFiniteNumber(nfa.news_delta) ? (nfa.news_delta > 0 ? "+" : "") + nfa.news_delta : "0";
+    el.querySelector('[data-field="adj-fund"]').textContent = isFiniteNumber(nfa.fundamentals_delta) ? (nfa.fundamentals_delta > 0 ? "+" : "") + nfa.fundamentals_delta : "0";
+    el.querySelector('[data-field="adj-earnings"]').textContent = isFiniteNumber(nfa.upcoming_earnings_delta) ? (nfa.upcoming_earnings_delta > 0 ? "+" : "") + nfa.upcoming_earnings_delta : "0";
+    el.querySelector('[data-field="adj-total"]').textContent = isFiniteNumber(nfa.total_delta) ? (nfa.total_delta > 0 ? "+" : "") + nfa.total_delta : "0";
+
     // Fill factors
+
     var posUl = el.querySelector(".positive-factors");
     posUl.innerHTML = "";
     if (posFactors.length === 0) {
