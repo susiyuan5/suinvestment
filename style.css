@@ -2332,3 +2332,145 @@ input::placeholder {
     display: none !important;
   }
 }
+
+/* ---- Action badge label colors (Feature: detailed action labels) ---- */
+.action-strong-buy {
+  border-color: #2ecc71 !important;
+  color: #a8f0c0 !important;
+  background: rgba(46, 204, 113, 0.12) !important;
+}
+.action-buy {
+  border-color: #4fc3a1 !important;
+  color: #9ff1dc !important;
+  background: rgba(79, 195, 161, 0.12) !important;
+}
+.action-light-buy {
+  border-color: #7dcea0 !important;
+  color: #b8f0d0 !important;
+  background: rgba(125, 206, 160, 0.12) !important;
+}
+.action-watch {
+  border-color: #95a5a6 !important;
+  color: #d5e0e0 !important;
+  background: rgba(149, 165, 166, 0.12) !important;
+}
+.action-light-reduce {
+  border-color: #ffc857 !important;
+  color: #ffe1a0 !important;
+  background: rgba(255, 200, 87, 0.12) !important;
+}
+.action-reduce {
+  border-color: #e67e22 !important;
+  color: #f0b070 !important;
+  background: rgba(230, 126, 34, 0.12) !important;
+}
+.action-pause-buy {
+  border-color: #ff5c7a !important;
+  color: #ffd5df !important;
+  background: rgba(255, 92, 122, 0.12) !important;
+}
+
+/* ---- Expandable explanation section inside stock-details-row ---- */
+.action-explanation {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-3);
+}
+
+.action-explanation h4 {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.action-explanation .explanation-conclusion {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.explanation-fields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+
+.explanation-fields .field-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.explanation-fields .field-value {
+  color: var(--text);
+  font-size: 0.82rem;
+  min-width: 0;
+}
+
+.explanation-reason {
+  margin: 0;
+  color: var(--soft);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.positive-factors,
+.negative-factors {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+.positive-factors li {
+  color: var(--accent);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.negative-factors li {
+  color: var(--danger);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.explanation-empty {
+  color: var(--muted) !important;
+  list-style: none !important;
+  font-size: 0.84rem;
+  margin-left: -18px;
+}
+
+.final-sentence {
+  margin: 0;
+  color: var(--soft);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Show explanation when stock-details-row is open */
+.stock-details-row[open] > .action-explanation {
+  display: grid;
+}
+
+/* Override desktop display:none for the explanation when details is open */
+@media (min-width: 1024px) {
+  .stock-details-row[open] > .action-explanation {
+    display: grid !important;
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (min-width: 720px) {
+  .stock-details-row[open] > .action-explanation {
+    display: grid !important;
+  }
+}

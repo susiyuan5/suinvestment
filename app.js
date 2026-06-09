@@ -1622,6 +1622,208 @@
     return t("signalAvoid");
   }
 
+  function getActionLabelFromMultiplier(signal) {
+    const m = isFiniteNumber(signal.multiplier) ? signal.multiplier : 1;
+    const sc = isFiniteNumber(signal.signal_score) ? signal.signal_score : 0;
+    const rl = signal.risk_level || "Low";
+    const wc = isFiniteNumber(signal.weekly_change) ? signal.weekly_change : 0;
+
+    // Hard stops
+    if (m < 0.40) return { label: "暂停买入", cls: "action-pause-buy" };
+    if (sc < 20 && wc < 0) return { label: "暂停买入", cls: "action-pause-buy" };
+    if (rl === "Extreme") return { label: "暂停买入", cls: "action-pause-buy" };
+
+    // Base label from multiplier
+    var label, cls;
+    if (m >= 1.60) { label = "强烈买入"; cls = "action-strong-buy"; }
+    else if (m >= 1.20) { label = "买入"; cls = "action-buy"; }
+    else if (m >= 1.00) { label = "小幅买入"; cls = "action-light-buy"; }
+    else if (m >= 0.90) { label = "观望"; cls = "action-watch"; }
+    else if (m >= 0.70) { label = "小幅减少买入"; cls = "action-light-reduce"; }
+    else if (m >= 0.40) { label = "减少买入"; cls = "action-reduce"; }
+    else { label = "暂停买入"; cls = "action-pause-buy"; }
+
+    // Level map: higher number = more cautious
+    var LEVELS = { "action-strong-buy": 1, "action-buy": 2, "action-light-buy": 3, "action-watch": 4, "action-light-reduce": 5, "action-reduce": 6, "action-pause-buy": 7 };
+    var currentLevel = LEVELS[cls] || 7;
+
+    // High risk safety caps
+    if (rl === "High") {
+      var cap = 7;
+      if (sc < 30) cap = 5;
+      else if (sc < 45) cap = 4;
+
+      if (currentLevel < cap) {
+        var capMap = { 4: { label: "观望", cls: "action-watch" }, 5: { label: "小幅减少买入", cls: "action-light-reduce" } };
+        return capMap[cap] || { label: label, cls: cls };
+      }
+
+      // Strong buy downgrade for High risk
+      if (cls === "action-strong-buy" && m >= 1.60 && !(sc >= 80 && wc > 0)) {
+        return { label: "买入", cls: "action-buy" };
+      }
+    }
+
+    return { label: label, cls: cls };
+  }
+
+  function ensureActionExplanation(card, signal) {
+    var row = card.querySelector(".stock-details-row");
+    if (!row) return;
+
+    var m = isFiniteNumber(signal.multiplier) ? signal.multiplier : 1;
+    var sc = isFiniteNumber(signal.signal_score) ? signal.signal_score : null;
+    var rl = signal.risk_level || null;
+    var dc = isFiniteNumber(signal.daily_change) ? signal.daily_change : null;
+    var wc = isFiniteNumber(signal.weekly_change) ? signal.weekly_change : null;
+
+    // Find portfolio allocation for this stock
+    var allocPct = null;
+    var symbol = card.dataset.symbol;
+    if (symbol && state && state.portfolio) {
+      state.portfolio.forEach(function (stock) {
+        if (stock.symbol === symbol) allocPct = (stock.allocation * 100).toFixed(1) + "%";
+      });
+    }
+
+    var action = getActionLabelFromMultiplier(signal);
+    var isPaused = action.cls === "action-pause-buy";
+
+    // Find or create the explanation container
+    var el = row.querySelector(".action-explanation");
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "action-explanation";
+      // Insert after summary, before existing content
+      var summary = row.querySelector(":scope > summary");
+      if (summary && summary.nextElementSibling) {
+        row.insertBefore(el, summary.nextElementSibling);
+      } else {
+        row.appendChild(el);
+      }
+    }
+
+    // Build reason text
+    var reasons = [];
+    if (m >= 1.60) reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，较高的买入倍数表明市场下跌较大，策略建议加仓。");
+    else if (m >= 1.20) reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，高于正常买入水平。");
+    else if (m >= 1.00) reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，接近正常买入水平。");
+    else if (m >= 0.90) reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，略低于正常水平，建议观望。");
+    else if (m >= 0.70) reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，低于正常买入水平，因此建议小幅减少买入。");
+    else if (m >= 0.40) reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，较低的买入倍数表明市场上涨较大，策略建议减少买入。");
+    else reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，已触发暂停买入条件。");
+
+    if (sc !== null && sc < 30) reasons.push("信号分为 " + sc + "，说明当前信号很弱，不适合激进加仓。");
+    else if (sc !== null && sc < 45) reasons.push("信号分为 " + sc + "，说明当前信号偏弱。");
+    else if (sc !== null && sc >= 80) reasons.push("信号分为 " + sc + "，说明当前信号较强。");
+
+    if (rl === "High") reasons.push("风险等级为高，说明不适合激进加仓。");
+    else if (rl === "Extreme") reasons.push("风险等级为极高，已暂停买入。");
+
+    if (dc !== null && dc < 0 && wc !== null && wc > 0) {
+      reasons.push("虽然 1D 表现为负（" + dc.toFixed(2) + "%），但 5D 仍为正（+" + wc.toFixed(2) + "%），因此不是完全暂停买入，而是降低买入金额。");
+    }
+
+    // Build positive factors
+    var posFactors = [];
+    if (wc !== null && wc > 0) posFactors.push("5D 表现仍为正（+" + wc.toFixed(2) + "%）");
+    if (!isPaused) posFactors.push("当前仍允许保留部分买入计划");
+    if (sc !== null && sc >= 45) posFactors.push("信号分较高（" + sc + "）");
+    if (m >= 1.00) posFactors.push("买入倍数较高（" + m.toFixed(2) + "x）");
+    if (m >= 0.40 && !(sc < 20 && wc < 0)) posFactors.push("未触发暂停买入条件");
+
+    // Build negative factors
+    var negFactors = [];
+    if (sc !== null && sc < 45) negFactors.push("信号分偏低（" + sc + "）");
+    if (rl === "High" || rl === "Extreme") negFactors.push("风险等级较高（" + displayRiskLevel(rl) + "）");
+    if (m < 1.00) negFactors.push("买入倍数低于 1.00x（" + m.toFixed(2) + "x）");
+    if (dc !== null && dc < 0) negFactors.push("1D 表现为负（" + dc.toFixed(2) + "%）");
+    if (wc !== null && wc < 0) negFactors.push("5D 表现为负（" + wc.toFixed(2) + "%）");
+
+    // Build final sentence
+    var pct = (m * 100).toFixed(0);
+    var finalSentence = "本次建议：按照正常计划的 " + pct + "% 买入。";
+    if (isPaused) finalSentence = "本次建议：完全暂停买入，等待信号回暖后再考虑。";
+    else if (m <= 0.40) finalSentence = "本次建议：买入倍数过低，建议暂停买入。";
+
+    // Build DOM content
+    el.innerHTML = [
+      "<div class=\"explanation-section\">",
+      "<h4>建议结论</h4>",
+      "<p class=\"explanation-conclusion\"></p>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>判断依据</h4>",
+      "<div class=\"explanation-fields\">",
+      "<span class=\"field-label\">买入倍数</span><span class=\"field-value\" data-field=\"multiplier\"></span>",
+      "<span class=\"field-label\">信号分</span><span class=\"field-value\" data-field=\"score\"></span>",
+      "<span class=\"field-label\">风险等级</span><span class=\"field-value\" data-field=\"risk\"></span>",
+      "<span class=\"field-label\">1D 表现</span><span class=\"field-value\" data-field=\"1d\"></span>",
+      "<span class=\"field-label\">5D 表现</span><span class=\"field-value\" data-field=\"5d\"></span>",
+      "<span class=\"field-label\">当前配置比例</span><span class=\"field-value\" data-field=\"allocation\"></span>",
+      "<span class=\"field-label\">最终建议</span><span class=\"field-value\" data-field=\"final-action\"></span>",
+      "</div>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>为什么是这个建议</h4>",
+      "<p class=\"explanation-reason\"></p>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>正面因素</h4>",
+      "<ul class=\"positive-factors\"></ul>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>负面因素</h4>",
+      "<ul class=\"negative-factors\"></ul>",
+      "</div>",
+      "<p class=\"final-sentence\"></p>"
+    ].join("");
+
+    // Fill data fields
+    el.querySelector(".explanation-conclusion").textContent = action.label;
+    el.querySelector('[data-field="multiplier"]').textContent = formatMultiplier(m);
+    el.querySelector('[data-field="score"]').textContent = sc !== null ? String(sc) : "暂无数据";
+    el.querySelector('[data-field="risk"]').textContent = rl ? displayRiskLevel(rl) : "暂无数据";
+    el.querySelector('[data-field="1d"]').textContent = dc !== null ? formatSigned(dc) + "%" : "暂无数据";
+    el.querySelector('[data-field="5d"]').textContent = wc !== null ? formatSigned(wc) + "%" : "暂无数据";
+    el.querySelector('[data-field="allocation"]').textContent = allocPct || "暂无数据";
+    el.querySelector('[data-field="final-action"]').textContent = action.label;
+    el.querySelector(".explanation-reason").textContent = reasons.join(" ");
+
+    // Fill factors
+    var posUl = el.querySelector(".positive-factors");
+    posUl.innerHTML = "";
+    if (posFactors.length === 0) {
+      var li = document.createElement("li");
+      li.textContent = "暂无";
+      li.className = "explanation-empty";
+      posUl.appendChild(li);
+    } else {
+      posFactors.forEach(function (f) {
+        var li = document.createElement("li");
+        li.textContent = f;
+        posUl.appendChild(li);
+      });
+    }
+
+    var negUl = el.querySelector(".negative-factors");
+    negUl.innerHTML = "";
+    if (negFactors.length === 0) {
+      var li = document.createElement("li");
+      li.textContent = "暂无";
+      li.className = "explanation-empty";
+      negUl.appendChild(li);
+    } else {
+      negFactors.forEach(function (f) {
+        var li = document.createElement("li");
+        li.textContent = f;
+        negUl.appendChild(li);
+      });
+    }
+
+    el.querySelector(".final-sentence").textContent = finalSentence;
+  }
+
   function calculateRiskAdjustedBuyAmount(signal) {
     const strategyAmount = signal.base_buy_amount * signal.multiplier;
     if (signal.risk_level === "Extreme") return 0;
@@ -2585,8 +2787,9 @@
     }
 
     card.querySelector(".signal-strength").textContent = signal.signal_strength;
-    card.querySelector(".action-badge").textContent = displayAction(signal.suggested_action);
-    card.querySelector(".action-badge").className = "action-badge action-" + String(signal.suggested_action || "").toLowerCase().replace(/_/g, "-");
+    var labelResult = getActionLabelFromMultiplier(signal);
+    card.querySelector(".action-badge").textContent = labelResult.label;
+    card.querySelector(".action-badge").className = "action-badge " + labelResult.cls;
     card.querySelector(".risk-level").textContent = displayRiskLevel(signal.risk_level);
     card.querySelector(".multiplier").textContent = formatMultiplier(signal.multiplier);
     card.querySelector(".buy-amount").textContent = "CAD " + signal.suggested_buy_amount.toFixed(2);
@@ -2602,6 +2805,7 @@
     card.querySelector(".note").textContent = [signal.note, panicText.trim()]
       .filter(Boolean)
       .join("; ");
+    ensureActionExplanation(card, signal);
   }
 
   function ensureSignalFields(card) {
