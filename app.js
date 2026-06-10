@@ -349,6 +349,17 @@
       copyTextDetails: "Copy text details",
       showDetails: "Show details",
       hideDetails: "Hide details",
+      searching: "Searching...",
+      stockSearchResultsTitle: "Search results",
+      selectedStock: "Selected",
+      addStock: "Add",
+      alreadyExists: "This ticker already exists.",
+      allocationTooHigh: "Total allocation cannot exceed 100%.",
+      invalidAllocation: "Enter a valid allocation percentage.",
+      remainingAllocation: "Remaining allocation",
+      onlineSearchUnavailable: "Online search unavailable. Showing local matches.",
+      noMatches: "No matching stocks found.",
+      addExactTicker: "Add exact ticker",
       newsSentiment: "News Sentiment",
       recentNews: "Recent News",
       financialReports: "Financial Reports",
@@ -623,6 +634,17 @@
       copyTextDetails: "复制文本详情",
       showDetails: "查看详情",
       hideDetails: "收起详情",
+      searching: "搜索中...",
+      stockSearchResultsTitle: "搜索结果",
+      selectedStock: "已选择",
+      addStock: "添加",
+      alreadyExists: "该股票已存在",
+      allocationTooHigh: "总配置不能超过 100%",
+      invalidAllocation: "请输入有效配置比例",
+      remainingAllocation: "剩余可配置",
+      onlineSearchUnavailable: "联网搜索暂不可用，已显示本地匹配结果。",
+      noMatches: "没有找到匹配股票",
+      addExactTicker: "添加准确代码",
       newsSentiment: "新闻情绪",
       recentNews: "近期新闻",
       financialReports: "财务报告",
@@ -654,6 +676,12 @@
     panicActive: false,
     loading: false,
     pendingRefresh: false,
+    autocompleteActiveIndex: -1,
+    autocompleteResults: [],
+    autocompleteQuery: "",
+    autocompleteSelectedResult: null,
+    autocompleteLastSearchQuery: "",
+    autocompleteAbortController: null,
     weeklySnapshot: null,
     backtestSnapshot: null,
     portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultStocks), { allowCustom: true }),
@@ -741,15 +769,71 @@
     });
     input.addEventListener("keydown", handleDeploymentInputKeydown);
   });
-  stockSearchBtn.addEventListener("click", searchStocks);
+  stockSearchBtn.addEventListener("click", function () { if (state.autocompleteActiveIndex >= 0 && state.autocompleteResults.length > 0) { selectStockSearchResult(state.autocompleteResults[state.autocompleteActiveIndex]); } else if (state.autocompleteSelectedResult) { addSelectedStockToPortfolio(); } else { searchStocks(); } });
   savePortfolioRiskBtn.addEventListener("click", savePortfolioRiskForm);
   availableCashInput.addEventListener("change", savePortfolioRiskForm);
   availableCashInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") savePortfolioRiskForm();
   });
-  stockSearchInput.addEventListener("keydown", function (event) {
-    if (event.key === "Enter") searchStocks();
+  var autocompleteCloseTimer = 0;
+  stockSearchInput.addEventListener("input", function () {
+    clearTimeout(autocompleteCloseTimer);
+    autoCompleteSearch();
   });
+  stockSearchInput.addEventListener("keydown", function (event) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (state.autocompleteResults.length === 0) return;
+      state.autocompleteActiveIndex = Math.min(state.autocompleteActiveIndex + 1, state.autocompleteResults.length - 1);
+      renderAutocompleteResults(state.autocompleteResults, state.autocompleteQuery);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (state.autocompleteResults.length === 0) return;
+      state.autocompleteActiveIndex = Math.max(state.autocompleteActiveIndex - 1, -1);
+      renderAutocompleteResults(state.autocompleteResults, state.autocompleteQuery);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (state.autocompleteActiveIndex >= 0 && state.autocompleteResults.length > 0) {
+        selectStockSearchResult(state.autocompleteResults[state.autocompleteActiveIndex]);
+      } else if (state.autocompleteSelectedResult) {
+        addSelectedStockToPortfolio();
+      } else {
+        searchStocks();
+      }
+    } else if (event.key === "Escape") {
+      clearAutocomplete();
+    }
+  });
+  stockSearchInput.addEventListener("blur", function () {
+    autocompleteCloseTimer = setTimeout(clearAutocomplete, 200);
+  });
+  stockSearchInput.addEventListener("focus", function () {
+    clearTimeout(autocompleteCloseTimer);
+  });
+  var autoCompleteSearch = debounce(function () {
+    var query = stockSearchInput.value.trim();
+    if (query.length < 2) {
+      if (query.length === 0) clearAutocomplete();
+      return;
+    }
+    if (query === state.autocompleteLastSearchQuery) return;
+    state.autocompleteLastSearchQuery = query;
+    searchStockSymbols(query).then(function (results) {
+      if (stockSearchInput.value.trim() !== query) return;
+      state.autocompleteResults = results;
+      state.autocompleteQuery = query;
+      state.autocompleteActiveIndex = -1;
+      renderAutocompleteResults(results, query);
+    }).catch(function () {
+      if (stockSearchInput.value.trim() !== query) return;
+      var localResults = searchLocalSymbols(query);
+      state.autocompleteResults = localResults;
+      state.autocompleteQuery = query;
+      state.autocompleteActiveIndex = -1;
+      renderAutocompleteResults(localResults, query);
+    });
+  }, 300);
+
   document.querySelectorAll(".holdings-details, .order-copy-details").forEach(function (details) {
     details.addEventListener("toggle", function () {
       setDetailLabels(".holdings-details", t("editHoldings"), t("hideDetails"));
@@ -820,6 +904,371 @@
   function closeSettings() {
     settingsModal.classList.add("hidden");
     openSettingsBtn.focus();
+  }
+
+  function debounce(fn, delay) {
+    var timer = 0;
+    return function () {
+      var args = arguments;
+      var ctx = this;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        fn.apply(ctx, args);
+      }, delay);
+    };
+  }
+
+  function normalizeStockSearchResult(raw, source) {
+    var symbol = normalizeSymbol(raw.symbol);
+    if (!symbol) return null;
+    return {
+      symbol: symbol,
+      name: raw.name || raw.description || raw.shortname || symbol,
+      exchange: raw.exchange || raw.exchDisp || "",
+      type: raw.type || raw.quoteType || "Equity",
+      source: source || "Unknown"
+    };
+  }
+
+  function clearAutocomplete() {
+    state.autocompleteActiveIndex = -1;
+    state.autocompleteResults = [];
+    state.autocompleteQuery = "";
+    state.autocompleteSelectedResult = null;
+    state.autocompleteLastSearchQuery = "";
+    if (state.autocompleteAbortController) {
+      try { state.autocompleteAbortController.abort(); } catch (e) {}
+      state.autocompleteAbortController = null;
+    }
+    stockSearchResultsEl.innerHTML = "";
+  }
+
+  function clearAutocompleteKeepSelected() {
+    state.autocompleteActiveIndex = -1;
+    state.autocompleteResults = [];
+    state.autocompleteQuery = "";
+    if (state.autocompleteAbortController) {
+      try { state.autocompleteAbortController.abort(); } catch (e) {}
+      state.autocompleteAbortController = null;
+    }
+    stockSearchResultsEl.innerHTML = "";
+    // Keep selectedResult for addSelectedStockToPortfolio
+  }
+
+  async function searchYahooSymbols(query, signal) {
+    var url = "https://query1.finance.yahoo.com/v1/finance/search?q=" + encodeURIComponent(query) + "&quotesCount=8&newsCount=0";
+    try {
+      var response = await fetch(url, { signal: signal || null });
+      if (!response.ok) throw new Error("Yahoo search failed: " + response.status);
+      var payload = await response.json();
+      var quotes = Array.isArray(payload.quotes) ? payload.quotes : [];
+      var seen = new Set();
+      return quotes.reduce(function (items, quote) {
+        var normalized = normalizeStockSearchResult(quote, "Yahoo");
+        if (!normalized || seen.has(normalized.symbol)) return items;
+        var type = String(quote.quoteType || "").toUpperCase();
+        if (type && !["EQUITY", "ETF", "MUTUALFUND"].includes(type)) return items;
+        seen.add(normalized.symbol);
+        items.push(normalized);
+        return items;
+      }, []);
+    } catch (e) {
+      if (e.name === "AbortError") throw e;
+      return null;
+    }
+  }
+
+  async function searchFinnhubSymbols(query, signal) {
+    var apiKey = localStorage.getItem(STORAGE_KEYS.apiKey);
+    if (!apiKey) return null;
+    try {
+      var url = "https://finnhub.io/api/v1/search?q=" + encodeURIComponent(query) + "&token=" + apiKey;
+      var response = await fetch(url, { signal: signal || null });
+      if (!response.ok) throw new Error("Finnhub search failed: " + response.status);
+      var payload = await response.json();
+      var results = Array.isArray(payload.result) ? payload.result : [];
+      var seen = new Set();
+      return results.reduce(function (items, item) {
+        var normalized = normalizeStockSearchResult(item, "Finnhub");
+        if (!normalized || seen.has(normalized.symbol)) return items;
+        if (item.type && item.type !== "Common Stock" && item.type !== "ETF") return items;
+        seen.add(normalized.symbol);
+        items.push(normalized);
+        return items;
+      }, []);
+    } catch (e) {
+      if (e.name === "AbortError") throw e;
+      return null;
+    }
+  }
+
+  function searchLocalSymbols(query) {
+    var upper = query.toUpperCase();
+    var results = [];
+    var seen = new Set();
+
+    // Check Chinese aliases
+    var aliasKeys = Object.keys(LOCAL_ALIASES);
+    for (var a = 0; a < aliasKeys.length; a++) {
+      if (query.indexOf(aliasKeys[a]) >= 0) {
+        var sym = LOCAL_ALIASES[aliasKeys[a]];
+        if (!seen.has(sym)) {
+          seen.add(sym);
+          results.push({ symbol: sym, name: LOCAL_NAMES[sym] || sym, exchange: "Local", type: "Equity", source: "Local" });
+        }
+      }
+    }
+
+    // Check symbol prefix matches
+    for (var s = 0; s < LOCAL_SYMBOLS.length; s++) {
+      var symbol = LOCAL_SYMBOLS[s];
+      if (symbol.indexOf(upper) >= 0 && !seen.has(symbol)) {
+        seen.add(symbol);
+        results.push({ symbol: symbol, name: LOCAL_NAMES[symbol] || symbol, exchange: "Local", type: "Equity", source: "Local" });
+      }
+    }
+
+    // Check name contains query
+    var nameKeys = Object.keys(LOCAL_NAMES);
+    for (var n = 0; n < nameKeys.length; n++) {
+      var sym2 = nameKeys[n];
+      if (!seen.has(sym2) && LOCAL_NAMES[sym2].toUpperCase().indexOf(upper) >= 0) {
+        seen.add(sym2);
+        results.push({ symbol: sym2, name: LOCAL_NAMES[sym2], exchange: "Local", type: "Equity", source: "Local" });
+      }
+    }
+
+    // Prioritize exact matches
+    var exact = [];
+    var partial = [];
+    for (var r = 0; r < results.length; r++) {
+      if (results[r].symbol === upper) exact.push(results[r]);
+      else partial.push(results[r]);
+    }
+    return exact.concat(partial).slice(0, 8);
+  }
+
+  function mergeSearchResults(arrays) {
+    var all = [];
+    var seen = new Set();
+    for (var a = 0; a < arrays.length; a++) {
+      var arr = arrays[a];
+      if (!Array.isArray(arr)) continue;
+      for (var i = 0; i < arr.length; i++) {
+        var item = arr[i];
+        if (item && !seen.has(item.symbol)) {
+          seen.add(item.symbol);
+          all.push(item);
+          if (all.length >= 8) return all;
+        }
+      }
+    }
+    return all;
+  }
+
+  async function searchStockSymbols(query) {
+    // Cancel previous search
+    if (state.autocompleteAbortController) {
+      try { state.autocompleteAbortController.abort(); } catch (e) {}
+    }
+    var controller;
+    try {
+      controller = new AbortController();
+    } catch (e) {
+      controller = { signal: null, abort: function () {} };
+    }
+    state.autocompleteAbortController = controller;
+    var signal = controller.signal;
+
+    // Try online sources in parallel
+    var yahooPromise = searchYahooSymbols(query, signal);
+    var finnhubPromise = searchFinnhubSymbols(query, signal);
+
+    var yahooResults = null;
+    var finnhubResults = null;
+
+    try { yahooResults = await yahooPromise; } catch (e) { if (e.name !== "AbortError") yahooResults = null; }
+    try { finnhubResults = await finnhubPromise; } catch (e) { if (e.name !== "AbortError") finnhubResults = null; }
+
+    var onlineResults = mergeSearchResults([yahooResults, finnhubResults]);
+
+    // If online results exist, show online + local fallback
+    if (onlineResults.length > 0) {
+      var localResults = searchLocalSymbols(query);
+      var merged = mergeSearchResults([onlineResults, localResults]);
+      return merged.slice(0, 8);
+    }
+
+    // If online failed, try local
+    state.autocompleteLastSearchQuery = query;
+    var localOnly = searchLocalSymbols(query);
+    if (localOnly.length > 0) return localOnly;
+
+    return [];
+  }
+
+  function renderAutocompleteResults(results, query) {
+    stockSearchResultsEl.innerHTML = "";
+
+    if (!results || results.length === 0) {
+      var emptyMsg = document.createElement("div");
+      emptyMsg.className = "stock-autocomplete-empty";
+      emptyMsg.textContent = t("noMatches");
+      stockSearchResultsEl.appendChild(emptyMsg);
+      return;
+    }
+
+    var list = document.createElement("div");
+    list.className = "stock-autocomplete";
+    list.setAttribute("role", "listbox");
+    list.setAttribute("aria-label", t("stockSearchResultsTitle"));
+
+    var maxItems = Math.min(results.length, 8);
+    for (var i = 0; i < maxItems; i++) {
+      var item = results[i];
+      var row = document.createElement("button");
+      row.className = "stock-autocomplete-item" + (i === state.autocompleteActiveIndex ? " stock-autocomplete-active" : "");
+      row.type = "button";
+      row.setAttribute("role", "option");
+      row.setAttribute("aria-selected", String(i === state.autocompleteActiveIndex));
+      row.dataset.index = String(i);
+
+      var symSpan = document.createElement("span");
+      symSpan.className = "stock-autocomplete-symbol";
+      symSpan.textContent = item.symbol;
+
+      var nameSpan = document.createElement("span");
+      nameSpan.className = "stock-autocomplete-name";
+      nameSpan.textContent = item.name;
+
+      var metaSpan = document.createElement("span");
+      metaSpan.className = "stock-autocomplete-meta";
+      var parts = [];
+      if (item.type) parts.push(item.type);
+      if (item.exchange) parts.push(item.exchange);
+      parts.push(item.source || "");
+      metaSpan.textContent = parts.join(" / ");
+
+      row.appendChild(symSpan);
+      row.appendChild(nameSpan);
+      row.appendChild(metaSpan);
+
+      (function (idx) {
+        row.addEventListener("mousedown", function (event) {
+          event.preventDefault();
+          selectStockSearchResult(results[idx]);
+        });
+      })(i);
+
+      list.appendChild(row);
+    }
+
+    stockSearchResultsEl.appendChild(list);
+  }
+
+  function selectStockSearchResult(result) {
+    if (!result) return;
+    stockSearchInput.value = result.symbol;
+    state.autocompleteSelectedResult = result;
+    clearAutocompleteKeepSelected();
+
+    // Calculate remaining allocation
+    var totalAlloc = state.portfolio.reduce(function (sum, stock) {
+      return sum + stock.allocation;
+    }, 0);
+    var remaining = Math.round((1 - totalAlloc) * 1000) / 10;
+
+    // Show selected summary
+    var summary = document.createElement("div");
+    summary.className = "stock-autocomplete-selected";
+    summary.textContent = t("selectedStock") + ": " + result.symbol + " — " + result.name + " — " + (result.exchange || result.type || "");
+    var existing = state.portfolio.find(function (s) { return s.symbol === result.symbol; });
+    if (existing) {
+      var dupNote = document.createElement("span");
+      dupNote.className = "stock-autocomplete-duplicate";
+      dupNote.textContent = " (" + t("alreadyExists") + ")";
+      summary.appendChild(dupNote);
+    }
+    stockSearchResultsEl.innerHTML = "";
+    stockSearchResultsEl.appendChild(summary);
+
+    // Default allocation to remaining
+    if (remaining > 0 && remaining <= 100) {
+      stockAllocationInput.value = String(remaining);
+    }
+
+    stockAllocationInput.focus();
+  }
+
+  function addSelectedStockToPortfolio() {
+    var result = state.autocompleteSelectedResult;
+    if (!result) {
+      // Try to use input directly as ticker
+      var rawSymbol = normalizeSymbol(stockSearchInput.value);
+      if (rawSymbol) {
+        result = { symbol: rawSymbol, name: rawSymbol, exchange: "Manual", type: "Equity", source: "Manual" };
+      }
+    }
+    if (!result) {
+      copyStatusEl.textContent = t("enterTicker");
+      return;
+    }
+
+    var symbol = normalizeSymbol(result.symbol);
+    if (!symbol) return;
+
+    var allocation = parseAllocation(stockAllocationInput.value);
+    var existing = state.portfolio.find(function (stock) {
+      return stock.symbol === symbol;
+    });
+
+    // Check duplicate
+    if (existing) {
+      copyStatusEl.textContent = t("alreadyExists");
+      state.autocompleteSelectedResult = null;
+      clearAutocomplete();
+      return;
+    }
+
+    // Validate allocation
+    if (!allocation || allocation <= 0) {
+      copyStatusEl.textContent = t("invalidAllocation");
+      return;
+    }
+
+    // Check total allocation
+    var currentTotal = state.portfolio.reduce(function (sum, stock) {
+      return sum + stock.allocation;
+    }, 0);
+    if (currentTotal + allocation > 1.005) {
+      copyStatusEl.textContent = t("allocationTooHigh");
+      return;
+    }
+
+    // Add the stock
+    state.portfolio.push({
+      symbol: symbol,
+      name: result.name || symbol,
+      allocation: allocation
+    });
+
+    state.portfolio = normalizePortfolio(state.portfolio, { allowCustom: true });
+    savePortfolio();
+    clearBacktestResult();
+
+    // Clear autocomplete and inputs
+    state.autocompleteSelectedResult = null;
+    clearAutocomplete();
+    stockSearchInput.value = "";
+    stockAllocationInput.value = "";
+
+    // Re-render
+    renderPortfolioTotal();
+    renderPortfolioRiskInputs();
+    renderSkeleton();
+    refreshMarketData();
+
+    copyStatusEl.textContent = t("addedSymbol", { symbol: symbol });
   }
 
   async function searchStocks() {
