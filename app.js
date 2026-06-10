@@ -4034,9 +4034,6 @@ allocWrapper.appendChild(editBtn);
       var p = document.getElementById(panelId);
       if (p) p.parentNode.removeChild(p);
       renderBacktestSettings();
-  renderBacktestSettings();
-  renderAlgorithmInfo();
-  renderBacktestIntro();
     });
     details.appendChild(resetBtn);
 
@@ -4044,6 +4041,9 @@ allocWrapper.appendChild(editBtn);
     var parent = backtestSummaryEl.parentNode;
     parent.insertBefore(details, backtestSummaryEl);
   }
+  renderBacktestSettings();
+  renderAlgorithmInfo();
+  renderBacktestIntro();
 
 function startEditAllocation(container, symbol) {
     var textSpan = container.querySelector(".allocation-text");
