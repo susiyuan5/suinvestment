@@ -2617,20 +2617,39 @@
     el.querySelector('[data-field="5d"]').textContent = wc !== null ? formatSigned(wc) + "%" : "暂无数据";
     el.querySelector('[data-field="allocation"]').textContent = allocPct || "暂无数据";
     el.querySelector('[data-field="final-action"]').textContent = action.label;
-    // Build algorithm factor chain
+    // Build algorithm factor chain - showing the Enhanced Signal Model path
     var algoChain = signal.algorithm || {};
     var chainParts = [];
-    if (isFiniteNumber(algoChain.raw_smooth_multiplier)) chainParts.push(t("rawSmooth") + " " + formatMultiplier(algoChain.raw_smooth_multiplier));
-    if (isFiniteNumber(algoChain.regime_adjustment)) chainParts.push(t("regimeCap") + " " + formatMultiplier(algoChain.regime_adjustment));
-    if (isFiniteNumber(algoChain.trend_adjustment)) chainParts.push(t("trendCap") + " " + formatMultiplier(algoChain.trend_adjustment));
-    if (isFiniteNumber(algoChain.volatility_adjustment)) chainParts.push(t("volAdj") + " " + formatMultiplier(algoChain.volatility_adjustment));
-    if (isFiniteNumber(algoChain.drawdown_adjustment)) chainParts.push(t("drawdownCap") + " " + formatMultiplier(algoChain.drawdown_adjustment));
-    if (isFiniteNumber(algoChain.portfolio_adjustment)) chainParts.push(t("portfolioAdj") + " " + formatMultiplier(algoChain.portfolio_adjustment));
-    if (isFiniteNumber(signal.multiplier)) chainParts.push(t("finalMultiplierShort") + " " + formatMultiplier(signal.multiplier));
+    // Step 1: raw smooth dip-buy result (starting point before enhanced adjustments)
+    if (isFiniteNumber(algoChain.rawMultiplier)) {
+      chainParts.push(formatMultiplier(algoChain.rawMultiplier) + " smooth");
+    } else if (isFiniteNumber(algoChain.raw_smooth_multiplier)) {
+      chainParts.push(formatMultiplier(algoChain.raw_smooth_multiplier) + " smooth");
+    }
+    // Step 2: volatility adjustment - MULTIPLICATIVE (applied before caps)
+    if (isFiniteNumber(algoChain.volatility_adjustment) && Math.abs(algoChain.volatility_adjustment - 1) > 0.001) {
+      chainParts.push("×" + algoChain.volatility_adjustment.toFixed(2));
+    }
+    // Step 3: regime cap - UPPER LIMIT (Math.min, not multiplication)
+    if (isFiniteNumber(algoChain.regime_adjustment)) {
+      chainParts.push("≤" + formatMultiplier(algoChain.regime_adjustment) + " " + t("regimeCap"));
+    }
+    // Step 4: trend cap - UPPER LIMIT (Math.min, not multiplication)
+    if (isFiniteNumber(algoChain.trend_adjustment)) {
+      chainParts.push("≤" + formatMultiplier(algoChain.trend_adjustment) + " " + t("trendCap"));
+    }
+    // Step 5: drawdown cap - UPPER LIMIT (Math.min, not multiplication)
+    if (isFiniteNumber(algoChain.drawdown_adjustment)) {
+      chainParts.push("≤" + formatMultiplier(algoChain.drawdown_adjustment) + " " + t("drawdownCap"));
+    }
+    // Step 6: final multiplier after all caps and [0.3, 2.0] clamp
+    if (isFiniteNumber(signal.multiplier)) {
+      chainParts.push(formatMultiplier(signal.multiplier) + " " + t("finalMultiplierShort"));
+    }
     var chainEl = el.querySelector(".algorithm-chain-line");
-    if (chainEl) chainEl.textContent = chainParts.length > 0 ? chainParts.join(" \u2192 ") : t("none");
-
-    el.querySelector(".explanation-reason").textContent = reasons.join(" ");
+    if (chainEl) chainEl.textContent = chainParts.length > 0 ? chainParts.join(" → ") : t("none");
+    
+el.querySelector(".explanation-reason").textContent = reasons.join(" ");
 
     // Fill news sentiment data
     el.querySelector('[data-field="news-label"]').textContent = ns.label === "Unavailable" ? t("newsDataUnavailable") : (ns.label || t("newsDataUnavailable"));
