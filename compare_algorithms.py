@@ -1,4 +1,4 @@
-"""compare_algorithms.py - compare old simple vs v1 vs v2."""
+"""compare_algorithms.py - compare old simple vs v2."""
 import json, math
 from datetime import date
 from backtest import run_backtest
@@ -42,7 +42,7 @@ def main():
     symbols = ["NVDA", "MSFT", "AAPL", "ASML", "KO", "BYDDY"]
     cfg = BacktestConfig(strategy=StrategyConfig(base_buy_amount=100,sensitivity=4,min_multiplier=0.3,max_multiplier=2.0,initial_cash=10000,commission_rate=0.001,slippage_rate=0.0005,strategy_mode="dip_buy",fractional_shares=True))
 
-    print("{:>6} {:>20} {:>12} {:>12} {:>12}".format("Symbol","Metric","Old","v1","v2"))
+    print("{:>6} {:>20} {:>12} {:>12} {:>12}".format("Symbol","Metric","Old","v1-inline","v2"))
     print("-" * 64)
     sf = [0,0,0]; si = [0,0,0]
 

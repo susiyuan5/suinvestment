@@ -349,6 +349,22 @@ This app stores API keys, cache snapshots, and manual overrides in the browser's
 python -m unittest discover tests
 ```
 
+
+
+## Algorithm Status
+
+**Default algorithm**: simple dip-buy multiplier (calculate_buy_amount)
+- Tested across 6 tickers over 5 years.
+- Recommended for normal long-term investing.
+
+**Optional algorithm**: risk-adjusted v2 (use_risk_adjusted=True)
+- Provides protection against extreme tail-risk events.
+- Total return is ~1% below the default in normal markets.
+- Not recommended as the default.
+
+See [ALGORITHM_VALIDATION.md](ALGORITHM_VALIDATION.md) for full details.
+
+
 ## Risk Warning
 
 This project is for education, historical backtesting, market analysis, and decision support only. It does not provide financial advice and does not execute trades. Historical results and live suggestions do not guarantee future performance.
