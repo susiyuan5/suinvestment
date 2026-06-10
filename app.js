@@ -160,6 +160,7 @@
       footnoteRiskFreeRate: "Sharpe and Sortino ratios assume a 0% risk-free rate. Approx. CAGR is estimated from final value and total invested capital.",
       footnoteLookAhead: "News and fundamentals are not included in backtest unless historical point-in-time data is available.",
       advancedSettings: "Advanced Backtest Settings",
+      advancedSettingsHint: "Adjust date range, weekly contribution, initial capital, transaction cost, and slippage",
       startDate: "Start Date",
       endDate: "End Date",
       weeklyContribution: "Weekly Contribution",
@@ -631,6 +632,7 @@
       footnoteRiskFreeRate: "夏普比率和索提诺比率假设无风险利率为 0%。近似年化收益率基于最终价值和总投入金额估算。",
       footnoteLookAhead: "新闻和基本面未纳入回测，除非有历史快照数据可用。",
       advancedSettings: "高级回测设置",
+      advancedSettingsHint: "可调整日期区间、每周投入、初始本金、交易成本和滑点",
       startDate: "开始日期",
       endDate: "结束日期",
       weeklyContribution: "每周投入",
@@ -3844,6 +3846,11 @@
     var sum = document.createElement("summary");
     sum.textContent = t("advancedSettings");
     details.appendChild(sum);
+
+    var hint = document.createElement("p");
+    hint.className = "backtest-settings-hint";
+    hint.textContent = t("advancedSettingsHint");
+    details.appendChild(hint);
 
     var grid = document.createElement("div");
     grid.className = "backtest-settings-grid";

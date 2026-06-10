@@ -2703,3 +2703,40 @@ input::placeholder {
   font-size: 0.82rem;
   line-height: 1.4;
 }
+
+.backtest-settings-panel summary:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.backtest-settings-panel summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px !important;
+  background: rgba(16, 23, 34, 0.92);
+  margin-bottom: 8px;
+  font-size: 0.92rem !important;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.backtest-settings-panel summary::before {
+  content: "\2699";
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+
+.backtest-settings-panel[open] summary {
+  border-color: var(--accent);
+  background: rgba(79, 195, 161, 0.08);
+}
+
+.backtest-settings-hint {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
