@@ -161,11 +161,11 @@
       footnoteLookAhead: "News and fundamentals are not included in backtest unless historical point-in-time data is available.",
       advancedSettings: "Advanced Backtest Settings",
       algorithmStatus: "Algorithm Status",
-      algorithmDefault: "Default: Simple Dip-Buy",
-      algorithmOptional: "Optional: Risk-Adjusted v2",
-      algorithmReturnCost: "~0.97% total return cost vs default",
+      algorithmDefault: "Dashboard: Enhanced Signal Model",
+      algorithmOptional: "Python backtest default: Simple Dip-Buy",
+      algorithmReturnCost: "Python optional: Risk-Adjusted v2 (tail-risk protection)",
       algorithmDrawdownNote: "Max drawdown unchanged at 44.2%",
-      algorithmVerdictNote: "Simple strategy performed best in 5-year backtest across 6 tickers. v2 exists for extreme tail-risk protection, not normal bull-market outperformance.",
+      algorithmVerdictNote: "Dashboard uses Enhanced Signal Model (smooth multiplier + trend + volatility + drawdown + market regime + portfolio risk + news factors). Python backtest uses Simple Dip-Buy by default, Risk-Adjusted v2 optionally.",
 
 
       advancedSettingsHint: "Adjust date range, weekly contribution, initial capital, transaction cost, and slippage",
@@ -645,11 +645,11 @@
       footnoteLookAhead: "新闻和基本面未纳入回测，除非有历史快照数据可用。",
       advancedSettings: "高级回测设置",
       algorithmStatus: "算法状态",
-      algorithmDefault: "默认：简单逢低买入",
-      algorithmOptional: "可选：风险调整 v2",
-      algorithmReturnCost: "总收益约低 0.97%",
+      algorithmDefault: "仪表盘：增强信号模型",
+      algorithmOptional: "Python 回测默认：简单逢低买入",
+      algorithmReturnCost: "Python 可选：风险调整 v2（尾部风险保护）",
       algorithmDrawdownNote: "最大回撤相同为 44.2%",
-      algorithmVerdictNote: "简单策略在 5 年回测中表现最佳。v2 仅为极端尾部风险保护设计，不能在正常牛市中取得超额收益。",
+      algorithmVerdictNote: "仪表盘使用增强信号模型（平滑乘数 + 趋势 + 波动率 + 回撤 + 市场制度 + 组合风险 + 新闻因素）。Python 回测默认简单逢低买入，可选风险调整 v2。",
 
 
       advancedSettingsHint: "可调整日期区间、每周投入、初始本金、交易成本和滑点",
