@@ -155,8 +155,8 @@
       cashUsage: "Cash Usage",
       bestWeek: "Best Week",
       worstWeek: "Worst Week",
-      backtestInterpretationOnly: "Backtest interpretation only, not investment advice.",
-      footnoteRiskFreeRate: "Risk-free rate is assumed as 0% for Sharpe and Sortino calculations. Approx. CAGR is estimated from final value and total invested capital because this strategy uses recurring weekly contributions.",
+      backtestInterpretationOnly: "This is historical backtest interpretation only, not investment advice.",
+      footnoteRiskFreeRate: "Sharpe and Sortino ratios assume a 0% risk-free rate. Approx. CAGR is estimated from final value and total invested capital.",
       footnoteLookAhead: "News and fundamentals are not included in backtest unless historical point-in-time data is available.",
       volatility: "Volatility",
       algorithmDetails: "Algorithm Details",
@@ -602,12 +602,13 @@
       highestFinalValue: "最高最终价值",
       highestReturn: "最高总收益率",
       lowestDrawdown: "最低最大回撤",
+      bestSharpeRatio: "最佳夏普比率",
       bestRiskAdjusted: "最佳风险调整收益",
       cashUsage: "资金使用率",
       bestWeek: "最佳单周",
       worstWeek: "最差单周",
-      backtestInterpretationOnly: "以下仅为回测解释，不构成投资建议。",
-      footnoteRiskFreeRate: "夏普比率和索提诺比率假设无风险利率为 0%。近似年化收益率基于最终价值和总投入金额估算，因为该策略采用每周持续投入。",
+      backtestInterpretationOnly: "以下仅为历史回测解释，不构成投资建议。",
+      footnoteRiskFreeRate: "夏普比率和索提诺比率假设无风险利率为 0%。近似年化收益率基于最终价值和总投入金额估算。",
       footnoteLookAhead: "新闻和基本面未纳入回测，除非有历史快照数据可用。",
       volatility: "波动率",
       algorithmDetails: "算法细节",
@@ -3354,7 +3355,7 @@
     var minVal = Math.min.apply(null, allValues) * 0.9;
     if (minVal >= maxVal) { minVal = 0; maxVal = allValues.length; }
 
-    var width = 600, height = 220, padLeft = 55, padRight = 10, padTop = 10, padBottom = 25;
+    var width = 600, height = 220, padLeft = 72, padRight = 10, padTop = 10, padBottom = 25;
     var plotW = width - padLeft - padRight;
     var plotH = height - padTop - padBottom;
 
@@ -3393,7 +3394,7 @@
       label.setAttribute("text-anchor", "end");
       label.setAttribute("fill", "#9aa9bc");
       label.setAttribute("font-size", "10");
-      label.textContent = formatCurrency(Math.round(yVal));
+      label.textContent = formatCompactCurrency(yVal);
       svg.appendChild(label);
     }
 
@@ -3444,7 +3445,7 @@
       { title: t("highestFinalValue"), getter: function (d) { return d.final_value; }, higherBetter: true, fmt: function (v) { return formatCurrency(v); } },
       { title: t("highestReturn"), getter: function (d) { return d.total_return; }, higherBetter: true, fmt: function (v) { return formatPercent(v); } },
       { title: t("lowestDrawdown"), getter: function (d) { return -d.max_drawdown; }, higherBetter: true, fmt: function (v) { return formatPercent(-v); } },
-      { title: t("bestRiskAdjusted"), getter: function (d) { return d.sharpe !== null && d.sharpe !== undefined ? d.sharpe : -999; }, higherBetter: true, fmt: function (v) { return v === -999 ? "N/A" : formatMetric(v); } },
+      { title: t("bestSharpeRatio"), getter: function (d) { return d.sharpe !== null && d.sharpe !== undefined ? d.sharpe : -999; }, higherBetter: true, fmt: function (v) { return v === -999 ? "N/A" : formatMetric(v); } },
       { title: t("cashUsage"), getter: function (d) { return d.cash_usage_ratio; }, higherBetter: false, fmt: function (v) { return formatPercent(v); } }
     ];
 
@@ -3537,7 +3538,7 @@
     var items = [
       [t("backtestWindow"), result.start_date + " — " + result.end_date],
       [t("numberOfBuys"), result.number_of_weeks + " weeks"],
-      [t("volatility"), String(result.enhanced.tickers.length) + " tickers"]
+      [t("ticker"), String(result.enhanced.tickers.length) + " tickers"]
     ];
     if (result.number_of_weeks < 52) {
       var warn = document.createElement("p");
@@ -3566,18 +3567,17 @@
     return div;
   }
 
-  function renderBacktestLookAheadNote() {
-    var note = document.createElement("p");
-    note.className = "backtest-footnote";
-    note.textContent = t("backtestInterpretationOnly") + " " + t("footnoteLookAhead");
-    return note;
-  }
-
-  function renderBacktestRiskNote() {
-    var note = document.createElement("p");
-    note.className = "backtest-footnote";
-    note.textContent = t("footnoteRiskFreeRate");
-    return note;
+  function renderBacktestFootnotes() {
+    var note1 = document.createElement("p");
+    note1.className = "backtest-footnote";
+    note1.textContent = t("backtestInterpretationOnly") + " " + t("footnoteLookAhead");
+    var note2 = document.createElement("p");
+    note2.className = "backtest-footnote";
+    note2.textContent = t("footnoteRiskFreeRate");
+    var frag = document.createDocumentFragment();
+    frag.appendChild(note1);
+    frag.appendChild(note2);
+    return frag;
   }
 
   function renderBacktestResult(result) {
@@ -3601,8 +3601,7 @@
     backtestSummaryEl.appendChild(createBacktestStrategyTable(result));
 
     // Footnotes
-    backtestSummaryEl.appendChild(renderBacktestLookAheadNote());
-    backtestSummaryEl.appendChild(renderBacktestRiskNote());
+    backtestSummaryEl.appendChild(renderBacktestFootnotes());
   }
 
   function createBacktestStrategyTable(result) {
@@ -3617,7 +3616,8 @@
       "<th>" + escapeHtml(t("totalReturn")) + "</th>",
       "<th>" + escapeHtml(t("approxCAGR")) + "</th>",
       "<th>" + escapeHtml(t("maxDrawdown")) + "</th>",
-      "<th>" + escapeHtml(t("sharpeRatio")) + "</th>",
+      "<th>" + escapeHtml(t("sharpeRatio")) + "</th>" +
+      "<th>" + escapeHtml(t("sortinoRatio")) + "</th>",
       "<th>" + escapeHtml(t("calmarRatio")) + "</th>",
       "<th>" + escapeHtml(t("numberOfBuys")) + "</th>",
       "<th>" + escapeHtml(t("cashUsage")) + "</th>",
@@ -3640,6 +3640,7 @@
       { key: "cagr", higherBetter: true },
       { key: "max_drawdown", higherBetter: false },
       { key: "sharpe", higherBetter: true },
+      { key: "sortino", higherBetter: true },
       { key: "calmar", higherBetter: true }
     ];
     fields.forEach(function (f) {
@@ -3663,6 +3664,7 @@
         { val: formatMetricPercent(s.data.cagr), cls: s.data === bests.cagr ? "backtest-highest" : "" },
         { val: formatPercent(s.data.max_drawdown), cls: s.data === bests.max_drawdown ? "backtest-lowest" : "" },
         { val: formatMetric(s.data.sharpe), cls: s.data === bests.sharpe ? "backtest-highest" : "" },
+        { val: formatMetric(s.data.sortino), cls: s.data === bests.sortino ? "backtest-highest" : "" },
         { val: formatMetric(s.data.calmar), cls: s.data === bests.calmar ? "backtest-highest" : "" },
         { val: String(s.data.number_of_buys), cls: "" },
         { val: formatPercent(s.data.cash_usage_ratio), cls: "" }
@@ -4909,6 +4911,13 @@
 
   function formatCurrency(value) {
     return "CAD " + Number(value).toFixed(2);
+  }
+
+  function formatCompactCurrency(value) {
+    if (!Number.isFinite(value)) return "N/A";
+    if (value >= 10000) return "CAD " + (value / 1000).toFixed(0) + "k";
+    if (value >= 1000) return "CAD " + (value / 1000).toFixed(1) + "k";
+    return "CAD " + value.toFixed(0);
   }
 
   function formatDateTime(timestamp) {
