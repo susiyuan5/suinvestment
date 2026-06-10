@@ -143,6 +143,21 @@
       beatsSmooth: "Beats Smooth Strategy",
       bestStrategy: "Best Strategy",
       worstStrategy: "Worst Strategy",
+      approxCAGR: "Approx. CAGR",
+      sharpeRatio: "Sharpe Ratio",
+      sortinoRatio: "Sortino Ratio",
+      calmarRatio: "Calmar Ratio",
+      equityCurve: "Equity Curve",
+      highestFinalValue: "Highest Final Value",
+      highestReturn: "Highest Total Return",
+      lowestDrawdown: "Lowest Drawdown",
+      bestRiskAdjusted: "Best Risk-adjusted",
+      cashUsage: "Cash Usage",
+      bestWeek: "Best Week",
+      worstWeek: "Worst Week",
+      backtestInterpretationOnly: "Backtest interpretation only, not investment advice.",
+      footnoteRiskFreeRate: "Risk-free rate is assumed as 0% for Sharpe and Sortino calculations. Approx. CAGR is estimated from final value and total invested capital because this strategy uses recurring weekly contributions.",
+      footnoteLookAhead: "News and fundamentals are not included in backtest unless historical point-in-time data is available.",
       volatility: "Volatility",
       algorithmDetails: "Algorithm Details",
       marketRegime: "Market regime",
@@ -579,6 +594,21 @@
       beatsSmooth: "是否跑赢当前平滑策略",
       bestStrategy: "最佳策略",
       worstStrategy: "最弱策略",
+      approxCAGR: "近似年化收益率",
+      sharpeRatio: "夏普比率",
+      sortinoRatio: "索提诺比率",
+      calmarRatio: "Calmar 比率",
+      equityCurve: "净值曲线",
+      highestFinalValue: "最高最终价值",
+      highestReturn: "最高总收益率",
+      lowestDrawdown: "最低最大回撤",
+      bestRiskAdjusted: "最佳风险调整收益",
+      cashUsage: "资金使用率",
+      bestWeek: "最佳单周",
+      worstWeek: "最差单周",
+      backtestInterpretationOnly: "以下仅为回测解释，不构成投资建议。",
+      footnoteRiskFreeRate: "夏普比率和索提诺比率假设无风险利率为 0%。近似年化收益率基于最终价值和总投入金额估算，因为该策略采用每周持续投入。",
+      footnoteLookAhead: "新闻和基本面未纳入回测，除非有历史快照数据可用。",
       volatility: "波动率",
       algorithmDetails: "算法细节",
       marketRegime: "市场环境",
@@ -3057,16 +3087,42 @@
       return riskAdjustedBacktestScore(right.data) - riskAdjustedBacktestScore(left.data);
     });
 
+    function computeMetrics(data) {
+      var cagr = calculateCAGR(data.final_value, data.total_invested, data.number_of_weeks);
+      var annVol = calculateAnnualizedVolatility(data.return_history);
+      var downsideDev = calculateDownsideDeviation(data.return_history);
+      return {
+        cagr: cagr,
+        ann_vol: annVol !== null ? annVol * 100 : null,
+        sharpe: calculateSharpe(cagr, annVol),
+        sortino: calculateSortino(cagr, downsideDev),
+        calmar: calculateCalmar(cagr, data.max_drawdown)
+      };
+    }
+
+    function addMetrics(data) {
+      var m = computeMetrics(data);
+      data.cagr = m.cagr;
+      data.ann_vol = m.ann_vol;
+      data.sharpe = m.sharpe;
+      data.sortino = m.sortino;
+      data.calmar = m.calmar;
+      return data;
+    }
+
+    addMetrics(enhanced);
+    addMetrics(smooth);
+    addMetrics(old);
+    addMetrics(dca);
+
     return {
       start_date: aligned[0].prices[1].date,
       end_date: aligned[0].prices[commonLength - 1].date,
+      number_of_weeks: commonLength - 1,
       enhanced,
       smooth,
       old,
       dca,
-      beats_dca: enhanced.final_value > dca.final_value,
-      beats_old: enhanced.final_value > old.final_value,
-      beats_smooth: enhanced.final_value > smooth.final_value,
       best_strategy: ranked[0].label,
       worst_strategy: ranked[ranked.length - 1].label
     };
@@ -3140,6 +3196,13 @@
       };
     });
 
+    var worstWeekReturn = returnHistory.length > 0 ? Math.min.apply(null, returnHistory) : 0;
+    var bestWeekReturn = returnHistory.length > 0 ? Math.max.apply(null, returnHistory) : 0;
+    var numberOfWeeks = aligned[0].prices.length - 1;
+    var totalPotential = numberOfWeeks * state.deployment.weeklyDeployment;
+    var cashUsageRatio = totalPotential > 0 ? round2((totalInvested / totalPotential) * 100) : 0;
+    var avgWeeklyBuy = numberOfWeeks > 0 ? round2(totalInvested / numberOfWeeks) : 0;
+
     return {
       final_value: round2(finalValue),
       total_invested: round2(totalInvested),
@@ -3148,8 +3211,66 @@
       volatility: round2(calculateReturnVolatility(returnHistory) * 100),
       number_of_buys: totalBuys,
       average_buy_price: totalInvested > 0 ? round2(weightedAverageNumerator / totalInvested) : 0,
-      tickers: tickerRows
+      tickers: tickerRows,
+      equity_curve: history,
+      return_history: returnHistory,
+      worst_week_return: round2(worstWeekReturn * 100),
+      best_week_return: round2(bestWeekReturn * 100),
+      average_weekly_buy: avgWeeklyBuy,
+      cash_usage_ratio: cashUsageRatio,
+      number_of_weeks: numberOfWeeks
     };
+  }
+
+  function calculateCAGR(finalValue, totalInvested, numberOfWeeks) {
+    if (totalInvested <= 0 || numberOfWeeks < 1) return null;
+    var years = numberOfWeeks / 52;
+    if (years <= 0) return null;
+    return Math.pow(finalValue / totalInvested, 1 / years) - 1;
+  }
+
+  function calculateAnnualizedVolatility(weeklyReturns) {
+    if (!Array.isArray(weeklyReturns) || weeklyReturns.length < 2) return null;
+    var mean = weeklyReturns.reduce(function (s, r) { return s + r; }, 0) / weeklyReturns.length;
+    var variance = weeklyReturns.reduce(function (s, r) { return s + (r - mean) * (r - mean); }, 0) / (weeklyReturns.length - 1);
+    if (variance <= 0) return null;
+    return Math.sqrt(variance) * Math.sqrt(52);
+  }
+
+  function calculateDownsideDeviation(weeklyReturns) {
+    if (!Array.isArray(weeklyReturns) || weeklyReturns.length < 2) return null;
+    var negativeReturns = weeklyReturns.filter(function (r) { return r < 0; });
+    if (negativeReturns.length < 2) return 0;
+    var mean = negativeReturns.reduce(function (s, r) { return s + r; }, 0) / negativeReturns.length;
+    var variance = negativeReturns.reduce(function (s, r) { return s + (r - mean) * (r - mean); }, 0) / (negativeReturns.length - 1);
+    if (variance <= 0) return 0;
+    return Math.sqrt(variance) * Math.sqrt(52);
+  }
+
+  function calculateSharpe(cagr, annualizedVol) {
+    if (cagr === null || cagr === undefined || annualizedVol === null || annualizedVol === undefined || annualizedVol <= 0) return null;
+    return cagr / annualizedVol;
+  }
+
+  function calculateSortino(cagr, downsideDev) {
+    if (cagr === null || cagr === undefined || downsideDev === null || downsideDev === undefined || downsideDev <= 0) return null;
+    return cagr / downsideDev;
+  }
+
+  function calculateCalmar(cagr, maxDrawdownPct) {
+    if (cagr === null || cagr === undefined || maxDrawdownPct === null || maxDrawdownPct === undefined || maxDrawdownPct <= 0) return null;
+    return cagr / (Math.abs(maxDrawdownPct) / 100);
+  }
+
+  function formatMetric(value, decimals) {
+    if (value === null || value === undefined || !Number.isFinite(value)) return "N/A";
+    if (decimals === undefined) decimals = 2;
+    return Number(value).toFixed(decimals);
+  }
+
+  function formatMetricPercent(value) {
+    if (value === null || value === undefined || !Number.isFinite(value)) return "N/A";
+    return (value * 100).toFixed(2) + "%";
   }
 
   function calculateBacktestEnhancedMultiplier(prices, index, weeklyReturn, marketRegime) {
@@ -3210,6 +3331,359 @@
     note.textContent = message;
     if (warning) note.classList.add("risk-high");
     backtestSummaryEl.appendChild(note);
+  }
+
+
+  function renderBacktestEquityChart(result) {
+    var strategies = [
+      { key: "enhanced", label: t("enhancedDipBuyStrategy"), color: "#4fc3a1" },
+      { key: "smooth", label: t("smoothDipBuyStrategy"), color: "#66a3ff" },
+      { key: "old", label: t("oldDipBuyStrategy"), color: "#ffc857" },
+      { key: "dca", label: t("fixedDcaStrategy"), color: "#95a5a6" }
+    ];
+
+    // Find max value for Y scale
+    var allValues = [];
+    strategies.forEach(function (s) {
+      var curve = result[s.key].equity_curve || [];
+      curve.forEach(function (pt) { if (isFiniteNumber(pt.value)) allValues.push(pt.value); });
+    });
+    if (allValues.length === 0) return;
+
+    var maxVal = Math.max.apply(null, allValues) * 1.1;
+    var minVal = Math.min.apply(null, allValues) * 0.9;
+    if (minVal >= maxVal) { minVal = 0; maxVal = allValues.length; }
+
+    var width = 600, height = 220, padLeft = 55, padRight = 10, padTop = 10, padBottom = 25;
+    var plotW = width - padLeft - padRight;
+    var plotH = height - padTop - padBottom;
+
+    function scaleX(i, total) { return padLeft + (i / (total - 1)) * plotW; }
+    function scaleY(v) { return padTop + plotH - ((v - minVal) / (maxVal - minVal)) * plotH; }
+
+    var container = document.createElement("div");
+    container.className = "backtest-chart-container";
+
+    var heading = document.createElement("h4");
+    heading.className = "backtest-chart-title";
+    heading.textContent = t("equityCurve");
+    container.appendChild(heading);
+
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    svg.setAttribute("class", "backtest-chart");
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+    // Y axis gridlines and labels
+    var steps = 5;
+    for (var s = 0; s <= steps; s++) {
+      var yVal = minVal + (maxVal - minVal) * (1 - s / steps);
+      var yPos = padTop + (s / steps) * plotH;
+      var line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", String(padLeft));
+      line.setAttribute("y1", String(yPos));
+      line.setAttribute("x2", String(width - padRight));
+      line.setAttribute("y2", String(yPos));
+      line.setAttribute("stroke", "#243144");
+      line.setAttribute("stroke-width", "1");
+      svg.appendChild(line);
+      var label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.setAttribute("x", String(padLeft - 5));
+      label.setAttribute("y", String(yPos + 4));
+      label.setAttribute("text-anchor", "end");
+      label.setAttribute("fill", "#9aa9bc");
+      label.setAttribute("font-size", "10");
+      label.textContent = formatCurrency(Math.round(yVal));
+      svg.appendChild(label);
+    }
+
+    // Draw each strategy line
+    strategies.forEach(function (s) {
+      var curve = result[s.key].equity_curve || [];
+      if (curve.length < 2) return;
+      var pts = [];
+      for (var i = 0; i < curve.length; i++) {
+        if (!isFiniteNumber(curve[i].value)) continue;
+        pts.push(scaleX(i, curve.length).toFixed(1) + "," + scaleY(curve[i].value).toFixed(1));
+      }
+      if (pts.length < 2) return;
+      var polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      polyline.setAttribute("points", pts.join(" "));
+      polyline.setAttribute("fill", "none");
+      polyline.setAttribute("stroke", s.color);
+      polyline.setAttribute("stroke-width", "1.5");
+      polyline.setAttribute("opacity", "0.85");
+      svg.appendChild(polyline);
+    });
+
+    container.appendChild(svg);
+
+    // Legend
+    var legend = document.createElement("div");
+    legend.className = "backtest-chart-legend";
+    strategies.forEach(function (s) {
+      var item = document.createElement("span");
+      item.className = "backtest-chart-legend-item";
+      item.innerHTML = "<span class=\"legend-dot\" style=\"background:" + s.color + "\"></span>" + escapeHtml(s.label);
+      legend.appendChild(item);
+    });
+    container.appendChild(legend);
+
+    return container;
+  }
+
+  function renderBacktestRankingCards(result) {
+    var strategies = [
+      { label: t("enhancedDipBuyStrategy"), data: result.enhanced },
+      { label: t("smoothDipBuyStrategy"), data: result.smooth },
+      { label: t("oldDipBuyStrategy"), data: result.old },
+      { label: t("fixedDcaStrategy"), data: result.dca }
+    ];
+
+    var rankings = [
+      { title: t("highestFinalValue"), getter: function (d) { return d.final_value; }, higherBetter: true, fmt: function (v) { return formatCurrency(v); } },
+      { title: t("highestReturn"), getter: function (d) { return d.total_return; }, higherBetter: true, fmt: function (v) { return formatPercent(v); } },
+      { title: t("lowestDrawdown"), getter: function (d) { return -d.max_drawdown; }, higherBetter: true, fmt: function (v) { return formatPercent(-v); } },
+      { title: t("bestRiskAdjusted"), getter: function (d) { return d.sharpe !== null && d.sharpe !== undefined ? d.sharpe : -999; }, higherBetter: true, fmt: function (v) { return v === -999 ? "N/A" : formatMetric(v); } },
+      { title: t("cashUsage"), getter: function (d) { return d.cash_usage_ratio; }, higherBetter: false, fmt: function (v) { return formatPercent(v); } }
+    ];
+
+    var cardsContainer = document.createElement("div");
+    cardsContainer.className = "backtest-ranking-cards";
+
+    rankings.forEach(function (rank) {
+      var best = null;
+      var bestVal = rank.higherBetter ? -Infinity : Infinity;
+      strategies.forEach(function (s) {
+        var val = rank.getter(s.data);
+        if (val === null || val === undefined || !Number.isFinite(val)) return;
+        if (rank.higherBetter ? val > bestVal : val < bestVal) {
+          bestVal = val;
+          best = s;
+        }
+      });
+
+      var card = document.createElement("div");
+      card.className = "backtest-ranking-card";
+      var title = document.createElement("span");
+      title.className = "backtest-ranking-title";
+      title.textContent = rank.title;
+      card.appendChild(title);
+      if (best) {
+        var name = document.createElement("strong");
+        name.className = "backtest-ranking-name";
+        name.textContent = best.label;
+        card.appendChild(name);
+        var val = document.createElement("span");
+        val.className = "backtest-ranking-value";
+        val.textContent = rank.fmt(rank.getter(best.data));
+        card.appendChild(val);
+      } else {
+        var name = document.createElement("span");
+        name.className = "backtest-ranking-na";
+        name.textContent = "N/A";
+        card.appendChild(name);
+      }
+      cardsContainer.appendChild(card);
+    });
+
+    return cardsContainer;
+  }
+
+  function renderBacktestVerdict(result) {
+    var strategies = [
+      { label: t("enhancedDipBuyStrategy"), data: result.enhanced },
+      { label: t("smoothDipBuyStrategy"), data: result.smooth },
+      { label: t("oldDipBuyStrategy"), data: result.old },
+      { label: t("fixedDcaStrategy"), data: result.dca }
+    ];
+
+    var bestReturn = null, bestReturnVal = -Infinity;
+    var lowestDD = null, lowestDDVal = Infinity;
+    var bestSharpe = null, bestSharpeVal = -Infinity;
+
+    strategies.forEach(function (s) {
+      if (isFiniteNumber(s.data.total_return) && s.data.total_return > bestReturnVal) {
+        bestReturnVal = s.data.total_return;
+        bestReturn = s;
+      }
+      if (isFiniteNumber(s.data.max_drawdown) && s.data.max_drawdown < lowestDDVal) {
+        lowestDDVal = s.data.max_drawdown;
+        lowestDD = s;
+      }
+      if (isFiniteNumber(s.data.sharpe) && s.data.sharpe > bestSharpeVal) {
+        bestSharpeVal = s.data.sharpe;
+        bestSharpe = s;
+      }
+    });
+
+    var parts = [];
+    if (bestReturn) parts.push("在本次回测区间中，" + bestReturn.label + "获得最高收益率" + formatPercent(bestReturn.data.total_return));
+    if (lowestDD && lowestDD.label !== bestReturn.label) parts.push("而" + lowestDD.label + "的最大回撊最低（" + formatPercent(lowestDD.data.max_drawdown) + "）");
+    if (bestSharpe && bestSharpe.label !== bestReturn.label && bestSharpe.label !== lowestDD.label) parts.push("，" + bestSharpe.label + "的风险调整收益更优");
+    parts.push("。未来结果可能不同。回测解释仅供参考，不构成投资建议。");
+
+    var verdict = document.createElement("p");
+    verdict.className = "backtest-verdict";
+    verdict.textContent = parts.join("");
+
+    return verdict;
+  }
+
+  function renderBacktestDataQuality(result) {
+    var div = document.createElement("div");
+    div.className = "backtest-data-quality";
+
+    var items = [
+      [t("backtestWindow"), result.start_date + " — " + result.end_date],
+      [t("numberOfBuys"), result.number_of_weeks + " weeks"],
+      [t("volatility"), String(result.enhanced.tickers.length) + " tickers"]
+    ];
+    if (result.number_of_weeks < 52) {
+      var warn = document.createElement("p");
+      warn.className = "backtest-data-warning";
+      warn.textContent = "警告：回测时间窗口较短（" + result.number_of_weeks + " 周），可能不足以衡量长期表现。";
+      div.appendChild(warn);
+    }
+
+    var grid = document.createElement("div");
+    grid.className = "backtest-dq-grid";
+    items.forEach(function (item) {
+      var row = document.createElement("div");
+      row.className = "backtest-dq-row";
+      var label = document.createElement("span");
+      label.className = "backtest-dq-label";
+      label.textContent = item[0];
+      var val = document.createElement("span");
+      val.className = "backtest-dq-value";
+      val.textContent = item[1];
+      row.appendChild(label);
+      row.appendChild(val);
+      grid.appendChild(row);
+    });
+    div.appendChild(grid);
+
+    return div;
+  }
+
+  function renderBacktestLookAheadNote() {
+    var note = document.createElement("p");
+    note.className = "backtest-footnote";
+    note.textContent = t("backtestInterpretationOnly") + " " + t("footnoteLookAhead");
+    return note;
+  }
+
+  function renderBacktestRiskNote() {
+    var note = document.createElement("p");
+    note.className = "backtest-footnote";
+    note.textContent = t("footnoteRiskFreeRate");
+    return note;
+  }
+
+  function renderBacktestResult(result) {
+    if (!backtestSummaryEl) return;
+    backtestSummaryEl.dataset.hasResult = "true";
+    backtestSummaryEl.innerHTML = "";
+
+    // Ranking cards
+    backtestSummaryEl.appendChild(renderBacktestRankingCards(result));
+
+    // Verdict
+    backtestSummaryEl.appendChild(renderBacktestVerdict(result));
+
+    // Data quality
+    backtestSummaryEl.appendChild(renderBacktestDataQuality(result));
+
+    // Equity curve chart
+    backtestSummaryEl.appendChild(renderBacktestEquityChart(result));
+
+    // Comparison table
+    backtestSummaryEl.appendChild(createBacktestStrategyTable(result));
+
+    // Footnotes
+    backtestSummaryEl.appendChild(renderBacktestLookAheadNote());
+    backtestSummaryEl.appendChild(renderBacktestRiskNote());
+  }
+
+  function createBacktestStrategyTable(result) {
+    var wrap = document.createElement("div");
+    wrap.className = "backtest-table-wrap";
+    var table = document.createElement("table");
+    table.className = "backtest-table";
+    table.innerHTML = [
+      "<thead><tr>",
+      "<th>" + escapeHtml(t("strategy")) + "</th>",
+      "<th>" + escapeHtml(t("finalValue")) + "</th>",
+      "<th>" + escapeHtml(t("totalReturn")) + "</th>",
+      "<th>" + escapeHtml(t("approxCAGR")) + "</th>",
+      "<th>" + escapeHtml(t("maxDrawdown")) + "</th>",
+      "<th>" + escapeHtml(t("sharpeRatio")) + "</th>",
+      "<th>" + escapeHtml(t("calmarRatio")) + "</th>",
+      "<th>" + escapeHtml(t("numberOfBuys")) + "</th>",
+      "<th>" + escapeHtml(t("cashUsage")) + "</th>",
+      "</tr></thead><tbody></tbody>"
+    ].join("");
+    var tbody = table.querySelector("tbody");
+
+    var strategies = [
+      { label: t("enhancedDipBuyStrategy"), data: result.enhanced },
+      { label: t("smoothDipBuyStrategy"), data: result.smooth },
+      { label: t("oldDipBuyStrategy"), data: result.old },
+      { label: t("fixedDcaStrategy"), data: result.dca }
+    ];
+
+    // Find best values for highlighting
+    var bests = {};
+    var fields = [
+      { key: "final_value", higherBetter: true },
+      { key: "total_return", higherBetter: true },
+      { key: "cagr", higherBetter: true },
+      { key: "max_drawdown", higherBetter: false },
+      { key: "sharpe", higherBetter: true },
+      { key: "calmar", higherBetter: true }
+    ];
+    fields.forEach(function (f) {
+      var bestVal = f.higherBetter ? -Infinity : Infinity;
+      strategies.forEach(function (s) {
+        var v = s.data[f.key];
+        if (v === null || v === undefined || !Number.isFinite(v)) return;
+        if (f.higherBetter ? v > bestVal : v < bestVal) {
+          bestVal = v;
+          bests[f.key] = s.data;
+        }
+      });
+    });
+
+    strategies.forEach(function (s) {
+      var row = document.createElement("tr");
+      var cells = [
+        { val: s.label, cls: "" },
+        { val: formatCurrency(s.data.final_value), cls: s.data === bests.final_value ? "backtest-highest" : "" },
+        { val: formatPercent(s.data.total_return), cls: s.data === bests.total_return ? "backtest-highest" : "" },
+        { val: formatMetricPercent(s.data.cagr), cls: s.data === bests.cagr ? "backtest-highest" : "" },
+        { val: formatPercent(s.data.max_drawdown), cls: s.data === bests.max_drawdown ? "backtest-lowest" : "" },
+        { val: formatMetric(s.data.sharpe), cls: s.data === bests.sharpe ? "backtest-highest" : "" },
+        { val: formatMetric(s.data.calmar), cls: s.data === bests.calmar ? "backtest-highest" : "" },
+        { val: String(s.data.number_of_buys), cls: "" },
+        { val: formatPercent(s.data.cash_usage_ratio), cls: "" }
+      ];
+      cells.forEach(function (cell, index) {
+        var td = document.createElement("td");
+        td.textContent = cell.val;
+        if (index === 0) {
+          var strong = document.createElement("strong");
+          strong.textContent = cell.val;
+          td.textContent = "";
+          td.appendChild(strong);
+        }
+        if (cell.cls) td.className = cell.cls;
+        row.appendChild(td);
+      });
+      tbody.appendChild(row);
+    });
+
+    wrap.appendChild(table);
+    return wrap;
   }
 
   function renderBacktestIntro() {
@@ -3354,99 +3828,6 @@
     }
   }
 
-  function renderBacktestResult(result) {
-    if (!backtestSummaryEl) return;
-    backtestSummaryEl.dataset.hasResult = "true";
-    backtestSummaryEl.innerHTML = "";
-
-    const metrics = document.createElement("div");
-    metrics.className = "backtest-metrics";
-    [
-      [t("backtestWindow"), result.start_date + " - " + result.end_date],
-      [t("beatsDca"), result.beats_dca ? t("yes") : t("no")],
-      [t("beatsOld"), result.beats_old ? t("yes") : t("no")],
-      [t("beatsSmooth"), result.beats_smooth ? t("yes") : t("no")],
-      [t("bestStrategy"), result.best_strategy],
-      [t("worstStrategy"), result.worst_strategy],
-      [t("finalValue") + " (" + t("enhancedDipBuyStrategy") + ")", formatCurrency(result.enhanced.final_value)],
-      [t("finalValue") + " (" + t("smoothDipBuyStrategy") + ")", formatCurrency(result.smooth.final_value)],
-      [t("finalValue") + " (" + t("oldDipBuyStrategy") + ")", formatCurrency(result.old.final_value)],
-      [t("finalValue") + " (" + t("fixedDcaStrategy") + ")", formatCurrency(result.dca.final_value)],
-      [t("totalReturn") + " (" + t("enhancedDipBuyStrategy") + ")", formatPercent(result.enhanced.total_return)],
-      [t("totalReturn") + " (" + t("smoothDipBuyStrategy") + ")", formatPercent(result.smooth.total_return)],
-      [t("totalReturn") + " (" + t("oldDipBuyStrategy") + ")", formatPercent(result.old.total_return)],
-      [t("totalReturn") + " (" + t("fixedDcaStrategy") + ")", formatPercent(result.dca.total_return)],
-      [t("maxDrawdown") + " (" + t("enhancedDipBuyStrategy") + ")", formatPercent(result.enhanced.max_drawdown)],
-      [t("maxDrawdown") + " (" + t("smoothDipBuyStrategy") + ")", formatPercent(result.smooth.max_drawdown)],
-      [t("maxDrawdown") + " (" + t("oldDipBuyStrategy") + ")", formatPercent(result.old.max_drawdown)],
-      [t("maxDrawdown") + " (" + t("fixedDcaStrategy") + ")", formatPercent(result.dca.max_drawdown)]
-    ].forEach(function (item) {
-      const metric = document.createElement("div");
-      metric.className = "backtest-metric";
-      metric.innerHTML = "<span></span><strong></strong>";
-      metric.querySelector("span").textContent = item[0];
-      metric.querySelector("strong").textContent = item[1];
-      metrics.appendChild(metric);
-    });
-    backtestSummaryEl.appendChild(metrics);
-
-    backtestSummaryEl.appendChild(createBacktestStrategyTable(result));
-  }
-
-  function createBacktestStrategyTable(result) {
-    const wrap = document.createElement("div");
-    wrap.className = "backtest-table-wrap";
-    const table = document.createElement("table");
-    table.className = "backtest-table";
-    table.innerHTML = [
-      "<thead><tr>",
-      "<th>" + escapeHtml(t("strategy")) + "</th>",
-      "<th>" + escapeHtml(t("finalValue")) + "</th>",
-      "<th>" + escapeHtml(t("invested")) + "</th>",
-      "<th>" + escapeHtml(t("totalReturn")) + "</th>",
-      "<th>" + escapeHtml(t("maxDrawdown")) + "</th>",
-      "<th>" + escapeHtml(t("volatility")) + "</th>",
-      "<th>" + escapeHtml(t("numberOfBuys")) + "</th>",
-      "<th>" + escapeHtml(t("avgBuyPrice")) + "</th>",
-      "</tr></thead><tbody></tbody>"
-    ].join("");
-    const tbody = table.querySelector("tbody");
-    [
-      createBacktestRow(t("enhancedDipBuyStrategy"), result.enhanced),
-      createBacktestRow(t("smoothDipBuyStrategy"), result.smooth),
-      createBacktestRow(t("oldDipBuyStrategy"), result.old),
-      createBacktestRow(t("fixedDcaStrategy"), result.dca)
-    ].forEach(function (row) {
-      tbody.appendChild(row);
-    });
-    wrap.appendChild(table);
-    return wrap;
-  }
-
-  function createBacktestRow(label, data) {
-    const row = document.createElement("tr");
-    [
-      label,
-      formatCurrency(data.final_value),
-      formatCurrency(data.total_invested),
-      formatPercent(data.total_return),
-      formatPercent(data.max_drawdown),
-      formatPercent(data.volatility),
-      String(data.number_of_buys),
-      formatPrice(data.average_buy_price)
-    ].forEach(function (value, index) {
-      const cell = document.createElement("td");
-      if (index === 0) {
-        const strong = document.createElement("strong");
-        strong.textContent = value;
-        cell.appendChild(strong);
-      } else {
-        cell.textContent = value;
-      }
-      row.appendChild(cell);
-    });
-    return row;
-  }
 
   function render() {
     panicBanner.classList.toggle("hidden", !state.panicActive);
