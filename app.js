@@ -165,6 +165,7 @@
       algorithmOptional: "Python backtest default: Simple Dip-Buy",
       algorithmReturnCost: "Python optional: Risk-Adjusted v2 (tail-risk protection)",
       algorithmDrawdownNote: "Max drawdown unchanged at 44.2%",
+      algorithmFactorChain: "Factor Chain",
       algorithmVerdictNote: "Dashboard uses Enhanced Signal Model (smooth multiplier + trend + volatility + drawdown + market regime + portfolio risk + news factors). Python backtest uses Simple Dip-Buy by default, Risk-Adjusted v2 optionally.",
 
 
@@ -649,6 +650,7 @@
       algorithmOptional: "Python 回测默认：简单逢低买入",
       algorithmReturnCost: "Python 可选：风险调整 v2（尾部风险保护）",
       algorithmDrawdownNote: "最大回撤相同为 44.2%",
+      algorithmFactorChain: "因素链",
       algorithmVerdictNote: "仪表盘使用增强信号模型（平滑乘数 + 趋势 + 波动率 + 回撤 + 市场制度 + 组合风险 + 新闻因素）。Python 回测默认简单逢低买入，可选风险调整 v2。",
 
 
@@ -2562,6 +2564,10 @@
       "</div>",
       "</div>",
       "<div class=\"explanation-section\">",
+      "<h4>" + t("algorithmFactorChain") + "</h4>",
+      "<p class=\"algorithm-chain-line\"></p>",
+      "</div>",
+      "<div class=\"explanation-section\">",
       "<h4>为什么是这个建议</h4>",
       "<p class=\"explanation-reason\"></p>",
       "</div>",
@@ -2611,6 +2617,19 @@
     el.querySelector('[data-field="5d"]').textContent = wc !== null ? formatSigned(wc) + "%" : "暂无数据";
     el.querySelector('[data-field="allocation"]').textContent = allocPct || "暂无数据";
     el.querySelector('[data-field="final-action"]').textContent = action.label;
+    // Build algorithm factor chain
+    var algoChain = signal.algorithm || {};
+    var chainParts = [];
+    if (isFiniteNumber(algoChain.raw_smooth_multiplier)) chainParts.push(t("rawSmooth") + " " + formatMultiplier(algoChain.raw_smooth_multiplier));
+    if (isFiniteNumber(algoChain.regime_adjustment)) chainParts.push(t("regimeCap") + " " + formatMultiplier(algoChain.regime_adjustment));
+    if (isFiniteNumber(algoChain.trend_adjustment)) chainParts.push(t("trendCap") + " " + formatMultiplier(algoChain.trend_adjustment));
+    if (isFiniteNumber(algoChain.volatility_adjustment)) chainParts.push(t("volAdj") + " " + formatMultiplier(algoChain.volatility_adjustment));
+    if (isFiniteNumber(algoChain.drawdown_adjustment)) chainParts.push(t("drawdownCap") + " " + formatMultiplier(algoChain.drawdown_adjustment));
+    if (isFiniteNumber(algoChain.portfolio_adjustment)) chainParts.push(t("portfolioAdj") + " " + formatMultiplier(algoChain.portfolio_adjustment));
+    if (isFiniteNumber(signal.multiplier)) chainParts.push(t("finalMultiplierShort") + " " + formatMultiplier(signal.multiplier));
+    var chainEl = el.querySelector(".algorithm-chain-line");
+    if (chainEl) chainEl.textContent = chainParts.length > 0 ? chainParts.join(" \u2192 ") : t("none");
+
     el.querySelector(".explanation-reason").textContent = reasons.join(" ");
 
     // Fill news sentiment data
