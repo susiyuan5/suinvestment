@@ -160,6 +160,14 @@
       footnoteRiskFreeRate: "Sharpe and Sortino ratios assume a 0% risk-free rate. Approx. CAGR is estimated from final value and total invested capital.",
       footnoteLookAhead: "News and fundamentals are not included in backtest unless historical point-in-time data is available.",
       advancedSettings: "Advanced Backtest Settings",
+      algorithmStatus: "Algorithm Status",
+      algorithmDefault: "Default: Simple Dip-Buy",
+      algorithmOptional: "Optional: Risk-Adjusted v2",
+      algorithmReturnCost: "~0.97% total return cost vs default",
+      algorithmDrawdownNote: "Max drawdown unchanged at 44.2%",
+      algorithmVerdictNote: "Simple strategy performed best in 5-year backtest across 6 tickers. v2 exists for extreme tail-risk protection, not normal bull-market outperformance.",
+
+
       advancedSettingsHint: "Adjust date range, weekly contribution, initial capital, transaction cost, and slippage",
       startDate: "Start Date",
       endDate: "End Date",
@@ -636,6 +644,14 @@
       footnoteRiskFreeRate: "夏普比率和索提诺比率假设无风险利率为 0%。近似年化收益率基于最终价值和总投入金额估算。",
       footnoteLookAhead: "新闻和基本面未纳入回测，除非有历史快照数据可用。",
       advancedSettings: "高级回测设置",
+      algorithmStatus: "算法状态",
+      algorithmDefault: "默认：简单逢低买入",
+      algorithmOptional: "可选：风险调整 v2",
+      algorithmReturnCost: "总收益约低 0.97%",
+      algorithmDrawdownNote: "最大回撤相同为 44.2%",
+      algorithmVerdictNote: "简单策略在 5 年回测中表现最佳。v2 仅为极端尾部风险保护设计，不能在正常牛市中取得超额收益。",
+
+
       advancedSettingsHint: "可调整日期区间、每周投入、初始本金、交易成本和滑点",
       startDate: "开始日期",
       endDate: "结束日期",
@@ -3853,6 +3869,40 @@ allocWrapper.appendChild(editBtn);
     saveJson(STORAGE_KEYS.backtestSettings, settings);
   }
 
+  function renderAlgorithmInfo() {
+    if (!backtestSummaryEl) return;
+    var panelId = "algorithmInfoPanel";
+    var oldPanel = document.getElementById(panelId);
+    if (oldPanel) oldPanel.parentNode.removeChild(oldPanel);
+
+    var details = document.createElement("details");
+    details.id = panelId;
+    details.className = "tool-details algorithm-info-panel";
+
+    var sum = document.createElement("summary");
+    sum.textContent = t("algorithmStatus");
+    details.appendChild(sum);
+
+    var items = [
+      t("algorithmDefault"),
+      t("algorithmOptional"),
+      t("algorithmReturnCost"),
+      t("algorithmDrawdownNote"),
+      "",
+      t("algorithmVerdictNote")
+    ];
+    items.forEach(function (text) {
+      if (!text) return;
+      var p = document.createElement("p");
+      p.className = "algorithm-info-line";
+      p.textContent = text;
+      details.appendChild(p);
+    });
+
+    var parent = backtestSummaryEl.parentNode;
+    parent.insertBefore(details, backtestSummaryEl);
+  }
+
   function renderBacktestSettings() {
     if (!backtestSummaryEl) return;
     var settings = getBacktestSettings();
@@ -3984,7 +4034,8 @@ allocWrapper.appendChild(editBtn);
       var p = document.getElementById(panelId);
       if (p) p.parentNode.removeChild(p);
       renderBacktestSettings();
-      renderBacktestSettings();
+  renderBacktestSettings();
+  renderAlgorithmInfo();
   renderBacktestIntro();
     });
     details.appendChild(resetBtn);
