@@ -12,7 +12,7 @@ from portfolio import (
     ticker_exposure_pct,
     total_equity_exposure_pct,
 )
-from strategy import calculate_buy_amount, calculate_weekly_return
+from strategy import calculate_buy_amount, calculate_risk_adjusted_buy_amount, calculate_weekly_return
 
 
 MANUAL_TRADE_NOTE = (
@@ -92,11 +92,22 @@ def analyze_ticker(
     if age_hours > analysis_config.stale_data_limit_hours:
         return _blocked_result(ticker, strategy_config, "Market data is stale.")
 
-    conservative_mode = _consecutive_declines(weekly_prices) > analysis_config.consecutive_decline_weeks_limit
-    desired_amount, buy_multiplier = calculate_buy_amount(
+    # Build list of weekly returns for risk adjustment
+    weekly_returns_list: list[float] = []
+    for idx in range(1, len(weekly_prices)):
+        r = calculate_weekly_return(weekly_prices[idx].close, weekly_prices[idx - 1].close)
+        weekly_returns_list.append(r)
+
+    consecutive_declines = _consecutive_declines(weekly_prices)
+    _recent_high = max(p.close for p in weekly_prices[-52:]) if weekly_prices else latest.close
+    _dd = 1 - latest.close / _recent_high if _recent_high else 0.0
+
+    desired_amount, buy_multiplier = calculate_risk_adjusted_buy_amount(
         weekly_return,
         strategy_config,
-        conservative_mode=conservative_mode,
+        recent_returns=weekly_returns_list[-12:],
+        consecutive_declines=consecutive_declines,
+        drawdown=_dd,
     )
     suggested_buy_amount = min(
         desired_amount,
@@ -105,13 +116,11 @@ def analyze_ticker(
     )
 
     warnings = []
-    recent_high = max(point.close for point in weekly_prices[-52:]) if weekly_prices else latest.close
-    drawdown = 1 - latest.close / recent_high if recent_high else 0.0
-    if drawdown > analysis_config.large_drawdown_threshold:
-        warnings.append(f"Price is down {drawdown:.1%} from recent high.")
+    if _dd > analysis_config.large_drawdown_threshold:
+        warnings.append(f"Price is down {_dd:.1%} from recent high.")
 
-    if conservative_mode:
-        warnings.append("More than 4 consecutive weekly declines; conservative mode is active.")
+    if consecutive_declines > analysis_config.consecutive_decline_weeks_limit:
+        warnings.append(f"{consecutive_declines} consecutive weekly declines detected.")
 
     ticker_exposure = ticker_exposure_pct(ticker, portfolio, analysis_config.available_cash)
     if ticker_exposure > analysis_config.max_position_pct_per_ticker:

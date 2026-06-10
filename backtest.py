@@ -8,7 +8,7 @@ from typing import Iterable
 
 from config import BacktestConfig
 from data_loader import PricePoint
-from strategy import calculate_buy_amount, calculate_weekly_return
+from strategy import calculate_buy_amount, calculate_risk_adjusted_buy_amount, calculate_weekly_return
 
 
 @dataclass
@@ -51,6 +51,7 @@ def run_backtest(
     weekly_prices: Iterable[PricePoint],
     config: BacktestConfig,
     save_results: bool = True,
+    use_risk_adjusted: bool = False,
 ) -> BacktestResult:
     prices = list(weekly_prices)
     if len(prices) < 2:
@@ -66,20 +67,33 @@ def run_backtest(
     trades: list[TradeRecord] = []
     history: list[PortfolioPoint] = []
 
+    recent_returns: list[float] = []
     for index in range(1, len(prices)):
         previous = prices[index - 1]
         current = prices[index]
         weekly_return = calculate_weekly_return(current.close, previous.close)
+        recent_returns.append(weekly_return)
+        if len(recent_returns) > 52:
+            recent_returns.pop(0)
         peak_price = max(peak_price, current.close)
         price_drawdown = 1 - current.close / peak_price if peak_price else 0
         consecutive_declines = consecutive_declines + 1 if weekly_return < 0 else 0
         conservative_mode = consecutive_declines > config.risk.consecutive_decline_weeks
 
-        desired_amount, multiplier = calculate_buy_amount(
-            weekly_return,
-            config.strategy,
-            conservative_mode=conservative_mode,
-        )
+        if use_risk_adjusted:
+            desired_amount, multiplier = calculate_risk_adjusted_buy_amount(
+                weekly_return,
+                config.strategy,
+                recent_returns=list(recent_returns),
+                consecutive_declines=consecutive_declines,
+                drawdown=price_drawdown,
+            )
+        else:
+            desired_amount, multiplier = calculate_buy_amount(
+                weekly_return,
+                config.strategy,
+                conservative_mode=conservative_mode,
+            )
 
         if price_drawdown >= config.risk.drawdown_threshold:
             if config.risk.drawdown_action == "pause":

@@ -45,3 +45,26 @@ def calculate_buy_amount(
 
 def with_strategy_overrides(config: StrategyConfig, **overrides: object) -> StrategyConfig:
     return replace(config, **overrides)
+
+def calculate_risk_adjusted_buy_amount(
+    weekly_return: float,
+    config: StrategyConfig,
+    recent_returns: list[float] | None = None,
+    consecutive_declines: int = 0,
+    drawdown: float = 0.0,
+) -> tuple[float, float]:
+    """Calculate buy amount using the risk-adjusted multiplier from risk_adjuster.py."""
+    from risk_adjuster import calculate_risk_adjusted_multiplier
+
+    multiplier = calculate_risk_adjusted_multiplier(
+        weekly_return=weekly_return,
+        recent_returns=recent_returns,
+        consecutive_declines=consecutive_declines,
+        drawdown=drawdown,
+        sensitivity=config.sensitivity,
+        min_multiplier=config.min_multiplier,
+        max_multiplier=config.max_multiplier,
+    )
+    amount = config.base_buy_amount * multiplier
+    return round(amount, 2), multiplier
+
