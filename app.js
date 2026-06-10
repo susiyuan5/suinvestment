@@ -391,6 +391,10 @@
       addStock: "Add",
       alreadyExists: "This ticker already exists.",
       allocationTooHigh: "Total allocation cannot exceed 100%.",
+      allocationUpdated: "Allocation updated.",
+      equalWeight: "Equal weight",
+      normalizeAllocation: "Normalize to 100%",
+      editAllocation: "Edit Allocation",
       invalidAllocation: "Enter a valid allocation percentage.",
       remainingAllocation: "Remaining allocation",
       onlineSearchUnavailable: "Online search unavailable. Showing local matches.",
@@ -2805,7 +2809,24 @@
       ensureSignalFields(card);
       card.dataset.symbol = stock.symbol;
       card.querySelector("h3").textContent = stock.symbol;
-      card.querySelector(".allocation").textContent = formatPercent(stock.allocation * 100) + " " + t("allocation");
+      var allocEl = card.querySelector(".allocation");
+var allocWrapper = document.createElement("span");
+allocWrapper.className = "allocation-wrapper";
+allocEl.parentNode.replaceChild(allocWrapper, allocEl);
+var allocText = document.createElement("span");
+allocText.className = "allocation-text";
+allocText.textContent = formatPercent(stock.allocation * 100) + " " + t("allocation");
+allocWrapper.appendChild(allocText);
+var editBtn = document.createElement("button");
+editBtn.type = "button";
+editBtn.className = "allocation-edit-button";
+editBtn.textContent = "✏";
+editBtn.setAttribute("aria-label", t("editAllocation"));
+editBtn.setAttribute("title", t("editAllocation"));
+(function(sym) {
+  editBtn.addEventListener("click", function() { startEditAllocation(allocWrapper, sym); });
+})(stock.symbol);
+allocWrapper.appendChild(editBtn);
 
       const input = card.querySelector(".override-input");
       input.value = state.overrides[stock.symbol] === undefined ? "" : formatSignedInput(state.overrides[stock.symbol]);
@@ -3973,6 +3994,128 @@
     parent.insertBefore(details, backtestSummaryEl);
   }
 
+function startEditAllocation(container, symbol) {
+    var textSpan = container.querySelector(".allocation-text");
+    var editBtn = container.querySelector(".allocation-edit-button");
+    if (!textSpan) return;
+    var currentText = textSpan.textContent;
+    var currentPct = parseFloat(currentText) || 0;
+
+    textSpan.style.display = "none";
+    if (editBtn) editBtn.style.display = "none";
+
+    var form = document.createElement("span");
+    form.className = "allocation-edit-form";
+
+    var input = document.createElement("input");
+    input.type = "number";
+    input.className = "allocation-input";
+    input.value = currentPct.toFixed(1);
+    input.min = 0;
+    input.max = 100;
+    input.step = 0.1;
+
+    var pctLabel = document.createElement("span");
+    pctLabel.textContent = "%";
+    pctLabel.style.cssText = "color:var(--muted);font-size:0.82rem;margin-right:4px;";
+
+    var saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "allocation-save-button";
+    saveBtn.textContent = t("save");
+
+    var cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "allocation-cancel-button";
+    cancelBtn.textContent = t("cancel");
+
+    form.appendChild(input);
+    form.appendChild(pctLabel);
+    form.appendChild(saveBtn);
+    form.appendChild(cancelBtn);
+    container.appendChild(form);
+
+    input.focus();
+    input.select();
+
+    function saveEdit() {
+        var val = parseFloat(input.value);
+        if (!Number.isFinite(val) || val < 0) {
+            copyStatusEl.textContent = t("invalidAllocation");
+            return;
+        }
+        var pct = round2(val) / 100;
+        var total = state.portfolio.reduce(function(s, st) { return s + st.allocation; }, 0);
+        var otherTotal = total;
+        state.portfolio.forEach(function(st) { if (st.symbol === symbol) otherTotal -= st.allocation; });
+        if (otherTotal + pct > 1.005) {
+            copyStatusEl.textContent = t("allocationTooHigh");
+            return;
+        }
+        state.portfolio.forEach(function(st) {
+            if (st.symbol === symbol) st.allocation = pct;
+        });
+        state.portfolio = normalizePortfolio(state.portfolio, { allowCustom: true });
+        saveJson(STORAGE_KEYS.portfolio, state.portfolio);
+        clearBacktestResult();
+        renderPortfolioTotal();
+        renderSkeleton();
+        render();
+        copyStatusEl.textContent = t("allocationUpdated");
+    }
+
+    saveBtn.addEventListener("click", saveEdit);
+    input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") saveEdit();
+        if (e.key === "Escape") cancelEdit();
+    });
+    cancelBtn.addEventListener("click", cancelEdit);
+
+    function cancelEdit() {
+        container.removeChild(form);
+        textSpan.style.display = "";
+        if (editBtn) editBtn.style.display = "";
+    }
+}
+
+function normalizeAllocations() {
+    var total = state.portfolio.reduce(function(s, st) { return s + st.allocation; }, 0);
+    if (total <= 0 || Math.abs(total - 1) < 0.001) return;
+    var sum = 0;
+    state.portfolio.forEach(function(stock, i) {
+        if (i === state.portfolio.length - 1) {
+            stock.allocation = round2(1 - sum);
+        } else {
+            stock.allocation = round2(stock.allocation / total * 10000) / 10000;
+        }
+        sum += stock.allocation;
+    });
+    saveJson(STORAGE_KEYS.portfolio, state.portfolio);
+    clearBacktestResult();
+    renderPortfolioTotal();
+    renderSkeleton();
+    render();
+}
+
+function equalizeAllocations() {
+    var count = state.portfolio.length;
+    var each = Math.round(100 / count * 100) / 10000;
+    var sum = 0;
+    state.portfolio.forEach(function(stock, i) {
+        if (i === count - 1) {
+            stock.allocation = round2(1 - sum);
+        } else {
+            stock.allocation = each;
+        }
+        sum += stock.allocation;
+    });
+    saveJson(STORAGE_KEYS.portfolio, state.portfolio);
+    clearBacktestResult();
+    renderPortfolioTotal();
+    renderSkeleton();
+    render();
+}
+
   function renderBacktestIntro() {
     if (!backtestSummaryEl || backtestSummaryEl.dataset.hasResult === "true") return;
     renderBacktestMessage(t("backtestIntro"));
@@ -4836,8 +4979,27 @@
     const total = state.portfolio.reduce(function (sum, stock) {
       return sum + stock.allocation;
     }, 0);
-    portfolioTotalEl.textContent = t("totalAllocation") + " " + formatPercent(total * 100);
+    portfolioTotalEl.innerHTML = "";
+    var totalSpan = document.createElement("span");
+    totalSpan.textContent = t("totalAllocation") + " " + formatPercent(total * 100);
+    portfolioTotalEl.appendChild(totalSpan);
     portfolioTotalEl.classList.toggle("warning", Math.abs(total - 1) > 0.001);
+
+    var tools = document.createElement("span");
+    tools.className = "allocation-tools";
+    var normBtn = document.createElement("button");
+    normBtn.type = "button";
+    normBtn.className = "allocation-normalize-button";
+    normBtn.textContent = t("normalizeAllocation");
+    normBtn.addEventListener("click", normalizeAllocations);
+    tools.appendChild(normBtn);
+    var eqBtn = document.createElement("button");
+    eqBtn.type = "button";
+    eqBtn.className = "allocation-equal-button";
+    eqBtn.textContent = t("equalWeight");
+    eqBtn.addEventListener("click", equalizeAllocations);
+    tools.appendChild(eqBtn);
+    portfolioTotalEl.appendChild(tools);
   }
 
   function savePortfolio() {
