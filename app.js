@@ -168,7 +168,7 @@
       algorithmFactorChain: "Factor Chain",
 amountBreakdown: "Amount Breakdown",
       baseTickerAmount: "Base ticker amount",
-      riskAdjustment: "Risk/cash adj",
+      riskAdjustment: "Combined adj",
       algorithmVerdictNote: "Dashboard uses Enhanced Signal Model (smooth multiplier + trend + volatility + drawdown + market regime + portfolio risk + news factors). Python backtest uses Simple Dip-Buy by default, Risk-Adjusted v2 optionally.",
 
 
@@ -656,7 +656,7 @@ amountBreakdown: "Amount Breakdown",
       algorithmFactorChain: "因素链",
 amountBreakdown: "金额分解",
       baseTickerAmount: "基础配置金额",
-      riskAdjustment: "风险调整",
+      riskAdjustment: "综合调整",
       algorithmVerdictNote: "仪表盘使用增强信号模型（平滑乘数 + 趋势 + 波动率 + 回撤 + 市场制度 + 组合风险 + 新闻因素）。Python 回测默认简单逢低买入，可选风险调整 v2。",
 
 
