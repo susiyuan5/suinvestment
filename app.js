@@ -166,6 +166,9 @@
       algorithmReturnCost: "Python optional: Risk-Adjusted v2 (tail-risk protection)",
       algorithmDrawdownNote: "Max drawdown unchanged at 44.2%",
       algorithmFactorChain: "Factor Chain",
+amountBreakdown: "Amount Breakdown",
+      baseTickerAmount: "Base ticker amount",
+      riskAdjustment: "Risk/cash adj",
       algorithmVerdictNote: "Dashboard uses Enhanced Signal Model (smooth multiplier + trend + volatility + drawdown + market regime + portfolio risk + news factors). Python backtest uses Simple Dip-Buy by default, Risk-Adjusted v2 optionally.",
 
 
@@ -651,6 +654,9 @@
       algorithmReturnCost: "Python 可选：风险调整 v2（尾部风险保护）",
       algorithmDrawdownNote: "最大回撤相同为 44.2%",
       algorithmFactorChain: "因素链",
+amountBreakdown: "金额分解",
+      baseTickerAmount: "基础配置金额",
+      riskAdjustment: "风险调整",
       algorithmVerdictNote: "仪表盘使用增强信号模型（平滑乘数 + 趋势 + 波动率 + 回撤 + 市场制度 + 组合风险 + 新闻因素）。Python 回测默认简单逢低买入，可选风险调整 v2。",
 
 
@@ -2568,6 +2574,17 @@
       "<p class=\"algorithm-chain-line\"></p>",
       "</div>",
       "<div class=\"explanation-section\">",
+      "<h4>" + t("amountBreakdown") + "</h4>",
+      "<div class=\"explanation-fields\">",
+      "<span class=\"field-label\">" + t("weeklyDeployment") + "</span><span class=\"field-value\" data-field=\"bd-budget\"></span>",
+      "<span class=\"field-label\">" + t("allocationPercent") + "</span><span class=\"field-value\" data-field=\"bd-alloc\"></span>",
+      "<span class=\"field-label\">" + t("baseTickerAmount") + "</span><span class=\"field-value\" data-field=\"bd-base\"></span>",
+      "<span class=\"field-label\">" + t("multiplier") + "</span><span class=\"field-value\" data-field=\"bd-mult\"></span>",
+      "<span class=\"field-label\">" + t("riskAdjustment") + "</span><span class=\"field-value\" data-field=\"bd-risk\"></span>",
+      "<span class=\"field-label\">" + t("suggestedBuy") + "</span><span class=\"field-value\" data-field=\"bd-final\"></span>",
+      "</div>",
+      "</div>",
+      "<div class=\"explanation-section\">",
       "<h4>为什么是这个建议</h4>",
       "<p class=\"explanation-reason\"></p>",
       "</div>",
@@ -2648,6 +2665,25 @@
     }
     var chainEl = el.querySelector(".algorithm-chain-line");
     if (chainEl) chainEl.textContent = chainParts.length > 0 ? chainParts.join(" → ") : t("none");
+    // Fill amount breakdown
+    var bdBudget = state && state.deployment ? state.deployment.weeklyDeployment : null;
+    el.querySelector('[data-field="bd-budget"]').textContent = isFiniteNumber(bdBudget) ? formatCurrency(bdBudget) : t("none");
+    el.querySelector('[data-field="bd-alloc"]').textContent = allocPct || t("none");
+    el.querySelector('[data-field="bd-base"]').textContent = isFiniteNumber(signal.base_buy_amount) ? formatCurrency(signal.base_buy_amount) : t("none");
+    el.querySelector('[data-field="bd-mult"]').textContent = isFiniteNumber(m) ? formatMultiplier(m) : t("none");
+    var riskAdj = null;
+    if (isFiniteNumber(signal.base_buy_amount) && isFiniteNumber(m) && signal.base_buy_amount * m > 0 && isFiniteNumber(signal.suggested_buy_amount)) {
+      riskAdj = signal.suggested_buy_amount / (signal.base_buy_amount * m);
+    }
+    if (isFiniteNumber(riskAdj) && Math.abs(riskAdj - 1) < 0.001) {
+      el.querySelector('[data-field="bd-risk"]').textContent = "1.00x";
+    } else if (isFiniteNumber(riskAdj)) {
+      el.querySelector('[data-field="bd-risk"]').textContent = formatMultiplier(riskAdj);
+    } else {
+      el.querySelector('[data-field="bd-risk"]').textContent = t("none");
+    }
+    el.querySelector('[data-field="bd-final"]').textContent = isFiniteNumber(signal.suggested_buy_amount) ? formatCurrency(signal.suggested_buy_amount) : t("none");
+
     
 el.querySelector(".explanation-reason").textContent = reasons.join(" ");
 
