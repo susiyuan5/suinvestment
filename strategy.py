@@ -54,7 +54,7 @@ def calculate_risk_adjusted_buy_amount(
     drawdown: float = 0.0,
 ) -> tuple[float, float]:
     """Calculate buy amount using the risk-adjusted multiplier from risk_adjuster.py."""
-    from risk_adjuster import calculate_risk_adjusted_multiplier
+    from risk_adjuster import calculate_risk_adjusted_multiplier_v2 as calculate_risk_adjusted_multiplier
 
     multiplier = calculate_risk_adjusted_multiplier(
         weekly_return=weekly_return,
