@@ -167,12 +167,6 @@
       algorithmDrawdownNote: "Max drawdown unchanged at 44.2%",
       algorithmFactorChain: "Factor Chain",
 amountBreakdown: "Amount Breakdown",
-      explanationConclusion: "Recommendation",
-      explanationBasis: "Key Metrics",
-      explanationWhy: "Why This Action",
-      inDepthAnalysis: "In-depth Analysis",
-      positiveFactors: "Positive Factors",
-      negativeFactors: "Negative Factors",
       baseTickerAmount: "Base ticker amount",
       riskAdjustment: "Combined adj",
       algorithmVerdictNote: "Dashboard uses Enhanced Signal Model (smooth multiplier + trend + volatility + drawdown + market regime + portfolio risk + news factors). Python backtest uses Simple Dip-Buy by default, Risk-Adjusted v2 optionally.",
@@ -661,12 +655,6 @@ amountBreakdown: "Amount Breakdown",
       algorithmDrawdownNote: "最大回撤相同为 44.2%",
       algorithmFactorChain: "因素链",
 amountBreakdown: "金额分解",
-      explanationConclusion: "建议结论",
-      explanationBasis: "判断依据",
-      explanationWhy: "为什么是这个建议",
-      inDepthAnalysis: "深入分析",
-      positiveFactors: "正面因素",
-      negativeFactors: "负面因素",
       baseTickerAmount: "基础配置金额",
       riskAdjustment: "综合调整",
       algorithmVerdictNote: "仪表盘使用增强信号模型（平滑乘数 + 趋势 + 波动率 + 回撤 + 市场制度 + 组合风险 + 新闻因素）。Python 回测默认简单逢低买入，可选风险调整 v2。",
@@ -2565,85 +2553,76 @@ amountBreakdown: "金额分解",
 
     // Build DOM content
     el.innerHTML = [
-      "<div class=\"explanation-core\">
-<div class=\"explanation-core-col\">
-<div class=\"explanation-section\">
-<h4>" + t("explanationConclusion") + "</h4>
-<p class=\"explanation-conclusion\"></p>
-</div>
-<div class=\"explanation-section\">
-<h4>" + t("explanationBasis") + "</h4>
-<div class=\"explanation-fields\">
-<span class=\"field-label\">" + t("multiplier") + "</span><span class=\"field-value\" data-field=\"multiplier\"></span>
-<span class=\"field-label\">" + t("signalScore") + "</span><span class=\"field-value\" data-field=\"score\"></span>
-<span class=\"field-label\">" + t("riskLevel") + "</span><span class=\"field-value\" data-field=\"risk\"></span>
-<span class=\"field-label\">1D</span><span class=\"field-value\" data-field=\"1d\"></span>
-<span class=\"field-label\">5D</span><span class=\"field-value\" data-field=\"5d\"></span>
-<span class=\"field-label\">" + t("allocationPercent") + "</span><span class=\"field-value\" data-field=\"allocation\"></span>
-<span class=\"field-label\">" + t("action") + "</span><span class=\"field-value\" data-field=\"final-action\"></span>
-</div>
-</div>
-</div>
-<div class=\"explanation-core-col\">
-<div class=\"explanation-section\">
-<h4>" + t("algorithmFactorChain") + "</h4>
-<p class=\"algorithm-chain-line\"></p>
-</div>
-<div class=\"explanation-section\">
-<h4>" + t("amountBreakdown") + "</h4>
-<div class=\"explanation-fields\">
-<span class=\"field-label\">" + t("weeklyDeployment") + "</span><span class=\"field-value\" data-field=\"bd-budget\"></span>
-<span class=\"field-label\">" + t("allocationPercent") + "</span><span class=\"field-value\" data-field=\"bd-alloc\"></span>
-<span class=\"field-label\">" + t("baseTickerAmount") + "</span><span class=\"field-value\" data-field=\"bd-base\"></span>
-<span class=\"field-label\">" + t("multiplier") + "</span><span class=\"field-value\" data-field=\"bd-mult\"></span>
-<span class=\"field-label\">" + t("riskAdjustment") + "</span><span class=\"field-value\" data-field=\"bd-risk\"></span>
-<span class=\"field-label\">" + t("suggestedBuy") + "</span><span class=\"field-value\" data-field=\"bd-final\"></span>
-</div>
-</div>
-</div>
-</div>
-<p class=\"final-sentence\"></p>
-<details class=\"explanation-secondary\">
-<summary>" + t("inDepthAnalysis") + "</summary>
-<div class=\"explanation-section\">
-<h4>" + t("explanationWhy") + "</h4>
-<p class=\"explanation-reason\"></p>
-</div>
-<details class=\"explanation-sub-details\">
-<summary>" + t("newsSentiment") + "</summary>
-<div class=\"explanation-fields\">
-<span class=\"field-label\">" + t("newsSentiment") + "</span><span class=\"field-value\" data-field=\"news-label\"></span>
-<span class=\"field-label\">" + t("signalScore") + "</span><span class=\"field-value\" data-field=\"news-score\"></span>
-<span class=\"field-label\">" + t("recentNews") + "</span><span class=\"field-value\" data-field=\"news-articles\"></span>
-</div>
-<p class=\"explanation-reason\" data-field=\"news-explanation\"></p>
-</details>
-<details class=\"explanation-sub-details\">
-<summary>" + t("fundamentals") + "</summary>
-<div class=\"explanation-fields\">
-<span class=\"field-label\">" + t("fundamentals") + "</span><span class=\"field-value\" data-field=\"fund-label\"></span>
-<span class=\"field-label\">" + t("signalScore") + "</span><span class=\"field-value\" data-field=\"fund-score\"></span>
-</div>
-<p class=\"explanation-reason\" data-field=\"fund-explanation\"></p>
-</details>
-<details class=\"explanation-sub-details\">
-<summary>" + t("externalFactorAdjustment") + "</summary>
-<div class=\"explanation-fields\">
-<span class=\"field-label\">" + t("newsDelta") + "</span><span class=\"field-value\" data-field=\"adj-news\"></span>
-<span class=\"field-label\">" + t("fundamentalsDelta") + "</span><span class=\"field-value\" data-field=\"adj-fund\"></span>
-<span class=\"field-label\">" + t("upcomingEarningsDelta") + "</span><span class=\"field-value\" data-field=\"adj-earnings\"></span>
-<span class=\"field-label\">" + t("externalFactorAdjustment") + "</span><span class=\"field-value\" data-field=\"adj-total\"></span>
-</div>
-</details>
-<details class=\"explanation-sub-details\">
-<summary>" + t("positiveFactors") + "</summary>
-<ul class=\"positive-factors\"></ul>
-</details>
-<details class=\"explanation-sub-details\">
-<summary>" + t("negativeFactors") + "</summary>
-<ul class=\"negative-factors\"></ul>
-</details>
-</details>"
+      "<div class=\"explanation-section\">",
+      "<h4>建议结论</h4>",
+      "<p class=\"explanation-conclusion\"></p>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>判断依据</h4>",
+      "<div class=\"explanation-fields\">",
+      "<span class=\"field-label\">买入倍数</span><span class=\"field-value\" data-field=\"multiplier\"></span>",
+      "<span class=\"field-label\">信号分</span><span class=\"field-value\" data-field=\"score\"></span>",
+      "<span class=\"field-label\">风险等级</span><span class=\"field-value\" data-field=\"risk\"></span>",
+      "<span class=\"field-label\">1D 表现</span><span class=\"field-value\" data-field=\"1d\"></span>",
+      "<span class=\"field-label\">5D 表现</span><span class=\"field-value\" data-field=\"5d\"></span>",
+      "<span class=\"field-label\">当前配置比例</span><span class=\"field-value\" data-field=\"allocation\"></span>",
+      "<span class=\"field-label\">最终建议</span><span class=\"field-value\" data-field=\"final-action\"></span>",
+      "</div>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>" + t("algorithmFactorChain") + "</h4>",
+      "<p class=\"algorithm-chain-line\"></p>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>" + t("amountBreakdown") + "</h4>",
+      "<div class=\"explanation-fields\">",
+      "<span class=\"field-label\">" + t("weeklyDeployment") + "</span><span class=\"field-value\" data-field=\"bd-budget\"></span>",
+      "<span class=\"field-label\">" + t("allocationPercent") + "</span><span class=\"field-value\" data-field=\"bd-alloc\"></span>",
+      "<span class=\"field-label\">" + t("baseTickerAmount") + "</span><span class=\"field-value\" data-field=\"bd-base\"></span>",
+      "<span class=\"field-label\">" + t("multiplier") + "</span><span class=\"field-value\" data-field=\"bd-mult\"></span>",
+      "<span class=\"field-label\">" + t("riskAdjustment") + "</span><span class=\"field-value\" data-field=\"bd-risk\"></span>",
+      "<span class=\"field-label\">" + t("suggestedBuy") + "</span><span class=\"field-value\" data-field=\"bd-final\"></span>",
+      "</div>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>为什么是这个建议</h4>",
+      "<p class=\"explanation-reason\"></p>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>新闻情绪</h4>",
+      "<div class=\"explanation-fields\">",
+      "<span class=\"field-label\">" + t("newsSentiment") + "</span><span class=\"field-value\" data-field=\"news-label\"></span>",
+      "<span class=\"field-label\">" + t("signalScore") + "</span><span class=\"field-value\" data-field=\"news-score\"></span>",
+      "<span class=\"field-label\">" + t("recentNews") + "</span><span class=\"field-value\" data-field=\"news-articles\"></span>",
+      "</div>",
+      "<p class=\"explanation-reason\" data-field=\"news-explanation\"></p>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>基本面</h4>",
+      "<div class=\"explanation-fields\">",
+      "<span class=\"field-label\">" + t("fundamentals") + "</span><span class=\"field-value\" data-field=\"fund-label\"></span>",
+      "<span class=\"field-label\">" + t("signalScore") + "</span><span class=\"field-value\" data-field=\"fund-score\"></span>",
+      "</div>",
+      "<p class=\"explanation-reason\" data-field=\"fund-explanation\"></p>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>" + t("externalFactorAdjustment") + "</h4>",
+      "<div class=\"explanation-fields\">",
+      "<span class=\"field-label\">" + t("newsDelta") + "</span><span class=\"field-value\" data-field=\"adj-news\"></span>",
+      "<span class=\"field-label\">" + t("fundamentalsDelta") + "</span><span class=\"field-value\" data-field=\"adj-fund\"></span>",
+      "<span class=\"field-label\">" + t("upcomingEarningsDelta") + "</span><span class=\"field-value\" data-field=\"adj-earnings\"></span>",
+      "<span class=\"field-label\">" + t("externalFactorAdjustment") + "</span><span class=\"field-value\" data-field=\"adj-total\"></span>",
+      "</div>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>正面因素</h4>",
+      "<ul class=\"positive-factors\"></ul>",
+      "</div>",
+      "<div class=\"explanation-section\">",
+      "<h4>负面因素</h4>",
+      "<ul class=\"negative-factors\"></ul>",
+      "</div>",
+      "<p class=\"final-sentence\"></p>"
     ].join("");
 
     // Fill data fields

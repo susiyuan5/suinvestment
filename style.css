@@ -1700,10 +1700,6 @@ input::placeholder {
 }
 
 @media (max-width: 719px) {
-/* Single-column for stock details on mobile */
-  .explanation-core {
-    grid-template-columns: 1fr;
-  }
   .hero {
     padding-bottom: 10px;
   }
@@ -2374,32 +2370,27 @@ input::placeholder {
   background: rgba(255, 92, 122, 0.12) !important;
 }
 
-/* ---- Compact expansion panel inside stock-details-row ---- */
+/* ---- Expandable explanation section inside stock-details-row ---- */
 .action-explanation {
   display: grid;
-  gap: 6px;
-  padding: 8px;
-  margin-top: 6px;
+  gap: 10px;
+  padding: 12px;
+  margin-top: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel-3);
 }
 
-.explanation-core {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.explanation-core-col {
-  display: grid;
-  gap: 6px;
-  align-content: start;
+.action-explanation h4 {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+  color: var(--accent);
+  font-weight: 800;
 }
 
 .action-explanation .explanation-conclusion {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 900;
   color: var(--text);
 }
@@ -2407,155 +2398,64 @@ input::placeholder {
 .explanation-fields {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 2px 10px;
+  gap: 4px 12px;
   align-items: baseline;
 }
 
 .explanation-fields .field-label {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .explanation-fields .field-value {
   color: var(--text);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   min-width: 0;
-}
-
-.explanation-section {
-  min-width: 0;
-  padding: 5px 7px;
-  border: 1px solid rgba(36, 49, 68, 0.5);
-  border-radius: 6px;
-  background: rgba(22, 37, 58, 0.5);
-}
-
-.explanation-section h4 {
-  margin: 0 0 2px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  color: var(--muted);
 }
 
 .explanation-reason {
-  margin: 3px 0 0;
+  margin: 0;
   color: var(--soft);
-  font-size: 0.8rem;
-  line-height: 1.4;
-}
-
-.explanation-secondary {
-  min-width: 0;
-  border: 1px solid rgba(83, 120, 166, 0.3);
-  border-radius: 6px;
-  background: rgba(7, 15, 25, 0.35);
-  margin-top: 2px;
-}
-
-.explanation-secondary > summary {
-  cursor: pointer;
-  padding: 5px 8px;
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  list-style: none;
-}
-
-.explanation-secondary > summary::-webkit-details-marker {
-  display: none;
-}
-
-.explanation-sub-details {
-  min-width: 0;
-  border: none;
-  border-top: 1px solid rgba(83, 120, 166, 0.2);
-  border-radius: 0;
-  background: transparent;
-}
-
-.explanation-sub-details > summary {
-  cursor: pointer;
-  padding: 4px 8px 4px 16px;
-  color: var(--muted);
-  font-size: 0.74rem;
-  font-weight: 800;
-  list-style: none;
-}
-
-.explanation-sub-details > summary::-webkit-details-marker {
-  display: none;
-}
-
-.explanation-sub-details[open] {
-  padding-bottom: 4px;
-}
-
-.explanation-sub-details .explanation-fields {
-  padding: 0 8px 4px 16px;
-}
-
-.explanation-sub-details .explanation-reason {
-  padding: 0 8px 4px 16px;
-}
-
-.explanation-sub-details ul {
-  padding: 0 8px 4px 16px;
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 .positive-factors,
 .negative-factors {
   margin: 0;
-  padding-left: 16px;
+  padding-left: 18px;
   list-style: disc;
 }
 
 .positive-factors li {
   color: var(--accent);
-  font-size: 0.8rem;
-  line-height: 1.4;
+  font-size: 0.84rem;
+  line-height: 1.5;
 }
 
 .negative-factors li {
   color: var(--danger);
-  font-size: 0.8rem;
-  line-height: 1.4;
+  font-size: 0.84rem;
+  line-height: 1.5;
 }
 
 .explanation-empty {
   color: var(--muted) !important;
   list-style: none !important;
-  font-size: 0.8rem;
-  margin-left: -16px;
+  font-size: 0.84rem;
+  margin-left: -18px;
 }
 
 .final-sentence {
-  margin: 2px 0 0;
-  color: var(--soft);
-  font-size: 0.82rem;
-  font-weight: 700;
-  line-height: 1.35;
-  padding: 0 2px;
-}
-
-.algorithm-chain-line {
   margin: 0;
-  color: var(--muted);
-  font-size: 0.78rem;
+  color: var(--soft);
+  font-size: 0.88rem;
+  font-weight: 700;
   line-height: 1.4;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  word-break: break-all;
 }
 
-/* Show explanation when stock-details-row is open */
-.stock-details-row[open] > .action-explanation {
-  display: grid;
-}
 /* Show explanation when stock-details-row is open */
 .stock-details-row[open] > .action-explanation {
   display: grid;
