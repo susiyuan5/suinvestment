@@ -26,7 +26,8 @@
     portfolio: "su-investment-pro:portfolio",
     portfolioRisk: "su-investment-pro:portfolio-risk",
     language: "su-investment-pro:language",
-    deployment: "su-investment-pro:deployment"
+    deployment: "su-investment-pro:deployment",
+    backtestSettings: "su-investment-pro:backtest-settings"
   };
 
   const DEFAULT_DEPLOYMENT = {
@@ -158,6 +159,25 @@
       backtestInterpretationOnly: "This is historical backtest interpretation only, not investment advice.",
       footnoteRiskFreeRate: "Sharpe and Sortino ratios assume a 0% risk-free rate. Approx. CAGR is estimated from final value and total invested capital.",
       footnoteLookAhead: "News and fundamentals are not included in backtest unless historical point-in-time data is available.",
+      advancedSettings: "Advanced Backtest Settings",
+      startDate: "Start Date",
+      endDate: "End Date",
+      weeklyContribution: "Weekly Contribution",
+      initialCapital: "Initial Capital",
+      transactionCost: "Transaction Cost %",
+      slippageCost: "Slippage %",
+      rebalanceMode: "Rebalance Mode",
+      rebalanceNone: "No Rebalance",
+      rebalanceMonthly: "Monthly Rebalance",
+      rebalanceQuarterly: "Quarterly Rebalance",
+      rebalanceAnnual: "Annual Rebalance",
+      benchmarkLabel: "Benchmark",
+      backtestAssumptions: "Backtest Assumptions",
+      resetBacktestSettings: "Reset Backtest Settings",
+      totalFrictionCost: "Total Friction Cost",
+      frictionCost: "Friction Cost",
+      beatsBenchmark: "Beats Benchmark",
+      underperformsBenchmark: "Underperforms Benchmark",
       volatility: "Volatility",
       algorithmDetails: "Algorithm Details",
       marketRegime: "Market regime",
@@ -610,6 +630,25 @@
       backtestInterpretationOnly: "以下仅为历史回测解释，不构成投资建议。",
       footnoteRiskFreeRate: "夏普比率和索提诺比率假设无风险利率为 0%。近似年化收益率基于最终价值和总投入金额估算。",
       footnoteLookAhead: "新闻和基本面未纳入回测，除非有历史快照数据可用。",
+      advancedSettings: "高级回测设置",
+      startDate: "开始日期",
+      endDate: "结束日期",
+      weeklyContribution: "每周投入",
+      initialCapital: "初始本金",
+      transactionCost: "交易成本 %",
+      slippageCost: "滑点 %",
+      rebalanceMode: "再平衡模式",
+      rebalanceNone: "不再平衡",
+      rebalanceMonthly: "每月再平衡",
+      rebalanceQuarterly: "每季度再平衡",
+      rebalanceAnnual: "每年再平衡",
+      benchmarkLabel: "基准策略",
+      backtestAssumptions: "回测假设",
+      resetBacktestSettings: "重置回测设置",
+      totalFrictionCost: "总摩擦成本",
+      frictionCost: "摩擦成本",
+      beatsBenchmark: "跑赢基准",
+      underperformsBenchmark: "跑输基准",
       volatility: "波动率",
       algorithmDetails: "算法细节",
       marketRegime: "市场环境",
@@ -715,6 +754,16 @@
     autocompleteAbortController: null,
     weeklySnapshot: null,
     backtestSnapshot: null,
+    backtestSettings: loadJson(STORAGE_KEYS.backtestSettings, {
+      startDate: "",
+      endDate: "",
+      weeklyContribution: -1,
+      initialCapital: 0,
+      transactionCostPct: 0,
+      slippagePct: 0,
+      rebalanceMode: "none",
+      benchmark: "dca"
+    }),
     portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultStocks), { allowCustom: true }),
     portfolioRiskInput: normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {})),
     deployment: normalizeDeployment(loadJson(STORAGE_KEYS.deployment, DEFAULT_DEPLOYMENT)),
@@ -3032,6 +3081,10 @@
   }
 
   async function runBacktestComparison() {
+    var btSettings = getBacktestSettings();
+    var btWeeklyAmt = btSettings.weeklyContribution > 0 ? btSettings.weeklyContribution : state.deployment.weeklyDeployment;
+    var btFrictionRate = (btSettings.transactionCostPct || 0) / 100 + (btSettings.slippagePct || 0) / 100;
+    var btInitialCap = btSettings.initialCapital > 0 ? btSettings.initialCapital : 0;
     if (!backtestSummaryEl || !runBacktestBtn) return;
     runBacktestBtn.disabled = true;
     runBacktestBtn.textContent = t("backtestRunning");
@@ -3042,7 +3095,14 @@
         const prices = await fetchBacktestWeeklyPrices(stock.symbol);
         return { stock, prices };
       }));
-      const result = calculateBacktestComparison(priceSets);
+      const result = calculateBacktestComparison(priceSets, {
+        weeklyAmt: btWeeklyAmt,
+        frictionCostRate: btFrictionRate,
+        initialCap: btInitialCap,
+        startDate: btSettings.startDate || null,
+        endDate: btSettings.endDate || null,
+        benchmark: btSettings.benchmark || "dca"
+      });
       state.backtestResult = result;
       renderBacktestResult(result);
     } catch (error) {
@@ -3054,7 +3114,7 @@
     }
   }
 
-  function calculateBacktestComparison(priceSets) {
+  function calculateBacktestComparison(priceSets, btConfig) {
     const validSets = priceSets.filter(function (item) {
       return item.prices.length >= 2;
     });
@@ -3062,22 +3122,39 @@
       throw new Error(t("backtestNeedData"));
     }
 
-    const commonLength = Math.min.apply(null, validSets.map(function (item) {
+    var btConf = btConfig || {};
+    var startDateFilter = btConf.startDate ? new Date(btConf.startDate) : null;
+    var endDateFilter = btConf.endDate ? new Date(btConf.endDate) : null;
+
+    function filterByDate(prices) {
+      return prices.filter(function (p) {
+        var d = new Date(p.date);
+        if (startDateFilter && d < startDateFilter) return false;
+        if (endDateFilter && d > endDateFilter) return false;
+        return true;
+      });
+    }
+
+    var filteredSets = validSets.map(function (item) {
+      return { stock: item.stock, prices: filterByDate(item.prices) };
+    });
+
+    var filteredCommon = Math.min.apply(null, filteredSets.map(function (item) {
       return item.prices.length;
     }));
-    if (commonLength < 2) throw new Error(t("backtestNeedData"));
+    if (filteredCommon < 2) throw new Error(t("backtestNeedData"));
 
-    const aligned = validSets.map(function (item) {
+    var aligned = filteredSets.map(function (item) {
       return {
         stock: item.stock,
-        prices: item.prices.slice(item.prices.length - commonLength)
+        prices: item.prices.slice(item.prices.length - filteredCommon)
       };
     });
 
-    const enhanced = simulateBacktestStrategy(aligned, "enhanced");
-    const smooth = simulateBacktestStrategy(aligned, "smooth");
-    const old = simulateBacktestStrategy(aligned, "old");
-    const dca = simulateBacktestStrategy(aligned, "dca");
+    const enhanced = simulateBacktestStrategy(aligned, "enhanced", btConf);
+    const smooth = simulateBacktestStrategy(aligned, "smooth", btConf);
+    const old = simulateBacktestStrategy(aligned, "old", btConf);
+    const dca = simulateBacktestStrategy(aligned, "dca", btConf);
     const strategies = [
       { label: t("enhancedDipBuyStrategy"), data: enhanced },
       { label: t("smoothDipBuyStrategy"), data: smooth },
@@ -3118,8 +3195,8 @@
 
     return {
       start_date: aligned[0].prices[1].date,
-      end_date: aligned[0].prices[commonLength - 1].date,
-      number_of_weeks: commonLength - 1,
+      end_date: aligned[0].prices[filteredCommon - 1].date,
+      number_of_weeks: filteredCommon - 1,
       enhanced,
       smooth,
       old,
@@ -3129,7 +3206,9 @@
     };
   }
 
-  function simulateBacktestStrategy(aligned, mode) {
+  function simulateBacktestStrategy(aligned, mode, btConf) {
+    var btWeekly = btConf && btConf.weeklyAmt > 0 ? btConf.weeklyAmt : state.deployment.weeklyDeployment;
+    var btFriction = btConf && btConf.frictionCostRate ? btConf.frictionCostRate : 0;
     const positions = aligned.reduce(function (items, item) {
       items[item.stock.symbol] = {
         shares: 0,
@@ -3142,6 +3221,7 @@
     const history = [];
     let totalInvested = 0;
     let totalBuys = 0;
+    let totalFrictionCost = 0;
     let weightedAverageNumerator = 0;
     let peakValue = 0;
     let maxDrawdown = 0;
@@ -3154,21 +3234,24 @@
         const current = item.prices[index].close;
         const previous = item.prices[index - 1].close;
         const weeklyReturn = previous > 0 ? ((current - previous) / previous) * 100 : 0;
-        const baseAmount = state.deployment.weeklyDeployment * item.stock.allocation;
+        var baseAmount = btWeekly * item.stock.allocation;
+        var effectiveFriction = 1 - btFriction;
         let multiplier = 1;
         if (mode === "enhanced") multiplier = calculateBacktestEnhancedMultiplier(item.prices, index, weeklyReturn, marketRegime);
         else if (mode === "smooth") multiplier = getMultiplier(weeklyReturn, null, weeklyReturn);
         else if (mode === "old") multiplier = getOldHardThresholdMultiplier(weeklyReturn);
-        const amount = mode === "dca" ? baseAmount : baseAmount * multiplier;
-        if (amount <= 0 || current <= 0) return;
-
-        const sharesBought = amount / current;
+        var rawAmount = mode === "dca" ? baseAmount : baseAmount * multiplier;
+        if (rawAmount <= 0 || current <= 0) return;
+        var effectiveAmount = rawAmount * effectiveFriction;
+        var weeklyFriction = rawAmount - effectiveAmount;
+        const sharesBought = effectiveAmount / current;
         const position = positions[symbol];
         position.shares += sharesBought;
-        position.invested += amount;
+        position.invested += rawAmount;
         position.buys += 1;
-        totalInvested += amount;
+        totalInvested += rawAmount;
         totalBuys += 1;
+        totalFrictionCost += weeklyFriction;
       });
 
       const value = aligned.reduce(function (sum, item) {
@@ -3217,6 +3300,7 @@
       return_history: returnHistory,
       worst_week_return: round2(worstWeekReturn * 100),
       best_week_return: round2(bestWeekReturn * 100),
+      total_friction_cost: round2(totalFrictionCost),
       average_weekly_buy: avgWeeklyBuy,
       cash_usage_ratio: cashUsageRatio,
       number_of_weeks: numberOfWeeks
@@ -3580,6 +3664,40 @@
     return frag;
   }
 
+
+  function renderBacktestAssumptions(result) {
+    if (!backtestSummaryEl) return;
+    var btSettings = getBacktestSettings();
+    var btWeeklyAmt = btSettings.weeklyContribution > 0 ? btSettings.weeklyContribution : state.deployment.weeklyDeployment;
+
+    var div = document.createElement("div");
+    div.className = "backtest-assumptions";
+
+    var heading = document.createElement("h4");
+    heading.className = "backtest-assumptions-title";
+    heading.textContent = t("backtestAssumptions") + ":";
+    div.appendChild(heading);
+
+    var lines = [
+      t("startDate") + ": " + (result.start_date || "N/A"),
+      t("endDate") + ": " + (result.end_date || "N/A"),
+      t("weeklyContribution") + ": " + formatCurrency(btWeeklyAmt),
+      t("initialCapital") + ": " + formatCurrency(btSettings.initialCapital),
+      t("transactionCost") + ": " + (btSettings.transactionCostPct > 0 ? btSettings.transactionCostPct + "%" : "0%"),
+      t("slippageCost") + ": " + (btSettings.slippagePct > 0 ? btSettings.slippagePct + "%" : "0%"),
+      t("rebalanceMode") + ": " + (btSettings.rebalanceMode === "none" ? t("rebalanceNone") : btSettings.rebalanceMode === "monthly" ? t("rebalanceMonthly") : btSettings.rebalanceMode === "quarterly" ? t("rebalanceQuarterly") : t("rebalanceAnnual")),
+      t("benchmarkLabel") + ": " + (btSettings.benchmark === "dca" ? t("fixedDcaStrategy") : btSettings.benchmark === "enhanced" ? t("enhancedDipBuyStrategy") : btSettings.benchmark === "smooth" ? t("smoothDipBuyStrategy") : t("oldDipBuyStrategy"))
+    ];
+    lines.forEach(function (l) {
+      var p = document.createElement("p");
+      p.className = "backtest-assumptions-line";
+      p.textContent = l;
+      div.appendChild(p);
+    });
+
+    return div;
+  }
+
   function renderBacktestResult(result) {
     if (!backtestSummaryEl) return;
     backtestSummaryEl.dataset.hasResult = "true";
@@ -3593,6 +3711,9 @@
 
     // Data quality
     backtestSummaryEl.appendChild(renderBacktestDataQuality(result));
+
+    // Backtest assumptions
+    backtestSummaryEl.appendChild(renderBacktestAssumptions(result));
 
     // Equity curve chart
     backtestSummaryEl.appendChild(renderBacktestEquityChart(result));
@@ -3620,7 +3741,8 @@
       "<th>" + escapeHtml(t("sortinoRatio")) + "</th>",
       "<th>" + escapeHtml(t("calmarRatio")) + "</th>",
       "<th>" + escapeHtml(t("numberOfBuys")) + "</th>",
-      "<th>" + escapeHtml(t("cashUsage")) + "</th>",
+      "<th>" + escapeHtml(t("cashUsage")) + "</th>" +
+      "<th>" + escapeHtml(t("frictionCost")) + "</th>",
       "</tr></thead><tbody></tbody>"
     ].join("");
     var tbody = table.querySelector("tbody");
@@ -3667,7 +3789,8 @@
         { val: formatMetric(s.data.sortino), cls: s.data === bests.sortino ? "backtest-highest" : "" },
         { val: formatMetric(s.data.calmar), cls: s.data === bests.calmar ? "backtest-highest" : "" },
         { val: String(s.data.number_of_buys), cls: "" },
-        { val: formatPercent(s.data.cash_usage_ratio), cls: "" }
+        { val: formatPercent(s.data.cash_usage_ratio), cls: "" },
+        { val: formatCurrency(s.data.total_friction_cost || 0), cls: "" }
       ];
       cells.forEach(function (cell, index) {
         var td = document.createElement("td");
@@ -3686,6 +3809,161 @@
 
     wrap.appendChild(table);
     return wrap;
+  }
+
+
+  function getBacktestSettings() {
+    return state.backtestSettings || {
+      startDate: "",
+      endDate: "",
+      weeklyContribution: -1,
+      initialCapital: 0,
+      transactionCostPct: 0,
+      slippagePct: 0,
+      rebalanceMode: "none",
+      benchmark: "dca"
+    };
+  }
+
+  function saveBacktestSettings(settings) {
+    state.backtestSettings = settings;
+    saveJson(STORAGE_KEYS.backtestSettings, settings);
+  }
+
+  function renderBacktestSettings() {
+    if (!backtestSummaryEl) return;
+    var settings = getBacktestSettings();
+    var panelId = "backtestSettingsPanel";
+    var oldPanel = document.getElementById(panelId);
+    if (oldPanel) oldPanel.parentNode.removeChild(oldPanel);
+
+    var details = document.createElement("details");
+    details.id = panelId;
+    details.className = "tool-details backtest-settings-panel";
+
+    var sum = document.createElement("summary");
+    sum.textContent = t("advancedSettings");
+    details.appendChild(sum);
+
+    var grid = document.createElement("div");
+    grid.className = "backtest-settings-grid";
+
+    var fields = [
+      { key: "startDate", label: t("startDate"), type: "date" },
+      { key: "endDate", label: t("endDate"), type: "date" },
+      { key: "weeklyContribution", label: t("weeklyContribution"), type: "number", placeholder: "(CAD 69.23)" },
+      { key: "initialCapital", label: t("initialCapital"), type: "number", placeholder: "(0)" },
+      { key: "transactionCostPct", label: t("transactionCost"), type: "number", placeholder: "(0)" },
+      { key: "slippagePct", label: t("slippageCost"), type: "number", placeholder: "(0)" }
+    ];
+
+    fields.forEach(function (f) {
+      var label = document.createElement("label");
+      label.className = "backtest-settings-label";
+      var span = document.createElement("span");
+      span.textContent = f.label;
+      label.appendChild(span);
+      var input = document.createElement("input");
+      input.type = f.type;
+      input.id = "bt_" + f.key;
+      if (f.placeholder) input.placeholder = f.placeholder;
+      input.inputMode = f.type === "number" ? "decimal" : "text";
+      input.autocomplete = "off";
+      var val = settings[f.key];
+      if (f.type === "date") input.value = val || "";
+      else input.value = val >= 0 ? String(val) : "";
+      input.addEventListener("change", function () {
+        var s = getBacktestSettings();
+        if (f.type === "date") s[f.key] = input.value;
+        else {
+          var v = parseFloat(input.value);
+          s[f.key] = input.value.trim() === "" ? (f.key === "weeklyContribution" ? -1 : 0) : (Number.isFinite(v) ? v : (f.key === "weeklyContribution" ? -1 : 0));
+        }
+        saveBacktestSettings(s);
+      });
+      label.appendChild(input);
+      grid.appendChild(label);
+    });
+
+    // Rebalance mode select
+    var rl = document.createElement("label");
+    rl.className = "backtest-settings-label";
+    var rs = document.createElement("span");
+    rs.textContent = t("rebalanceMode");
+    rl.appendChild(rs);
+    var rsel = document.createElement("select");
+    rsel.id = "bt_rebalanceMode";
+    [
+      { val: "none", label: t("rebalanceNone") },
+      { val: "monthly", label: t("rebalanceMonthly") },
+      { val: "quarterly", label: t("rebalanceQuarterly") },
+      { val: "annual", label: t("rebalanceAnnual") }
+    ].forEach(function (o) {
+      var opt = document.createElement("option");
+      opt.value = o.val;
+      opt.textContent = o.label;
+      if (settings.rebalanceMode === o.val) opt.selected = true;
+      rsel.appendChild(opt);
+    });
+    rsel.addEventListener("change", function () {
+      var s = getBacktestSettings();
+      s.rebalanceMode = rsel.value;
+      saveBacktestSettings(s);
+    });
+    rl.appendChild(rsel);
+    grid.appendChild(rl);
+
+    // Benchmark select
+    var bl = document.createElement("label");
+    bl.className = "backtest-settings-label";
+    var bs = document.createElement("span");
+    bs.textContent = t("benchmarkLabel");
+    bl.appendChild(bs);
+    var bsel = document.createElement("select");
+    bsel.id = "bt_benchmark";
+    [
+      { val: "dca", label: t("fixedDcaStrategy") },
+      { val: "enhanced", label: t("enhancedDipBuyStrategy") },
+      { val: "smooth", label: t("smoothDipBuyStrategy") },
+      { val: "old", label: t("oldDipBuyStrategy") }
+    ].forEach(function (o) {
+      var opt = document.createElement("option");
+      opt.value = o.val;
+      opt.textContent = o.label;
+      if (settings.benchmark === o.val) opt.selected = true;
+      bsel.appendChild(opt);
+    });
+    bsel.addEventListener("change", function () {
+      var s = getBacktestSettings();
+      s.benchmark = bsel.value;
+      saveBacktestSettings(s);
+    });
+    bl.appendChild(bsel);
+    grid.appendChild(bl);
+
+    details.appendChild(grid);
+
+    // Reset button
+    var resetBtn = document.createElement("button");
+    resetBtn.type = "button";
+    resetBtn.className = "secondary-button";
+    resetBtn.textContent = t("resetBacktestSettings");
+    resetBtn.addEventListener("click", function () {
+      var def = { startDate: "", endDate: "", weeklyContribution: -1, initialCapital: 0, transactionCostPct: 0, slippagePct: 0, rebalanceMode: "none", benchmark: "dca" };
+      saveBacktestSettings(def);
+      state.backtestResult = null;
+      if (backtestSummaryEl) backtestSummaryEl.dataset.hasResult = "false";
+      var p = document.getElementById(panelId);
+      if (p) p.parentNode.removeChild(p);
+      renderBacktestSettings();
+      renderBacktestSettings();
+  renderBacktestIntro();
+    });
+    details.appendChild(resetBtn);
+
+    // Insert before backtestSummaryEl
+    var parent = backtestSummaryEl.parentNode;
+    parent.insertBefore(details, backtestSummaryEl);
   }
 
   function renderBacktestIntro() {
