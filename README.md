@@ -10,7 +10,9 @@ All suggestions are for manual review only. The final trading decision and any b
 - `style.css` - Dark mobile-first dashboard UI
 - `app.js` - Market fetching, weekly snapshot loading, cache, manual overrides, panic mode, and order calculation
 - `scripts/update-market-data.js` - GitHub Actions script that calculates weekly percentage changes
+- `scripts/update_backtest_prices.py` - Historical weekly snapshot updater for dashboard backtests and market regime inputs
 - `data/market-data.json` - Weekly market snapshot served by GitHub Pages
+- `data/backtest-prices.json` - Historical weekly close snapshot for dashboard backtests, trend/volatility/drawdown, and QQQ/SPY market regime
 - `config.py` - Backtest and risk-control defaults
 - `strategy.py` - Weekly-return strategy logic
 - `backtest.py` - Weekly historical simulation

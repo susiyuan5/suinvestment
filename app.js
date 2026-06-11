@@ -402,6 +402,7 @@ amountBreakdown: "Amount Breakdown",
       fallbackRows: "Fallback / 备用数据",
       cacheRows: "Cache / 缓存",
       marketRegimeData: "Market Regime / 市场状态",
+      weeklyRows: "rows / 周",
       dataQualityWaiting: "Waiting for market data.",
       dataQualityAllClear: "Fresh source mix; no stale rows, legacy overrides, or neutral market fallback detected.",
       dataQualityStaleWarning: "Stale data is present.",
@@ -755,6 +756,7 @@ amountBreakdown: "金额分解",
       fallbackRows: "Fallback / 备用数据",
       cacheRows: "Cache / 缓存",
       marketRegimeData: "Market Regime / 市场状态",
+      weeklyRows: "rows / 周",
       dataQualityWaiting: "等待市场数据。",
       dataQualityAllClear: "数据来源组合新鲜；未发现过期行、旧覆盖或中性市场备用状态。",
       dataQualityStaleWarning: "存在过期数据。",
@@ -2262,9 +2264,16 @@ amountBreakdown: "金额分解",
   }
 
   function calculateMarketRegimeFromPrices(rows, proxy) {
-    const closes = Array.isArray(rows) ? rows.map(function (row) { return Number(row.close); }).filter(function (value) {
-      return Number.isFinite(value) && value > 0;
-    }) : [];
+    const validRows = Array.isArray(rows) ? rows.reduce(function (items, row) {
+      const close = Number(row.close);
+      if (row.date && Number.isFinite(close) && close > 0) {
+        items.push({ date: row.date, close });
+      }
+      return items;
+    }, []) : [];
+    const closes = validRows.map(function (row) {
+      return row.close;
+    });
     if (closes.length < 50) return getNeutralMarketRegime(proxy);
 
     const latest = closes[closes.length - 1];
@@ -2278,11 +2287,13 @@ amountBreakdown: "金额分解",
     else if (isFiniteNumber(ma20) && isFiniteNumber(ma50) && latest > ma20 && ma20 > ma50) type = "Bull";
     else if (isFiniteNumber(ma20) && latest < ma20) type = "Correction";
 
-    const regimeMeta = createHistoricalIndicatorMeta(rows, (proxy || "Market") + " market regime");
+    const regimeMeta = createHistoricalIndicatorMeta(validRows, "Historical weekly prices / " + (proxy || "Market"));
     return {
       type,
       label: displayMarketRegime(type),
       proxy: proxy || "QQQ",
+      row_count: validRows.length,
+      latest_date: validRows[validRows.length - 1].date,
       latest_price: round2(latest),
       ma20: round2(ma20),
       ma50: round2(ma50),
@@ -2299,6 +2310,8 @@ amountBreakdown: "金额分解",
       type: "Neutral",
       label: displayMarketRegime("Neutral"),
       proxy: proxy || "QQQ",
+      row_count: 0,
+      latest_date: null,
       latest_price: null,
       ma20: null,
       ma50: null,
@@ -5351,7 +5364,14 @@ function equalizeAllocations() {
         : t("staleRows");
     return {
       fallback: neutralFallback,
-      label: localizeMarketRegime(regime) + " · " + quality
+      label: [
+        localizeMarketRegime(regime),
+        regime.proxy || "QQQ",
+        isFiniteNumber(regime.row_count) ? regime.row_count + " " + t("weeklyRows") : "",
+        regime.latest_date || "",
+        metaSource,
+        quality
+      ].filter(Boolean).join(" | ")
     };
   }
 
