@@ -393,6 +393,22 @@ amountBreakdown: "Amount Breakdown",
       dashboardSummary: "Dashboard Summary",
       researchEyebrow: "Secondary tools",
       researchTesting: "Research & Testing",
+      dataQualityEyebrow: "Data quality / 数据质量",
+      dataQualitySummary: "Data Quality Summary / 数据质量摘要",
+      freshRows: "Fresh / 新鲜",
+      staleRows: "Stale / 过期",
+      manualOverrideRows: "Manual Override / 手动覆盖",
+      legacyOverrideRows: "Legacy Override / 旧覆盖",
+      fallbackRows: "Fallback / 备用数据",
+      cacheRows: "Cache / 缓存",
+      marketRegimeData: "Market Regime / 市场状态",
+      dataQualityWaiting: "Waiting for market data.",
+      dataQualityAllClear: "Fresh source mix; no stale rows, legacy overrides, or neutral market fallback detected.",
+      dataQualityStaleWarning: "Stale data is present.",
+      dataQualityLegacyWarning: "Legacy manual override without timestamp is present.",
+      dataQualityManualWarning: "Recommendations may be affected by manual override data.",
+      dataQualityFallbackWarning: "Fallback data is in use.",
+      dataQualityMarketFallbackWarning: "Market regime is neutral because fallback is being used.",
       editHoldings: "Edit holdings",
       copyTextDetails: "Copy text details",
       showDetails: "Show details",
@@ -730,6 +746,22 @@ amountBreakdown: "金额分解",
       dashboardSummary: "面板总览",
       researchEyebrow: "辅助工具",
       researchTesting: "研究与测试",
+      dataQualityEyebrow: "Data quality / 数据质量",
+      dataQualitySummary: "Data Quality Summary / 数据质量摘要",
+      freshRows: "Fresh / 新鲜",
+      staleRows: "Stale / 过期",
+      manualOverrideRows: "Manual Override / 手动覆盖",
+      legacyOverrideRows: "Legacy Override / 旧覆盖",
+      fallbackRows: "Fallback / 备用数据",
+      cacheRows: "Cache / 缓存",
+      marketRegimeData: "Market Regime / 市场状态",
+      dataQualityWaiting: "等待市场数据。",
+      dataQualityAllClear: "数据来源组合新鲜；未发现过期行、旧覆盖或中性市场备用状态。",
+      dataQualityStaleWarning: "存在过期数据。",
+      dataQualityLegacyWarning: "存在没有时间戳的旧手动覆盖。",
+      dataQualityManualWarning: "建议可能受到手动覆盖数据影响。",
+      dataQualityFallbackWarning: "正在使用备用数据。",
+      dataQualityMarketFallbackWarning: "市场状态因备用数据而显示为中性。",
       editHoldings: "编辑持仓",
       copyTextDetails: "复制文本详情",
       showDetails: "查看详情",
@@ -828,6 +860,15 @@ amountBreakdown: "金额分解",
   const overviewOverallRiskEl = document.getElementById("overviewOverallRisk");
   const overviewMarketRegimeEl = document.getElementById("overviewMarketRegime");
   const overviewAvailableCashEl = document.getElementById("overviewAvailableCash");
+  const dataQualityPanelEl = document.getElementById("dataQualityPanel");
+  const dataQualityFreshEl = document.getElementById("dataQualityFresh");
+  const dataQualityStaleEl = document.getElementById("dataQualityStale");
+  const dataQualityManualEl = document.getElementById("dataQualityManual");
+  const dataQualityLegacyEl = document.getElementById("dataQualityLegacy");
+  const dataQualityFallbackEl = document.getElementById("dataQualityFallback");
+  const dataQualityCacheEl = document.getElementById("dataQualityCache");
+  const dataQualityMarketRegimeEl = document.getElementById("dataQualityMarketRegime");
+  const dataQualityWarningEl = document.getElementById("dataQualityWarning");
   const runBacktestBtn = document.getElementById("runBacktestBtn");
   const backtestSummaryEl = document.getElementById("backtestSummary");
   const algorithmTestInput = document.getElementById("algorithmTestInput");
@@ -955,6 +996,7 @@ amountBreakdown: "金额分解",
   renderDeploymentSettings();
   renderPortfolioTotal();
   renderPortfolioRiskInputs();
+  renderDataQualitySummary();
   renderAlgorithmTestPresets();
   renderAlgorithmTestPanel();
   renderSkeleton();
@@ -4705,6 +4747,9 @@ function equalizeAllocations() {
     renderPortfolioTotal();
     renderPortfolioRiskSummary(portfolioRisk);
     renderOverviewSummary(portfolioRisk);
+    renderDataQualitySummary(entries.map(function (entry) {
+      return entry.signal;
+    }));
   }
 
   function updateCard(card, signal) {
@@ -5232,6 +5277,88 @@ function equalizeAllocations() {
     }
   }
 
+  function renderDataQualitySummary(signals) {
+    if (!dataQualityPanelEl) return;
+    const items = Array.isArray(signals) ? signals : (window.__SUINVESTMENT_SIGNALS__ || []);
+    const summary = summarizeDataQuality(items);
+
+    setMetricText(dataQualityFreshEl, summary.fresh);
+    setMetricText(dataQualityStaleEl, summary.stale);
+    setMetricText(dataQualityManualEl, summary.manual);
+    setMetricText(dataQualityLegacyEl, summary.legacy);
+    setMetricText(dataQualityFallbackEl, summary.fallback);
+    setMetricText(dataQualityCacheEl, summary.cache);
+    if (dataQualityMarketRegimeEl) dataQualityMarketRegimeEl.textContent = summary.marketRegimeLabel;
+
+    if (dataQualityWarningEl) {
+      dataQualityWarningEl.textContent = summary.warning || t("dataQualityAllClear");
+      dataQualityWarningEl.classList.toggle("is-warning", !!summary.warning);
+    }
+    dataQualityPanelEl.classList.toggle("has-warning", !!summary.warning);
+  }
+
+  function summarizeDataQuality(signals) {
+    const counts = {
+      fresh: 0,
+      stale: 0,
+      manual: 0,
+      legacy: 0,
+      fallback: 0,
+      cache: 0
+    };
+
+    signals.forEach(function (signal) {
+      const source = String(signal.data_source || "");
+      if (signal.data_freshness === "fresh") counts.fresh += 1;
+      if (signal.data_freshness === "stale" || signal.data_freshness === "missing") counts.stale += 1;
+      if (signal.manual_override_active || /manual/i.test(source)) counts.manual += 1;
+      if (signal.manual_override_legacy) counts.legacy += 1;
+      if (/cache/i.test(source)) counts.cache += 1;
+      if (isFallbackSource(source)) counts.fallback += 1;
+    });
+
+    const marketStatus = getMarketRegimeDataStatus();
+    const warnings = [];
+    if (!signals.length) warnings.push(t("dataQualityWaiting"));
+    if (counts.stale > 0) warnings.push(t("dataQualityStaleWarning"));
+    if (counts.legacy > 0) warnings.push(t("dataQualityLegacyWarning"));
+    if (counts.manual > 0) warnings.push(t("dataQualityManualWarning"));
+    if (counts.fallback > 0) warnings.push(t("dataQualityFallbackWarning"));
+    if (marketStatus.fallback) warnings.push(t("dataQualityMarketFallbackWarning"));
+
+    return {
+      ...counts,
+      marketRegimeLabel: marketStatus.label,
+      warning: warnings.join(" ")
+    };
+  }
+
+  function isFallbackSource(source) {
+    const value = String(source || "").toLowerCase();
+    if (!value || /finnhub|cache|manual/.test(value)) return false;
+    return /yahoo|weekly|fallback|unavailable/.test(value);
+  }
+
+  function getMarketRegimeDataStatus() {
+    const regime = state.marketRegime || getNeutralMarketRegime("QQQ");
+    const meta = regime && regime.field_meta ? regime.field_meta.marketRegime : null;
+    const metaSource = meta && meta.source ? meta.source : "";
+    const neutralFallback = !state.marketRegime || /fallback|neutral/i.test(metaSource);
+    const quality = neutralFallback
+      ? t("fallbackRows")
+      : meta && meta.freshness === "fresh"
+        ? t("freshRows")
+        : t("staleRows");
+    return {
+      fallback: neutralFallback,
+      label: localizeMarketRegime(regime) + " · " + quality
+    };
+  }
+
+  function setMetricText(element, value) {
+    if (element) element.textContent = String(value);
+  }
+
   function showDeploymentStatus(message, warning) {
     if (!deploymentStatusEl) return;
     deploymentStatusEl.textContent = message;
@@ -5453,6 +5580,20 @@ function equalizeAllocations() {
     setOverviewLabel(2, t("overallRisk"));
     setOverviewLabel(3, t("marketRegime"));
     setOverviewLabel(4, t("availableCash"));
+    setText(".data-quality-panel .eyebrow", t("dataQualityEyebrow"));
+    setText("#data-quality-title", t("dataQualitySummary"));
+    setText("#dataQualityFreshLabel", t("freshRows"));
+    setText("#dataQualityStaleLabel", t("staleRows"));
+    setText("#dataQualityManualLabel", t("manualOverrideRows"));
+    setText("#dataQualityLegacyLabel", t("legacyOverrideRows"));
+    setText("#dataQualityFallbackLabel", t("fallbackRows"));
+    setText("#dataQualityCacheLabel", t("cacheRows"));
+    setText("#dataQualityMarketLabel", t("marketRegimeData"));
+    const dataQualitySummary = document.querySelector(".data-quality-panel summary");
+    if (dataQualitySummary) {
+      dataQualitySummary.setAttribute("data-label", t("details"));
+      dataQualitySummary.setAttribute("data-open-label", t("hide"));
+    }
     setText("#settings-title", t("deploymentPlan"));
     setText(".settings-panel .eyebrow", t("monthlySettings"));
     setText("#openSettingsBtn", t("settings"));
@@ -5520,6 +5661,7 @@ function equalizeAllocations() {
     if (languageToggle) languageToggle.textContent = "中文 / EN";
     translateTemplateLabels();
     renderOverviewSummary(window.__SUINVESTMENT_PORTFOLIO_RISK__);
+    renderDataQualitySummary();
   }
 
   function setText(selector, value) {
