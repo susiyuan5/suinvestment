@@ -29,6 +29,16 @@ Detected drawdown and high-volatility windows are the best available local stres
 | risk_adjusted_v2 | 18.11% | 17.88% | 15.93% | 0.68 | 86.47% |
 | enhanced_low_frequency_proxy | 15.20% | 15.98% | 13.92% | 0.64 | 78.85% |
 
+## Phase 3A.1 Audit Of Fixed DCA Outperformance
+
+**The comparison is fair inside the Python backtest harness, with one naming caveat.** Simple Dip-Buy, Risk-Adjusted v2, Fixed Weekly DCA, and the enhanced proxy use the same six tickers, the same detected window dates per ticker/window, the same `initial_cash = 10000`, the same `base_buy_amount = 100`, the same commission and slippage settings, the same cash cap, and the same drawdown risk rule. The caveat is that `fixed_weekly_dca` is not a true external-contribution DCA model; it is a fixed 1x deployment rule spending down the same initial cash pool as the other Python strategies.
+
+**The DCA edge is narrow and sample-dependent, not robust.** On the full available period, Fixed DCA beat Simple Dip-Buy by 1.60 percentage points on average, but the median ticker-level difference was -0.07 points and DCA won only 2 of 6 tickers. Excluding NVDA, Fixed DCA underperformed Simple Dip-Buy by 0.43 points on average. In the detected major drawdown windows, Fixed DCA also slightly trailed Simple Dip-Buy by 0.19 points on average.
+
+**The main driver is NVDA path dependence.** NVDA rose about 117.5% over the first 104 weekly observations. Fixed DCA deployed more cash during that early high-growth phase, investing about 7,958 versus 7,526 for Simple Dip-Buy by week 104, and ended with more shares at a slightly lower average buy price. That explains most of the full-period DCA advantage. For ASML, BYDDY, and KO, Simple Dip-Buy did better; MSFT was effectively tied.
+
+**Next tests should separate strategy quality from cash-timing artifacts.** Phase 3B should add a true weekly-contribution model, an equal-total-invested normalization, longer pre-2021 history, rolling walk-forward windows, and per-ticker attribution that reports when dip-buy underinvests during persistent uptrends. Until then, the DCA result should be treated as evidence that the timing edge is unproven, not evidence that Fixed DCA is structurally superior.
+
 ## Parameter Sensitivity Points To Candidates, Not Conclusions
 
 The balanced score rewards return and Calmar, penalizes max drawdown and volatility, includes a cash-deployment penalty, and penalizes uneven performance across tickers. It intentionally avoids selecting only the highest-return setting. The top rows are a cluster rather than a single decisive answer, which means some stress caps did not activate often enough in this dataset to separate cleanly.
