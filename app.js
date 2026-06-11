@@ -1526,6 +1526,82 @@ amountBreakdown: "金额分解",
     copyStatusEl.textContent = t("removedSymbol", { symbol });
   }
 
+  function createFieldMeta(source, timestamp, options) {
+    const ts = Number(timestamp);
+    const opts = options || {};
+    return {
+      source: source || "Unavailable",
+      timestamp: Number.isFinite(ts) ? ts : null,
+      freshness: opts.freshness || getFreshnessFromTimestamp(ts, opts),
+      stale_reason: opts.staleReason || ""
+    };
+  }
+
+  function getFreshnessFromTimestamp(timestamp, options) {
+    const opts = options || {};
+    if (opts.missing) return "missing";
+    if (opts.stale) return "stale";
+    if (!Number.isFinite(timestamp)) return "missing";
+    const ageHours = (Date.now() - timestamp) / (60 * 60 * 1000);
+    return ageHours > (opts.maxAgeHours || CONFIG.cacheHours) ? "stale" : "fresh";
+  }
+
+  function cloneFieldMeta(meta) {
+    return meta ? { ...meta } : createFieldMeta("Unavailable", null, { missing: true });
+  }
+
+  function getFieldMeta(row, field) {
+    return row && row.field_meta && row.field_meta[field]
+      ? cloneFieldMeta(row.field_meta[field])
+      : createFieldMeta(row && row.source ? row.source : "Unavailable", row && row.fetchedAt, { missing: !row });
+  }
+
+  function chooseMetaForValue(value, candidates, fallbackSource, fallbackTimestamp) {
+    const finiteCandidates = candidates.filter(function (item) {
+      return isFiniteNumber(item.value);
+    });
+    const match = finiteCandidates.find(function (item) {
+      return Object.is(item.value, value);
+    }) || finiteCandidates[0];
+    return match && match.meta ? cloneFieldMeta(match.meta) : createFieldMeta(fallbackSource, fallbackTimestamp);
+  }
+
+  function addRowFieldMeta(row, source, timestamp, fieldNames) {
+    const fields = Array.isArray(fieldNames) ? fieldNames : ["price", "dailyChange", "weeklyChange", "decisionChange"];
+    const meta = {};
+    fields.forEach(function (field) {
+      meta[field] = createFieldMeta(source, timestamp, { missing: !isFiniteNumber(row[field]) });
+    });
+    return {
+      ...row,
+      field_meta: {
+        ...(row.field_meta || {}),
+        ...meta
+      }
+    };
+  }
+
+  function getOverrideRecord(symbol) {
+    const raw = state.overrides && state.overrides[symbol];
+    if (isFiniteNumber(raw)) {
+      return { value: raw, appliedAt: null, legacy: true };
+    }
+    if (raw && typeof raw === "object" && isFiniteNumber(raw.value)) {
+      return {
+        value: raw.value,
+        appliedAt: Number.isFinite(raw.appliedAt) ? raw.appliedAt : null,
+        legacy: raw.legacy === true
+      };
+    }
+    return null;
+  }
+
+  function createHistoricalIndicatorMeta(rows, source) {
+    const latest = Array.isArray(rows) && rows.length ? rows[rows.length - 1] : null;
+    const timestamp = latest && latest.date ? Date.parse(latest.date) : null;
+    return createFieldMeta(source || "Historical prices", timestamp, { maxAgeHours: CONFIG.cacheHours * 14 });
+  }
+
   async function fetchSymbolSnapshot(symbol) {
     const apiKey = apiKeyInput.value.trim();
     const cached = getValidCache(symbol);
@@ -1565,8 +1641,12 @@ amountBreakdown: "金额分解",
         weeklyChange: weeklyData.weeklyChange,
         decisionChange: weeklyData.decisionChange,
         source: "Weekly",
-        note: "Scheduled close snapshot",
-        fetchedAt: weeklyData.fetchedAt
+        note: weeklyData.stale ? "Scheduled close snapshot; stale carried forward" : "Scheduled close snapshot",
+        fetchedAt: weeklyData.fetchedAt,
+        field_meta: weeklyData.field_meta,
+        snapshot_stale: weeklyData.stale,
+        snapshot_stale_reason: weeklyData.staleReason,
+        snapshot_stale_from: weeklyData.staleFrom
       };
     }
 
@@ -1574,7 +1654,8 @@ amountBreakdown: "金额分解",
       return {
         ...cached,
         source: "Cache",
-        note: "API failed; using saved snapshot"
+        note: "API failed; using saved snapshot",
+        field_meta: refreshFieldMeta(cached.field_meta, cached.fetchedAt, "Cache")
       };
     }
 
@@ -1602,6 +1683,13 @@ amountBreakdown: "金额分解",
   function getWeeklySnapshot(symbol) {
     const item = state.weeklySnapshot && state.weeklySnapshot.symbols && state.weeklySnapshot.symbols[symbol];
     if (!item || !isFiniteNumber(item.weeklyChange)) return null;
+    const generatedAt = state.weeklySnapshot.generatedAt ? Date.parse(state.weeklySnapshot.generatedAt) : Date.now();
+    const freshnessOptions = {
+      stale: item.stale === true,
+      staleReason: item.staleReason || "",
+      maxAgeHours: CONFIG.cacheHours
+    };
+    const weeklyMeta = createFieldMeta("Weekly", generatedAt, freshnessOptions);
     return {
       price: isFiniteNumber(item.price) ? item.price : null,
       latestClose: isFiniteNumber(item.latestClose) ? item.latestClose : null,
@@ -1610,7 +1698,16 @@ amountBreakdown: "金额分解",
       dailyChange: isFiniteNumber(item.dailyChange) ? item.dailyChange : null,
       weeklyChange: item.weeklyChange,
       decisionChange: isFiniteNumber(item.decisionChange) ? item.decisionChange : calculateDecisionChange(item.weeklyChange, item.dailyChange),
-      fetchedAt: state.weeklySnapshot.generatedAt ? Date.parse(state.weeklySnapshot.generatedAt) : Date.now()
+      fetchedAt: generatedAt,
+      stale: item.stale === true,
+      staleReason: item.staleReason || "",
+      staleFrom: item.staleFrom || null,
+      field_meta: {
+        price: cloneFieldMeta(weeklyMeta),
+        dailyChange: isFiniteNumber(item.dailyChange) ? cloneFieldMeta(weeklyMeta) : createFieldMeta("Weekly", generatedAt, { missing: true }),
+        weeklyChange: cloneFieldMeta(weeklyMeta),
+        decisionChange: cloneFieldMeta(weeklyMeta)
+      }
     };
   }
 
@@ -1619,11 +1716,24 @@ amountBreakdown: "金额分解",
     if (isFiniteNumber(row.weeklyChange) && isFiniteNumber(row.dailyChange) && !isFiniteNumber(weeklyData.dailyChange)) {
       return {
         ...row,
-        decisionChange: calculateDecisionChange(row.weeklyChange, row.dailyChange)
+        decisionChange: calculateDecisionChange(row.weeklyChange, row.dailyChange),
+        field_meta: {
+          ...(row.field_meta || {}),
+          decisionChange: chooseMetaForValue(
+            calculateDecisionChange(row.weeklyChange, row.dailyChange),
+            [
+              { value: row.weeklyChange, meta: getFieldMeta(row, "weeklyChange") },
+              { value: row.dailyChange, meta: getFieldMeta(row, "dailyChange") }
+            ],
+            row.source,
+            row.fetchedAt
+          )
+        }
       };
     }
     const mergedDailyChange = calculateDecisionChange(row.dailyChange, weeklyData.dailyChange);
     const mergedWeeklyChange = isFiniteNumber(row.weeklyChange) ? row.weeklyChange : weeklyData.weeklyChange;
+    const mergedDecisionChange = calculateDecisionChange(mergedWeeklyChange, mergedDailyChange, weeklyData.decisionChange);
     return {
       ...row,
       latestClose: isFiniteNumber(row.latestClose) ? row.latestClose : weeklyData.latestClose,
@@ -1631,9 +1741,57 @@ amountBreakdown: "金额分解",
       weekAgoClose: isFiniteNumber(row.weekAgoClose) ? row.weekAgoClose : weeklyData.weekAgoClose,
       dailyChange: mergedDailyChange,
       weeklyChange: mergedWeeklyChange,
-      decisionChange: calculateDecisionChange(mergedWeeklyChange, mergedDailyChange, weeklyData.decisionChange),
-      note: row.note + "; scheduled snapshot"
+      decisionChange: mergedDecisionChange,
+      note: row.note + "; scheduled snapshot",
+      field_meta: {
+        ...(row.field_meta || {}),
+        price: isFiniteNumber(row.price) ? getFieldMeta(row, "price") : getFieldMeta(weeklyData, "price"),
+        dailyChange: chooseMetaForValue(
+          mergedDailyChange,
+          [
+            { value: row.dailyChange, meta: getFieldMeta(row, "dailyChange") },
+            { value: weeklyData.dailyChange, meta: getFieldMeta(weeklyData, "dailyChange") }
+          ],
+          row.source,
+          row.fetchedAt
+        ),
+        weeklyChange: isFiniteNumber(row.weeklyChange) ? getFieldMeta(row, "weeklyChange") : getFieldMeta(weeklyData, "weeklyChange"),
+        decisionChange: chooseMetaForValue(
+          mergedDecisionChange,
+          [
+            { value: mergedWeeklyChange, meta: isFiniteNumber(row.weeklyChange) ? getFieldMeta(row, "weeklyChange") : getFieldMeta(weeklyData, "weeklyChange") },
+            { value: mergedDailyChange, meta: chooseMetaForValue(
+              mergedDailyChange,
+              [
+                { value: row.dailyChange, meta: getFieldMeta(row, "dailyChange") },
+                { value: weeklyData.dailyChange, meta: getFieldMeta(weeklyData, "dailyChange") }
+              ],
+              row.source,
+              row.fetchedAt
+            ) },
+            { value: weeklyData.decisionChange, meta: getFieldMeta(weeklyData, "decisionChange") }
+          ],
+          row.source,
+          row.fetchedAt
+        )
+      }
     };
+  }
+
+  function refreshFieldMeta(fieldMeta, fallbackTimestamp, cacheSource) {
+    const meta = fieldMeta && typeof fieldMeta === "object" ? fieldMeta : {};
+    return Object.keys(meta).reduce(function (items, key) {
+      const item = meta[key] || {};
+      const timestamp = Number.isFinite(item.timestamp) ? item.timestamp : fallbackTimestamp;
+      items[key] = {
+        ...item,
+        source: cacheSource ? cacheSource + " / " + (item.source || "stored snapshot") : item.source,
+        timestamp,
+        freshness: getFreshnessFromTimestamp(timestamp, { stale: item.freshness === "stale", missing: item.freshness === "missing" }),
+        stale_reason: item.stale_reason || ""
+      };
+      return items;
+    }, {});
   }
 
   async function fetchFinnhubSnapshot(symbol, apiKey) {
@@ -1673,7 +1831,8 @@ amountBreakdown: "金额分解",
       console.warn("Finnhub candles failed for", symbol, error);
     }
 
-    return {
+    const fetchedAt = Date.now();
+    const finnhubRow = addRowFieldMeta({
       symbol,
       price: quote.c,
       latestClose: comparison ? comparison.latestClose : null,
@@ -1684,8 +1843,10 @@ amountBreakdown: "金额分解",
       decisionChange: comparison ? comparison.decisionChange : quoteDailyChange,
       source: "Finnhub",
       note: candleNote,
-      fetchedAt: Date.now()
-    };
+      fetchedAt
+    }, comparison ? "Finnhub candles" : "Finnhub quote", fetchedAt, ["dailyChange", "weeklyChange", "decisionChange"]);
+    finnhubRow.field_meta.price = createFieldMeta("Finnhub quote", fetchedAt);
+    return finnhubRow;
   }
 
   async function fetchYahooSnapshot(symbol) {
@@ -1703,7 +1864,8 @@ amountBreakdown: "金额分解",
     const comparison = calculateMarketSignals(closes);
     const metaPrice = result.meta && result.meta.regularMarketPrice;
 
-    return {
+    const fetchedAt = Date.now();
+    return addRowFieldMeta({
       symbol,
       price: isFiniteNumber(metaPrice) ? metaPrice : comparison.latestClose,
       latestClose: comparison.latestClose,
@@ -1714,8 +1876,8 @@ amountBreakdown: "金额分解",
       decisionChange: comparison.decisionChange,
       source: "Yahoo",
       note: "Yahoo Finance fallback",
-      fetchedAt: Date.now()
-    };
+      fetchedAt
+    }, "Yahoo", fetchedAt);
   }
 
   async function fetchBacktestWeeklyPrices(symbol) {
@@ -1861,6 +2023,7 @@ amountBreakdown: "金额分解",
     const smooth = calculateSmoothMultiplier(decisionChange, dailyChange, weeklyChange);
     const history = getHistoricalPriceRows(symbol);
     const closes = history.map(function (row) { return row.close; });
+    const historyMeta = createHistoricalIndicatorMeta(history, "Historical weekly prices");
     const trend = analyzeTickerTrend(closes, decisionChange);
     const realizedVolatility = calculateWeeklyVolatility(closes, 12);
     const drawdown = calculateRecentDrawdown(closes, 52);
@@ -1915,6 +2078,14 @@ amountBreakdown: "金额分解",
       market_regime: marketRegime || getNeutralMarketRegime(),
       realized_weekly_volatility: isFiniteNumber(realizedVolatility) ? round2(realizedVolatility * 100) : null,
       drawdown: isFiniteNumber(drawdown) ? round2(drawdown) : null,
+      field_meta: {
+        trend: cloneFieldMeta(historyMeta),
+        volatility: cloneFieldMeta(historyMeta),
+        drawdown: cloneFieldMeta(historyMeta),
+        marketRegime: marketRegime && marketRegime.field_meta && marketRegime.field_meta.marketRegime
+          ? cloneFieldMeta(marketRegime.field_meta.marketRegime)
+          : createFieldMeta("Market regime fallback", null, { missing: true })
+      },
       explanation: ""
     };
   }
@@ -2065,6 +2236,7 @@ amountBreakdown: "金额分解",
     else if (isFiniteNumber(ma20) && isFiniteNumber(ma50) && latest > ma20 && ma20 > ma50) type = "Bull";
     else if (isFiniteNumber(ma20) && latest < ma20) type = "Correction";
 
+    const regimeMeta = createHistoricalIndicatorMeta(rows, (proxy || "Market") + " market regime");
     return {
       type,
       label: displayMarketRegime(type),
@@ -2073,7 +2245,10 @@ amountBreakdown: "金额分解",
       ma20: round2(ma20),
       ma50: round2(ma50),
       drawdown: isFiniteNumber(drawdown) ? round2(drawdown) : null,
-      max_multiplier: getMarketRegimeMultiplierCap(type)
+      max_multiplier: getMarketRegimeMultiplierCap(type),
+      field_meta: {
+        marketRegime: regimeMeta
+      }
     };
   }
 
@@ -2086,7 +2261,10 @@ amountBreakdown: "金额分解",
       ma20: null,
       ma50: null,
       drawdown: null,
-      max_multiplier: LOW_FREQ_ALGO_PARAMS.maxNeutralMultiplier
+      max_multiplier: LOW_FREQ_ALGO_PARAMS.maxNeutralMultiplier,
+      field_meta: {
+        marketRegime: createFieldMeta("Neutral fallback", null, { missing: true, staleReason: "Market regime data unavailable" })
+      }
     };
   }
 
@@ -2267,7 +2445,8 @@ amountBreakdown: "金额分解",
 
   function buildSignalObject(stock, row) {
     const decisionChange = getDecisionChange(row);
-    const manualOverrideActive = isFiniteNumber(state.overrides[stock.symbol]);
+    const overrideRecord = getOverrideRecord(stock.symbol);
+    const manualOverrideActive = !!overrideRecord;
     const panicSupported = state.panicActive && CONFIG.panicSymbols.has(stock.symbol);
     const enhancedMultiplier = calculateEnhancedLowFrequencyMultiplier(
       stock.symbol,
@@ -2283,6 +2462,7 @@ amountBreakdown: "金额分解",
     const baseBuyAmount = round2(state.deployment.weeklyDeployment * stock.allocation);
     const suggestedBuyAmount = round2(baseBuyAmount * multiplier);
     const dataAgeHours = row && row.fetchedAt ? (Date.now() - row.fetchedAt) / (60 * 60 * 1000) : null;
+    const fieldProvenance = buildSignalFieldProvenance(row, enhancedMultiplier);
 
     const signal = {
       symbol: stock.symbol,
@@ -2303,8 +2483,11 @@ amountBreakdown: "金额分解",
       data_freshness: getDataFreshness(row, dataAgeHours),
       data_age_hours: isFiniteNumber(dataAgeHours) ? round2(dataAgeHours) : null,
       manual_override_active: manualOverrideActive,
+      manual_override_applied_at: overrideRecord && overrideRecord.appliedAt ? overrideRecord.appliedAt : null,
+      manual_override_legacy: !!(overrideRecord && overrideRecord.legacy),
       panic_active: panicSupported,
       algorithm: enhancedMultiplier,
+      field_provenance: fieldProvenance,
       raw_smooth_multiplier: enhancedMultiplier.raw_smooth_multiplier,
       volatility_adjustment: enhancedMultiplier.volatility_adjustment,
       regime_adjustment: enhancedMultiplier.regime_adjustment,
@@ -2340,6 +2523,59 @@ amountBreakdown: "金额分解",
     signal.reason = generateSignalReason(signal);
     signal.warning = generateSignalWarning(signal);
     return signal;
+  }
+
+  function buildSignalFieldProvenance(row, algorithm) {
+    const algoMeta = algorithm && algorithm.field_meta ? algorithm.field_meta : {};
+    return {
+      price: getFieldMeta(row, "price"),
+      oneDayChange: getFieldMeta(row, "dailyChange"),
+      fiveDayChange: getFieldMeta(row, "weeklyChange"),
+      decisionChange: getFieldMeta(row, "decisionChange"),
+      trend: algoMeta.trend ? cloneFieldMeta(algoMeta.trend) : createFieldMeta("Historical prices", null, { missing: true }),
+      volatility: algoMeta.volatility ? cloneFieldMeta(algoMeta.volatility) : createFieldMeta("Historical prices", null, { missing: true }),
+      drawdown: algoMeta.drawdown ? cloneFieldMeta(algoMeta.drawdown) : createFieldMeta("Historical prices", null, { missing: true }),
+      marketRegime: algoMeta.marketRegime ? cloneFieldMeta(algoMeta.marketRegime) : createFieldMeta("Market regime", null, { missing: true })
+    };
+  }
+
+  function getFieldQualityIssues(fieldProvenance) {
+    const labels = {
+      price: "price",
+      oneDayChange: "1D",
+      fiveDayChange: "5D",
+      decisionChange: "decision",
+      trend: "trend",
+      volatility: "volatility",
+      drawdown: "drawdown",
+      marketRegime: "regime"
+    };
+    return Object.keys(labels).reduce(function (items, key) {
+      const meta = fieldProvenance && fieldProvenance[key];
+      if (!meta || meta.freshness === "fresh") return items;
+      items.push(labels[key] + " " + (meta.freshness || "missing"));
+      return items;
+    }, []);
+  }
+
+  function summarizeFieldProvenance(fieldProvenance) {
+    if (!fieldProvenance) return "";
+    const compact = [
+      ["price", "price"],
+      ["oneDayChange", "1D"],
+      ["fiveDayChange", "5D"],
+      ["decisionChange", "decision"],
+      ["trend", "trend"],
+      ["volatility", "vol"],
+      ["drawdown", "dd"],
+      ["marketRegime", "regime"]
+    ].map(function (item) {
+      const meta = fieldProvenance[item[0]];
+      if (!meta) return "";
+      const suffix = meta.freshness && meta.freshness !== "fresh" ? "/" + meta.freshness : "";
+      return item[1] + "=" + meta.source + suffix;
+    }).filter(Boolean);
+    return compact.length ? "Field sources: " + compact.join(", ") : "";
   }
 
   function calculateSignalScore(input) {
@@ -2839,6 +3075,8 @@ el.querySelector(".explanation-reason").textContent = reasons.join(" ");
     if (signal.data_freshness === "stale") warnings.push(t("dataMayBeStale"));
     if (/cache/i.test(signal.data_source)) warnings.push(t("usingCacheData"));
     if (signal.manual_override_active) warnings.push(t("manualOverrideActive"));
+    const fieldIssues = getFieldQualityIssues(signal.field_provenance);
+    if (fieldIssues.length) warnings.push("Field data quality: " + fieldIssues.join(", "));
     if (signal.panic_active) warnings.push(t("panicModeActive"));
     if (isFiniteNumber(signal.weekly_change) && signal.weekly_change <= -15) warnings.push(t("sharpWeeklyDrop"));
     if (isFiniteNumber(signal.weekly_change) && Math.abs(signal.weekly_change) >= ALGORITHM_PARAMS.extremeWeeklyThreshold) warnings.push(t("extremeMoveWarning"));
@@ -2862,6 +3100,11 @@ el.querySelector(".explanation-reason").textContent = reasons.join(" ");
 
   function getDataFreshness(row, dataAgeHours) {
     if (!row || row.source === "Unavailable") return "missing";
+    if (row.source === "Manual") {
+      if (!Number.isFinite(row.override_applied_at)) return "stale";
+      const overrideAgeHours = (Date.now() - row.override_applied_at) / (60 * 60 * 1000);
+      return overrideAgeHours > CONFIG.cacheHours ? "stale" : "fresh";
+    }
     if (isFiniteNumber(dataAgeHours) && dataAgeHours > CONFIG.cacheHours) return "stale";
     return "fresh";
   }
@@ -2876,15 +3119,27 @@ el.querySelector(".explanation-reason").textContent = reasons.join(" ");
         note: t("useManualOverride")
       };
 
-      const override = state.overrides[stock.symbol];
-      if (isFiniteNumber(override)) {
+      const override = getOverrideRecord(stock.symbol);
+      if (override) {
+        const appliedAt = Number.isFinite(override.appliedAt) ? override.appliedAt : null;
+        const manualMeta = createFieldMeta("Manual override", appliedAt, { stale: !appliedAt });
         state.rows.set(stock.symbol, {
           ...base,
-          weeklyChange: override,
+          weeklyChange: override.value,
           dailyChange: null,
-          decisionChange: override,
+          decisionChange: override.value,
           source: "Manual",
-          note: t("manualOverrideActive")
+          note: t("manualOverrideActive"),
+          fetchedAt: appliedAt || base.fetchedAt || null,
+          override_applied_at: appliedAt,
+          override_legacy: override.legacy,
+          field_meta: {
+            ...(base.field_meta || {}),
+            price: getFieldMeta(base, "price"),
+            dailyChange: createFieldMeta("Manual override", appliedAt, { missing: true, stale: !appliedAt }),
+            weeklyChange: cloneFieldMeta(manualMeta),
+            decisionChange: cloneFieldMeta(manualMeta)
+          }
         });
       } else {
         state.rows.set(stock.symbol, base);
@@ -2919,7 +3174,8 @@ editBtn.setAttribute("title", t("editAllocation"));
 allocWrapper.appendChild(editBtn);
 
       const input = card.querySelector(".override-input");
-      input.value = state.overrides[stock.symbol] === undefined ? "" : formatSignedInput(state.overrides[stock.symbol]);
+      const overrideRecord = getOverrideRecord(stock.symbol);
+      input.value = overrideRecord ? formatSignedInput(overrideRecord.value) : "";
       card.querySelector(".source-badge").textContent = t("loading");
       card.querySelector(".action-badge").textContent = t("loading");
       card.querySelector(".weekly-change").textContent = t("loading");
@@ -4483,7 +4739,12 @@ function equalizeAllocations() {
     updateAlgorithmDetails(card, signal);
 
     const panicText = signal.panic_active ? " + panic 1.3x" : "";
-    card.querySelector(".note").textContent = [signal.note, panicText.trim()]
+    const overrideText = signal.manual_override_applied_at
+      ? "Manual override " + formatDateTime(signal.manual_override_applied_at)
+      : signal.manual_override_legacy
+        ? "Manual override has no timestamp"
+        : "";
+    card.querySelector(".note").textContent = [signal.note, overrideText, summarizeFieldProvenance(signal.field_provenance), panicText.trim()]
       .filter(Boolean)
       .join("; ");
     ensureActionExplanation(card, signal);
@@ -4664,7 +4925,10 @@ function equalizeAllocations() {
       return;
     }
 
-    state.overrides[symbol] = Number(normalized);
+    state.overrides[symbol] = {
+      value: Number(normalized),
+      appliedAt: Date.now()
+    };
     saveOverrides();
     applyManualOverrides();
     render();
