@@ -92,6 +92,18 @@ class RiskAdjusterV2Tests(unittest.TestCase):
         m = calculate_risk_adjusted_multiplier_v2(weekly_return=-0.08)
         self.assertAlmostEqual(m, 1.32, delta=0.01)
 
+    def test_momentum_positive_return_increases_multiplier(self):
+        m = calculate_risk_adjusted_multiplier_v2(weekly_return=0.08, strategy_mode="momentum")
+        self.assertAlmostEqual(m, 1.32, delta=0.01)
+
+    def test_momentum_negative_return_decreases_multiplier(self):
+        m = calculate_risk_adjusted_multiplier_v2(weekly_return=-0.08, strategy_mode="momentum")
+        self.assertAlmostEqual(m, 0.68, delta=0.01)
+
+    def test_unsupported_strategy_mode_raises(self):
+        with self.assertRaises(ValueError):
+            calculate_risk_adjusted_multiplier_v2(weekly_return=0.01, strategy_mode="mean_reversion")
+
 
 if __name__ == "__main__":
     unittest.main()

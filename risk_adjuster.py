@@ -20,6 +20,7 @@ VOL_CLAMP_LOW = 0.8                # Narrower range (was 0.7-1.1)
 VOL_CLAMP_HIGH = 1.05
 DRAWDOWN_35_CAP = 1.1
 DECLINE_8_CAP = 1.2
+VALID_MODES = {"dip_buy", "momentum"}
 
 
 def calculate_risk_adjusted_multiplier_v2(
@@ -31,12 +32,16 @@ def calculate_risk_adjusted_multiplier_v2(
     min_multiplier: float = DEFAULT_MIN_MULTIPLIER,
     max_multiplier: float = DEFAULT_MAX_MULTIPLIER,
     target_weekly_vol: float = DEFAULT_TARGET_VOL,
+    strategy_mode: str = "dip_buy",
 ) -> float:
     """Compute a less conservative risk-adjusted buy multiplier in [min, max]."""
+    if strategy_mode not in VALID_MODES:
+        raise ValueError(f"Unsupported strategy_mode: {strategy_mode}")
 
-    # Step 1: Smooth dip-buy baseline
+    # Step 1: Smooth strategy baseline
     decision_change = weekly_return * 100
-    multiplier = 1.0 - sensitivity * decision_change / 100.0
+    direction = -1 if strategy_mode == "dip_buy" else 1
+    multiplier = 1.0 + direction * sensitivity * decision_change / 100.0
 
     # Step 2: Milder volatility adjustment
     if recent_returns and len(recent_returns) >= 4:

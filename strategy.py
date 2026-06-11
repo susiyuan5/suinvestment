@@ -64,6 +64,7 @@ def calculate_risk_adjusted_buy_amount(
         sensitivity=config.sensitivity,
         min_multiplier=config.min_multiplier,
         max_multiplier=config.max_multiplier,
+        strategy_mode=config.strategy_mode,
     )
     amount = config.base_buy_amount * multiplier
     return round(amount, 2), multiplier

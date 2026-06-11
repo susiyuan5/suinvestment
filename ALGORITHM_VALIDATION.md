@@ -23,7 +23,9 @@ The old simple strategy remains the default because:
 **Optional algorithm: risk-adjusted v2 (use_risk_adjusted=True)**
 
 The v2 risk-adjusted strategy is available as an opt-in mode for users who want
-additional protection against extreme tail-risk events.
+additional protection against extreme tail-risk events. It now uses the selected
+strategy direction, so `dip_buy` increases buys after drops while `momentum`
+increases buys after gains.
 
 ## Why v1 Was Replaced
 

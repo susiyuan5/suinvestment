@@ -4,7 +4,7 @@ from datetime import date
 from backtest import run_backtest
 from config import BacktestConfig, StrategyConfig
 from data_loader import PricePoint
-from strategy import calculate_buy_amount, calculate_buy_multiplier
+from strategy import calculate_buy_amount, calculate_buy_multiplier, calculate_risk_adjusted_buy_amount
 
 
 class StrategyTests(unittest.TestCase):
@@ -53,6 +53,12 @@ class StrategyTests(unittest.TestCase):
         ]
         result = run_backtest("TEST", prices, config, save_results=False)
         self.assertTrue(all(trade.cash >= 0 for trade in result.trades))
+
+    def test_risk_adjusted_buy_amount_respects_momentum_mode(self):
+        config = StrategyConfig(strategy_mode="momentum", base_buy_amount=100)
+        amount, multiplier = calculate_risk_adjusted_buy_amount(0.08, config)
+        self.assertGreater(multiplier, 1.0)
+        self.assertGreater(amount, config.base_buy_amount)
 
 
 if __name__ == "__main__":

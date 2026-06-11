@@ -138,7 +138,7 @@ def analyze_ticker(
         warnings.append(f"Recent weekly volatility is unusually high at {volatility:.1%}.")
 
     action, sell_amount = _suggest_action(weekly_return, buy_multiplier, suggested_buy_amount, warnings)
-    risk_level = _risk_level(warnings, weekly_return, drawdown, volatility)
+    risk_level = _risk_level(warnings, weekly_return, _dd, volatility)
     reason = _reason(ticker, weekly_return, strategy_config.strategy_mode, action)
 
     return AnalysisResult(

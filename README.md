@@ -359,6 +359,7 @@ python -m unittest discover tests
 
 **Optional algorithm**: risk-adjusted v2 (use_risk_adjusted=True)
 - Provides protection against extreme tail-risk events.
+- Respects `strategy_mode`, including both `dip_buy` and `momentum`.
 - Total return is ~1% below the default in normal markets.
 - Not recommended as the default.
 
