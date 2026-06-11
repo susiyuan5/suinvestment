@@ -353,6 +353,8 @@ python -m unittest discover tests
 
 ## Algorithm Status
 
+For the consolidated Phase 3A-3C research conclusion, see [ALGORITHM_RESEARCH_SUMMARY.md](ALGORITHM_RESEARCH_SUMMARY.md).
+
 **Default algorithm**: simple dip-buy multiplier (calculate_buy_amount)
 - Tested across 6 tickers over 5 years.
 - Recommended for normal long-term investing.
