@@ -53,6 +53,23 @@ All suggestions are for manual review only. The final trading decision and any b
 
 Manual overrides are entered per stock as a weekly percentage value, such as `-9.2`, `+12`, or `10.5`. Overrides are saved in the browser and take priority for that stock.
 
+## Data Refresh Workflow / 数据刷新流程
+
+Use `scripts/update_backtest_prices.py` to maintain `data/backtest-prices.json`, which powers dashboard backtests, trend/volatility/drawdown, and QQQ/SPY Market Regime history.
+
+Run the manual refresh workflow after weekly data updates, before stable releases, or whenever the Data Quality Summary unexpectedly shows Market Regime neutral fallback:
+
+```powershell
+python scripts\update_backtest_prices.py
+python -m py_compile scripts\update_backtest_prices.py
+python -m unittest discover -s tests
+node --check app.js
+```
+
+Post-refresh, confirm QQQ and SPY exist in `data/backtest-prices.json`, each has at least 50 weekly rows, latest dates are recent, and the dashboard Data Quality Summary shows a computed QQQ/SPY Market Regime source rather than Neutral fallback.
+
+Full workflow and failure-handling notes are in `DATA_REFRESH_WORKFLOW.md`. Future GitHub Actions automation should be handled as a separate Phase 4G.
+
 ## Live Calculator Signal
 
 ```text
