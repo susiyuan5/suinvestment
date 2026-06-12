@@ -1,0 +1,136 @@
+name: Update historical backtest prices
+
+on:
+  schedule:
+    - cron: "0 12 * * 6"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-historical-backtest-prices
+  cancel-in-progress: true
+
+jobs:
+  update-backtest-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          fi
+
+      - name: Refresh historical backtest prices
+        run: python scripts/update_backtest_prices.py --refresh-all
+
+      - name: Validate historical snapshot
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("data/backtest-prices.json")
+          if not path.exists():
+              raise SystemExit("data/backtest-prices.json is missing")
+
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          symbols = payload.get("symbols")
+          if not isinstance(symbols, dict):
+              raise SystemExit("symbols object is missing")
+
+          summary = {}
+          for symbol in ("QQQ", "SPY"):
+              rows = symbols.get(symbol)
+              if not isinstance(rows, list):
+                  raise SystemExit(f"{symbol} is missing")
+              if len(rows) < 50:
+                  raise SystemExit(f"{symbol} has fewer than 50 weekly rows")
+              latest = rows[-1].get("date") if isinstance(rows[-1], dict) else None
+              if not latest:
+                  raise SystemExit(f"{symbol} latest date is missing")
+              summary[symbol] = {
+                  "count": len(rows),
+                  "latest": latest,
+              }
+
+          with open("snapshot-summary.env", "w", encoding="utf-8") as handle:
+              for symbol, values in summary.items():
+                  handle.write(f"{symbol}_ROW_COUNT={values['count']}\n")
+                  handle.write(f"{symbol}_LATEST_DATE={values['latest']}\n")
+          PY
+          cat snapshot-summary.env >> "$GITHUB_ENV"
+
+      - name: Compile historical refresh script
+        run: python -m py_compile scripts/update_backtest_prices.py
+
+      - name: Run Python tests
+        run: python -m unittest discover -s tests
+
+      - name: Check dashboard JavaScript syntax
+        run: node --check app.js
+
+      - name: Detect data changes
+        id: changes
+        run: |
+          if git diff --quiet -- data/backtest-prices.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare pull request body
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          cat > pr-body.md <<EOF
+          Automated historical backtest price refresh.
+
+          Validation summary:
+          - QQQ row count: ${QQQ_ROW_COUNT}
+          - QQQ latest date: ${QQQ_LATEST_DATE}
+          - SPY row count: ${SPY_ROW_COUNT}
+          - SPY latest date: ${SPY_LATEST_DATE}
+          - Python tests: passed
+          - Node check: passed
+
+          This pull request updates data/backtest-prices.json only after snapshot validation, Python tests, and dashboard JavaScript syntax checks pass.
+          EOF
+
+      - name: Create pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="automation/update-backtest-prices-${{ github.run_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add data/backtest-prices.json
+          git commit -m "Refresh historical backtest prices"
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --title "Refresh historical backtest prices" \
+            --body-file pr-body.md \
+            --base main \
+            --head "$branch"
+
+      - name: No data changes
+        if: steps.changes.outputs.changed == 'false'
+        run: echo "Historical backtest prices are already up to date."

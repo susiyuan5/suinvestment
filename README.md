@@ -68,7 +68,7 @@ node --check app.js
 
 Post-refresh, confirm QQQ and SPY exist in `data/backtest-prices.json`, each has at least 50 weekly rows, latest dates are recent, and the dashboard Data Quality Summary shows a computed QQQ/SPY Market Regime source rather than Neutral fallback.
 
-Full workflow and failure-handling notes are in `DATA_REFRESH_WORKFLOW.md`. Future GitHub Actions automation should be handled as a separate Phase 4G.
+Full workflow, GitHub Actions automation, and failure-handling notes are in `DATA_REFRESH_WORKFLOW.md`. The automated workflow opens a pull request when refreshed historical data changes and validation passes.
 
 ## Live Calculator Signal
 

@@ -104,17 +104,72 @@ If the refresh script cannot fetch Yahoo historical data:
 
 The dashboard has a neutral fallback path, but Phase 4E showed that missing QQQ/SPY history can affect live recommendations. Preserve the static snapshot unless a replacement has been validated.
 
-## Phase 4G Automation Plan
+## GitHub Actions Automation
 
-Phase 4G can automate this workflow, but automation should be implemented separately.
+Phase 4G adds `.github/workflows/update-backtest-prices.yml` for automated historical snapshot refresh.
 
-Recommended automation:
+The workflow can run in two ways:
 
-1. Add a GitHub Actions job that runs weekly after `scripts/update-market-data.js`.
-2. Run `python scripts\update_backtest_prices.py`.
-3. Run a snapshot completeness check for QQQ/SPY row counts and latest dates.
-4. Run `python -m unittest discover -s tests`.
-5. Run `node --check app.js`.
-6. Open a pull request or commit only when the snapshot is complete and checks pass.
+- Manual: open GitHub Actions, choose `Update historical backtest prices`, and run the workflow.
+- Scheduled: weekly on Saturday at 12:00 UTC, after the regular US market week has closed.
 
-Do not add automatic trading, broker integration, or algorithm promotion as part of refresh automation.
+The automated workflow:
+
+1. Checks out the repository.
+2. Sets up Python.
+3. Sets up Node.
+4. Installs Python dependencies from `requirements.txt`.
+5. Runs `python scripts/update_backtest_prices.py --refresh-all`.
+6. Validates `data/backtest-prices.json`.
+7. Compiles `scripts/update_backtest_prices.py`.
+8. Runs `python -m unittest discover -s tests`.
+9. Runs `node --check app.js`.
+10. Opens a pull request only if `data/backtest-prices.json` changed and every validation step passed.
+
+The workflow uses GitHub CLI (`gh`) to create the pull request and avoids a third-party pull-request action. It needs these repository permissions:
+
+- `contents: write`
+- `pull-requests: write`
+
+PR-based updates are safer than direct pushes to `main` because the refreshed snapshot can be reviewed before merge. This matters because Market Regime can affect live recommendation outputs through real data inputs.
+
+## Automated Validation Checks
+
+The GitHub Actions workflow fails before opening a PR if:
+
+- `data/backtest-prices.json` is missing.
+- The JSON is invalid.
+- QQQ is missing.
+- SPY is missing.
+- QQQ has fewer than 50 weekly rows.
+- SPY has fewer than 50 weekly rows.
+- The latest QQQ date is missing.
+- The latest SPY date is missing.
+- Python tests fail.
+- `node --check app.js` fails.
+
+The pull request body includes:
+
+- QQQ row count
+- QQQ latest date
+- SPY row count
+- SPY latest date
+- Python test status
+- Node check status
+
+## If Automated Refresh Fails
+
+If Yahoo historical access fails in GitHub Actions:
+
+1. Do not manually merge any partial data output.
+2. Confirm the committed `data/backtest-prices.json` still has valid QQQ/SPY histories.
+3. Re-run the workflow later from `workflow_dispatch`.
+4. If failures persist, run the manual refresh locally and commit only after validation passes.
+
+If QQQ/SPY validation fails:
+
+1. Leave the existing committed snapshot in place.
+2. Inspect whether Yahoo returned partial or malformed data.
+3. Do not merge a PR that removes QQQ/SPY or reduces either below 50 weekly rows.
+
+Do not add automatic trading, broker integration, or algorithm promotion as part of data refresh automation.
