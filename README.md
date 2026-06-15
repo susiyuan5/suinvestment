@@ -70,6 +70,36 @@ Post-refresh, confirm QQQ and SPY exist in `data/backtest-prices.json`, each has
 
 Full workflow, GitHub Actions automation, and failure-handling notes are in `DATA_REFRESH_WORKFLOW.md`. The automated workflow opens a pull request when refreshed historical data changes and validation passes.
 
+## Phase 5 Research Stack
+
+Phase 5 research tooling is optional and separate from the normal dashboard/runtime dependencies. Install it only when running sandbox research:
+
+```bash
+python -m pip install -r requirements-research.txt
+```
+
+Phase 5A adds a pandas-ta-classic weekly factor report:
+
+```bash
+python research/factor_report.py
+```
+
+Outputs:
+
+- `results/phase5/factor_report.csv`
+- `results/phase5/factor_latest.csv`
+- `FACTOR_REPORT.md`
+
+These factors are research-only and do not affect live dashboard recommendations, buy amounts, signal scores, multipliers, risk levels, action thresholds, the default Python strategy, or the market regime formula.
+
+Research roadmap:
+
+- Backtrader sandbox comparison workflow: planned after the factor report is stable.
+- QuantStats performance reports: planned for sandbox backtest reporting.
+- Alphalens factor validation: planned for factor predictive-value checks.
+- scikit-learn ML sandbox: planned for research experiments only.
+- PyPortfolioOpt: deferred to Phase 6; not implemented in Phase 5A.
+
 ## Live Calculator Signal
 
 ```text
