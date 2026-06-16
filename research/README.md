@@ -63,7 +63,7 @@ Treat these reports as diagnostics only. Higher final value, higher Sharpe ratio
 
 ## Phase 5D
 
-Phase 5D adds Alphalens-style factor validation for the Phase 5A factor table:
+Phase 5D adds Alphalens-style factor validation for the Phase 5A live-portfolio factor table:
 
 ```powershell
 python research\factor_validation.py
@@ -138,3 +138,21 @@ Outputs for research mode:
 - `RESEARCH_FACTOR_REPORT.md`
 
 Reference symbols QQQ, SPY, DIA, and IWM are excluded from the research trade-factor table by default. Research-universe factors do not affect live recommendations and should not be interpreted as a buy list.
+
+## Phase 6D
+
+Phase 6D adds explicit research-universe factor validation while preserving the default Phase 5 live-portfolio validation path:
+
+```powershell
+python research\factor_validation.py
+python research\factor_validation.py --universe research
+```
+
+Outputs for research mode:
+
+- `results/phase6/research_factor_validation_ic.csv`
+- `results/phase6/research_factor_validation_quantiles.csv`
+- `results/phase6/research_factor_validation_summary.csv`
+- `RESEARCH_FACTOR_VALIDATION_REPORT.md`
+
+The research validation compares the 38-symbol research universe against the earlier six-symbol Phase 5 results where possible. It remains research-only; factor IC, quantile spreads, and direction consistency are not live recommendations.

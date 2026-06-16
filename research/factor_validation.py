@@ -1,20 +1,27 @@
 from __future__ import annotations
 
+import argparse
 import csv
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from research.universe import load_research_universe
+
 
 ROOT = Path(__file__).resolve().parents[1]
-FACTOR_PATH = ROOT / "results" / "phase5" / "factor_report.csv"
-OUT_DIR = ROOT / "results" / "phase5"
-IC_PATH = OUT_DIR / "factor_validation_ic.csv"
-QUANTILE_PATH = OUT_DIR / "factor_validation_quantiles.csv"
-SUMMARY_PATH = OUT_DIR / "factor_validation_summary.csv"
-REPORT_PATH = ROOT / "FACTOR_VALIDATION_REPORT.md"
+PHASE5_FACTOR_PATH = ROOT / "results" / "phase5" / "factor_report.csv"
+PHASE6_FACTOR_PATH = ROOT / "results" / "phase6" / "research_factor_report.csv"
+PHASE5_OUT_DIR = ROOT / "results" / "phase5"
+PHASE6_OUT_DIR = ROOT / "results" / "phase6"
+LIVE_REPORT_PATH = ROOT / "FACTOR_VALIDATION_REPORT.md"
+RESEARCH_REPORT_PATH = ROOT / "RESEARCH_FACTOR_VALIDATION_REPORT.md"
 PORTFOLIO_SYMBOLS = ("BYDDY", "MSFT", "NVDA", "AAPL", "ASML", "KO")
+REFERENCE_SYMBOLS = ("QQQ", "SPY", "DIA", "IWM")
 HORIZONS = (1, 4, 12)
 BASE_FACTORS = (
     "weekly_return",
@@ -29,7 +36,24 @@ BASE_FACTORS = (
 )
 
 
+@dataclass(frozen=True)
+class ValidationConfig:
+    universe: str
+    factor_path: Path
+    symbols: tuple[str, ...]
+    out_dir: Path
+    ic_path: Path
+    quantile_path: Path
+    summary_path: Path
+    report_path: Path
+    report_title: str
+    method_scope: str
+    universe_note: str
+    comparison_note: str
+
+
 def main() -> int:
+    args = parse_args()
     try:
         pd, scipy_stats = load_dependencies()
     except ImportError as error:
@@ -41,21 +65,69 @@ def main() -> int:
         )
         return 2
 
-    frame = load_factor_table(pd, FACTOR_PATH)
+    config = build_config(args.universe)
+    frame = load_factor_table(pd, config)
     ic_rows = calculate_ic_rows(frame, scipy_stats)
-    quantile_rows = calculate_quantile_rows(frame, pd)
+    quantile_rows = calculate_quantile_rows(frame, pd, config)
     summary_rows = calculate_summary_rows(frame, ic_rows, quantile_rows, pd)
+    comparison_rows = calculate_phase_comparison(pd, summary_rows, config)
 
-    write_csv(IC_PATH, ic_rows)
-    write_csv(QUANTILE_PATH, quantile_rows)
-    write_csv(SUMMARY_PATH, summary_rows)
-    write_report(summary_rows, ic_rows, quantile_rows)
+    config.out_dir.mkdir(parents=True, exist_ok=True)
+    write_csv(config.ic_path, ic_rows)
+    write_csv(config.quantile_path, quantile_rows)
+    write_csv(config.summary_path, summary_rows)
+    write_report(summary_rows, ic_rows, quantile_rows, comparison_rows, config)
 
-    print(f"Wrote {IC_PATH}")
-    print(f"Wrote {QUANTILE_PATH}")
-    print(f"Wrote {SUMMARY_PATH}")
-    print(f"Wrote {REPORT_PATH}")
+    print(f"Wrote {config.ic_path}")
+    print(f"Wrote {config.quantile_path}")
+    print(f"Wrote {config.summary_path}")
+    print(f"Wrote {config.report_path}")
     return 0
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run Alphalens-style factor validation.")
+    parser.add_argument(
+        "--universe",
+        choices=("live", "research"),
+        default="live",
+        help="live preserves Phase 5D outputs; research validates the Phase 6 research-universe factor table.",
+    )
+    return parser.parse_args()
+
+
+def build_config(universe: str) -> ValidationConfig:
+    if universe == "live":
+        return ValidationConfig(
+            universe="live",
+            factor_path=PHASE5_FACTOR_PATH,
+            symbols=PORTFOLIO_SYMBOLS,
+            out_dir=PHASE5_OUT_DIR,
+            ic_path=PHASE5_OUT_DIR / "factor_validation_ic.csv",
+            quantile_path=PHASE5_OUT_DIR / "factor_validation_quantiles.csv",
+            summary_path=PHASE5_OUT_DIR / "factor_validation_summary.csv",
+            report_path=LIVE_REPORT_PATH,
+            report_title="Phase 5D Factor Validation Report",
+            method_scope="Uses the Phase 5A factor table for BYDDY, MSFT, NVDA, AAPL, ASML, and KO only.",
+            universe_note="The stock universe is very small, so IC and quantile results are preliminary.",
+            comparison_note="This is the baseline six-symbol validation path.",
+        )
+
+    research_universe = load_research_universe()
+    return ValidationConfig(
+        universe="research",
+        factor_path=PHASE6_FACTOR_PATH,
+        symbols=research_universe.research_universe_symbols,
+        out_dir=PHASE6_OUT_DIR,
+        ic_path=PHASE6_OUT_DIR / "research_factor_validation_ic.csv",
+        quantile_path=PHASE6_OUT_DIR / "research_factor_validation_quantiles.csv",
+        summary_path=PHASE6_OUT_DIR / "research_factor_validation_summary.csv",
+        report_path=RESEARCH_REPORT_PATH,
+        report_title="Phase 6D Research Universe Factor Validation Report",
+        method_scope="Uses the Phase 6C research-universe factor table for 38 research symbols.",
+        universe_note="The 38-symbol research universe is broader than Phase 5, but still not a professional-scale universe.",
+        comparison_note="Compares research-universe mean rank IC against the existing Phase 5 six-symbol validation summary where available.",
+    )
 
 
 def load_dependencies() -> tuple[Any, Any]:
@@ -70,13 +142,24 @@ def load_dependencies() -> tuple[Any, Any]:
     return pd, scipy_stats
 
 
-def load_factor_table(pd: Any, path: Path) -> Any:
-    frame = pd.read_csv(path)
-    frame = frame[frame["ticker"].isin(PORTFOLIO_SYMBOLS)].copy()
+def load_factor_table(pd: Any, config: ValidationConfig) -> Any:
+    frame = pd.read_csv(config.factor_path)
+    if len(config.symbols) != len(set(config.symbols)):
+        raise RuntimeError("Duplicate symbols detected in validation configuration")
+    frame = frame[frame["ticker"].isin(config.symbols)].copy()
+    missing = sorted(set(config.symbols) - set(frame["ticker"].unique()))
+    if missing:
+        raise RuntimeError(f"Missing symbols from factor validation input: {', '.join(missing)}")
+    if config.universe == "research":
+        overlap = sorted(set(REFERENCE_SYMBOLS) & set(frame["ticker"].unique()))
+        if overlap:
+            raise RuntimeError(f"Reference symbols should be excluded from research validation: {', '.join(overlap)}")
     frame["date"] = pd.to_datetime(frame["date"])
     frame = frame.sort_values(["ticker", "date"]).reset_index(drop=True)
-    frame["sma_10_distance"] = frame["close"] / frame["sma_10"] - 1
-    frame["sma_20_distance"] = frame["close"] / frame["sma_20"] - 1
+    if "sma_10_distance" not in frame.columns and "sma_10" in frame.columns:
+        frame["sma_10_distance"] = frame["close"] / frame["sma_10"] - 1
+    if "sma_20_distance" not in frame.columns and "sma_20" in frame.columns:
+        frame["sma_20_distance"] = frame["close"] / frame["sma_20"] - 1
     for horizon in HORIZONS:
         frame[f"forward_{horizon}w_return"] = frame.groupby("ticker")["close"].shift(-horizon) / frame["close"] - 1
     return frame
@@ -108,7 +191,7 @@ def calculate_ic_rows(frame: Any, scipy_stats: Any) -> list[dict[str, Any]]:
     return rows
 
 
-def calculate_quantile_rows(frame: Any, pd: Any) -> list[dict[str, Any]]:
+def calculate_quantile_rows(frame: Any, pd: Any, config: ValidationConfig) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for factor in BASE_FACTORS:
         if factor not in frame.columns:
@@ -119,27 +202,32 @@ def calculate_quantile_rows(frame: Any, pd: Any) -> list[dict[str, Any]]:
                 clean = group[["ticker", factor, target]].dropna().copy()
                 if len(clean) < 6 or clean[factor].nunique() < 3:
                     continue
+                bucket_count = 5 if len(clean) >= 15 and clean[factor].nunique() >= 5 else 3
+                labels = ("q1", "q2", "q3", "q4", "q5") if bucket_count == 5 else ("low", "middle", "high")
                 try:
-                    clean["tercile"] = pd.qcut(clean[factor].rank(method="first"), 3, labels=("low", "middle", "high"))
+                    clean["bucket"] = pd.qcut(clean[factor].rank(method="first"), bucket_count, labels=labels)
                 except ValueError:
                     continue
-                grouped = clean.groupby("tercile", observed=False)[target].mean()
-                low = grouped.get("low")
-                middle = grouped.get("middle")
-                high = grouped.get("high")
+                grouped = clean.groupby("bucket", observed=False)[target].mean()
+                low_label = labels[0]
+                high_label = labels[-1]
+                low = grouped.get(low_label)
+                middle = grouped.get("middle") if bucket_count == 3 else grouped.get("q3")
+                high = grouped.get(high_label)
                 if pd.isna(low) or pd.isna(high):
                     continue
-                rows.append(
-                    {
-                        "date": date_value.date().isoformat(),
-                        "factor": factor,
-                        "horizon": f"{horizon}w",
-                        "low_return": round(float(low), 8),
-                        "middle_return": round(float(middle), 8) if not pd.isna(middle) else "",
-                        "high_return": round(float(high), 8),
-                        "long_short_spread": round(float(high - low), 8),
-                    }
-                )
+                row = {
+                    "date": date_value.date().isoformat(),
+                    "factor": factor,
+                    "horizon": f"{horizon}w",
+                    "low_return": round(float(low), 8),
+                    "middle_return": round(float(middle), 8) if not pd.isna(middle) else "",
+                    "high_return": round(float(high), 8),
+                    "long_short_spread": round(float(high - low), 8),
+                }
+                if config.universe == "research":
+                    row["bucket_count"] = bucket_count
+                rows.append(row)
     return rows
 
 
@@ -187,6 +275,43 @@ def per_symbol_correlations(frame: Any, factor: str, target: str) -> dict[str, f
     return correlations
 
 
+def calculate_phase_comparison(pd: Any, summary_rows: list[dict[str, Any]], config: ValidationConfig) -> list[dict[str, Any]]:
+    if config.universe != "research" or not (PHASE5_OUT_DIR / "factor_validation_summary.csv").exists():
+        return []
+    phase5 = pd.read_csv(PHASE5_OUT_DIR / "factor_validation_summary.csv")
+    current = pd.DataFrame(summary_rows)
+    if phase5.empty or current.empty:
+        return []
+    rows: list[dict[str, Any]] = []
+    for _, row in current.iterrows():
+        factor = row["factor"]
+        horizon = row["horizon"]
+        if row["mean_rank_ic"] == "":
+            continue
+        prior = phase5[(phase5["factor"] == factor) & (phase5["horizon"] == horizon)]
+        if prior.empty or pd.isna(prior.iloc[0].get("mean_rank_ic")):
+            continue
+        live_ic = float(prior.iloc[0]["mean_rank_ic"])
+        research_ic = float(row["mean_rank_ic"])
+        if live_ic == 0 or research_ic == 0:
+            direction = "flat_or_zero"
+        elif (live_ic > 0 and research_ic > 0) or (live_ic < 0 and research_ic < 0):
+            direction = "consistent"
+        else:
+            direction = "reversed"
+        rows.append(
+            {
+                "factor": factor,
+                "horizon": horizon,
+                "live_mean_rank_ic": round(live_ic, 8),
+                "research_mean_rank_ic": round(research_ic, 8),
+                "delta": round(research_ic - live_ic, 8),
+                "direction": direction,
+            }
+        )
+    return rows
+
+
 def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
@@ -196,15 +321,28 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writerows(rows)
 
 
-def write_report(summary_rows: list[dict[str, Any]], ic_rows: list[dict[str, Any]], quantile_rows: list[dict[str, Any]]) -> None:
+def write_report(
+    summary_rows: list[dict[str, Any]],
+    ic_rows: list[dict[str, Any]],
+    quantile_rows: list[dict[str, Any]],
+    comparison_rows: list[dict[str, Any]],
+    config: ValidationConfig,
+) -> None:
     generated_at = datetime.now(timezone.utc).isoformat()
     usable = [row for row in summary_rows if row["mean_rank_ic"] != ""]
     positive = sorted(usable, key=lambda row: float(row["mean_rank_ic"]), reverse=True)[:5]
     negative = sorted(usable, key=lambda row: float(row["mean_rank_ic"]))[:5]
     coverage_issues = [row for row in summary_rows if float(row["coverage"]) < 0.90]
+    consistent = [row for row in comparison_rows if row["direction"] == "consistent"]
+    reversed_rows = [row for row in comparison_rows if row["direction"] == "reversed"]
+    weakened = [
+        row
+        for row in comparison_rows
+        if row["direction"] == "consistent" and abs(float(row["research_mean_rank_ic"])) < abs(float(row["live_mean_rank_ic"]))
+    ]
 
     lines = [
-        "# Phase 5D Factor Validation Report",
+        f"# {config.report_title}",
         "",
         f"Generated at: `{generated_at}`",
         "",
@@ -212,17 +350,17 @@ def write_report(summary_rows: list[dict[str, Any]], ic_rows: list[dict[str, Any
         "",
         "## Method",
         "",
-        "- Uses the Phase 5A factor table for BYDDY, MSFT, NVDA, AAPL, ASML, and KO only.",
-        "- QQQ/SPY remain market-regime/reference data and are excluded.",
-        "- Uses an Alphalens-style manual validation with pandas and scipy instead of direct Alphalens integration because the universe is only six weekly symbols and the current data shape is simpler than Alphalens' preferred factor/pricing pipeline.",
+        f"- {config.method_scope}",
+        "- QQQ/SPY/DIA/IWM remain market-regime/reference data and are excluded when present.",
+        "- Uses an Alphalens-style manual validation with pandas and scipy instead of direct Alphalens integration because the current weekly factor table is compact and does not need Alphalens' full factor/pricing pipeline.",
         "- Calculates forward 1w, 4w, and 12w returns.",
-        "- Computes cross-sectional rank IC, Pearson correlation, tercile returns, long-short spread, and per-symbol robustness diagnostics.",
+        "- Computes cross-sectional rank IC, Pearson correlation, tercile/quintile returns, long-short spread, and per-symbol robustness diagnostics.",
         "",
         "## Outputs",
         "",
-        "- `results/phase5/factor_validation_ic.csv`",
-        "- `results/phase5/factor_validation_quantiles.csv`",
-        "- `results/phase5/factor_validation_summary.csv`",
+        f"- `{config.ic_path.relative_to(ROOT).as_posix()}`",
+        f"- `{config.quantile_path.relative_to(ROOT).as_posix()}`",
+        f"- `{config.summary_path.relative_to(ROOT).as_posix()}`",
         "",
         "## Most Positive Mean Rank IC",
         "",
@@ -255,21 +393,36 @@ def write_report(summary_rows: list[dict[str, Any]], ic_rows: list[dict[str, Any
     else:
         lines.append("- No factor coverage below 90%.")
 
+    lines.extend(["", "## Phase 5 Comparison", ""])
+    lines.append(f"- {config.comparison_note}")
+    if comparison_rows:
+        lines.append(f"- Directionally consistent factor/horizon pairs: `{len(consistent)}`")
+        lines.append(f"- Weakened but same-direction pairs: `{len(weakened)}`")
+        lines.append(f"- Reversed factor/horizon pairs: `{len(reversed_rows)}`")
+        lines.extend(["", "| factor | horizon | live_ic | research_ic | direction |", "|:--|:--|--:|--:|:--|"])
+        for row in sorted(comparison_rows, key=lambda item: abs(float(item["delta"])), reverse=True)[:12]:
+            lines.append(
+                f"| {row['factor']} | {row['horizon']} | {float(row['live_mean_rank_ic']):.4f} | "
+                f"{float(row['research_mean_rank_ic']):.4f} | {row['direction']} |"
+            )
+    else:
+        lines.append("- No Phase 5 comparison was generated for this mode.")
+
     lines.extend(
         [
             "",
             "## Interpretation Notes",
             "",
-            "- The stock universe is very small, so IC and quantile results are preliminary.",
+            f"- {config.universe_note}",
             "- Factor validation is not enough to promote a strategy.",
-            "- Any promising factor requires walk-forward and out-of-sample validation before live use.",
-            "- Rank IC can be unstable with only six symbols per week.",
+            "- Any promising factor requires walk-forward, out-of-sample, regime-specific, ex-sector, and transaction-cost validation before live use.",
+            "- Rank IC can be unstable when symbols share sector exposure or the universe is small.",
             f"- IC rows written: `{len(ic_rows)}`",
             f"- Quantile rows written: `{len(quantile_rows)}`",
             "",
         ]
     )
-    REPORT_PATH.write_text("\n".join(lines), encoding="utf-8")
+    config.report_path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def _fmt(value: Any) -> str:
