@@ -80,7 +80,7 @@ The validation checks preliminary relationships between research factors and for
 
 ## Phase 5E
 
-Phase 5E adds a scikit-learn ML sandbox using the Phase 5A factor table:
+Phase 5E adds a scikit-learn ML sandbox using the Phase 5A live-portfolio factor table:
 
 ```powershell
 python research\ml_sandbox.py
@@ -156,3 +156,22 @@ Outputs for research mode:
 - `RESEARCH_FACTOR_VALIDATION_REPORT.md`
 
 The research validation compares the 38-symbol research universe against the earlier six-symbol Phase 5 results where possible. It remains research-only; factor IC, quantile spreads, and direction consistency are not live recommendations.
+
+## Phase 6E
+
+Phase 6E adds explicit research-universe ML sandbox mode while preserving the default Phase 5 live-portfolio ML path:
+
+```powershell
+python research\ml_sandbox.py
+python research\ml_sandbox.py --universe research
+```
+
+Outputs for research mode:
+
+- `results/phase6/ml/research_ml_regression_results.csv`
+- `results/phase6/ml/research_ml_classification_results.csv`
+- `results/phase6/ml/research_ml_feature_importance.csv`
+- `results/phase6/ml/research_ml_predictions.csv`
+- `RESEARCH_ML_SANDBOX_REPORT.md`
+
+Research-universe ML remains sandbox-only. The predictions are diagnostics for model stability and baseline comparison, not dashboard recommendations.

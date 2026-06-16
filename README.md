@@ -101,6 +101,7 @@ Phase 6A adds a separate research universe scaffold for broader validation. See 
 - Phase 6B writes broader research history to `data/research-prices.json`; it remains separate from `data/backtest-prices.json`.
 - Phase 6C adds `python research/factor_report.py --universe research` for research-universe factor reports while preserving the default live-portfolio factor report.
 - Phase 6D adds `python research/factor_validation.py --universe research` for research-universe factor validation while preserving the default Phase 5 validation path.
+- Phase 6E adds `python research/ml_sandbox.py --universe research` for research-universe ML sandbox diagnostics while preserving the default Phase 5 ML path.
 
 ## Live Calculator Signal
 
