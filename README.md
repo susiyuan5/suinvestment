@@ -78,27 +78,17 @@ Phase 5 research tooling is optional and separate from the normal dashboard/runt
 python -m pip install -r requirements-research.txt
 ```
 
-Phase 5A adds a pandas-ta-classic weekly factor report:
+For the consolidated findings and promotion gates, see [PHASE5_RESEARCH_SUMMARY.md](PHASE5_RESEARCH_SUMMARY.md).
 
-```bash
-python research/factor_report.py
-```
+Phase 5 includes:
 
-Outputs:
+- pandas-ta-classic factor reports
+- Backtrader sandbox comparison
+- QuantStats performance diagnostics
+- Alphalens-style factor validation
+- scikit-learn ML sandbox
 
-- `results/phase5/factor_report.csv`
-- `results/phase5/factor_latest.csv`
-- `FACTOR_REPORT.md`
-
-These factors are research-only and do not affect live dashboard recommendations, buy amounts, signal scores, multipliers, risk levels, action thresholds, the default Python strategy, or the market regime formula.
-
-Research roadmap:
-
-- Backtrader sandbox comparison workflow: planned after the factor report is stable.
-- QuantStats performance reports: planned for sandbox backtest reporting.
-- Alphalens factor validation: planned for factor predictive-value checks.
-- scikit-learn ML sandbox: planned for research experiments only.
-- PyPortfolioOpt: deferred to Phase 6; not implemented in Phase 5A.
+All Phase 5 outputs are research-only and do not affect live dashboard recommendations, buy amounts, signal scores, multipliers, risk levels, action thresholds, the default Python strategy, or the market regime formula. PyPortfolioOpt is deferred to Phase 6 or later.
 
 ## Live Calculator Signal
 

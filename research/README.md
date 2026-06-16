@@ -2,6 +2,8 @@
 
 This directory contains optional research scripts. Nothing here changes the live dashboard, the default Python strategy, buy amount logic, signal score, multiplier, risk level, action thresholds, or market regime formula.
 
+For consolidated Phase 5 findings and promotion gates, see `PHASE5_RESEARCH_SUMMARY.md`.
+
 ## Phase 5A
 
 Phase 5A adds the first weekly factor report:
