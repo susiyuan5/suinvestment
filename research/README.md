@@ -23,6 +23,8 @@ Outputs:
 
 The factors are research inputs only and need later validation before any live strategy use.
 
+The default command remains the live-portfolio factor report for BYDDY, MSFT, NVDA, AAPL, ASML, and KO.
+
 ## Phase 5B
 
 Phase 5B adds a Backtrader sandbox comparison workflow:
@@ -119,3 +121,20 @@ Outputs:
 - `RESEARCH_PRICE_EXPANSION.md`
 
 `data/research-prices.json` is not the live dashboard data source. It is separate from `data/backtest-prices.json`, and missing or failed research symbols do not affect live recommendations. Research universe symbols are not a buy list.
+
+## Phase 6C
+
+Phase 6C adds an explicit research-universe factor report mode while preserving the default live-portfolio factor report:
+
+```powershell
+python research\factor_report.py
+python research\factor_report.py --universe research
+```
+
+Outputs for research mode:
+
+- `results/phase6/research_factor_report.csv`
+- `results/phase6/research_factor_latest.csv`
+- `RESEARCH_FACTOR_REPORT.md`
+
+Reference symbols QQQ, SPY, DIA, and IWM are excluded from the research trade-factor table by default. Research-universe factors do not affect live recommendations and should not be interpreted as a buy list.
