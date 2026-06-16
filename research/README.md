@@ -36,3 +36,38 @@ Outputs:
 The sandbox compares Fixed Weekly DCA, Simple Dip-Buy, and Risk-Adjusted v2 on the current portfolio symbols only. It is an additional research engine and does not replace `backtest.py`.
 
 Do not infer live strategy changes from this report yet. Differences versus the existing custom backtest can come from Backtrader order timing, broker accounting, cash handling, commission/slippage handling, or fractional-share assumptions.
+
+## Phase 5C
+
+Phase 5C adds QuantStats-style performance reports from the Backtrader sandbox equity series:
+
+```powershell
+python research\quantstats_report.py
+```
+
+Outputs:
+
+- `results/phase5/quantstats/quantstats_summary.csv`
+- `results/phase5/quantstats/fixed_weekly_dca_report.html`
+- `results/phase5/quantstats/simple_dip_buy_report.html`
+- `results/phase5/quantstats/risk_adjusted_v2_report.html`
+- `QUANTSTATS_REPORT.md`
+
+Treat these reports as diagnostics only. Higher final value, higher Sharpe ratio, or lower drawdown is not enough to promote a strategy without broader validation, out-of-sample testing, and review of execution assumptions.
+
+## Phase 5D
+
+Phase 5D adds Alphalens-style factor validation for the Phase 5A factor table:
+
+```powershell
+python research\factor_validation.py
+```
+
+Outputs:
+
+- `results/phase5/factor_validation_ic.csv`
+- `results/phase5/factor_validation_quantiles.csv`
+- `results/phase5/factor_validation_summary.csv`
+- `FACTOR_VALIDATION_REPORT.md`
+
+The validation checks preliminary relationships between research factors and forward 1-week, 4-week, and 12-week returns. Interpret results cautiously: the universe has only six symbols, and promising IC or quantile spreads require walk-forward and out-of-sample validation before any live strategy use.

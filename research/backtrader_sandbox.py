@@ -165,7 +165,7 @@ def run_symbol_backtest(
         "shares_held": round(float(strategy.position.size), 8),
         "orders": len(strategy.trades),
     }
-    return {"summary": summary, "trades": strategy.trades}
+    return {"summary": summary, "trades": strategy.trades, "equity_curve": strategy.equity_curve}
 
 
 class SandboxWeeklyStrategy(bt.Strategy if bt is not None else object):
