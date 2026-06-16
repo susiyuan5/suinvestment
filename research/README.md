@@ -103,3 +103,19 @@ Phase 6A separates the Live Portfolio from a broader Research Universe:
 - Reference symbols QQQ, SPY, DIA, and IWM are not trade candidates in this scaffold.
 - Research Universe symbols do not become buy recommendations and do not appear in the Manual Trade Plan.
 - Historical data expansion for the broader universe is deferred to Phase 6B.
+
+## Phase 6B
+
+Phase 6B adds a separate research-only historical data refresh:
+
+```powershell
+python scripts\update_research_prices.py
+```
+
+Outputs:
+
+- `data/research-prices.json`
+- `results/phase6/research_price_coverage.csv`
+- `RESEARCH_PRICE_EXPANSION.md`
+
+`data/research-prices.json` is not the live dashboard data source. It is separate from `data/backtest-prices.json`, and missing or failed research symbols do not affect live recommendations. Research universe symbols are not a buy list.

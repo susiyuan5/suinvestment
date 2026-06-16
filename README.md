@@ -98,7 +98,7 @@ Phase 6A adds a separate research universe scaffold for broader validation. See 
 - Research universe symbols are for research and validation only.
 - Reference symbols such as QQQ, SPY, DIA, and IWM remain separate from trade candidates.
 - Phase 6A does not add symbols to the live dashboard, Manual Trade Plan, or recommendation logic.
-- Historical data expansion for the research universe is deferred to Phase 6B.
+- Phase 6B writes broader research history to `data/research-prices.json`; it remains separate from `data/backtest-prices.json`.
 
 ## Live Calculator Signal
 

@@ -66,4 +66,14 @@ Expected counts:
 
 ## Phase 6B
 
-Phase 6A does not update `data/backtest-prices.json`. Historical data expansion for the research universe should happen in Phase 6B, after this scaffold is reviewed.
+Phase 6B adds a separate research-only historical data workflow. It writes `data/research-prices.json` and `results/phase6/research_price_coverage.csv`.
+
+Run:
+
+```powershell
+python scripts\update_research_prices.py
+```
+
+`data/research-prices.json` is separate from `data/backtest-prices.json`. The live/backtest snapshot continues to serve the dashboard portfolio and QQQ/SPY market-regime path. Research prices are for broader validation only and do not turn research universe symbols into buy recommendations.
+
+If Yahoo/historical access fails for a symbol, the refresh records the failure and continues with the rest of the universe. Missing or short histories should be reviewed in `results/phase6/research_price_coverage.csv`.
