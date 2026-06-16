@@ -4,6 +4,8 @@ This directory contains optional research scripts. Nothing here changes the live
 
 For consolidated Phase 5 findings and promotion gates, see `PHASE5_RESEARCH_SUMMARY.md`.
 
+For the Phase 6A research universe scaffold, see `RESEARCH_UNIVERSE.md` and `data/research-universe.json`.
+
 ## Phase 5A
 
 Phase 5A adds the first weekly factor report:
@@ -91,3 +93,13 @@ Outputs:
 - `ML_SANDBOX_REPORT.md`
 
 The ML sandbox uses time-based train/test splits and sklearn Pipelines to reduce leakage risk. It is not used by the live dashboard, and predictions must not be treated as recommendations. Results are preliminary because the universe has only six symbols and limited weekly history.
+
+## Phase 6A
+
+Phase 6A separates the Live Portfolio from a broader Research Universe:
+
+- Live Portfolio remains BYDDY, MSFT, NVDA, AAPL, ASML, and KO.
+- Research Universe symbols are for factor validation, ML research, and future optimization experiments only.
+- Reference symbols QQQ, SPY, DIA, and IWM are not trade candidates in this scaffold.
+- Research Universe symbols do not become buy recommendations and do not appear in the Manual Trade Plan.
+- Historical data expansion for the broader universe is deferred to Phase 6B.

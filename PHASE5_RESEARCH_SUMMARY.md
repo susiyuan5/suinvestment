@@ -106,4 +106,4 @@ No live strategy change is justified from Phase 5. The live dashboard should rem
 
 ## Recommended Phase 6A
 
-Expand the research universe and history before adding new models or portfolio optimization. Phase 6A should focus on broader data coverage, more symbols, longer history, and validation across more market regimes. PyPortfolioOpt remains deferred until the research dataset is broader and more reliable.
+Expand the research universe and history before adding new models or portfolio optimization. Phase 6A starts with the scaffold in `RESEARCH_UNIVERSE.md` and `data/research-universe.json`; Phase 6B should add historical data coverage for that broader universe. PyPortfolioOpt remains deferred until the research dataset is broader and more reliable.

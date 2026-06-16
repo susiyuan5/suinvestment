@@ -90,6 +90,16 @@ Phase 5 includes:
 
 All Phase 5 outputs are research-only and do not affect live dashboard recommendations, buy amounts, signal scores, multipliers, risk levels, action thresholds, the default Python strategy, or the market regime formula. PyPortfolioOpt is deferred to Phase 6 or later.
 
+## Phase 6A Research Universe
+
+Phase 6A adds a separate research universe scaffold for broader validation. See [RESEARCH_UNIVERSE.md](RESEARCH_UNIVERSE.md).
+
+- Live Portfolio remains BYDDY, MSFT, NVDA, AAPL, ASML, and KO.
+- Research universe symbols are for research and validation only.
+- Reference symbols such as QQQ, SPY, DIA, and IWM remain separate from trade candidates.
+- Phase 6A does not add symbols to the live dashboard, Manual Trade Plan, or recommendation logic.
+- Historical data expansion for the research universe is deferred to Phase 6B.
+
 ## Live Calculator Signal
 
 ```text
