@@ -71,3 +71,21 @@ Outputs:
 - `FACTOR_VALIDATION_REPORT.md`
 
 The validation checks preliminary relationships between research factors and forward 1-week, 4-week, and 12-week returns. Interpret results cautiously: the universe has only six symbols, and promising IC or quantile spreads require walk-forward and out-of-sample validation before any live strategy use.
+
+## Phase 5E
+
+Phase 5E adds a scikit-learn ML sandbox using the Phase 5A factor table:
+
+```powershell
+python research\ml_sandbox.py
+```
+
+Outputs:
+
+- `results/phase5/ml/ml_regression_results.csv`
+- `results/phase5/ml/ml_classification_results.csv`
+- `results/phase5/ml/ml_feature_importance.csv`
+- `results/phase5/ml/ml_predictions.csv`
+- `ML_SANDBOX_REPORT.md`
+
+The ML sandbox uses time-based train/test splits and sklearn Pipelines to reduce leakage risk. It is not used by the live dashboard, and predictions must not be treated as recommendations. Results are preliminary because the universe has only six symbols and limited weekly history.
