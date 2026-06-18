@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Sandbox Dashboard</title>
+    <link rel="stylesheet" href="research-sandbox.css">
+</head>
+<body>
+    <main class="page-shell">
+        <header class="hero">
+            <div>
+                <p class="eyebrow">Research-only / Shadow-only / Not live / Not trading advice</p>
+                <h1>Research Sandbox Dashboard</h1>
+                <p class="subtitle">Read-only review surface for Phase 6J-6Q research expansion results.</p>
+            </div>
+            <a class="home-link" href="index.html">Default Dashboard</a>
+        </header>
+
+        <section class="safety-banner" aria-label="Research safety status">
+            <div><span>Active default universe</span><strong id="active-count">38</strong></div>
+            <div><span>Expanded universe</span><strong id="expanded-count">80 research-only</strong></div>
+            <div><span>Shadow universe</span><strong id="shadow-count">50 shadow-only</strong></div>
+            <div><span>Monitored symbols</span><strong id="monitored-count">12 monitoring-only</strong></div>
+            <div><span>Live/default behavior</span><strong>Unchanged</strong></div>
+            <div><span>Manual Trade Plan</span><strong>Unchanged</strong></div>
+            <div><span>Partial activation</span><strong id="activation-state">disabled_by_default</strong></div>
+        </section>
+
+        <section class="card" id="load-state">
+            Loading research review files...
+        </section>
+
+        <section class="grid two">
+            <article class="card">
+                <div class="card-header">
+                    <h2>Executive Summary</h2>
+                    <button type="button" data-copy="executive">Copy</button>
+                </div>
+                <div id="executive-summary"></div>
+            </article>
+
+            <article class="card">
+                <h2>38 vs 80 Comparison</h2>
+                <div id="comparison-summary"></div>
+            </article>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2>Shadow Candidate Review</h2>
+                <button type="button" data-copy="candidates">Copy Table</button>
+            </div>
+            <div class="table-wrap">
+                <table id="candidate-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Category</th>
+                            <th>Why Selected</th>
+                            <th>Factor</th>
+                            <th>Regime</th>
+                            <th>Risk Notes</th>
+                            <th>Monitoring</th>
+                            <th>Readiness</th>
+                            <th>Rollback</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="grid two">
+            <article class="card">
+                <h2>Deferred / Rejected Summary</h2>
+                <div id="deferred-summary"></div>
+            </article>
+
+            <article class="card">
+                <h2>Risk Gates</h2>
+                <div id="risk-gates"></div>
+            </article>
+        </section>
+
+        <section class="grid two">
+            <article class="card">
+                <h2>Monitoring Framework</h2>
+                <div id="monitoring-framework"></div>
+            </article>
+
+            <article class="card">
+                <div class="card-header">
+                    <h2>Next Review Checklist</h2>
+                    <button type="button" data-copy="checklist">Copy</button>
+                </div>
+                <div id="next-checklist"></div>
+            </article>
+        </section>
+    </main>
+
+    <script src="research-sandbox.js"></script>
+</body>
+</html>

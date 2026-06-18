@@ -107,6 +107,7 @@ Phase 6A adds a separate research universe scaffold for broader validation. See 
 - Phase 6H adds [RESEARCH_UNIVERSE_EXPANSION_PLAN.md](RESEARCH_UNIVERSE_EXPANSION_PLAN.md), a planning-only 80-symbol sector-balanced research universe proposal. It does not activate the larger universe.
 - Phase 6I adds an explicit research-only 80-symbol universe file and `python research/run_phase6i_expanded_research.py` for 38 vs 80 comparison. The default active research universe remains 38 symbols.
 - Phase 6J-6O add a research-only expansion validation flow on branch `phase6j-to-6o-research-flow`: 38-vs-80 comparison, promotion screening, shadow comparison, risk gates, disabled-by-default partial activation planning, and monitoring framework. No live/default activation is enabled.
+- Phase 6R adds `research-sandbox.html`, a read-only research sandbox dashboard for human review of Phase 6J-6Q outputs. It reads only `research/results/phase6j/` through `research/results/phase6q/`, cannot activate symbols, cannot modify the Manual Trade Plan, and does not affect the default dashboard or live recommendation behavior.
 
 ## Live Calculator Signal
 
