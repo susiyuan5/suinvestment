@@ -236,3 +236,27 @@ Files:
 - `research/results/phase6i/expanded-80-price-coverage.csv`
 
 The default active research universe remains `data/research-universe.json` with 38 symbols. The expanded 80-symbol universe is only used by explicit Phase 6I research scripts and must not be interpreted as a live buy list.
+
+## Phase 6J-6O
+
+Phase 6J-6O is a research-only expansion validation flow. Run scripts explicitly:
+
+```powershell
+python research\run_phase6j_research_comparison.py
+python research\run_phase6k_promotion_screening.py
+python research\run_phase6l_shadow_comparison.py
+python research\run_phase6m_risk_gate_review.py
+python research\run_phase6n_partial_activation_plan.py
+python research\run_phase6o_monitoring_framework.py
+```
+
+Outputs:
+
+- `research/results/phase6j/`: 38-vs-80 universe, factor, sector, regime, ML availability, and decision reports.
+- `research/results/phase6k/`: candidate promotion screening lists.
+- `research/results/phase6l/`: shadow-only comparison against active 38.
+- `research/results/phase6m/`: risk gate config, review, and rollback plan.
+- `research/results/phase6n/`: disabled-by-default partial activation plan.
+- `research/results/phase6o/`: long-term monitoring framework and monthly review templates.
+
+Safety statement: the default active research universe remains 38 symbols; the live dashboard, Manual Trade Plan, and default strategy remain unchanged; PyPortfolioOpt remains deferred; all Phase 6J-6O outputs are research-only, shadow-only, or disabled-by-default.
