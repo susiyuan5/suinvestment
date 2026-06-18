@@ -1,0 +1,188 @@
+# Phase 6L Shadow Comparison Report
+
+Shadow-only. Default dashboard and Manual Trade Plan are unchanged.
+
+```json
+{
+  "shadowUniverseDefinition": {
+    "activeSymbolCount": 38,
+    "shadowSymbolCount": 50,
+    "candidateCount": 12,
+    "shadowSymbols": [
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "GOOGL",
+      "AMZN",
+      "META",
+      "ASML",
+      "AMD",
+      "AVGO",
+      "TSM",
+      "QCOM",
+      "MU",
+      "INTC",
+      "COST",
+      "WMT",
+      "MCD",
+      "NKE",
+      "SBUX",
+      "HD",
+      "KO",
+      "PEP",
+      "PG",
+      "JNJ",
+      "UNH",
+      "MRK",
+      "JPM",
+      "BAC",
+      "V",
+      "MA",
+      "AXP",
+      "CAT",
+      "DE",
+      "GE",
+      "HON",
+      "BYDDY",
+      "TM",
+      "TCEHY",
+      "BABA",
+      "ABBV",
+      "ABT",
+      "AMT",
+      "APD",
+      "BA",
+      "BKNG",
+      "BLK",
+      "CMG",
+      "COP",
+      "DUK",
+      "ETN",
+      "GS"
+    ],
+    "candidateSymbols": [
+      "ABBV",
+      "ABT",
+      "AMT",
+      "APD",
+      "BA",
+      "BKNG",
+      "BLK",
+      "CMG",
+      "COP",
+      "DUK",
+      "ETN",
+      "GS"
+    ],
+    "categoryCounts": {
+      "consumer_retail": 8,
+      "core_technology": 6,
+      "defensive_healthcare": 8,
+      "energy_materials": 2,
+      "financial_payments": 7,
+      "industrial_diversified": 6,
+      "international": 4,
+      "semiconductors": 7,
+      "utilities_real_assets": 2
+    },
+    "disabledByDefault": true
+  },
+  "signalDifference": {
+    "rows": [
+      {
+        "category": "consumer_retail",
+        "activeShare": 0.157895,
+        "shadowShare": 0.16,
+        "shareDelta": 0.002105
+      },
+      {
+        "category": "core_technology",
+        "activeShare": 0.157895,
+        "shadowShare": 0.12,
+        "shareDelta": -0.037895
+      },
+      {
+        "category": "defensive_healthcare",
+        "activeShare": 0.157895,
+        "shadowShare": 0.16,
+        "shareDelta": 0.002105
+      },
+      {
+        "category": "energy_materials",
+        "activeShare": 0.0,
+        "shadowShare": 0.04,
+        "shareDelta": 0.04
+      },
+      {
+        "category": "financial_payments",
+        "activeShare": 0.131579,
+        "shadowShare": 0.14,
+        "shareDelta": 0.008421
+      },
+      {
+        "category": "industrial_diversified",
+        "activeShare": 0.105263,
+        "shadowShare": 0.12,
+        "shareDelta": 0.014737
+      },
+      {
+        "category": "international",
+        "activeShare": 0.105263,
+        "shadowShare": 0.08,
+        "shareDelta": -0.025263
+      },
+      {
+        "category": "semiconductors",
+        "activeShare": 0.184211,
+        "shadowShare": 0.14,
+        "shareDelta": -0.044211
+      },
+      {
+        "category": "utilities_real_assets",
+        "activeShare": 0.0,
+        "shadowShare": 0.04,
+        "shareDelta": 0.04
+      }
+    ],
+    "interpretation": "Shadow universe improves sector breadth but remains disabled by default."
+  },
+  "recommendationDifference": {
+    "status": "shadow_only",
+    "defaultRecommendationsChanged": false,
+    "manualTradePlanChanged": false,
+    "newSymbolsInShadowOnly": [
+      "ABBV",
+      "ABT",
+      "AMT",
+      "APD",
+      "BA",
+      "BKNG",
+      "BLK",
+      "CMG",
+      "COP",
+      "DUK",
+      "ETN",
+      "GS"
+    ],
+    "note": "No dashboard recommendation output is changed by this comparison."
+  },
+  "riskExposureDifference": {
+    "activeLargestCategoryShare": 0.184211,
+    "shadowLargestCategoryShare": 0.16,
+    "activeTechSemiShare": 0.342105,
+    "shadowTechSemiShare": 0.26
+  },
+  "priceCoverage": {
+    "expectedSymbolsWithReferences": 84,
+    "presentSymbols": 84,
+    "researchSymbols": 80,
+    "referenceSymbols": 4,
+    "failures": 0,
+    "shortHistories": 0,
+    "latestDateMin": "2026-06-12",
+    "latestDateMax": "2026-06-18",
+    "firstDateMin": "2015-01-02",
+    "firstDateMax": "2015-07-10"
+  }
+}
+```
