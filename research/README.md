@@ -200,3 +200,19 @@ Outputs:
 - `SECTOR_REGIME_BREAKDOWN_REPORT.md`
 
 The script uses research-only category metadata from `data/research-universe.json` and reconstructs a simple QQQ-based research regime from `data/research-prices.json`. These diagnostics do not change the live market regime formula, dashboard recommendations, or Manual Trade Plan. Interpret results cautiously because sector groups and regime buckets can be small or imbalanced.
+
+## Phase 6H
+
+Phase 6H creates a planning-only sector-balanced expansion proposal for an approximately 80-symbol research universe:
+
+```powershell
+python research\plan_universe_expansion.py
+```
+
+Files:
+
+- `data/research-universe-expansion-plan.json`
+- `RESEARCH_UNIVERSE_EXPANSION_PLAN.md`
+- `research/plan_universe_expansion.py`
+
+This does not activate the 80-symbol universe, fetch prices, change `data/research-prices.json`, change `data/backtest-prices.json`, or add symbols to the dashboard or Manual Trade Plan.
