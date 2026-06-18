@@ -216,3 +216,23 @@ Files:
 - `research/plan_universe_expansion.py`
 
 This does not activate the 80-symbol universe, fetch prices, change `data/research-prices.json`, change `data/backtest-prices.json`, or add symbols to the dashboard or Manual Trade Plan.
+
+## Phase 6I
+
+Phase 6I activates the sector-balanced 80-symbol universe only for explicit research comparison:
+
+```powershell
+python research\run_phase6i_expanded_research.py
+```
+
+Files:
+
+- `data/research-universe-sector-balanced-80.json`
+- `data/research-prices-sector-balanced-80.json`
+- `research/results/phase6i/universe-comparison-38-vs-80.json`
+- `research/results/phase6i/universe-comparison-38-vs-80.md`
+- `research/results/phase6i/sector-distribution-38-vs-80.json`
+- `research/results/phase6i/phase6i-validation-report.json`
+- `research/results/phase6i/expanded-80-price-coverage.csv`
+
+The default active research universe remains `data/research-universe.json` with 38 symbols. The expanded 80-symbol universe is only used by explicit Phase 6I research scripts and must not be interpreted as a live buy list.

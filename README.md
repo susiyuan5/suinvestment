@@ -105,6 +105,7 @@ Phase 6A adds a separate research universe scaffold for broader validation. See 
 - Phase 6F consolidates findings in [PHASE6_RESEARCH_UNIVERSE_SUMMARY.md](PHASE6_RESEARCH_UNIVERSE_SUMMARY.md). No Phase 6 result is promoted to live recommendations.
 - Phase 6G adds `python research/sector_regime_breakdown.py` for research-only sector/category and QQQ-regime factor diagnostics.
 - Phase 6H adds [RESEARCH_UNIVERSE_EXPANSION_PLAN.md](RESEARCH_UNIVERSE_EXPANSION_PLAN.md), a planning-only 80-symbol sector-balanced research universe proposal. It does not activate the larger universe.
+- Phase 6I adds an explicit research-only 80-symbol universe file and `python research/run_phase6i_expanded_research.py` for 38 vs 80 comparison. The default active research universe remains 38 symbols.
 
 ## Live Calculator Signal
 

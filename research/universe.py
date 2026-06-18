@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_UNIVERSE_PATH = ROOT / "data" / "research-universe.json"
+EXPANDED_UNIVERSE_PATH = ROOT / "data" / "research-universe-sector-balanced-80.json"
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,22 @@ def load_research_universe(path: Path = DEFAULT_UNIVERSE_PATH) -> ResearchUniver
     )
     validate_research_universe(universe)
     return universe
+
+
+def load_active_research_universe() -> ResearchUniverse:
+    return load_research_universe(DEFAULT_UNIVERSE_PATH)
+
+
+def load_expanded_research_universe() -> ResearchUniverse:
+    return load_research_universe(EXPANDED_UNIVERSE_PATH)
+
+
+def load_research_universe_by_mode(mode: str = "active") -> ResearchUniverse:
+    if mode == "active":
+        return load_active_research_universe()
+    if mode == "expanded":
+        return load_expanded_research_universe()
+    raise ValueError("mode must be 'active' or 'expanded'")
 
 
 def validate_research_universe(universe: ResearchUniverse) -> None:
