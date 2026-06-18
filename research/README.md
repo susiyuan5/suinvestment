@@ -175,3 +175,28 @@ Outputs for research mode:
 - `RESEARCH_ML_SANDBOX_REPORT.md`
 
 Research-universe ML remains sandbox-only. The predictions are diagnostics for model stability and baseline comparison, not dashboard recommendations.
+
+## Phase 6F
+
+Phase 6F consolidates the research-universe findings and next research direction:
+
+- `PHASE6_RESEARCH_UNIVERSE_SUMMARY.md`
+
+The summary confirms that Phase 6 expanded research coverage but did not justify live promotion. The recommended next step is sector/regime breakdown before larger-universe expansion or PyPortfolioOpt work.
+
+## Phase 6G
+
+Phase 6G adds sector/category and QQQ-regime breakdown diagnostics for research-universe factor validation:
+
+```powershell
+python research\sector_regime_breakdown.py
+```
+
+Outputs:
+
+- `results/phase6/sector_regime_factor_ic.csv`
+- `results/phase6/sector_factor_summary.csv`
+- `results/phase6/regime_factor_summary.csv`
+- `SECTOR_REGIME_BREAKDOWN_REPORT.md`
+
+The script uses research-only category metadata from `data/research-universe.json` and reconstructs a simple QQQ-based research regime from `data/research-prices.json`. These diagnostics do not change the live market regime formula, dashboard recommendations, or Manual Trade Plan. Interpret results cautiously because sector groups and regime buckets can be small or imbalanced.

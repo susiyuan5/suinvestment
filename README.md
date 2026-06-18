@@ -102,6 +102,8 @@ Phase 6A adds a separate research universe scaffold for broader validation. See 
 - Phase 6C adds `python research/factor_report.py --universe research` for research-universe factor reports while preserving the default live-portfolio factor report.
 - Phase 6D adds `python research/factor_validation.py --universe research` for research-universe factor validation while preserving the default Phase 5 validation path.
 - Phase 6E adds `python research/ml_sandbox.py --universe research` for research-universe ML sandbox diagnostics while preserving the default Phase 5 ML path.
+- Phase 6F consolidates findings in [PHASE6_RESEARCH_UNIVERSE_SUMMARY.md](PHASE6_RESEARCH_UNIVERSE_SUMMARY.md). No Phase 6 result is promoted to live recommendations.
+- Phase 6G adds `python research/sector_regime_breakdown.py` for research-only sector/category and QQQ-regime factor diagnostics.
 
 ## Live Calculator Signal
 
