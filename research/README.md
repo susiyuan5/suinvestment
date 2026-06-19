@@ -276,3 +276,27 @@ python research\analyze_shadow_observation_history.py
 ```
 
 Outputs stay under `research/results/phase6s/`. A single clean observation is not enough: governance requires at least 8 observation runs and 8 calendar weeks before any candidate can even be considered for human review. The governance output never marks a candidate as eligible for live promotion, and the read-only `research-sandbox.html` screen cannot activate, promote, trade, or modify the live portfolio.
+
+## Phase 6U Monthly Refresh Checklist
+
+Phase 6U documents the manual/monthly shadow observation refresh workflow in `SHADOW_OBSERVATION_REFRESH_CHECKLIST.md`.
+
+Recommended command order:
+
+```powershell
+python scripts\update_research_prices.py
+python research\run_phase6s_shadow_observation.py
+python research\analyze_shadow_observation_history.py
+python research\check_shadow_refresh_readiness.py
+python -m unittest discover -s tests
+node --check app.js
+node --check research-sandbox.js
+```
+
+The readiness helper is console-only and read-only:
+
+```powershell
+python research\check_shadow_refresh_readiness.py
+```
+
+Interpretation: at least 8 observation runs and 8 calendar weeks are required before human review. Human review is not live promotion, and live promotion is never automatic.
