@@ -2,6 +2,8 @@
 
 This directory contains optional research scripts. Nothing here changes the live dashboard, the default Python strategy, buy amount logic, signal score, multiplier, risk level, action thresholds, or market regime formula.
 
+For the cross-project navigation map, start with `PROJECT_NAVIGATION.md` in the repository root. It links the live dashboard, read-only research sandbox, Phase 6 reports, shadow observation workflow, production UI QA reports, validation commands, and safety boundaries.
+
 For consolidated Phase 5 findings and promotion gates, see `PHASE5_RESEARCH_SUMMARY.md`.
 
 For the Phase 6A research universe scaffold, see `RESEARCH_UNIVERSE.md` and `data/research-universe.json`.

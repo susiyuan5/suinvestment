@@ -4,6 +4,10 @@ Su Investment Pro is a weekly investment calculator, historical backtesting tool
 
 All suggestions are for manual review only. The final trading decision and any brokerage order must be placed manually by the user.
 
+## Project Navigation
+
+Start with [PROJECT_NAVIGATION.md](PROJECT_NAVIGATION.md) for the live dashboard entry, read-only research sandbox, Manual Trade Plan boundary, Phase 6 reports, shadow observation workflow, production UI QA reports, validation commands, and safety boundaries.
+
 ## Files
 
 - `index.html` - App markup
