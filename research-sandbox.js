@@ -9,7 +9,9 @@
         monitoring: "research/results/phase6o/monitoring-framework.json",
         removalRules: "research/results/phase6o/removal-rules.md",
         observation: "research/results/phase6s/shadow-observation-log.json",
-        observationSummary: "research/results/phase6s/shadow-observation-summary.md"
+        observationSummary: "research/results/phase6s/shadow-observation-summary.md",
+        governance: "research/results/phase6s/shadow-observation-governance-report.json",
+        governanceSummary: "research/results/phase6s/shadow-observation-governance-summary.md"
     };
 
     const state = {
@@ -22,7 +24,9 @@
         monitoring: null,
         removalRules: "",
         observation: null,
-        observationSummary: ""
+        observationSummary: "",
+        governance: null,
+        governanceSummary: ""
     };
 
     function byId(id) {
@@ -210,7 +214,8 @@
             candidates: state.candidates.map((row) => `${row.symbol}\t${row.sector_category}\t${row.why_selected}\t${row.activation_readiness}`).join("\n"),
             checklist: state.checklist
             ,
-            observation: state.observationSummary || "No Phase 6S observation summary loaded."
+            observation: state.observationSummary || "No Phase 6S observation summary loaded.",
+            governance: state.governanceSummary || "No Phase 6T governance summary loaded."
         };
         navigator.clipboard.writeText(textByKind[kind] || "");
     }
@@ -223,8 +228,25 @@
     }
 
     function renderObservation() {
+        const governanceTarget = byId("governance-summary");
         const target = byId("observation-summary");
         const table = byId("observation-table").querySelector("tbody");
+        if (state.governance) {
+            const governance = state.governance.governance || {};
+            governanceTarget.innerHTML = `
+                <div class="facts">
+                    <div class="fact"><span>Governance status</span><strong class="${state.governance.anyCandidateEligibleForHumanReview ? "warn" : "ok"}">${escapeHtml(state.governance.anyCandidateEligibleForHumanReview ? "human review allowed" : "not enough observation history")}</strong></div>
+                    <div class="fact"><span>Observation runs available</span><strong>${escapeHtml(state.governance.observationRunsAvailable)}</strong></div>
+                    <div class="fact"><span>Minimum required runs</span><strong>${escapeHtml(governance.minimum_observation_runs_before_review || 8)}</strong></div>
+                    <div class="fact"><span>Calendar weeks available</span><strong>${escapeHtml(state.governance.calendarWeeksAvailable)}</strong></div>
+                    <div class="fact"><span>Minimum required weeks</span><strong>${escapeHtml(governance.minimum_calendar_weeks_before_review || 8)}</strong></div>
+                    <div class="fact"><span>Eligible for human review</span><strong>${escapeHtml(state.governance.anyCandidateEligibleForHumanReview ? "yes" : "no")}</strong></div>
+                    <div class="fact"><span>Eligible for live promotion</span><strong class="danger">no</strong></div>
+                </div>
+            `;
+        } else {
+            governanceTarget.innerHTML = '<p class="muted">No Phase 6T governance report found yet. Run <code>python research\\analyze_shadow_observation_history.py</code>.</p>';
+        }
         if (!state.observation) {
             target.innerHTML = '<p class="muted">No Phase 6S shadow observation log found yet. Run <code>python research\\run_phase6s_shadow_observation.py</code>.</p>';
             table.innerHTML = "";
@@ -272,6 +294,8 @@
             ]);
             const observation = await loadJson(paths.observation).catch(() => null);
             const observationSummary = await loadText(paths.observationSummary).catch(() => "");
+            const governance = await loadJson(paths.governance).catch(() => null);
+            const governanceSummary = await loadText(paths.governanceSummary).catch(() => "");
             state.review = review;
             state.candidates = parseCsv(candidatesCsv);
             state.deferred = parseCsv(deferredCsv);
@@ -282,6 +306,8 @@
             state.removalRules = removalRules;
             state.observation = observation;
             state.observationSummary = observationSummary;
+            state.governance = governance;
+            state.governanceSummary = governanceSummary;
 
             renderExecutive();
             renderComparison();
@@ -304,7 +330,15 @@
             copyText(button.dataset.copy);
             button.textContent = "Copied";
             setTimeout(() => {
-                button.textContent = button.dataset.copy === "candidates" ? "Copy Table" : "Copy";
+                if (button.dataset.copy === "candidates") {
+                    button.textContent = "Copy Table";
+                } else if (button.dataset.copy === "observation") {
+                    button.textContent = "Copy Observation";
+                } else if (button.dataset.copy === "governance") {
+                    button.textContent = "Copy Governance";
+                } else {
+                    button.textContent = "Copy";
+                }
             }, 1200);
         }
     });

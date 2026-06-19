@@ -260,3 +260,19 @@ Outputs:
 - `research/results/phase6o/`: long-term monitoring framework and monthly review templates.
 
 Safety statement: the default active research universe remains 38 symbols; the live dashboard, Manual Trade Plan, and default strategy remain unchanged; PyPortfolioOpt remains deferred; all Phase 6J-6O outputs are research-only, shadow-only, or disabled-by-default.
+
+## Phase 6S-6T Shadow Observation
+
+Phase 6S records a research-only observation snapshot for the 12 monitored symbols:
+
+```powershell
+python research\run_phase6s_shadow_observation.py
+```
+
+Phase 6T adds governance gates for interpreting those observations across multiple runs:
+
+```powershell
+python research\analyze_shadow_observation_history.py
+```
+
+Outputs stay under `research/results/phase6s/`. A single clean observation is not enough: governance requires at least 8 observation runs and 8 calendar weeks before any candidate can even be considered for human review. The governance output never marks a candidate as eligible for live promotion, and the read-only `research-sandbox.html` screen cannot activate, promote, trade, or modify the live portfolio.
