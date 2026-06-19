@@ -13,7 +13,8 @@
         governance: "research/results/phase6s/shadow-observation-governance-report.json",
         governanceSummary: "research/results/phase6s/shadow-observation-governance-summary.md",
         historyManifest: "research/results/phase6s/history/shadow-observation-history-manifest.json",
-        archiveValidation: "research/results/phase6s/history/shadow-observation-archive-validation-report.json"
+        archiveValidation: "research/results/phase6s/history/shadow-observation-archive-validation-report.json",
+        monthlyReview: "research/results/phase6s/shadow-monthly-review-report.json"
     };
 
     const state = {
@@ -30,7 +31,8 @@
         governance: null,
         governanceSummary: "",
         historyManifest: null,
-        archiveValidation: null
+        archiveValidation: null,
+        monthlyReview: null
     };
 
     function byId(id) {
@@ -250,6 +252,9 @@
                     <div class="fact"><span>Unique archived timestamps</span><strong>${escapeHtml(state.archiveValidation ? state.archiveValidation.uniqueObservationTimestampCount : "n/a")}</strong></div>
                     <div class="fact"><span>Duplicate timestamps</span><strong>${escapeHtml(state.archiveValidation ? state.archiveValidation.actualDuplicateTimestampCount : "n/a")}</strong></div>
                     <div class="fact"><span>Missing archive files</span><strong>${escapeHtml(state.archiveValidation ? state.archiveValidation.missingArchiveFileCount : "n/a")}</strong></div>
+                    <div class="fact"><span>Monthly review generated</span><strong>${escapeHtml(state.monthlyReview ? state.monthlyReview.generatedAt : "not run")}</strong></div>
+                    <div class="fact"><span>Monthly human-review eligible</span><strong>${escapeHtml(state.monthlyReview ? (state.monthlyReview.humanReviewEligibility ? "yes" : "no") : "n/a")}</strong></div>
+                    <div class="fact"><span>Monthly live promotion blocked</span><strong class="danger">${escapeHtml(state.monthlyReview ? (state.monthlyReview.livePromotionBlocked ? "yes" : "review") : "n/a")}</strong></div>
                     <div class="fact"><span>Eligible for human review</span><strong>${escapeHtml(state.governance.anyCandidateEligibleForHumanReview ? "yes" : "no")}</strong></div>
                     <div class="fact"><span>Eligible for live promotion</span><strong class="danger">no</strong></div>
                 </div>
@@ -308,6 +313,7 @@
             const governanceSummary = await loadText(paths.governanceSummary).catch(() => "");
             const historyManifest = await loadJson(paths.historyManifest).catch(() => null);
             const archiveValidation = await loadJson(paths.archiveValidation).catch(() => null);
+            const monthlyReview = await loadJson(paths.monthlyReview).catch(() => null);
             state.review = review;
             state.candidates = parseCsv(candidatesCsv);
             state.deferred = parseCsv(deferredCsv);
@@ -322,6 +328,7 @@
             state.governanceSummary = governanceSummary;
             state.historyManifest = historyManifest;
             state.archiveValidation = archiveValidation;
+            state.monthlyReview = monthlyReview;
 
             renderExecutive();
             renderComparison();

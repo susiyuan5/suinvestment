@@ -291,6 +291,7 @@ python research\archive_shadow_observation_snapshot.py
 python research\analyze_shadow_observation_history.py
 python research\validate_shadow_observation_archive.py
 python research\check_shadow_refresh_readiness.py
+python research\generate_shadow_monthly_review.py
 python -m unittest discover -s tests
 node --check app.js
 node --check research-sandbox.js
@@ -319,3 +320,11 @@ python research\validate_shadow_observation_archive.py
 ```
 
 The validator checks manifest entries against archive folders and required files, reports duplicate timestamps, detects missing archive files, and verifies the governance observation count does not exceed unique real observation timestamps. It does not rerun observations and is not a promotion signal.
+
+Monthly shadow review:
+
+```powershell
+python research\generate_shadow_monthly_review.py
+```
+
+The monthly review generator reads existing governance, archive validation, and history files and writes `research/results/phase6s/shadow-monthly-review-report.json` plus `research/results/phase6s/shadow-monthly-review-summary.md`. It does not run observations, archive snapshots, fetch prices, or change live/default behavior.
