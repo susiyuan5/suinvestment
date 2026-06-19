@@ -243,9 +243,13 @@
                 <div class="facts">
                     <div class="fact"><span>Governance status</span><strong class="${state.governance.anyCandidateEligibleForHumanReview ? "warn" : "ok"}">${escapeHtml(state.governance.anyCandidateEligibleForHumanReview ? "human review allowed" : "not enough observation history")}</strong></div>
                     <div class="fact"><span>Observation runs available</span><strong>${escapeHtml(state.governance.observationRunsAvailable)}</strong></div>
+                    <div class="fact"><span>Unique observation dates</span><strong>${escapeHtml(state.governance.uniqueObservationDateCount || "n/a")}</strong></div>
                     <div class="fact"><span>Minimum required runs</span><strong>${escapeHtml(governance.minimum_observation_runs_before_review || 8)}</strong></div>
                     <div class="fact"><span>Calendar weeks available</span><strong>${escapeHtml(state.governance.calendarWeeksAvailable)}</strong></div>
+                    <div class="fact"><span>Calendar span days</span><strong>${escapeHtml(state.governance.calendarSpanDays ?? "n/a")}</strong></div>
                     <div class="fact"><span>Minimum required weeks</span><strong>${escapeHtml(governance.minimum_calendar_weeks_before_review || 8)}</strong></div>
+                    <div class="fact"><span>Cadence status</span><strong class="${state.governance.cadenceStatus === "cadence_ok_for_longitudinal_review" ? "ok" : "warn"}">${escapeHtml(state.governance.cadenceStatus || "unknown")}</strong></div>
+                    <div class="fact"><span>Same-day validation warning</span><strong class="${state.governance.sameDayRunCount ? "warn" : "ok"}">${escapeHtml(state.governance.sameDayRunCount ? "yes" : "no")}</strong></div>
                     <div class="fact"><span>Archived observations</span><strong>${escapeHtml(state.governance.archivedObservationCount || 0)}</strong></div>
                     <div class="fact"><span>Latest snapshot archived</span><strong>${escapeHtml(state.governance.latestSnapshotAlreadyArchived ? "yes" : "no")}</strong></div>
                     <div class="fact"><span>Archive validation</span><strong>${escapeHtml(state.archiveValidation ? (state.archiveValidation.archiveValid ? "valid" : "review required") : "not run")}</strong></div>

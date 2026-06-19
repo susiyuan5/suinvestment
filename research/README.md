@@ -334,3 +334,5 @@ Lifecycle map:
 - `SHADOW_OBSERVATION_LIFECYCLE.md`
 
 The lifecycle map documents Phase 6S through Phase 6X, including observation, governance, archive, archive validation, readiness, monthly review, and promotion boundaries. It is read-only documentation and does not run observations or alter live behavior.
+
+Cadence guard: same-day repeated runs may count as unique technical observations, but they do not satisfy calendar evidence. Governance still requires at least 8 observation runs and 8 calendar weeks before human review can even be considered. Human review is not live promotion.

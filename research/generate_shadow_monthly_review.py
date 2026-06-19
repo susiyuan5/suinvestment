@@ -50,6 +50,10 @@ def main() -> None:
         blockers.append("not_enough_observation_runs")
     if not governance.get("minimumCalendarWeeksMet", False):
         blockers.append("not_enough_calendar_weeks")
+    if governance.get("sameDayRunCount", 0) > 0:
+        blockers.append("same_day_validation_runs_detected")
+    if governance.get("tooSoonRunCount", 0) > 0:
+        blockers.append("too_soon_observation_runs")
     if governance.get("riskWarningCount", 0) > governance_config.get("maximum_allowed_risk_warning_count", 0):
         blockers.append("risk_warning_count")
     if governance.get("missingDataCount", 0) > governance_config.get("maximum_allowed_missing_data_count", 0):
@@ -60,8 +64,8 @@ def main() -> None:
         blockers.append("archive_integrity_not_valid")
 
     next_action = (
-        "Continue monthly/manual observation until at least 8 unique observation runs "
-        "and 8 calendar weeks are available."
+        "Continue monthly/manual observation across real calendar time until at least 8 unique observation runs "
+        "and 8 calendar weeks are available. Do not treat repeated same-day runs as monthly evidence."
     )
 
     report = {
@@ -74,6 +78,16 @@ def main() -> None:
         "minimumObservationRunsRequired": minimum_runs,
         "minimumCalendarWeeksRequired": minimum_weeks,
         "calendarWeeksAvailable": governance.get("calendarWeeksAvailable"),
+        "uniqueObservationDateCount": governance.get("uniqueObservationDateCount"),
+        "calendarSpanDays": governance.get("calendarSpanDays"),
+        "calendarSpanWeeks": governance.get("calendarSpanWeeks"),
+        "calendarRequirementMet": governance.get("calendarRequirementMet"),
+        "sameDayRunCount": governance.get("sameDayRunCount"),
+        "tooSoonRunCount": governance.get("tooSoonRunCount"),
+        "cadenceWarningCount": governance.get("cadenceWarningCount"),
+        "cadenceStatus": governance.get("cadenceStatus"),
+        "sameDayRunWarning": governance.get("sameDayRunCount", 0) > 0,
+        "includesSameDayValidationRuns": governance.get("sameDayRunCount", 0) > 0,
         "monitoredSymbolCount": governance.get("uniqueMonitoredSymbolCount"),
         "governanceStatusSummary": governance.get("candidateReviewStatusCounts", {}),
         "archiveValidationStatus": "valid" if archive.get("archiveValid") else "review_required",
@@ -106,6 +120,12 @@ def main() -> None:
         f"- Minimum observation runs required: `{minimum_runs}`",
         f"- Minimum calendar weeks required: `{minimum_weeks}`",
         f"- Calendar weeks available: `{report['calendarWeeksAvailable']}`",
+        f"- Unique observation date count: `{report['uniqueObservationDateCount']}`",
+        f"- Calendar span days: `{report['calendarSpanDays']}`",
+        f"- Calendar span weeks: `{report['calendarSpanWeeks']}`",
+        f"- Calendar requirement met: `{report['calendarRequirementMet']}`",
+        f"- Same-day run warning: `{report['sameDayRunWarning']}`",
+        f"- Cadence status: `{report['cadenceStatus']}`",
         f"- Monitored symbol count: `{report['monitoredSymbolCount']}`",
         "",
         "## Governance",
@@ -142,6 +162,10 @@ def main() -> None:
     print(f"monthly_review_generated={generated_at}")
     print(f"latest_observation_timestamp={report['latestObservationTimestamp']}")
     print(f"observation_runs_available={observation_runs}")
+    print(f"unique_observation_date_count={report['uniqueObservationDateCount']}")
+    print(f"calendar_span_days={report['calendarSpanDays']}")
+    print(f"calendar_span_weeks={report['calendarSpanWeeks']}")
+    print(f"cadence_status={report['cadenceStatus']}")
     print(f"minimum_observation_runs_required={minimum_runs}")
     print(f"monitored_symbol_count={report['monitoredSymbolCount']}")
     print(f"archive_validation_status={report['archiveValidationStatus']}")

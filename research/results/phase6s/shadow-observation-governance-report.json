@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-19T02:02:12.760019+00:00",
+  "generatedAt": "2026-06-19T02:11:45.666564+00:00",
   "source": "Phase 6T shadow observation governance review",
   "researchOnly": true,
   "liveDefaultChanged": false,
@@ -11,6 +11,11 @@
     "maximum_allowed_risk_warning_count": 0,
     "maximum_allowed_missing_data_count": 0,
     "maximum_allowed_candidate_degraded_count": 0,
+    "minimum_days_between_longitudinal_observations": 7,
+    "preferred_days_between_monthly_observations": 28,
+    "same_day_runs_count_as_unique_runs": true,
+    "same_day_runs_count_as_calendar_evidence": false,
+    "require_calendar_span_for_human_review": true,
     "require_no_live_activation": true,
     "require_manual_review_before_any_promotion": true,
     "require_strategy_backtest_before_any_promotion": true,
@@ -18,8 +23,20 @@
     "require_transaction_cost_check_before_any_promotion": true
   },
   "observationRunsAvailable": 2,
+  "uniqueObservationTimestampCount": 2,
+  "uniqueObservationDateCount": 1,
   "uniqueMonitoredSymbolCount": 12,
   "latestObservationDate": "2026-06-19T02:02:01.345244+00:00",
+  "firstObservationTimestamp": "2026-06-19T00:36:16.089451+00:00",
+  "latestObservationTimestamp": "2026-06-19T02:02:01.345244+00:00",
+  "calendarSpanDays": 0,
+  "calendarSpanWeeks": 0.0,
+  "minimumCalendarWeeksRequired": 8.0,
+  "calendarRequirementMet": false,
+  "sameDayRunCount": 1,
+  "tooSoonRunCount": 1,
+  "cadenceWarningCount": 3,
+  "cadenceStatus": "same_day_validation_runs_detected",
   "calendarWeeksAvailable": 0.0,
   "statusCounts": {
     "keep_watching": 12
@@ -135,9 +152,9 @@
   },
   "validationSourcePassed": true,
   "historyManifestFound": true,
-  "archivedObservationCount": 1,
-  "uniqueArchivedObservationTimestampCount": 1,
-  "latestSnapshotAlreadyArchived": false,
+  "archivedObservationCount": 2,
+  "uniqueArchivedObservationTimestampCount": 2,
+  "latestSnapshotAlreadyArchived": true,
   "historyWarnings": [],
   "duplicateObservationTimestamps": [
     "2026-06-19T00:36:16.089451+00:00"

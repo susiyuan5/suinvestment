@@ -9,6 +9,7 @@ Shadow Observation is not a live trading system. It does not create trading advi
 ## Current Status
 
 - Observation runs available: `1`
+- Unique observation date count: `1`
 - Minimum observation runs required: `8`
 - Minimum calendar weeks required: `8`
 - Human-review eligibility: `no`
@@ -291,6 +292,8 @@ Current `1 / 8` observation runs means:
 - Continue monthly/manual observation
 - Do not change live strategy
 - Do not add symbols to Manual Trade Plan
+
+After Phase 6Z, the system may show `2 / 8` observation runs while still having only one unique observation date. Same-day repeated runs can validate the pipeline but are not monthly evidence. They must not be used to satisfy the 8-calendar-week requirement.
 
 ## Future Phase 6Z
 

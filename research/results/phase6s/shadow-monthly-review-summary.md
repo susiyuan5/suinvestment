@@ -1,6 +1,6 @@
 # Shadow Monthly Review Summary
 
-Generated: `2026-06-19T02:02:12.998912+00:00`
+Generated: `2026-06-19T02:11:45.815730+00:00`
 
 This report is research-only. It does not rerun observations, fetch prices, archive snapshots, promote symbols, trade, or change live/default behavior.
 
@@ -11,6 +11,12 @@ This report is research-only. It does not rerun observations, fetch prices, arch
 - Minimum observation runs required: `8`
 - Minimum calendar weeks required: `8`
 - Calendar weeks available: `0.0`
+- Unique observation date count: `1`
+- Calendar span days: `0`
+- Calendar span weeks: `0.0`
+- Calendar requirement met: `False`
+- Same-day run warning: `True`
+- Cadence status: `same_day_validation_runs_detected`
 - Monitored symbol count: `12`
 
 ## Governance
@@ -33,8 +39,8 @@ This report is research-only. It does not rerun observations, fetch prices, arch
 
 ## Blockers
 
-- `not_enough_observation_runs, not_enough_calendar_weeks`
+- `not_enough_observation_runs, not_enough_calendar_weeks, same_day_validation_runs_detected, too_soon_observation_runs`
 
 ## Next Required Action
 
-Continue monthly/manual observation until at least 8 unique observation runs and 8 calendar weeks are available.
+Continue monthly/manual observation across real calendar time until at least 8 unique observation runs and 8 calendar weeks are available. Do not treat repeated same-day runs as monthly evidence.

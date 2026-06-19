@@ -50,7 +50,9 @@ def main() -> None:
     actual_duplicate_timestamps = sorted([timestamp for timestamp, count in timestamp_counts.items() if count > 1])
     manifest_duplicate_timestamps = sorted(set(manifest.get("duplicateObservationTimestamps", [])))
     unique_timestamps = sorted(set(timestamps))
+    unique_dates = sorted({timestamp[:10] for timestamp in unique_timestamps})
     latest_timestamp = unique_timestamps[-1] if unique_timestamps else None
+    same_day_run_count = max(0, len(unique_timestamps) - len(unique_dates))
 
     missing_files: list[str] = []
     folder_mismatches: list[str] = []
@@ -99,6 +101,9 @@ def main() -> None:
         "archiveValid": archive_valid,
         "archivedObservationCount": len(entries),
         "uniqueObservationTimestampCount": len(unique_timestamps),
+        "uniqueObservationDateCount": len(unique_dates),
+        "sameDayRunCount": same_day_run_count,
+        "sameDayRunWarning": same_day_run_count > 0,
         "latestArchivedObservationTimestamp": latest_timestamp,
         "actualDuplicateTimestampCount": len(actual_duplicate_timestamps),
         "actualDuplicateTimestamps": actual_duplicate_timestamps,
@@ -129,6 +134,8 @@ def main() -> None:
         f"- Archive valid: `{archive_valid}`",
         f"- Archived observation count: `{len(entries)}`",
         f"- Unique observation timestamp count: `{len(unique_timestamps)}`",
+        f"- Unique observation date count: `{len(unique_dates)}`",
+        f"- Same-day run warning: `{same_day_run_count > 0}`",
         f"- Latest archived observation timestamp: `{latest_timestamp}`",
         f"- Actual duplicate timestamp count: `{len(actual_duplicate_timestamps)}`",
         f"- Prevented duplicate timestamp count: `{len(manifest_duplicate_timestamps)}`",
@@ -146,6 +153,8 @@ def main() -> None:
     print(f"archive_valid={archive_valid}")
     print(f"archived_observation_count={len(entries)}")
     print(f"unique_observation_timestamp_count={len(unique_timestamps)}")
+    print(f"unique_observation_date_count={len(unique_dates)}")
+    print(f"same_day_run_warning={same_day_run_count > 0}")
     print(f"duplicate_timestamp_count={len(actual_duplicate_timestamps)}")
     print(f"prevented_duplicate_timestamp_count={len(manifest_duplicate_timestamps)}")
     print(f"missing_archive_file_count={len(set(missing_files))}")

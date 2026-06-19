@@ -5,6 +5,8 @@ This validation is research-only. It does not rerun observations, fetch prices, 
 - Archive valid: `True`
 - Archived observation count: `2`
 - Unique observation timestamp count: `2`
+- Unique observation date count: `1`
+- Same-day run warning: `True`
 - Latest archived observation timestamp: `2026-06-19T02:02:01.345244+00:00`
 - Actual duplicate timestamp count: `0`
 - Prevented duplicate timestamp count: `1`

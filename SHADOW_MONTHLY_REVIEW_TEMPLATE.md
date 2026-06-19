@@ -10,6 +10,7 @@ Review whether the 12 monitored symbols continue to show research value across m
 
 - At least 8 unique observation runs.
 - At least 8 calendar weeks of observation history.
+- Repeated same-day observations do not count as monthly evidence.
 - No risk warnings.
 - No missing data warnings.
 - No candidate degradation.
@@ -23,6 +24,9 @@ Record:
 - Observation runs available:
 - Minimum runs required:
 - Calendar weeks available:
+- Unique observation dates:
+- Same-day run warning:
+- Cadence status:
 - Human-review gate met:
 - Candidate review status counts:
 

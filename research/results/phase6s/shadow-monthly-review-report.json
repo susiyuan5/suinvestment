@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-19T02:02:12.998912+00:00",
+  "generatedAt": "2026-06-19T02:11:45.815730+00:00",
   "researchOnly": true,
   "liveDefaultChanged": false,
   "manualTradePlanChanged": false,
@@ -8,6 +8,16 @@
   "minimumObservationRunsRequired": 8,
   "minimumCalendarWeeksRequired": 8,
   "calendarWeeksAvailable": 0.0,
+  "uniqueObservationDateCount": 1,
+  "calendarSpanDays": 0,
+  "calendarSpanWeeks": 0.0,
+  "calendarRequirementMet": false,
+  "sameDayRunCount": 1,
+  "tooSoonRunCount": 1,
+  "cadenceWarningCount": 3,
+  "cadenceStatus": "same_day_validation_runs_detected",
+  "sameDayRunWarning": true,
+  "includesSameDayValidationRuns": true,
   "monitoredSymbolCount": 12,
   "governanceStatusSummary": {
     "not_enough_observation_history": 12
@@ -23,9 +33,11 @@
   "livePromotionBlocked": true,
   "humanReviewBlockers": [
     "not_enough_observation_runs",
-    "not_enough_calendar_weeks"
+    "not_enough_calendar_weeks",
+    "same_day_validation_runs_detected",
+    "too_soon_observation_runs"
   ],
-  "nextRequiredAction": "Continue monthly/manual observation until at least 8 unique observation runs and 8 calendar weeks are available.",
+  "nextRequiredAction": "Continue monthly/manual observation across real calendar time until at least 8 unique observation runs and 8 calendar weeks are available. Do not treat repeated same-day runs as monthly evidence.",
   "historyEntryCount": 2,
   "explicitStatement": "No candidate is eligible for live promotion from this report."
 }

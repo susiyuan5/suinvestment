@@ -5,13 +5,19 @@ Shadow observation is research-only. No live promotion is allowed from this repo
 ## Governance Gates
 
 - Observation runs available: `2`
-- Archived observation snapshots: `1`
-- Latest snapshot already archived: `False`
+- Unique observation timestamp count: `2`
+- Unique observation date count: `1`
+- Archived observation snapshots: `2`
+- Latest snapshot already archived: `True`
 - Minimum required runs before human review: `8`
+- Calendar span days: `0`
 - Calendar weeks available: `0.0`
 - Minimum required calendar weeks: `8`
 - Minimum run count met: `False`
 - Minimum calendar weeks met: `False`
+- Same-day run count: `1`
+- Too-soon run count: `1`
+- Cadence status: `same_day_validation_runs_detected`
 - Risk warning count: `0`
 - Missing data count: `0`
 - Candidate degraded count: `0`

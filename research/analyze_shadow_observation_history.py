@@ -34,6 +34,46 @@ def parse_date(value: str | None) -> datetime | None:
     return datetime.fromisoformat(normalized)
 
 
+def cadence_metrics(observation_dates: list[str], governance: dict) -> dict:
+    parsed = [parse_date(value) for value in observation_dates]
+    parsed = [value for value in parsed if value is not None]
+    unique_dates = sorted({value.date().isoformat() for value in parsed})
+    same_day_run_count = max(0, len(parsed) - len(unique_dates))
+    minimum_days = int(governance.get("minimum_days_between_longitudinal_observations", 7))
+    too_soon_run_count = 0
+    for previous, current in zip(parsed, parsed[1:]):
+        if (current.date() - previous.date()).days < minimum_days:
+            too_soon_run_count += 1
+    first_dt = parsed[0] if parsed else None
+    latest_dt = parsed[-1] if parsed else None
+    calendar_span_days = 0
+    if first_dt and latest_dt:
+        calendar_span_days = max(0, (latest_dt.date() - first_dt.date()).days)
+    calendar_span_weeks = calendar_span_days / 7
+    minimum_weeks = float(governance["minimum_calendar_weeks_before_review"])
+    calendar_requirement_met = calendar_span_weeks >= minimum_weeks
+    cadence_warning_count = int(same_day_run_count > 0) + too_soon_run_count + int(not calendar_requirement_met)
+    if same_day_run_count > 0:
+        cadence_status = "same_day_validation_runs_detected"
+    elif not calendar_requirement_met:
+        cadence_status = "insufficient_calendar_history"
+    else:
+        cadence_status = "cadence_ok_for_longitudinal_review"
+    return {
+        "unique_observation_date_count": len(unique_dates),
+        "first_observation_timestamp": observation_dates[0] if observation_dates else None,
+        "latest_observation_timestamp": observation_dates[-1] if observation_dates else None,
+        "calendar_span_days": calendar_span_days,
+        "calendar_span_weeks": round(calendar_span_weeks, 4),
+        "minimum_calendar_weeks_required": minimum_weeks,
+        "calendar_requirement_met": calendar_requirement_met,
+        "same_day_run_count": same_day_run_count,
+        "too_soon_run_count": too_soon_run_count,
+        "cadence_warning_count": cadence_warning_count,
+        "cadence_status": cadence_status,
+    }
+
+
 def load_history_manifest() -> dict:
     if HISTORY_MANIFEST_FILE.exists():
         return load_json(HISTORY_MANIFEST_FILE)
@@ -81,6 +121,7 @@ def main() -> None:
     }
     observation_dates = sorted(archived_timestamps | latest_snapshot_timestamps)
     observation_runs_available = len(observation_dates)
+    cadence = cadence_metrics(observation_dates, governance)
     unique_symbols = sorted({row["symbol"] for row in observations})
     status_counts = Counter(row.get("monitoring_status", "unknown") for row in observations)
     risk_warning_count = sum(1 for row in observations if row.get("risk_gate_status") == "warning")
@@ -89,11 +130,7 @@ def main() -> None:
     missing_data_count = sum(1 for row in observations if row.get("missing_price_warning") or not row.get("price_available"))
     latest_already_archived = generated_at in archived_timestamps
 
-    first_dt = parse_date(observation_dates[0]) if observation_dates else None
-    latest_dt = parse_date(observation_dates[-1]) if observation_dates else None
-    calendar_weeks = 0.0
-    if first_dt and latest_dt:
-        calendar_weeks = max(0.0, (latest_dt - first_dt).days / 7)
+    calendar_weeks = cadence["calendar_span_weeks"]
 
     symbol_statuses = {}
     status_summary = Counter()
@@ -121,7 +158,7 @@ def main() -> None:
         status_summary[status] += 1
 
     minimum_runs_met = observation_runs_available >= int(governance["minimum_observation_runs_before_review"])
-    minimum_weeks_met = calendar_weeks >= float(governance["minimum_calendar_weeks_before_review"])
+    minimum_weeks_met = bool(cadence["calendar_requirement_met"])
     eligible_human_review = [
         symbol for symbol, data in symbol_statuses.items()
         if data["candidate_review_status"] == "eligible_for_human_review_only"
@@ -136,8 +173,20 @@ def main() -> None:
         "eligibleForLivePromotion": False,
         "governance": governance,
         "observationRunsAvailable": observation_runs_available,
+        "uniqueObservationTimestampCount": observation_runs_available,
+        "uniqueObservationDateCount": cadence["unique_observation_date_count"],
         "uniqueMonitoredSymbolCount": len(unique_symbols),
         "latestObservationDate": latest_observation_date,
+        "firstObservationTimestamp": cadence["first_observation_timestamp"],
+        "latestObservationTimestamp": cadence["latest_observation_timestamp"],
+        "calendarSpanDays": cadence["calendar_span_days"],
+        "calendarSpanWeeks": cadence["calendar_span_weeks"],
+        "minimumCalendarWeeksRequired": cadence["minimum_calendar_weeks_required"],
+        "calendarRequirementMet": cadence["calendar_requirement_met"],
+        "sameDayRunCount": cadence["same_day_run_count"],
+        "tooSoonRunCount": cadence["too_soon_run_count"],
+        "cadenceWarningCount": cadence["cadence_warning_count"],
+        "cadenceStatus": cadence["cadence_status"],
         "calendarWeeksAvailable": round(calendar_weeks, 4),
         "statusCounts": dict(status_counts),
         "riskWarningCount": risk_warning_count,
@@ -172,13 +221,19 @@ def main() -> None:
         "## Governance Gates",
         "",
         f"- Observation runs available: `{observation_runs_available}`",
+        f"- Unique observation timestamp count: `{observation_runs_available}`",
+        f"- Unique observation date count: `{cadence['unique_observation_date_count']}`",
         f"- Archived observation snapshots: `{len(history_manifest.get('entries', []))}`",
         f"- Latest snapshot already archived: `{latest_already_archived}`",
         f"- Minimum required runs before human review: `{governance['minimum_observation_runs_before_review']}`",
+        f"- Calendar span days: `{cadence['calendar_span_days']}`",
         f"- Calendar weeks available: `{round(calendar_weeks, 2)}`",
         f"- Minimum required calendar weeks: `{governance['minimum_calendar_weeks_before_review']}`",
         f"- Minimum run count met: `{minimum_runs_met}`",
         f"- Minimum calendar weeks met: `{minimum_weeks_met}`",
+        f"- Same-day run count: `{cadence['same_day_run_count']}`",
+        f"- Too-soon run count: `{cadence['too_soon_run_count']}`",
+        f"- Cadence status: `{cadence['cadence_status']}`",
         f"- Risk warning count: `{risk_warning_count}`",
         f"- Missing data count: `{missing_data_count}`",
         f"- Candidate degraded count: `{degraded_count}`",
@@ -204,6 +259,11 @@ def main() -> None:
     summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(f"observation_runs_available={observation_runs_available}")
+    print(f"unique_observation_timestamp_count={observation_runs_available}")
+    print(f"unique_observation_date_count={cadence['unique_observation_date_count']}")
+    print(f"calendar_span_days={cadence['calendar_span_days']}")
+    print(f"calendar_span_weeks={cadence['calendar_span_weeks']}")
+    print(f"cadence_status={cadence['cadence_status']}")
     print(f"minimum_required_runs={governance['minimum_observation_runs_before_review']}")
     print(f"unique_monitored_symbols={len(unique_symbols)}")
     print(f"latest_observation_date={latest_observation_date}")

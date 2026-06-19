@@ -4,6 +4,8 @@ This checklist is for monthly or manual research-only shadow observation refresh
 
 For the full operational map and promotion boundaries, see `SHADOW_OBSERVATION_LIFECYCLE.md`.
 
+Same-day repeated runs can validate the pipeline, but they are not monthly evidence. Do not run repeated same-day observations just to reach `8 / 8`; the governance gate also requires 8 calendar weeks.
+
 ## Purpose
 
 Use this workflow after research price refreshes to update the 12-symbol shadow observation log and governance review. The goal is to preserve longitudinal evidence before any candidate can be considered for human review.
@@ -87,6 +89,7 @@ Confirm:
 - Minimum observation runs before human review: `8`.
 - Minimum calendar weeks before human review: `8`.
 - Archived snapshots count only when they have unique real observation timestamps.
+- Same-day runs may count as unique technical runs, but they do not satisfy calendar evidence.
 - Human review is not live promotion.
 - Live promotion is never automatic.
 - No candidate can be promoted from this checklist.
