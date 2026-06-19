@@ -3285,6 +3285,15 @@ allocWrapper.appendChild(editBtn);
         if (event.key === "Enter") applyOverride(stock.symbol, input.value);
       });
 
+      const expandedDetails = card.querySelector(".expanded-detail-panel");
+      if (expandedDetails) {
+        const syncExpandedLayout = function () {
+          card.classList.toggle("details-open", expandedDetails.open);
+        };
+        expandedDetails.addEventListener("toggle", syncExpandedLayout);
+        syncExpandedLayout();
+      }
+
       cardsEl.appendChild(card);
     });
     translateTemplateLabels();
