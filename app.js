@@ -2924,6 +2924,26 @@ amountBreakdown: "金额分解",
       "<p class=\"final-sentence\"></p>"
     ].join("");
 
+    // Layout-only class map for the full-width expanded detail panel.
+    var detailSections = el.querySelectorAll(".explanation-section");
+    var detailSectionClasses = [
+      ["detail-summary-card", "detail-recommendation-card"],
+      ["detail-summary-card", "detail-key-metrics-card"],
+      ["factor-chain-card"],
+      ["detail-summary-card", "amount-breakdown-card"],
+      ["recommendation-explanation-card"],
+      ["data-status-card", "news-status-card"],
+      ["data-status-card", "fundamentals-status-card"],
+      ["data-status-card", "external-status-card"],
+      ["positive-factors-card"],
+      ["negative-factors-card"]
+    ];
+    detailSections.forEach(function (section, index) {
+      (detailSectionClasses[index] || []).forEach(function (className) {
+        section.classList.add(className);
+      });
+    });
+
     // Fill data fields
     el.querySelector(".explanation-conclusion").textContent = action.label;
     el.querySelector('[data-field="multiplier"]').textContent = formatMultiplier(m);

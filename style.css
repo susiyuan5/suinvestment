@@ -3063,3 +3063,256 @@ input::placeholder {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   word-break: break-all;
 }
+
+/* Manual Trade Plan expanded detail layout cleanup */
+.expanded-detail-panel,
+.expanded-detail-panel > *,
+.action-explanation,
+.action-explanation > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.action-explanation {
+  width: 100%;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+  overflow: hidden;
+  background: rgba(12, 19, 32, 0.94);
+}
+
+.action-explanation,
+.action-explanation * {
+  white-space: normal !important;
+}
+
+.action-explanation .explanation-section {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(83, 120, 166, 0.28);
+  border-radius: 8px;
+  background: rgba(18, 29, 45, 0.78);
+}
+
+.detail-recommendation-card {
+  grid-column: 1 / 4;
+}
+
+.detail-key-metrics-card {
+  grid-column: 4 / 9;
+}
+
+.amount-breakdown-card {
+  grid-column: 9 / 13;
+  border-color: rgba(79, 195, 161, 0.55) !important;
+  background: rgba(79, 195, 161, 0.1) !important;
+}
+
+.recommendation-explanation-card {
+  grid-column: 1 / 5;
+}
+
+.factor-chain-card {
+  grid-column: 5 / 13;
+}
+
+.positive-factors-card,
+.negative-factors-card {
+  grid-column: 1 / 5;
+}
+
+.news-status-card {
+  grid-column: 5 / 9;
+}
+
+.fundamentals-status-card {
+  grid-column: 9 / 13;
+}
+
+.external-status-card {
+  grid-column: 5 / 13;
+}
+
+.action-explanation > .final-sentence {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  background: rgba(79, 195, 161, 0.07);
+}
+
+.detail-summary-card {
+  min-height: 108px;
+}
+
+.amount-breakdown-card [data-field="bd-final"] {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: clamp(1.18rem, 1.8vw, 1.55rem);
+  line-height: 1.15;
+  font-weight: 900;
+}
+
+.action-explanation .explanation-fields {
+  grid-template-columns: minmax(96px, auto) minmax(0, 1fr);
+}
+
+.detail-key-metrics-card .explanation-fields {
+  grid-template-columns: repeat(2, minmax(78px, auto) minmax(42px, 1fr));
+  gap: 5px 10px;
+}
+
+.action-explanation .field-label {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.action-explanation .field-value,
+.action-explanation .explanation-reason,
+.action-explanation li,
+.action-explanation .final-sentence,
+.algorithm-chain-line {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.action-explanation .explanation-reason,
+.action-explanation li,
+.action-explanation .final-sentence {
+  line-height: 1.65;
+}
+
+.factor-chain-card .algorithm-chain-line {
+  padding: 9px 10px;
+  border-radius: 6px;
+  background: rgba(7, 15, 25, 0.58);
+  white-space: normal;
+}
+
+.positive-factors-card {
+  border-color: rgba(79, 195, 161, 0.32) !important;
+}
+
+.negative-factors-card {
+  border-color: rgba(255, 92, 122, 0.3) !important;
+}
+
+@media (min-width: 1024px) {
+  .stock-card:has(.expanded-detail-panel[open]) {
+    grid-template-rows: auto auto auto !important;
+    min-height: 0 !important;
+    padding-bottom: 14px !important;
+  }
+
+  .stock-card:has(.expanded-detail-panel[open]) .stock-values > div {
+    display: none !important;
+  }
+
+  .stock-card:has(.expanded-detail-panel[open]) .expanded-detail-panel[open] {
+    display: grid !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto !important;
+    width: 100% !important;
+    pointer-events: auto !important;
+  }
+
+  .stock-card:has(.expanded-detail-panel[open]) .expanded-detail-panel[open] > summary {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    width: 82px !important;
+  }
+
+  .expanded-detail-panel[open] > .action-explanation {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin-top: 2px;
+  }
+
+  .stock-card:has(.expanded-detail-panel[open]) .action-badge {
+    white-space: normal !important;
+    line-height: 1.25 !important;
+    text-align: center;
+  }
+}
+
+@media (max-width: 880px) {
+  .detail-recommendation-card,
+  .detail-key-metrics-card,
+  .amount-breakdown-card,
+  .recommendation-explanation-card,
+  .factor-chain-card,
+  .positive-factors-card,
+  .negative-factors-card,
+  .news-status-card,
+  .fundamentals-status-card,
+  .external-status-card {
+    grid-column: span 6;
+  }
+
+  .amount-breakdown-card,
+  .factor-chain-card,
+  .external-status-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 719px) {
+  .stock-row-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .stock-primary-info,
+  .price-row {
+    min-width: 0;
+  }
+
+  .action-badge {
+    max-width: 100%;
+    white-space: normal;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  .expanded-detail-panel[open] > .action-explanation {
+    display: grid !important;
+    width: 100%;
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .detail-recommendation-card,
+  .detail-key-metrics-card,
+  .amount-breakdown-card,
+  .recommendation-explanation-card,
+  .factor-chain-card,
+  .positive-factors-card,
+  .negative-factors-card,
+  .news-status-card,
+  .fundamentals-status-card,
+  .external-status-card,
+  .action-explanation > .final-sentence {
+    grid-column: 1;
+  }
+
+  .detail-key-metrics-card .explanation-fields,
+  .action-explanation .explanation-fields {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .action-explanation .explanation-section {
+    padding: 10px;
+  }
+
+  .positive-factors,
+  .negative-factors {
+    padding-left: 16px;
+  }
+}

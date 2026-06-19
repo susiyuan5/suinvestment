@@ -18,6 +18,7 @@ Main files:
 - `index.html`
 - `app.js`
 - `style.css`
+- `tests/`: current Python unit test entry directory.
 
 Important warning:
 
@@ -56,6 +57,23 @@ Purpose:
 - Current live portfolio manual planning only.
 - It is the copyable manual order-planning surface for the active live dashboard symbols.
 
+Main entry points:
+
+- `index.html`: Manual Trade Plan panel markup uses `#order-title`, `#orderRows`, and `#orderText`.
+- `app.js`: `render()` builds the order text, `formatManualTradePlanEntry(signal)` formats each line, and clipboard copy reads from `orderTextEl`.
+- `app.js`: `buildSignalObject(stock, row)`, `calculateSignalScore(input)`, and `calculateRiskAdjustedBuyAmount(signal)` feed the displayed recommendation and amount fields.
+
+Policy and design documents:
+
+- `DCA_STRATEGY_POLICY_LAYER.md`: primary policy document for a proposed three-layer Manual Trade Plan: Base DCA Amount, Extra Dip-Buy Amount, and Risk Cap / Cash Reserve Guard.
+- `DCA1_MANUAL_TRADE_PLAN_DESIGN.md`: design-only proposal for presenting those layers in the Manual Trade Plan without changing current behavior.
+
+Important policy status:
+
+- These documents describe a future design; they do not implement trading logic or current dashboard behavior.
+- Base DCA remains the primary strategy in the proposed policy.
+- Strategy signals may adjust only the optional extra dip-buy amount; they must not cancel the base DCA.
+
 Safety:
 
 - Research or shadow symbols must not appear here unless a future human-reviewed live promotion phase explicitly changes live portfolio symbols.
@@ -68,6 +86,10 @@ Safety:
 - `data/research-prices.json`: research-only universe historical price data.
 - `data/research-universe.json`: active 38-symbol research universe definition.
 - `data/research-universe-expansion-plan.json`: planning-only expansion proposal.
+- `data/research-universe-sector-balanced-80.json`: explicit research-only 80-symbol comparison universe.
+- `data/research-prices-sector-balanced-80.json`: explicit research-only 80-symbol comparison price file.
+- `data/market-data.json`: weekly market snapshot served by GitHub Pages.
+- `data/manual_portfolio.csv`: sample manual portfolio input for analysis tooling.
 
 The project intentionally separates research data from live/backtest data. Research-only phases must not modify `data/backtest-prices.json` unless a future explicit phase allows it.
 
@@ -103,6 +125,20 @@ Core scripts:
 
 These scripts are research-only. They do not create trades, modify the live portfolio, or unlock live promotion.
 
+Generated research/shadow result directories:
+
+- `research/results/phase6i/`: explicit 38-vs-80 research-only comparison outputs.
+- `research/results/phase6j/`: 38-vs-80 research comparison outputs.
+- `research/results/phase6k/`: promotion screening research outputs.
+- `research/results/phase6l/`: shadow-only comparison outputs.
+- `research/results/phase6m/`: risk gate and rollback review outputs.
+- `research/results/phase6n/`: disabled-by-default partial activation planning outputs.
+- `research/results/phase6o/`: monitoring framework outputs.
+- `research/results/phase6q/`: executive review pack outputs.
+- `research/results/phase6s/`: shadow observation, governance, archive, validation, and monthly review outputs.
+
+These generated outputs are evidence files. Do not edit them manually during documentation/navigation QA phases.
+
 ## G. Current Shadow Observation Status
 
 - Observation runs available: 2
@@ -134,6 +170,12 @@ python -m unittest discover -s tests
 node --check app.js
 node --check research-sandbox.js
 ```
+
+Current unit test files:
+
+- `tests/test_analysis.py`
+- `tests/test_risk_adjuster.py`
+- `tests/test_strategy.py`
 
 Shadow readiness/report-only:
 
