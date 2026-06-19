@@ -289,6 +289,7 @@ python research\run_phase6s_shadow_observation.py
 python research\analyze_shadow_observation_history.py
 python research\archive_shadow_observation_snapshot.py
 python research\analyze_shadow_observation_history.py
+python research\validate_shadow_observation_archive.py
 python research\check_shadow_refresh_readiness.py
 python -m unittest discover -s tests
 node --check app.js
@@ -310,3 +311,11 @@ python research\archive_shadow_observation_snapshot.py
 ```
 
 The archive script copies the latest Phase 6S/6T snapshot into `research/results/phase6s/history/`, updates `shadow-observation-history-manifest.json`, and writes `shadow-observation-history-summary.md`. It prevents duplicate entries for the same observation timestamp and does not fetch prices, run observations, or change live/default behavior.
+
+Archive validation:
+
+```powershell
+python research\validate_shadow_observation_archive.py
+```
+
+The validator checks manifest entries against archive folders and required files, reports duplicate timestamps, detects missing archive files, and verifies the governance observation count does not exceed unique real observation timestamps. It does not rerun observations and is not a promotion signal.

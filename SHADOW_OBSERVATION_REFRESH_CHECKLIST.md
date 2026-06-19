@@ -32,6 +32,7 @@ python research\run_phase6s_shadow_observation.py
 python research\analyze_shadow_observation_history.py
 python research\archive_shadow_observation_snapshot.py
 python research\analyze_shadow_observation_history.py
+python research\validate_shadow_observation_archive.py
 python research\check_shadow_refresh_readiness.py
 python -m unittest discover -s tests
 node --check app.js
@@ -49,8 +50,12 @@ node --check research-sandbox.js
 - `research/results/phase6s/shadow-observation-governance-summary.md`
 - `research/results/phase6s/history/shadow-observation-history-manifest.json`
 - `research/results/phase6s/history/shadow-observation-history-summary.md`
+- `research/results/phase6s/history/shadow-observation-archive-validation-report.json`
+- `research/results/phase6s/history/shadow-observation-archive-validation-summary.md`
 
 Archive after the governance analysis confirms the latest snapshot is valid. The archive script detects duplicate observation timestamps and does not create another history entry for the same real observation. Archived snapshots are longitudinal evidence only; they do not promote candidates.
+
+Run archive validation after the archive step. It checks history integrity only: required files, manifest/folder consistency, duplicate timestamp detection, and whether governance observation count is grounded in unique real timestamps. It does not rerun observations or promote candidates.
 
 ## Before Commit
 
