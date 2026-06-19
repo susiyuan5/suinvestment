@@ -2,6 +2,8 @@
 
 This checklist is for monthly or manual research-only shadow observation refreshes. It does not create trading advice, does not update the Manual Trade Plan, and does not change the live/default dashboard.
 
+For the full operational map and promotion boundaries, see `SHADOW_OBSERVATION_LIFECYCLE.md`.
+
 ## Purpose
 
 Use this workflow after research price refreshes to update the 12-symbol shadow observation log and governance review. The goal is to preserve longitudinal evidence before any candidate can be considered for human review.

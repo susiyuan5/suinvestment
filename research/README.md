@@ -328,3 +328,9 @@ python research\generate_shadow_monthly_review.py
 ```
 
 The monthly review generator reads existing governance, archive validation, and history files and writes `research/results/phase6s/shadow-monthly-review-report.json` plus `research/results/phase6s/shadow-monthly-review-summary.md`. It does not run observations, archive snapshots, fetch prices, or change live/default behavior.
+
+Lifecycle map:
+
+- `SHADOW_OBSERVATION_LIFECYCLE.md`
+
+The lifecycle map documents Phase 6S through Phase 6X, including observation, governance, archive, archive validation, readiness, monthly review, and promotion boundaries. It is read-only documentation and does not run observations or alter live behavior.

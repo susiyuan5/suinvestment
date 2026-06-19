@@ -114,6 +114,7 @@ Phase 6A adds a separate research universe scaffold for broader validation. See 
 - Phase 6V adds `python research\archive_shadow_observation_snapshot.py` for research-only shadow observation history archiving. Archived snapshots preserve longitudinal evidence without changing live/default behavior or promoting candidates.
 - Phase 6W adds `python research\validate_shadow_observation_archive.py` to validate shadow observation archive integrity. It checks manifest/folder consistency and duplicate timestamps without rerunning observations or changing live/default behavior.
 - Phase 6X adds `python research\generate_shadow_monthly_review.py` and [SHADOW_MONTHLY_REVIEW_TEMPLATE.md](SHADOW_MONTHLY_REVIEW_TEMPLATE.md) for research-only monthly review summaries. The report reads existing readiness and archive validation outputs and cannot promote candidates.
+- Phase 6Y adds [SHADOW_OBSERVATION_LIFECYCLE.md](SHADOW_OBSERVATION_LIFECYCLE.md), a read-only governance map for Phase 6S-6X. It documents the operational flow and boundaries without running observations or changing live/default behavior.
 
 ## Live Calculator Signal
 
