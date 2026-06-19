@@ -7,7 +7,7 @@ does not modify dashboard, portfolio, or trade-plan data.
 from __future__ import annotations
 
 import json
-from collections import Counter, defaultdict
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -17,6 +17,7 @@ GOVERNANCE_FILE = ROOT / "research" / "shadow_observation_governance.json"
 OBSERVATION_FILE = ROOT / "research" / "results" / "phase6s" / "shadow-observation-log.json"
 VALIDATION_FILE = ROOT / "research" / "results" / "phase6s" / "shadow-observation-validation-report.json"
 OUT_DIR = ROOT / "research" / "results" / "phase6s"
+HISTORY_MANIFEST_FILE = OUT_DIR / "history" / "shadow-observation-history-manifest.json"
 
 
 def load_json(path: Path) -> dict:
@@ -31,6 +32,12 @@ def parse_date(value: str | None) -> datetime | None:
         return None
     normalized = value.replace("Z", "+00:00")
     return datetime.fromisoformat(normalized)
+
+
+def load_history_manifest() -> dict:
+    if HISTORY_MANIFEST_FILE.exists():
+        return load_json(HISTORY_MANIFEST_FILE)
+    return {"entries": [], "warnings": [], "duplicateObservationTimestamps": []}
 
 
 def candidate_status(
@@ -58,6 +65,7 @@ def main() -> None:
     governance = load_json(GOVERNANCE_FILE)
     observation_log = load_json(OBSERVATION_FILE)
     validation = load_json(VALIDATION_FILE) if VALIDATION_FILE.exists() else {}
+    history_manifest = load_history_manifest()
 
     observations = observation_log.get("observations", [])
     if not observations:
@@ -65,7 +73,13 @@ def main() -> None:
 
     generated_at = observation_log.get("generatedAt")
     latest_observation_date = generated_at
-    observation_dates = sorted({row.get("observation_date") for row in observations if row.get("observation_date")})
+    latest_snapshot_timestamps = {row.get("observation_date") for row in observations if row.get("observation_date")}
+    archived_timestamps = {
+        entry.get("observationTimestamp")
+        for entry in history_manifest.get("entries", [])
+        if entry.get("observationTimestamp")
+    }
+    observation_dates = sorted(archived_timestamps | latest_snapshot_timestamps)
     observation_runs_available = len(observation_dates)
     unique_symbols = sorted({row["symbol"] for row in observations})
     status_counts = Counter(row.get("monitoring_status", "unknown") for row in observations)
@@ -73,6 +87,7 @@ def main() -> None:
     degraded_count = status_counts.get("candidate_degraded", 0)
     improved_count = status_counts.get("candidate_improved", 0)
     missing_data_count = sum(1 for row in observations if row.get("missing_price_warning") or not row.get("price_available"))
+    latest_already_archived = generated_at in archived_timestamps
 
     first_dt = parse_date(observation_dates[0]) if observation_dates else None
     latest_dt = parse_date(observation_dates[-1]) if observation_dates else None
@@ -136,6 +151,12 @@ def main() -> None:
         "candidateReviewStatusCounts": dict(status_summary),
         "candidateStatuses": symbol_statuses,
         "validationSourcePassed": validation.get("passed"),
+        "historyManifestFound": HISTORY_MANIFEST_FILE.exists(),
+        "archivedObservationCount": len(history_manifest.get("entries", [])),
+        "uniqueArchivedObservationTimestampCount": len(archived_timestamps),
+        "latestSnapshotAlreadyArchived": latest_already_archived,
+        "historyWarnings": history_manifest.get("warnings", []),
+        "duplicateObservationTimestamps": history_manifest.get("duplicateObservationTimestamps", []),
         "explicitStatement": "No candidate is eligible for human review with only one observation run. No candidate is eligible for live promotion from this report.",
     }
 
@@ -151,6 +172,8 @@ def main() -> None:
         "## Governance Gates",
         "",
         f"- Observation runs available: `{observation_runs_available}`",
+        f"- Archived observation snapshots: `{len(history_manifest.get('entries', []))}`",
+        f"- Latest snapshot already archived: `{latest_already_archived}`",
         f"- Minimum required runs before human review: `{governance['minimum_observation_runs_before_review']}`",
         f"- Calendar weeks available: `{round(calendar_weeks, 2)}`",
         f"- Minimum required calendar weeks: `{governance['minimum_calendar_weeks_before_review']}`",
@@ -159,6 +182,7 @@ def main() -> None:
         f"- Risk warning count: `{risk_warning_count}`",
         f"- Missing data count: `{missing_data_count}`",
         f"- Candidate degraded count: `{degraded_count}`",
+        f"- History warnings: `{', '.join(history_manifest.get('warnings', [])) or 'none'}`",
         "",
         "## Review Eligibility",
         "",

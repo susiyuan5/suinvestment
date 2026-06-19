@@ -5,8 +5,8 @@ Shadow observation is research-only. No live promotion is allowed from this repo
 ## Governance Gates
 
 - Observation runs available: `1`
-- Archived observation snapshots: `1`
-- Latest snapshot already archived: `True`
+- Archived observation snapshots: `0`
+- Latest snapshot already archived: `False`
 - Minimum required runs before human review: `8`
 - Calendar weeks available: `0.0`
 - Minimum required calendar weeks: `8`

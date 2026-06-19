@@ -111,6 +111,7 @@ Phase 6A adds a separate research universe scaffold for broader validation. See 
 - Phase 6S adds `python research\run_phase6s_shadow_observation.py` to generate a shadow observation log for the 12 monitored symbols. The log is research-only, is shown in `research-sandbox.html`, does not change the default 38-symbol research universe, and is not trading advice.
 - Phase 6T adds shadow observation governance gates with `python research\analyze_shadow_observation_history.py`. At least 8 observation runs and 8 calendar weeks are required before any candidate can be considered for human review, and no live activation is allowed from the sandbox.
 - Phase 6U adds [SHADOW_OBSERVATION_REFRESH_CHECKLIST.md](SHADOW_OBSERVATION_REFRESH_CHECKLIST.md) and `python research\check_shadow_refresh_readiness.py` for manual/monthly research-only refresh review. The checklist does not automate live behavior and cannot promote candidates.
+- Phase 6V adds `python research\archive_shadow_observation_snapshot.py` for research-only shadow observation history archiving. Archived snapshots preserve longitudinal evidence without changing live/default behavior or promoting candidates.
 
 ## Live Calculator Signal
 

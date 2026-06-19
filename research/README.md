@@ -287,6 +287,8 @@ Recommended command order:
 python scripts\update_research_prices.py
 python research\run_phase6s_shadow_observation.py
 python research\analyze_shadow_observation_history.py
+python research\archive_shadow_observation_snapshot.py
+python research\analyze_shadow_observation_history.py
 python research\check_shadow_refresh_readiness.py
 python -m unittest discover -s tests
 node --check app.js
@@ -300,3 +302,11 @@ python research\check_shadow_refresh_readiness.py
 ```
 
 Interpretation: at least 8 observation runs and 8 calendar weeks are required before human review. Human review is not live promotion, and live promotion is never automatic.
+
+Archive support:
+
+```powershell
+python research\archive_shadow_observation_snapshot.py
+```
+
+The archive script copies the latest Phase 6S/6T snapshot into `research/results/phase6s/history/`, updates `shadow-observation-history-manifest.json`, and writes `shadow-observation-history-summary.md`. It prevents duplicate entries for the same observation timestamp and does not fetch prices, run observations, or change live/default behavior.

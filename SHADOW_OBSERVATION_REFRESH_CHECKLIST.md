@@ -30,6 +30,8 @@ Run commands in this order:
 python scripts\update_research_prices.py
 python research\run_phase6s_shadow_observation.py
 python research\analyze_shadow_observation_history.py
+python research\archive_shadow_observation_snapshot.py
+python research\analyze_shadow_observation_history.py
 python research\check_shadow_refresh_readiness.py
 python -m unittest discover -s tests
 node --check app.js
@@ -45,6 +47,10 @@ node --check research-sandbox.js
 - `research/results/phase6s/shadow-observation-validation-report.json`
 - `research/results/phase6s/shadow-observation-governance-report.json`
 - `research/results/phase6s/shadow-observation-governance-summary.md`
+- `research/results/phase6s/history/shadow-observation-history-manifest.json`
+- `research/results/phase6s/history/shadow-observation-history-summary.md`
+
+Archive after the governance analysis confirms the latest snapshot is valid. The archive script detects duplicate observation timestamps and does not create another history entry for the same real observation. Archived snapshots are longitudinal evidence only; they do not promote candidates.
 
 ## Before Commit
 
@@ -68,6 +74,7 @@ Confirm:
 
 - Minimum observation runs before human review: `8`.
 - Minimum calendar weeks before human review: `8`.
+- Archived snapshots count only when they have unique real observation timestamps.
 - Human review is not live promotion.
 - Live promotion is never automatic.
 - No candidate can be promoted from this checklist.

@@ -11,7 +11,8 @@
         observation: "research/results/phase6s/shadow-observation-log.json",
         observationSummary: "research/results/phase6s/shadow-observation-summary.md",
         governance: "research/results/phase6s/shadow-observation-governance-report.json",
-        governanceSummary: "research/results/phase6s/shadow-observation-governance-summary.md"
+        governanceSummary: "research/results/phase6s/shadow-observation-governance-summary.md",
+        historyManifest: "research/results/phase6s/history/shadow-observation-history-manifest.json"
     };
 
     const state = {
@@ -26,7 +27,8 @@
         observation: null,
         observationSummary: "",
         governance: null,
-        governanceSummary: ""
+        governanceSummary: "",
+        historyManifest: null
     };
 
     function byId(id) {
@@ -240,6 +242,8 @@
                     <div class="fact"><span>Minimum required runs</span><strong>${escapeHtml(governance.minimum_observation_runs_before_review || 8)}</strong></div>
                     <div class="fact"><span>Calendar weeks available</span><strong>${escapeHtml(state.governance.calendarWeeksAvailable)}</strong></div>
                     <div class="fact"><span>Minimum required weeks</span><strong>${escapeHtml(governance.minimum_calendar_weeks_before_review || 8)}</strong></div>
+                    <div class="fact"><span>Archived observations</span><strong>${escapeHtml(state.governance.archivedObservationCount || 0)}</strong></div>
+                    <div class="fact"><span>Latest snapshot archived</span><strong>${escapeHtml(state.governance.latestSnapshotAlreadyArchived ? "yes" : "no")}</strong></div>
                     <div class="fact"><span>Eligible for human review</span><strong>${escapeHtml(state.governance.anyCandidateEligibleForHumanReview ? "yes" : "no")}</strong></div>
                     <div class="fact"><span>Eligible for live promotion</span><strong class="danger">no</strong></div>
                 </div>
@@ -296,6 +300,7 @@
             const observationSummary = await loadText(paths.observationSummary).catch(() => "");
             const governance = await loadJson(paths.governance).catch(() => null);
             const governanceSummary = await loadText(paths.governanceSummary).catch(() => "");
+            const historyManifest = await loadJson(paths.historyManifest).catch(() => null);
             state.review = review;
             state.candidates = parseCsv(candidatesCsv);
             state.deferred = parseCsv(deferredCsv);
@@ -308,6 +313,7 @@
             state.observationSummary = observationSummary;
             state.governance = governance;
             state.governanceSummary = governanceSummary;
+            state.historyManifest = historyManifest;
 
             renderExecutive();
             renderComparison();
