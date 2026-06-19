@@ -805,6 +805,8 @@ amountBreakdown: "金额分解",
     marketRows: new Map(),
     rows: new Map(),
     qqqSignal: null,
+    qqqSignalLoaded: false,
+    dataQualityEvaluated: false,
     marketRegime: null,
     backtestResult: null,
     panicActive: false,
@@ -1016,6 +1018,10 @@ amountBreakdown: "金额分解",
     refreshBtn.textContent = t("refreshing");
     lastUpdatedEl.textContent = t("refreshingMarketData");
     copyStatusEl.textContent = "";
+    state.qqqSignal = null;
+    state.qqqSignalLoaded = false;
+    state.dataQualityEvaluated = false;
+    state.panicActive = false;
     markCardsLoading();
 
     state.weeklySnapshot = await fetchWeeklySnapshot();
@@ -1031,13 +1037,15 @@ amountBreakdown: "金额分解",
       if (!result) return;
       if (result.symbol === "QQQ") {
         state.qqqSignal = getDecisionChange(result);
+        state.qqqSignalLoaded = typeof state.qqqSignal === "number";
       } else {
         state.marketRows.set(result.symbol, result);
       }
     });
 
-    state.panicActive = typeof state.qqqSignal === "number" && state.qqqSignal <= CONFIG.qqqPanicThreshold;
+    state.panicActive = state.qqqSignalLoaded && state.qqqSignal <= CONFIG.qqqPanicThreshold;
     applyManualOverrides();
+    state.dataQualityEvaluated = true;
     render();
     renderAlgorithmTestPanel();
 
@@ -4696,7 +4704,7 @@ function equalizeAllocations() {
 
 
   function render() {
-    panicBanner.classList.toggle("hidden", !state.panicActive);
+    panicBanner.classList.toggle("hidden", !canShowPanicBanner());
     renderDeploymentSummary();
 
     const orderLines = [t("manualPlanHeader"), ""];
@@ -5311,6 +5319,19 @@ function equalizeAllocations() {
   }
 
   function summarizeDataQuality(signals) {
+    if (!state.dataQualityEvaluated) {
+      return {
+        fresh: "--",
+        stale: "--",
+        manual: "--",
+        legacy: "--",
+        fallback: "--",
+        cache: "--",
+        marketRegimeLabel: t("dataQualityWaiting"),
+        warning: t("dataQualityWaiting")
+      };
+    }
+
     const counts = {
       fresh: 0,
       stale: 0,
@@ -5353,6 +5374,13 @@ function equalizeAllocations() {
   }
 
   function getMarketRegimeDataStatus() {
+    if (!state.dataQualityEvaluated && !state.marketRegime) {
+      return {
+        fallback: false,
+        label: t("dataQualityWaiting")
+      };
+    }
+
     const regime = state.marketRegime || getNeutralMarketRegime("QQQ");
     const meta = regime && regime.field_meta ? regime.field_meta.marketRegime : null;
     const metaSource = meta && meta.source ? meta.source : "";
@@ -5377,6 +5405,10 @@ function equalizeAllocations() {
 
   function setMetricText(element, value) {
     if (element) element.textContent = String(value);
+  }
+
+  function canShowPanicBanner() {
+    return state.dataQualityEvaluated && state.qqqSignalLoaded && state.panicActive;
   }
 
   function showDeploymentStatus(message, warning) {

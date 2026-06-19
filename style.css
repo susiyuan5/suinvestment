@@ -1213,6 +1213,42 @@ input::placeholder {
   margin: 0 14px;
 }
 
+.research-sandbox-entry {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 14px 12px;
+  padding: 12px;
+  border: 1px solid rgba(79, 195, 161, 0.34);
+  border-radius: 8px;
+  background: rgba(79, 195, 161, 0.08);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.research-sandbox-entry:hover,
+.research-sandbox-entry:focus-visible {
+  border-color: rgba(79, 195, 161, 0.68);
+  background: rgba(79, 195, 161, 0.12);
+}
+
+.research-sandbox-entry strong,
+.research-sandbox-entry small {
+  display: block;
+}
+
+.research-sandbox-entry strong {
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.research-sandbox-entry small {
+  margin-top: 4px;
+  color: var(--soft);
+  line-height: 1.45;
+}
+
 .algorithm-research-content {
   display: grid;
   gap: 12px;
@@ -1950,6 +1986,11 @@ input::placeholder {
 
   .tool-details summary {
     grid-template-columns: 1fr;
+  }
+
+  .research-sandbox-entry {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .tool-details summary .secondary-button {
