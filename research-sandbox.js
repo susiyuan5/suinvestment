@@ -7,7 +7,9 @@
         universe: "research/results/phase6j/universe-summary-38-vs-80.json",
         sector: "research/results/phase6j/sector-breakdown-38-vs-80.json",
         monitoring: "research/results/phase6o/monitoring-framework.json",
-        removalRules: "research/results/phase6o/removal-rules.md"
+        removalRules: "research/results/phase6o/removal-rules.md",
+        observation: "research/results/phase6s/shadow-observation-log.json",
+        observationSummary: "research/results/phase6s/shadow-observation-summary.md"
     };
 
     const state = {
@@ -18,7 +20,9 @@
         universe: null,
         sector: null,
         monitoring: null,
-        removalRules: ""
+        removalRules: "",
+        observation: null,
+        observationSummary: ""
     };
 
     function byId(id) {
@@ -205,8 +209,53 @@
             executive: `Recommendation: ${state.review.executiveRecommendation}\nActive default: 38\nExpanded 80: research-only\nShadow 50: shadow-only\nPartial activation: disabled_by_default\nLive/default: unchanged`,
             candidates: state.candidates.map((row) => `${row.symbol}\t${row.sector_category}\t${row.why_selected}\t${row.activation_readiness}`).join("\n"),
             checklist: state.checklist
+            ,
+            observation: state.observationSummary || "No Phase 6S observation summary loaded."
         };
         navigator.clipboard.writeText(textByKind[kind] || "");
+    }
+
+    function formatPercent(value) {
+        if (value === null || value === undefined || value === "") {
+            return "n/a";
+        }
+        return `${(Number(value) * 100).toFixed(2)}%`;
+    }
+
+    function renderObservation() {
+        const target = byId("observation-summary");
+        const table = byId("observation-table").querySelector("tbody");
+        if (!state.observation) {
+            target.innerHTML = '<p class="muted">No Phase 6S shadow observation log found yet. Run <code>python research\\run_phase6s_shadow_observation.py</code>.</p>';
+            table.innerHTML = "";
+            return;
+        }
+        const counts = state.observation.statusCounts || {};
+        target.innerHTML = `
+            <div class="facts">
+                <div class="fact"><span>Latest observation date</span><strong>${escapeHtml(state.observation.generatedAt)}</strong></div>
+                <div class="fact"><span>Monitored symbols</span><strong>${escapeHtml(state.observation.monitoredSymbolCount)}</strong></div>
+                <div class="fact"><span>keep_watching</span><strong>${escapeHtml(counts.keep_watching || 0)}</strong></div>
+                <div class="fact"><span>needs_more_data</span><strong>${escapeHtml(counts.needs_more_data || 0)}</strong></div>
+                <div class="fact"><span>risk_warning</span><strong>${escapeHtml(counts.risk_warning || 0)}</strong></div>
+                <div class="fact"><span>candidate_degraded</span><strong>${escapeHtml(counts.candidate_degraded || 0)}</strong></div>
+                <div class="fact"><span>candidate_improved</span><strong>${escapeHtml(counts.candidate_improved || 0)}</strong></div>
+                <div class="fact"><span>Risk warnings</span><strong class="${(state.observation.riskWarningSymbols || []).length ? "warn" : "ok"}">${escapeHtml((state.observation.riskWarningSymbols || []).join(", ") || "none")}</strong></div>
+            </div>
+        `;
+        table.innerHTML = (state.observation.observations || []).map((row) => `
+            <tr>
+                <td><strong>${escapeHtml(row.symbol)}</strong></td>
+                <td>${escapeHtml(row.category)}</td>
+                <td>${escapeHtml(row.latest_price_date || "missing")}</td>
+                <td>${escapeHtml(row.price_coverage_rows)}</td>
+                <td>${escapeHtml(formatPercent(row.recent_return_proxy))}</td>
+                <td>${escapeHtml(formatPercent(row.volatility_proxy))}</td>
+                <td>${escapeHtml(row.risk_gate_status)}</td>
+                <td>${escapeHtml(row.monitoring_status)}</td>
+                <td>${escapeHtml((row.risk_gate_warnings || []).join(", ") || "none")}</td>
+            </tr>
+        `).join("");
     }
 
     async function init() {
@@ -221,6 +270,8 @@
                 loadJson(paths.monitoring),
                 loadText(paths.removalRules)
             ]);
+            const observation = await loadJson(paths.observation).catch(() => null);
+            const observationSummary = await loadText(paths.observationSummary).catch(() => "");
             state.review = review;
             state.candidates = parseCsv(candidatesCsv);
             state.deferred = parseCsv(deferredCsv);
@@ -229,6 +280,8 @@
             state.sector = sector;
             state.monitoring = monitoring;
             state.removalRules = removalRules;
+            state.observation = observation;
+            state.observationSummary = observationSummary;
 
             renderExecutive();
             renderComparison();
@@ -237,6 +290,7 @@
             renderRiskGates();
             renderMonitoring();
             renderChecklist();
+            renderObservation();
 
             byId("load-state").innerHTML = '<strong class="ok">Loaded.</strong> Read-only sandbox data is available for human review.';
         } catch (error) {
