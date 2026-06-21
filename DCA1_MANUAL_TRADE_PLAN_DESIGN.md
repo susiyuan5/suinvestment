@@ -4,6 +4,10 @@ Status: design-only proposal; not implemented
 
 This report proposes how the Manual Trade Plan could present the policy defined in `DCA_STRATEGY_POLICY_LAYER.md`. It does not change current formulas, signal calculations, buy amounts, Manual Trade Plan behavior, dashboard UI, data, or execution behavior.
 
+## Checkpoint Status
+
+This document is a design-only checkpoint for future Manual Trade Plan DCA presentation. It does not implement DCA execution logic, does not change buy amount calculations, does not change live recommendation formulas, does not modify Manual Trade Plan behavior, and does not add broker, trading, activate, or promote controls.
+
 ## Design Objective
 
 Keep scheduled DCA visible and primary while making any opportunistic amount understandable. A future Manual Trade Plan should show the path from base allocation to final suggested amount without implying that a signal can cancel the base contribution.

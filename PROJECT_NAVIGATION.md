@@ -2,6 +2,10 @@
 
 This document is the starting map for the live dashboard, research sandbox, Phase 6 research files, shadow observation workflow, production QA reports, and safety boundaries.
 
+## NAV2.5 / DCA1 Documentation Checkpoint
+
+The DCA policy layer and DCA1 Manual Trade Plan design are documentation-only checkpoints. They describe future UI/policy structure for Base DCA, Extra Dip-Buy, Risk Guard, Final Amount, and Factor Chain display, but they do not implement trading logic, change live formulas, change Manual Trade Plan behavior, or add broker/trading controls.
+
 ## A. Main Live Dashboard
 
 Production URL:
