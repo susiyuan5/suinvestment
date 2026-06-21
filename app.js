@@ -840,6 +840,7 @@ amountBreakdown: "金额分解",
 
   const cardsEl = document.getElementById("cards");
   const orderTextEl = document.getElementById("orderText");
+  const dcaPreviewRowsEl = document.getElementById("dcaPreviewRows");
   const copyStatusEl = document.getElementById("copyStatus");
   const refreshBtn = document.getElementById("refreshBtn");
   const copyBtn = document.getElementById("copyBtn");
@@ -4800,6 +4801,142 @@ function equalizeAllocations() {
     renderDataQualitySummary(entries.map(function (entry) {
       return entry.signal;
     }));
+    renderDcaPolicyPreview(entries);
+  }
+
+  function renderDcaPolicyPreview(entries) {
+    if (!dcaPreviewRowsEl) return;
+    dcaPreviewRowsEl.innerHTML = "";
+
+    if (!Array.isArray(entries) || !entries.length) {
+      const empty = document.createElement("p");
+      empty.className = "dca-preview-empty";
+      empty.textContent = "DCA preview waiting for data / 定投预览等待数据";
+      dcaPreviewRowsEl.appendChild(empty);
+      return;
+    }
+
+    const marketStatus = getMarketRegimeDataStatus();
+    entries.forEach(function (entry) {
+      const signal = entry.signal || {};
+      const source = String(signal.data_source || "");
+      const fieldIssues = getFieldQualityIssues(signal.field_provenance);
+      const waiting = !state.dataQualityEvaluated || /loading/i.test(source);
+      const poorData = !waiting && (
+        signal.data_freshness === "stale" ||
+        signal.data_freshness === "missing" ||
+        /unavailable/i.test(source) ||
+        fieldIssues.length > 0
+      );
+      const manualReview = poorData || marketStatus.fallback;
+      const currentAmount = isFiniteNumber(signal.suggested_buy_amount)
+        ? formatCurrency(signal.suggested_buy_amount)
+        : "--";
+      const currentAction = signal.suggested_action ? displayAction(signal.suggested_action) : "--";
+      const currentRisk = signal.risk_level ? displayRiskLevel(signal.risk_level) : "--";
+
+      const row = document.createElement("details");
+      row.className = "dca-preview-symbol";
+
+      const summary = document.createElement("summary");
+      const identity = document.createElement("span");
+      identity.className = "dca-preview-symbol-name";
+      identity.textContent = signal.symbol || entry.stock.symbol;
+      const amount = document.createElement("strong");
+      amount.textContent = currentAmount;
+      const status = document.createElement("span");
+      status.className = "dca-preview-status " + (manualReview ? "is-warning" : waiting ? "is-waiting" : "is-preview");
+      status.textContent = waiting
+        ? "Waiting / 等待数据"
+        : manualReview
+          ? "Manual review / 人工复核"
+          : "Preview only / 仅预览";
+      summary.append(identity, amount, status);
+      row.appendChild(summary);
+
+      const current = document.createElement("section");
+      current.className = "dca-preview-current";
+      current.innerHTML = "<h4>Current Manual Plan / 当前手动计划</h4>";
+      const currentGrid = document.createElement("div");
+      currentGrid.className = "dca-preview-current-grid";
+      currentGrid.append(
+        createDcaPreviewValue("Recommendation / 建议", currentAction),
+        createDcaPreviewValue("Displayed amount / 当前金额", currentAmount),
+        createDcaPreviewValue("Risk / 风险", currentRisk)
+      );
+      current.appendChild(currentGrid);
+      row.appendChild(current);
+
+      const stages = document.createElement("div");
+      stages.className = "dca-preview-stages";
+      stages.append(
+        createDcaPreviewStage("Base DCA Preview / 基础定投", waiting ? "Waiting for data / 等待数据" : "Label only · policy not active / 仅标签，策略未启用", "neutral"),
+        createDcaPreviewStage("Extra Dip-Buy Preview / 额外逢低买入", waiting ? "Waiting / 等待数据" : manualReview ? "Blocked by data/risk · manual review / 数据或风险阻止，需人工复核" : "Inactive · policy not active / 未启用", manualReview ? "warning" : "neutral"),
+        createDcaPreviewStage("Risk Guard Preview / 风险保护", waiting ? "Waiting / 等待数据" : manualReview ? "Caution · manual review required / 谨慎，需人工复核" : "Clear label only · preview / 仅预览状态", manualReview ? "warning" : "clear"),
+        createDcaPreviewStage("Final Amount Preview / 最终金额预览", waiting ? "DCA preview waiting for data / 等待数据" : "Not active · future policy preview only / 未启用，仅未来策略预览", "inactive")
+      );
+      row.appendChild(stages);
+
+      const chain = document.createElement("section");
+      chain.className = "dca-preview-chain";
+      const chainTitle = document.createElement("h4");
+      chainTitle.textContent = "Factor Chain Preview / 因素链预览";
+      const chainList = document.createElement("ol");
+      [
+        "Current signal / 当前信号: " + (isFiniteNumber(signal.signal_score) ? signal.signal_score : "--"),
+        "Existing recommendation / 现有建议: " + currentAction,
+        "Existing manual amount / 现有手动金额: " + currentAmount,
+        "DCA policy layer / 定投策略层: not active · preview only",
+        "Risk guard / 风险保护: " + (manualReview ? "manual review required" : "not active · preview only"),
+        "Final preview / 最终预览: not active · not used in current buy amount"
+      ].forEach(function (text) {
+        const item = document.createElement("li");
+        item.textContent = text;
+        chainList.appendChild(item);
+      });
+      chain.append(chainTitle, chainList);
+      row.appendChild(chain);
+
+      if (waiting || manualReview) {
+        const warning = document.createElement("p");
+        warning.className = "dca-preview-warning";
+        warning.textContent = waiting
+          ? "DCA preview waiting for data. No confident final preview is shown. / 定投预览等待数据，不显示确定性最终金额。"
+          : [
+              "Manual review required / 需要人工复核.",
+              fieldIssues.length ? "Data: " + fieldIssues.join(", ") + "." : "",
+              marketStatus.fallback ? "QQQ / market regime unavailable or fallback. Warning only." : ""
+            ].filter(Boolean).join(" ");
+        row.appendChild(warning);
+      }
+
+      const safety = document.createElement("p");
+      safety.className = "dca-preview-row-safety";
+      safety.textContent = "Display-only mock · no trading execution · manual decision required";
+      row.appendChild(safety);
+      dcaPreviewRowsEl.appendChild(row);
+    });
+  }
+
+  function createDcaPreviewValue(label, value) {
+    const item = document.createElement("div");
+    const labelEl = document.createElement("span");
+    const valueEl = document.createElement("strong");
+    labelEl.textContent = label;
+    valueEl.textContent = value;
+    item.append(labelEl, valueEl);
+    return item;
+  }
+
+  function createDcaPreviewStage(label, value, tone) {
+    const item = document.createElement("article");
+    item.className = "dca-preview-stage is-" + tone;
+    const labelEl = document.createElement("h4");
+    const valueEl = document.createElement("p");
+    labelEl.textContent = label;
+    valueEl.textContent = value;
+    item.append(labelEl, valueEl);
+    return item;
   }
 
   function updateCard(card, signal) {
