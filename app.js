@@ -36,6 +36,24 @@
     crashFund: 100
   };
 
+  const DCA_MULTIPLIER_ENABLED = true;
+  const DCA_POLICY_CONFIG = Object.freeze({
+    enabled: DCA_MULTIPLIER_ENABLED,
+    default_multiplier: 1.0,
+    min_multiplier: 0.0,
+    max_multiplier: 2.0,
+    poor_data_max_multiplier: 1.0,
+    unknown_market_max_multiplier: 1.0,
+    bear_market_max_multiplier: 1.0,
+    panic_market_max_multiplier: 0.75,
+    extreme_drawdown_max_multiplier: 1.2,
+    extreme_volatility_max_multiplier: 1.0,
+    manual_review_blocks_extra_buy: true,
+    show_original_amount: true,
+    show_factor_chain: true,
+    no_broker_no_auto_trade: true
+  });
+
   const WEEKS_PER_MONTH = 52 / 12;
 
   const ALGORITHM_PARAMS = {
@@ -4770,17 +4788,34 @@ function equalizeAllocations() {
       roundedTotal = round2(roundedTotal + amount);
     });
 
-    const targetTotal = round2(rawTotal);
-    const pennyDifference = round2(targetTotal - roundedTotal);
+    const baseTargetTotal = round2(rawTotal);
+    const pennyDifference = round2(baseTargetTotal - roundedTotal);
     if (pennyDifference !== 0 && entries.length) {
       entries[0].signal.suggested_buy_amount = round2(entries[0].signal.suggested_buy_amount + pennyDifference);
       entries[0].signal.final_suggested_buy_amount = entries[0].signal.suggested_buy_amount;
     }
 
     entries.forEach(function (entry) {
+      entry.baseManualAmount = entry.signal.suggested_buy_amount;
+      entry.baseManualAction = entry.signal.suggested_action;
+      entry.baseManualRisk = entry.signal.risk_level;
+    });
+    applyDcaManualAmountPolicy(entries, portfolioRisk);
+    applyDcaPortfolioSafetyCap(entries, portfolioRisk);
+
+    const targetTotal = round2(entries.reduce(function (sum, entry) {
+      return sum + entry.finalManualAmount;
+    }, 0));
+    portfolioRisk.total_planned_buy_amount = targetTotal;
+    portfolioRisk.planned_cash_usage_percentage = portfolioRisk.available_cash_provided && portfolioRisk.available_cash > 0
+      ? round2((targetTotal / portfolioRisk.available_cash) * 100)
+      : null;
+    finalizePortfolioRisk(portfolioRisk, entries);
+
+    entries.forEach(function (entry) {
       const card = cardsEl.querySelector('[data-symbol="' + entry.stock.symbol + '"]');
       updateCard(card, entry.signal);
-      orderLines.push(formatManualTradePlanEntry(entry.signal));
+      orderLines.push(formatManualTradePlanEntry(entry.signal, entry));
     });
 
     window.__SUINVESTMENT_SIGNALS__ = entries.map(function (entry) {
@@ -4804,6 +4839,82 @@ function equalizeAllocations() {
     renderDcaPolicyPreview(entries);
   }
 
+  function applyDcaManualAmountPolicy(entries, portfolioRisk) {
+    entries.forEach(function (entry) {
+      const signal = entry.signal;
+      const history = getHistoricalPriceRows(signal.symbol);
+      const closes = history.map(function (row) { return row.close; });
+      const source = String(signal.data_source || "");
+      const marketStatus = getMarketRegimeDataStatus();
+      const marketMeta = state.marketRegime && state.marketRegime.field_meta
+        ? state.marketRegime.field_meta.marketRegime
+        : null;
+      const marketContextAvailable = !marketStatus.fallback && !!marketMeta && marketMeta.freshness === "fresh";
+      const position = portfolioRisk.positions && portfolioRisk.positions[signal.symbol];
+      const concentrationEvaluated = portfolioRisk.total_stock_value > 0 && !!position;
+      const missingPrice = !isFiniteNumber(signal.latest_price);
+      const poorData = signal.data_freshness === "stale" || /manual|fallback|yahoo|weekly|unavailable/i.test(source);
+      const dataQuality = missingPrice || signal.data_freshness === "missing" ? "missing" : poorData ? "poor" : "fresh";
+
+      try {
+        if (!window.DcaPolicy || typeof window.DcaPolicy.evaluateDcaPolicy !== "function") throw new Error("DCA policy module unavailable");
+        entry.dcaPolicy = window.DcaPolicy.evaluateDcaPolicy({
+          baseAmount: entry.baseManualAmount,
+          currentPrice: signal.latest_price,
+          closes,
+          dataQuality,
+          marketRegime: state.marketRegime && state.marketRegime.type,
+          marketContextAvailable,
+          panicActive: signal.panic_active || state.panicActive,
+          volatilityPct: signal.algorithm && signal.algorithm.realized_weekly_volatility,
+          concentrationEvaluated,
+          currentAllocationPct: concentrationEvaluated ? position.current_allocation : null
+        }, DCA_POLICY_CONFIG);
+      } catch (error) {
+        entry.dcaPolicy = createDcaPolicyFallback(entry.baseManualAmount);
+      }
+      entry.finalManualAmount = round2(entry.dcaPolicy.finalAmount);
+    });
+  }
+
+  function createDcaPolicyFallback(baseAmount) {
+    return {
+      status: "manual_review",
+      multiplier: 1,
+      baseAmount: round2(baseAmount),
+      finalAmount: round2(baseAmount),
+      rawDipMultiplier: 1,
+      concentrationStatus: "not_evaluated",
+      factorChain: [{ stage: "safety_fallback", status: "manual_review", detail: "DCA multiplier unavailable; using base manual amount" }],
+      warnings: ["DCA multiplier unavailable; using base manual amount"]
+    };
+  }
+
+  function applyDcaPortfolioSafetyCap(entries, portfolioRisk) {
+    if (!portfolioRisk.available_cash_provided || portfolioRisk.available_cash <= 0) return;
+    const maxUse = round2(portfolioRisk.available_cash * 0.30);
+    const planned = round2(entries.reduce(function (sum, entry) { return sum + entry.finalManualAmount; }, 0));
+    if (planned <= maxUse || planned <= 0) return;
+    const scale = maxUse / planned;
+    entries.forEach(function (entry) {
+      entry.finalManualAmount = round2(entry.finalManualAmount * scale);
+      entry.dcaPolicy.finalAmount = entry.finalManualAmount;
+      entry.dcaPolicy.multiplier = entry.baseManualAmount > 0 ? round2(entry.finalManualAmount / entry.baseManualAmount) : 0;
+      if (entry.dcaPolicy.status === "active") entry.dcaPolicy.status = "caution";
+      entry.dcaPolicy.warnings.push("Final portfolio cash-use cap applied");
+      entry.dcaPolicy.factorChain.push({
+        stage: "portfolio_cash_cap",
+        status: "caution",
+        detail: "Scaled final manual amounts to 30% of available cash"
+      });
+      entry.dcaPolicy.factorChain.push({
+        stage: "final_manual_amount_after_cash_cap",
+        status: entry.dcaPolicy.status,
+        detail: "Final CAD " + entry.finalManualAmount.toFixed(2) + " at " + entry.dcaPolicy.multiplier.toFixed(2) + "x"
+      });
+    });
+  }
+
   function renderDcaPolicyPreview(entries) {
     if (!dcaPreviewRowsEl) return;
     dcaPreviewRowsEl.innerHTML = "";
@@ -4816,22 +4927,13 @@ function equalizeAllocations() {
       return;
     }
 
-    const marketStatus = getMarketRegimeDataStatus();
     entries.forEach(function (entry) {
       const signal = entry.signal || {};
-      const source = String(signal.data_source || "");
-      const fieldIssues = getFieldQualityIssues(signal.field_provenance);
-      const waiting = !state.dataQualityEvaluated || /loading/i.test(source);
-      const poorData = !waiting && (
-        signal.data_freshness === "stale" ||
-        signal.data_freshness === "missing" ||
-        /unavailable/i.test(source) ||
-        fieldIssues.length > 0
-      );
-      const manualReview = poorData || marketStatus.fallback;
-      const currentAmount = isFiniteNumber(signal.suggested_buy_amount)
-        ? formatCurrency(signal.suggested_buy_amount)
-        : "--";
+      const policy = entry.dcaPolicy || createDcaPolicyFallback(entry.baseManualAmount || signal.suggested_buy_amount);
+      const waiting = !state.dataQualityEvaluated;
+      const manualReview = policy.status === "manual_review" || policy.status === "blocked";
+      const baseAmount = isFiniteNumber(entry.baseManualAmount) ? formatCurrency(entry.baseManualAmount) : "--";
+      const finalAmount = isFiniteNumber(entry.finalManualAmount) ? formatCurrency(entry.finalManualAmount) : baseAmount;
       const currentAction = signal.suggested_action ? displayAction(signal.suggested_action) : "--";
       const currentRisk = signal.risk_level ? displayRiskLevel(signal.risk_level) : "--";
 
@@ -4843,26 +4945,29 @@ function equalizeAllocations() {
       identity.className = "dca-preview-symbol-name";
       identity.textContent = signal.symbol || entry.stock.symbol;
       const amount = document.createElement("strong");
-      amount.textContent = currentAmount;
+      amount.textContent = finalAmount;
       const status = document.createElement("span");
-      status.className = "dca-preview-status " + (manualReview ? "is-warning" : waiting ? "is-waiting" : "is-preview");
+      status.className = "dca-preview-status " + (manualReview ? "is-warning" : waiting ? "is-waiting" : "is-active");
       status.textContent = waiting
         ? "Waiting / 等待数据"
         : manualReview
           ? "Manual review / 人工复核"
-          : "Preview only / 仅预览";
+          : policy.status.replaceAll("_", " ") + " / DCA 已应用";
       summary.append(identity, amount, status);
       row.appendChild(summary);
 
       const current = document.createElement("section");
       current.className = "dca-preview-current";
-      current.innerHTML = "<h4>Current Manual Plan / 当前手动计划</h4>";
+      current.innerHTML = "<h4>DCA Adjusted Manual Plan / DCA 调整手动计划</h4>";
       const currentGrid = document.createElement("div");
       currentGrid.className = "dca-preview-current-grid";
       currentGrid.append(
-        createDcaPreviewValue("Recommendation / 建议", currentAction),
-        createDcaPreviewValue("Displayed amount / 当前金额", currentAmount),
-        createDcaPreviewValue("Risk / 风险", currentRisk)
+        createDcaPreviewValue("Base Manual Amount / 原手动金额", baseAmount),
+        createDcaPreviewValue("DCA Multiplier / DCA 倍数", formatMultiplier(policy.multiplier)),
+        createDcaPreviewValue("Final Manual Amount / 最终手动金额", finalAmount),
+        createDcaPreviewValue("Base action / 原建议", currentAction),
+        createDcaPreviewValue("Base risk / 原风险", currentRisk),
+        createDcaPreviewValue("Status / 状态", policy.status.replaceAll("_", " "))
       );
       current.appendChild(currentGrid);
       row.appendChild(current);
@@ -4870,26 +4975,21 @@ function equalizeAllocations() {
       const stages = document.createElement("div");
       stages.className = "dca-preview-stages";
       stages.append(
-        createDcaPreviewStage("Base DCA Preview / 基础定投", waiting ? "Waiting for data / 等待数据" : "Label only · policy not active / 仅标签，策略未启用", "neutral"),
-        createDcaPreviewStage("Extra Dip-Buy Preview / 额外逢低买入", waiting ? "Waiting / 等待数据" : manualReview ? "Blocked by data/risk · manual review / 数据或风险阻止，需人工复核" : "Inactive · policy not active / 未启用", manualReview ? "warning" : "neutral"),
-        createDcaPreviewStage("Risk Guard Preview / 风险保护", waiting ? "Waiting / 等待数据" : manualReview ? "Caution · manual review required / 谨慎，需人工复核" : "Clear label only · preview / 仅预览状态", manualReview ? "warning" : "clear"),
-        createDcaPreviewStage("Final Amount Preview / 最终金额预览", waiting ? "DCA preview waiting for data / 等待数据" : "Not active · future policy preview only / 未启用，仅未来策略预览", "inactive")
+        createDcaPreviewStage("Base Manual Amount / 原手动金额", baseAmount, "neutral"),
+        createDcaPreviewStage("Drawdown + RSI / 回撤与 RSI", "Raw " + formatMultiplier(policy.rawDipMultiplier) + " · RSI " + (isFiniteNumber(policy.rsi14) ? policy.rsi14.toFixed(2) : "N/A"), manualReview ? "warning" : "neutral"),
+        createDcaPreviewStage("Risk Guards / 风险保护", "Trend " + (isFiniteNumber(policy.trendDistancePct) ? formatSigned(policy.trendDistancePct) + "%" : "N/A") + " · Vol " + (isFiniteNumber(policy.volatilityPct) ? policy.volatilityPct.toFixed(2) + "%" : "N/A") + " · Concentration " + policy.concentrationStatus, manualReview ? "warning" : "clear"),
+        createDcaPreviewStage("Final Manual Amount / 最终手动金额", finalAmount + " · " + formatMultiplier(policy.multiplier), policy.status === "blocked" ? "warning" : "active")
       );
       row.appendChild(stages);
 
       const chain = document.createElement("section");
       chain.className = "dca-preview-chain";
       const chainTitle = document.createElement("h4");
-      chainTitle.textContent = "Factor Chain Preview / 因素链预览";
+      chainTitle.textContent = "DCA Factor Chain / DCA 因素链";
       const chainList = document.createElement("ol");
-      [
-        "Current signal / 当前信号: " + (isFiniteNumber(signal.signal_score) ? signal.signal_score : "--"),
-        "Existing recommendation / 现有建议: " + currentAction,
-        "Existing manual amount / 现有手动金额: " + currentAmount,
-        "DCA policy layer / 定投策略层: not active · preview only",
-        "Risk guard / 风险保护: " + (manualReview ? "manual review required" : "not active · preview only"),
-        "Final preview / 最终预览: not active · not used in current buy amount"
-      ].forEach(function (text) {
+      (policy.factorChain || []).map(function (item) {
+        return item.stage.replaceAll("_", " ") + " [" + item.status + "]: " + item.detail;
+      }).forEach(function (text) {
         const item = document.createElement("li");
         item.textContent = text;
         chainList.appendChild(item);
@@ -4897,22 +4997,18 @@ function equalizeAllocations() {
       chain.append(chainTitle, chainList);
       row.appendChild(chain);
 
-      if (waiting || manualReview) {
+      if (waiting || manualReview || (policy.warnings && policy.warnings.length)) {
         const warning = document.createElement("p");
         warning.className = "dca-preview-warning";
         warning.textContent = waiting
-          ? "DCA preview waiting for data. No confident final preview is shown. / 定投预览等待数据，不显示确定性最终金额。"
-          : [
-              "Manual review required / 需要人工复核.",
-              fieldIssues.length ? "Data: " + fieldIssues.join(", ") + "." : "",
-              marketStatus.fallback ? "QQQ / market regime unavailable or fallback. Warning only." : ""
-            ].filter(Boolean).join(" ");
+          ? "DCA policy waiting for data; using conservative safety state. / DCA 策略等待数据。"
+          : (policy.warnings || []).join(" ") || "Manual review required / 需要人工复核";
         row.appendChild(warning);
       }
 
       const safety = document.createElement("p");
       safety.className = "dca-preview-row-safety";
-      safety.textContent = "Display-only mock · no trading execution · manual decision required";
+      safety.textContent = "Manual planning only · not an order · no automatic trading · no broker connection";
       row.appendChild(safety);
       dcaPreviewRowsEl.appendChild(row);
     });
@@ -5135,11 +5231,15 @@ function equalizeAllocations() {
     return wrapper;
   }
 
-  function formatManualTradePlanEntry(signal) {
+  function formatManualTradePlanEntry(signal, entry) {
+    const finalAmount = entry && isFiniteNumber(entry.finalManualAmount) ? entry.finalManualAmount : signal.suggested_buy_amount;
+    const baseAmount = entry && isFiniteNumber(entry.baseManualAmount) ? entry.baseManualAmount : signal.suggested_buy_amount;
+    const policy = entry && entry.dcaPolicy;
     return [
-      signal.symbol + " - " + displayAction(signal.suggested_action) + " - CAD " + signal.suggested_buy_amount.toFixed(2) + " - " + t("scoreLabel") + " " + signal.signal_score + " - " + t("riskLabel") + " " + displayRiskLevel(signal.risk_level),
+      signal.symbol + " - " + displayAction(signal.suggested_action) + " - CAD " + finalAmount.toFixed(2) + " - " + t("scoreLabel") + " " + signal.signal_score + " - " + t("riskLabel") + " " + displayRiskLevel(signal.risk_level),
+      "DCA: Base CAD " + baseAmount.toFixed(2) + " x " + (policy ? policy.multiplier.toFixed(2) : "1.00") + " = Final CAD " + finalAmount.toFixed(2) + " [" + (policy ? policy.status : "fallback") + "]",
       t("reasonLabel") + ": " + signal.reason,
-      t("warningLabel") + ": " + signal.warning + sentenceEnd()
+      t("warningLabel") + ": " + signal.warning + (policy && policy.warnings.length ? " DCA: " + policy.warnings.join(" ") : "") + sentenceEnd()
     ].join("\n");
   }
 
