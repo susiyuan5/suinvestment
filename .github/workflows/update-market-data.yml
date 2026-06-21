@@ -2,7 +2,7 @@ name: Update weekly market data
 
 on:
   schedule:
-    - cron: "0 5 * * 2"
+    - cron: "30 22 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -23,10 +23,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - name: Update market data
-        run: node scripts/update-market-data.js
+        run: python scripts/price_sources.py
+      - name: Validate price source tests
+        run: python -m unittest tests.test_price_sources
       - name: Commit market data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Update weekly market data"
-          file_pattern: data/market-data.json
+          file_pattern: data/market-data.json results/data_freshness/market_price_freshness.json

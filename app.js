@@ -1711,7 +1711,10 @@ amountBreakdown: "金额分解",
         dailyChange: weeklyData.dailyChange,
         weeklyChange: weeklyData.weeklyChange,
         decisionChange: weeklyData.decisionChange,
-        source: "Weekly",
+        source: weeklyData.source || "Weekly",
+        source_type: weeklyData.sourceType || "weekly",
+        source_validation_status: weeklyData.validationStatus || (weeklyData.stale ? "stale" : "weekly"),
+        quote_timestamp: weeklyData.quoteTimestamp || null,
         note: weeklyData.stale ? "Scheduled close snapshot; stale carried forward" : "Scheduled close snapshot",
         fetchedAt: weeklyData.fetchedAt,
         field_meta: weeklyData.field_meta,
@@ -1755,12 +1758,17 @@ amountBreakdown: "金额分解",
     const item = state.weeklySnapshot && state.weeklySnapshot.symbols && state.weeklySnapshot.symbols[symbol];
     if (!item || !isFiniteNumber(item.weeklyChange)) return null;
     const generatedAt = state.weeklySnapshot.generatedAt ? Date.parse(state.weeklySnapshot.generatedAt) : Date.now();
+    const quoteTimestamp = item.quoteTimestamp ? Date.parse(item.quoteTimestamp) : null;
+    const fetchTimestamp = item.fetchTimestamp ? Date.parse(item.fetchTimestamp) : generatedAt;
+    const sourceTimestamp = Number.isFinite(quoteTimestamp) ? quoteTimestamp : fetchTimestamp;
+    const validationStatus = item.validationStatus || (item.stale ? "stale" : "weekly");
     const freshnessOptions = {
-      stale: item.stale === true,
+      stale: item.stale === true || validationStatus !== "validated",
       staleReason: item.staleReason || "",
       maxAgeHours: CONFIG.cacheHours
     };
-    const weeklyMeta = createFieldMeta("Weekly", generatedAt, freshnessOptions);
+    const sourceName = item.source || "Weekly";
+    const weeklyMeta = createFieldMeta(sourceName, sourceTimestamp, freshnessOptions);
     return {
       price: isFiniteNumber(item.price) ? item.price : null,
       latestClose: isFiniteNumber(item.latestClose) ? item.latestClose : null,
@@ -1769,8 +1777,12 @@ amountBreakdown: "金额分解",
       dailyChange: isFiniteNumber(item.dailyChange) ? item.dailyChange : null,
       weeklyChange: item.weeklyChange,
       decisionChange: isFiniteNumber(item.decisionChange) ? item.decisionChange : calculateDecisionChange(item.weeklyChange, item.dailyChange),
-      fetchedAt: generatedAt,
-      stale: item.stale === true,
+      fetchedAt: sourceTimestamp,
+      source: sourceName,
+      sourceType: item.sourceType || "weekly",
+      validationStatus,
+      quoteTimestamp: item.quoteTimestamp || null,
+      stale: item.stale === true || validationStatus !== "validated",
       staleReason: item.staleReason || "",
       staleFrom: item.staleFrom || null,
       field_meta: {
@@ -1913,6 +1925,9 @@ amountBreakdown: "金额分解",
       weeklyChange: comparison ? comparison.weeklyChange : null,
       decisionChange: comparison ? comparison.decisionChange : quoteDailyChange,
       source: "Finnhub",
+      source_type: "api",
+      source_validation_status: "validated",
+      quote_timestamp: new Date(fetchedAt).toISOString(),
       note: candleNote,
       fetchedAt
     }, comparison ? "Finnhub candles" : "Finnhub quote", fetchedAt, ["dailyChange", "weeklyChange", "decisionChange"]);
@@ -1935,7 +1950,13 @@ amountBreakdown: "金额分解",
     const comparison = calculateMarketSignals(closes);
     const metaPrice = result.meta && result.meta.regularMarketPrice;
 
-    const fetchedAt = Date.now();
+    const marketTimestamp = result.meta && Number.isFinite(result.meta.regularMarketTime)
+      ? result.meta.regularMarketTime * 1000
+      : Array.isArray(result.timestamp) && result.timestamp.length
+        ? result.timestamp[result.timestamp.length - 1] * 1000
+        : null;
+    const fetchedAt = Number.isFinite(marketTimestamp) ? marketTimestamp : Date.now();
+    const quoteAgeHours = (Date.now() - fetchedAt) / (60 * 60 * 1000);
     return addRowFieldMeta({
       symbol,
       price: isFiniteNumber(metaPrice) ? metaPrice : comparison.latestClose,
@@ -1946,6 +1967,9 @@ amountBreakdown: "金额分解",
       weeklyChange: comparison.weeklyChange,
       decisionChange: comparison.decisionChange,
       source: "Yahoo",
+      source_type: "api",
+      source_validation_status: quoteAgeHours <= CONFIG.cacheHours ? "validated" : "stale",
+      quote_timestamp: new Date(fetchedAt).toISOString(),
       note: "Yahoo Finance fallback",
       fetchedAt
     }, "Yahoo", fetchedAt);
@@ -2562,6 +2586,9 @@ amountBreakdown: "金额分解",
       reason: "",
       warning: "",
       data_source: row && row.source ? row.source : "Unavailable",
+      data_source_type: row && row.source_type ? row.source_type : "unknown",
+      data_validation_status: row && row.source_validation_status ? row.source_validation_status : "unknown",
+      quote_timestamp: row && row.quote_timestamp ? row.quote_timestamp : null,
       data_freshness: getDataFreshness(row, dataAgeHours),
       data_age_hours: isFiniteNumber(dataAgeHours) ? round2(dataAgeHours) : null,
       manual_override_active: manualOverrideActive,
@@ -4853,7 +4880,8 @@ function equalizeAllocations() {
       const position = portfolioRisk.positions && portfolioRisk.positions[signal.symbol];
       const concentrationEvaluated = portfolioRisk.total_stock_value > 0 && !!position;
       const missingPrice = !isFiniteNumber(signal.latest_price);
-      const poorData = signal.data_freshness === "stale" || /manual|fallback|yahoo|weekly|unavailable/i.test(source);
+      const validatedApi = signal.data_freshness === "fresh" && signal.data_source_type === "api" && signal.data_validation_status === "validated";
+      const poorData = signal.data_freshness === "stale" || !validatedApi || /manual|fallback|cache|weekly|unavailable/i.test(source);
       const dataQuality = missingPrice || signal.data_freshness === "missing" ? "missing" : poorData ? "poor" : "fresh";
 
       try {
@@ -5614,7 +5642,7 @@ function equalizeAllocations() {
       if (signal.manual_override_active || /manual/i.test(source)) counts.manual += 1;
       if (signal.manual_override_legacy) counts.legacy += 1;
       if (/cache/i.test(source)) counts.cache += 1;
-      if (isFallbackSource(source)) counts.fallback += 1;
+      if (isFallbackSource(signal)) counts.fallback += 1;
     });
 
     const marketStatus = getMarketRegimeDataStatus();
@@ -5633,7 +5661,11 @@ function equalizeAllocations() {
     };
   }
 
-  function isFallbackSource(source) {
+  function isFallbackSource(signal) {
+    const source = signal && typeof signal === "object" ? signal.data_source : signal;
+    const sourceType = signal && typeof signal === "object" ? signal.data_source_type : "";
+    if (sourceType === "fallback") return true;
+    if (sourceType === "api") return false;
     const value = String(source || "").toLowerCase();
     if (!value || /finnhub|cache|manual/.test(value)) return false;
     return /yahoo|weekly|fallback|unavailable/.test(value);
