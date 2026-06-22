@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style.css?v=dca-l1-policy-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
-    <link rel="stylesheet" href="watchlist.css?v=watchlist-7">
+    <link rel="stylesheet" href="watchlist.css?v=watchlist-8">
   </head>
   <body>
     <div class="app-shell">
@@ -60,22 +60,22 @@
       <section id="watchlist" class="watchlist-panel" aria-labelledby="watchlist-title">
         <div class="watchlist-heading">
           <div>
-            <p class="eyebrow">Market monitor · 美股盯盘</p>
-            <h2 id="watchlist-title">US Stock Watchlist</h2>
-            <p>Quotes, price history and MACD in one focused view.</p>
+            <p class="eyebrow">美股行情监控</p>
+            <h2 id="watchlist-title">美股盯盘</h2>
+            <p>集中查看自选股票、价格走势与 MACD 指标。</p>
           </div>
           <form id="watchlistAddForm" class="watchlist-add-form">
-            <label for="watchlistSymbolInput">Add ticker</label>
+            <label for="watchlistSymbolInput">添加股票代码</label>
             <div>
-              <input id="watchlistSymbolInput" maxlength="10" autocomplete="off" placeholder="e.g. TSLA" aria-describedby="watchlistFormStatus">
-              <button type="submit">Add</button>
+              <input id="watchlistSymbolInput" maxlength="10" autocomplete="off" placeholder="例如 TSLA" aria-describedby="watchlistFormStatus">
+              <button type="submit">添加</button>
             </div>
             <span id="watchlistFormStatus" role="status"></span>
           </form>
         </div>
 
         <div class="watchlist-workspace">
-          <aside class="watchlist-rail" aria-label="US stock watchlist">
+          <aside class="watchlist-rail" aria-label="美股自选列表">
             <div id="watchlistCards" class="watchlist-cards"></div>
           </aside>
 
@@ -87,7 +87,7 @@
                   <span id="watchlistCompanyName">Apple Inc.</span>
                   <span class="watchlist-market-pill">NASDAQ</span>
                 </div>
-                <p id="watchlistQuoteMeta">Loading market data…</p>
+                <p id="watchlistQuoteMeta">正在加载行情…</p>
                 <div class="watchlist-price-line">
                   <strong id="watchlistPrice">—</strong>
                   <span>USD</span>
@@ -95,23 +95,23 @@
                 </div>
               </div>
               <div class="watchlist-refresh-controls">
-                <label><input id="watchlistAutoRefresh" type="checkbox" checked> Auto refresh</label>
-                <select id="watchlistRefreshRate" aria-label="Refresh interval">
-                  <option value="10">10 sec</option>
-                  <option value="30">30 sec</option>
-                  <option value="60">60 sec</option>
+                <label><input id="watchlistAutoRefresh" type="checkbox" checked> 自动刷新</label>
+                <select id="watchlistRefreshRate" aria-label="刷新间隔">
+                  <option value="10">10 秒</option>
+                  <option value="30">30 秒</option>
+                  <option value="60">60 秒</option>
                 </select>
-                <button id="watchlistRefreshBtn" type="button">Refresh now</button>
+                <button id="watchlistRefreshBtn" type="button">立即刷新</button>
               </div>
             </article>
 
             <article class="watchlist-chart-card">
               <div class="watchlist-chart-heading">
                 <div>
-                  <h3>Price · MACD</h3>
-                  <p id="watchlistChartCaption">Historical prices update with the selected ticker.</p>
+                  <h3>价格 · MACD</h3>
+                  <p id="watchlistChartCaption">历史价格会随所选股票和周期更新。</p>
                 </div>
-                <div id="watchlistPeriods" class="watchlist-periods" role="group" aria-label="Chart period">
+                <div id="watchlistPeriods" class="watchlist-periods" role="group" aria-label="图表周期">
                   <button type="button" data-period="1d">1D</button>
                   <button type="button" data-period="5d">5D</button>
                   <button type="button" data-period="3mo">3M</button>
@@ -119,14 +119,14 @@
                   <button type="button" data-period="5y">5Y</button>
                 </div>
               </div>
-              <div id="watchlistChartLoading" class="watchlist-chart-loading">Loading chart…</div>
-              <canvas id="watchlistPriceChart" aria-label="Price chart"></canvas>
-              <canvas id="watchlistMacdChart" aria-label="MACD chart"></canvas>
-              <div class="watchlist-chart-legend"><span>Price</span><span>MACD</span><span>Signal</span><span>Histogram</span></div>
+              <div id="watchlistChartLoading" class="watchlist-chart-loading">正在加载图表…</div>
+              <canvas id="watchlistPriceChart" aria-label="价格图表"></canvas>
+              <canvas id="watchlistMacdChart" aria-label="MACD 图表"></canvas>
+              <div class="watchlist-chart-legend"><span>价格</span><span>MACD</span><span>信号线</span><span>柱状图</span></div>
             </article>
           </div>
         </div>
-        <p class="watchlist-disclaimer">Market data is for monitoring and decision support only; verify quotes with your broker before trading.</p>
+        <p class="watchlist-disclaimer">行情仅供盯盘和辅助决策；交易前请以券商报价为准。</p>
       </section>
 
       <details id="dataQualityPanel" class="panel data-quality-panel">
@@ -586,6 +586,6 @@
     <script src="app.js?v=dca-l1-policy-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
-    <script src="watchlist.js?v=watchlist-2"></script>
+    <script src="watchlist.js?v=watchlist-3"></script>
   </body>
 </html>

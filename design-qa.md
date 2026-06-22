@@ -1,9 +1,9 @@
 **Comparison Target**
 
-- Source visual truth path: `C:\Users\Administrator\Documents\xwechat_files\wxid_c301wy2oyrpw22_774f\temp\RWTemp\2026-06\9e20f478899dc29eb19741386f9343c8\1003dbce3ca81a75427a1333af604d7c.jpg`
-- Implementation screenshot path: `C:\Users\Administrator\Documents\fince\watchlist-desktop.png`
+- Source visual truth path: `C:\Users\Administrator\AppData\Local\Temp\codex-clipboard-a6ec514c-9938-4b95-8804-e5ea8e531726.png`
+- Implementation screenshot path: `C:\Users\Administrator\Documents\fince\watchlist-chinese-sorted.png`
 - Mobile implementation screenshot path: `C:\Users\Administrator\Documents\fince\watchlist-mobile.png`
-- Combined comparison evidence: `C:\Users\Administrator\Documents\fince\watchlist-comparison.png`
+- Combined comparison evidence: `C:\Users\Administrator\Documents\fince\watchlist-chinese-comparison.png`
 - Viewport: desktop 1280 x 720; mobile 390 x 844
 - State: dark theme, AAPL selected, 1Y selected, automatic refresh enabled, local weekly fallback active
 
@@ -30,6 +30,9 @@ The desktop and mobile captures were checked separately for the watchlist rail, 
 - Constrained the mobile grid track with `minmax(0, 1fr)` to remove horizontal page overflow.
 - Added mobile-specific sizing for refresh controls and chart canvases.
 - Preserved a local weekly-history fallback when the live Yahoo request is blocked.
+- Localized the complete watchlist surface into Chinese.
+- Added persistent up/down ordering controls to every watchlist card.
+- Corrected fallback period slicing: 1D=2, 5D=6, 3M=14, 1Y=53 and 5Y=all available data points.
 
 **Implementation Checklist**
 
