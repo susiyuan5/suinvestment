@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css?v=dca-l1-policy-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
+    <link rel="stylesheet" href="watchlist.css?v=watchlist-7">
   </head>
   <body>
     <div class="app-shell">
@@ -54,6 +55,78 @@
             <strong id="overviewAvailableCash">Not provided</strong>
           </article>
         </div>
+      </section>
+
+      <section id="watchlist" class="watchlist-panel" aria-labelledby="watchlist-title">
+        <div class="watchlist-heading">
+          <div>
+            <p class="eyebrow">Market monitor · 美股盯盘</p>
+            <h2 id="watchlist-title">US Stock Watchlist</h2>
+            <p>Quotes, price history and MACD in one focused view.</p>
+          </div>
+          <form id="watchlistAddForm" class="watchlist-add-form">
+            <label for="watchlistSymbolInput">Add ticker</label>
+            <div>
+              <input id="watchlistSymbolInput" maxlength="10" autocomplete="off" placeholder="e.g. TSLA" aria-describedby="watchlistFormStatus">
+              <button type="submit">Add</button>
+            </div>
+            <span id="watchlistFormStatus" role="status"></span>
+          </form>
+        </div>
+
+        <div class="watchlist-workspace">
+          <aside class="watchlist-rail" aria-label="US stock watchlist">
+            <div id="watchlistCards" class="watchlist-cards"></div>
+          </aside>
+
+          <div class="watchlist-main">
+            <article class="watchlist-quote-card" aria-live="polite">
+              <div>
+                <div class="watchlist-symbol-line">
+                  <h3 id="watchlistActiveSymbol">AAPL</h3>
+                  <span id="watchlistCompanyName">Apple Inc.</span>
+                  <span class="watchlist-market-pill">NASDAQ</span>
+                </div>
+                <p id="watchlistQuoteMeta">Loading market data…</p>
+                <div class="watchlist-price-line">
+                  <strong id="watchlistPrice">—</strong>
+                  <span>USD</span>
+                  <em id="watchlistChange">—</em>
+                </div>
+              </div>
+              <div class="watchlist-refresh-controls">
+                <label><input id="watchlistAutoRefresh" type="checkbox" checked> Auto refresh</label>
+                <select id="watchlistRefreshRate" aria-label="Refresh interval">
+                  <option value="10">10 sec</option>
+                  <option value="30">30 sec</option>
+                  <option value="60">60 sec</option>
+                </select>
+                <button id="watchlistRefreshBtn" type="button">Refresh now</button>
+              </div>
+            </article>
+
+            <article class="watchlist-chart-card">
+              <div class="watchlist-chart-heading">
+                <div>
+                  <h3>Price · MACD</h3>
+                  <p id="watchlistChartCaption">Historical prices update with the selected ticker.</p>
+                </div>
+                <div id="watchlistPeriods" class="watchlist-periods" role="group" aria-label="Chart period">
+                  <button type="button" data-period="1d">1D</button>
+                  <button type="button" data-period="5d">5D</button>
+                  <button type="button" data-period="3mo">3M</button>
+                  <button type="button" data-period="1y" class="active">1Y</button>
+                  <button type="button" data-period="5y">5Y</button>
+                </div>
+              </div>
+              <div id="watchlistChartLoading" class="watchlist-chart-loading">Loading chart…</div>
+              <canvas id="watchlistPriceChart" aria-label="Price chart"></canvas>
+              <canvas id="watchlistMacdChart" aria-label="MACD chart"></canvas>
+              <div class="watchlist-chart-legend"><span>Price</span><span>MACD</span><span>Signal</span><span>Histogram</span></div>
+            </article>
+          </div>
+        </div>
+        <p class="watchlist-disclaimer">Market data is for monitoring and decision support only; verify quotes with your broker before trading.</p>
       </section>
 
       <details id="dataQualityPanel" class="panel data-quality-panel">
@@ -513,5 +586,6 @@
     <script src="app.js?v=dca-l1-policy-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
+    <script src="watchlist.js?v=watchlist-2"></script>
   </body>
 </html>
