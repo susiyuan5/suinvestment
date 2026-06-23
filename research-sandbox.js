@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const paths = {
         review: "research/results/phase6q/phase6q-executive-review.json",
         candidates: "research/results/phase6q/shadow-candidate-review-table.csv",
@@ -51,7 +51,7 @@
     async function loadText(path) {
         const response = await fetch(path, { cache: "no-store" });
         if (!response.ok) {
-            throw new Error(`Unable to load ${path}: ${response.status}`);
+            throw new Error("无法加载 " + path + "：" + response.status);
         }
         return response.text();
     }
@@ -102,206 +102,237 @@
     }
 
     function renderFacts(target, facts) {
-        target.innerHTML = `<div class="facts">${facts.map(([label, value, className]) => `
-            <div class="fact"><span>${escapeHtml(label)}</span><strong class="${className || ""}">${escapeHtml(value)}</strong></div>
-        `).join("")}</div>`;
+        var html = "<div class=\"facts\">";
+        for (var i = 0; i < facts.length; i++) {
+            var label = escapeHtml(facts[i][0]);
+            var value = escapeHtml(facts[i][1]);
+            var cls = facts[i][2] || "";
+            html += "<div class=\"fact\"><span>" + label + "</span><strong";
+            if (cls) { html += " class=\"" + cls + "\""; }
+            html += ">" + value + "</strong></div>";
+        }
+        html += "</div>";
+        target.innerHTML = html;
     }
 
     function renderExecutive() {
-        const defaults = state.review.defaultState || {};
-        const phase6j = state.review.phase6j || {};
+        var defaults = state.review.defaultState || {};
+        var phase6j = state.review.phase6j || {};
         byId("active-count").textContent = defaults.activeUniverseCount || "38";
-        byId("expanded-count").textContent = `${defaults.expandedUniverseCount || 80} research-only`;
-        byId("shadow-count").textContent = `${defaults.shadowSymbolCount || 50} shadow-only`;
-        byId("monitored-count").textContent = `${defaults.monitoredSymbolCount || 12} monitoring-only`;
-        byId("activation-state").textContent = defaults.partialActivationDisabledByDefault ? "disabled_by_default" : "review required";
+        byId("expanded-count").textContent = (defaults.expandedUniverseCount || 80) + " 仅研究用";
+        byId("shadow-count").textContent = (defaults.shadowSymbolCount || 50) + " 仅影子用";
+        byId("monitored-count").textContent = (defaults.monitoredSymbolCount || 12) + " 仅监控用";
+        byId("activation-state").textContent = defaults.partialActivationDisabledByDefault ? "默认禁用" : "需要审查";
 
         renderFacts(byId("executive-summary"), [
-            ["Recommendation", state.review.executiveRecommendation, "warn"],
-            ["Phase 6J decision", phase6j.recommendation || "continue_research_80", "warn"],
-            ["Active default", `${defaults.activeUniverseCount} symbols`, "ok"],
-            ["Expanded 80", "research-only"],
-            ["Shadow 50", "shadow-only"],
-            ["Partial activation", defaults.partialActivationDisabledByDefault ? "disabled" : "review required"],
-            ["Next requirement", "human review before sandbox UI or live/default discussion"]
+            ["建议", state.review.executiveRecommendation, "warn"],
+            ["Phase 6J 决策", phase6j.recommendation || "continue_research_80", "warn"],
+            ["当前默认", defaults.activeUniverseCount + " 个标的", "ok"],
+            ["扩展 80", "仅研究用"],
+            ["影子 50", "仅影子用"],
+            ["部分激活", defaults.partialActivationDisabledByDefault ? "已禁用" : "需要审查"],
+            ["下一步要求", "在沙盘 UI 或实盘讨论之前需要人工审查"]
         ]);
     }
 
     function renderComparison() {
-        const activeCategories = state.universe.activeCategoryCounts || {};
-        const expandedCategories = state.universe.expandedCategoryCounts || {};
-        const newCategories = Object.keys(expandedCategories).filter((key) => !activeCategories[key]);
-        const topExpanded = Object.entries(expandedCategories)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 6)
-            .map(([key, value]) => `<span class="pill">${escapeHtml(key)}: ${escapeHtml(value)}</span>`)
-            .join("");
+        var activeCategories = state.universe.activeCategoryCounts || {};
+        var expandedCategories = state.universe.expandedCategoryCounts || {};
+        var newCategories = Object.keys(expandedCategories).filter(function(key) { return !activeCategories[key]; });
+        var entries = Object.entries(expandedCategories)
+            .sort(function(a, b) { return b[1] - a[1]; })
+            .slice(0, 6);
+        var topExpanded = "";
+        for (var ei = 0; ei < entries.length; ei++) {
+            topExpanded += "<span class=\"pill\">" + escapeHtml(entries[ei][0]) + ": " + escapeHtml(entries[ei][1]) + "</span>";
+        }
 
-        byId("comparison-summary").innerHTML = `
-            <div class="facts">
-                <div class="fact"><span>Active count</span><strong>${escapeHtml(state.universe.activeCount)}</strong></div>
-                <div class="fact"><span>Expanded count</span><strong>${escapeHtml(state.universe.expandedCount)}</strong></div>
-                <div class="fact"><span>New symbols</span><strong>${escapeHtml((state.universe.newSymbols || []).length)}</strong></div>
-                <div class="fact"><span>Removed symbols</span><strong>${escapeHtml((state.universe.removedSymbols || []).length)}</strong></div>
-                <div class="fact"><span>New category coverage</span><strong>${escapeHtml(newCategories.join(", ") || "none")}</strong></div>
-            </div>
-            <p class="muted">Expanded category mix:</p>
-            <p>${topExpanded}</p>
-            <p class="muted">Expansion improves sector balance and candidate diversity, but also adds noise and remains research-only.</p>
-        `;
+        byId("comparison-summary").innerHTML =
+            "<div class=\"facts\">" +
+            "<div class=\"fact\"><span>当前数量</span><strong>" + escapeHtml(state.universe.activeCount) + "</strong></div>" +
+            "<div class=\"fact\"><span>扩展数量</span><strong>" + escapeHtml(state.universe.expandedCount) + "</strong></div>" +
+            "<div class=\"fact\"><span>新增标的</span><strong>" + escapeHtml((state.universe.newSymbols || []).length) + "</strong></div>" +
+            "<div class=\"fact\"><span>移除标的</span><strong>" + escapeHtml((state.universe.removedSymbols || []).length) + "</strong></div>" +
+            "<div class=\"fact\"><span>新增类别覆盖</span><strong>" + escapeHtml(newCategories.join(", ") || "无") + "</strong></div>" +
+            "</div>" +
+            "<p class=\"muted\">扩展类别构成：</p>" +
+            "<p>" + topExpanded + "</p>" +
+            "<p class=\"muted\">扩展改善了行业平衡和候选多样性，但也增加了噪音，仍仅限研究用途。</p>";
     }
 
     function renderCandidates() {
-        const tbody = byId("candidate-table").querySelector("tbody");
-        tbody.innerHTML = state.candidates.map((row) => `
-            <tr>
-                <td><strong>${escapeHtml(row.symbol)}</strong></td>
-                <td>${escapeHtml(row.sector_category)}</td>
-                <td>${escapeHtml(row.why_selected)}</td>
-                <td>${escapeHtml(row.factor_usefulness)}</td>
-                <td>${escapeHtml(row.regime_usefulness)}</td>
-                <td>${escapeHtml(row.risk_notes)}</td>
-                <td>${escapeHtml(row.monitoring_requirement)}</td>
-                <td>${escapeHtml(row.activation_readiness)}</td>
-                <td>${escapeHtml(row.rollback_trigger)}</td>
-            </tr>
-        `).join("");
+        var tbody = byId("candidate-table").querySelector("tbody");
+        var html = "";
+        for (var ci = 0; ci < state.candidates.length; ci++) {
+            var row = state.candidates[ci];
+            html += "<tr>" +
+                "<td><strong>" + escapeHtml(row.symbol) + "</strong></td>" +
+                "<td>" + escapeHtml(row.sector_category) + "</td>" +
+                "<td>" + escapeHtml(row.why_selected) + "</td>" +
+                "<td>" + escapeHtml(row.factor_usefulness) + "</td>" +
+                "<td>" + escapeHtml(row.regime_usefulness) + "</td>" +
+                "<td>" + escapeHtml(row.risk_notes) + "</td>" +
+                "<td>" + escapeHtml(row.monitoring_requirement) + "</td>" +
+                "<td>" + escapeHtml(row.activation_readiness) + "</td>" +
+                "<td>" + escapeHtml(row.rollback_trigger) + "</td>" +
+                "</tr>";
+        }
+        tbody.innerHTML = html;
     }
 
     function renderDeferred() {
-        byId("deferred-summary").innerHTML = state.deferred.map((row) => `
-            <section>
-                <h3>${escapeHtml(row.group)}: ${escapeHtml(row.symbol_count)}</h3>
-                <p>${escapeHtml(row.reason_summary)}</p>
-                <p class="muted">${escapeHtml(row.top_categories || "No categories in this group.")}</p>
-            </section>
-        `).join("");
+        var html = "";
+        for (var di = 0; di < state.deferred.length; di++) {
+            var row = state.deferred[di];
+            html += "<section>" +
+                "<h3>" + escapeHtml(row.group) + ": " + escapeHtml(row.symbol_count) + "</h3>" +
+                "<p>" + escapeHtml(row.reason_summary) + "</p>" +
+                "<p class=\"muted\">" + escapeHtml(row.top_categories || "该组无类别。") + "</p>" +
+                "</section>";
+        }
+        byId("deferred-summary").innerHTML = html;
     }
 
     function renderRiskGates() {
-        const risk = state.review.phase6m || {};
+        var risk = state.review.phase6m || {};
         renderFacts(byId("risk-gates"), [
-            ["Gate passed", risk.gate_passed, risk.gate_passed ? "ok" : "danger"],
-            ["Max sector concentration", risk.max_sector_concentration],
-            ["Max single symbol exposure", risk.max_single_symbol_exposure],
-            ["Minimum price coverage", risk.minimum_price_coverage_rows],
-            ["Volatility ceiling 12w", risk.volatility_ceiling_12w],
-            ["Missing price fallback", risk.missing_price_fallback],
-            ["New symbol cooldown", `${risk.new_symbol_cooldown_weeks} weeks`],
-            ["Rollback baseline", "active 38-symbol research universe"]
+            ["门控通过", risk.gate_passed, risk.gate_passed ? "ok" : "danger"],
+            ["最大行业集中度", risk.max_sector_concentration],
+            ["最大单标的风险敞口", risk.max_single_symbol_exposure],
+            ["最低价格覆盖", risk.minimum_price_coverage_rows],
+            ["12周波动率上限", risk.volatility_ceiling_12w],
+            ["缺失价格回退", risk.missing_price_fallback],
+            ["新标冷却期", risk.new_symbol_cooldown_weeks + " 周"],
+            ["回滚基线", "当前 38 标的股票池"]
         ]);
     }
 
     function renderMonitoring() {
-        const metrics = state.monitoring.metrics || [];
-        byId("monitoring-framework").innerHTML = `
-            <div class="facts">
-                <div class="fact"><span>Status</span><strong>${escapeHtml(state.monitoring.status)}</strong></div>
-                <div class="fact"><span>Review cadence</span><strong>${escapeHtml(state.monitoring.reviewCadence)}</strong></div>
-                <div class="fact"><span>Symbols</span><strong>${escapeHtml((state.monitoring.symbols || []).join(", "))}</strong></div>
-            </div>
-            <p class="muted">Monthly review metrics:</p>
-            <ul>${metrics.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-            <p class="muted">${escapeHtml(state.removalRules.replace(/^#.*\\n?/, "").trim())}</p>
-        `;
+        var metrics = state.monitoring.metrics || [];
+        var metricHtml = "";
+        for (var mi = 0; mi < metrics.length; mi++) {
+            metricHtml += "<li>" + escapeHtml(metrics[mi]) + "</li>";
+        }
+        byId("monitoring-framework").innerHTML =
+            "<div class=\"facts\">" +
+            "<div class=\"fact\"><span>状态</span><strong>" + escapeHtml(state.monitoring.status) + "</strong></div>" +
+            "<div class=\"fact\"><span>审查节奏</span><strong>" + escapeHtml(state.monitoring.reviewCadence) + "</strong></div>" +
+            "<div class=\"fact\"><span>标的</span><strong>" + escapeHtml((state.monitoring.symbols || []).join(", ")) + "</strong></div>" +
+            "</div>" +
+            "<p class=\"muted\">月审指标：</p>" +
+            "<ul>" + metricHtml + "</ul>" +
+            "<p class=\"muted\">" + escapeHtml(state.removalRules.replace(/^#.*\\n?/, "").trim()) + "</p>";
     }
 
     function renderChecklist() {
-        const items = state.checklist
-            .split("\n")
-            .filter((line) => line.startsWith("- [ ]"))
-            .map((line) => line.replace("- [ ]", "").trim());
-        byId("next-checklist").innerHTML = `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+        var lines = state.checklist.split("\n");
+        var html = "<ul>";
+        for (var li = 0; li < lines.length; li++) {
+            var line = lines[li].trim();
+            if (line.startsWith("- [ ]")) {
+                html += "<li>" + escapeHtml(line.replace("- [ ]", "").trim()) + "</li>";
+            }
+        }
+        html += "</ul>";
+        byId("next-checklist").innerHTML = html;
     }
 
     function copyText(kind) {
-        const textByKind = {
-            executive: `Recommendation: ${state.review.executiveRecommendation}\nActive default: 38\nExpanded 80: research-only\nShadow 50: shadow-only\nPartial activation: disabled_by_default\nLive/default: unchanged`,
-            candidates: state.candidates.map((row) => `${row.symbol}\t${row.sector_category}\t${row.why_selected}\t${row.activation_readiness}`).join("\n"),
-            checklist: state.checklist
-            ,
-            observation: state.observationSummary || "No Phase 6S observation summary loaded.",
-            governance: state.governanceSummary || "No Phase 6T governance summary loaded."
+        var textByKind = {
+            executive: "建议：" + state.review.executiveRecommendation + "\n当前默认：38\n扩展 80：仅研究用\n影子 50：仅影子用\n部分激活：默认禁用\n实盘/默认：未改变\n",
+            candidates: (function() {
+                var rows = [];
+                for (var ci = 0; ci < state.candidates.length; ci++) {
+                    rows.push(state.candidates[ci].symbol + "\t" + state.candidates[ci].sector_category + "\t" + state.candidates[ci].why_selected + "\t" + state.candidates[ci].activation_readiness);
+                }
+                return rows.join("\n");
+            })(),
+            checklist: state.checklist,
+            observation: state.observationSummary || "未加载 Phase 6S 观测摘要。",
+            governance: state.governanceSummary || "未加载 Phase 6T 治理摘要。"
         };
         navigator.clipboard.writeText(textByKind[kind] || "");
     }
 
     function formatPercent(value) {
         if (value === null || value === undefined || value === "") {
-            return "n/a";
+            return "无";
         }
-        return `${(Number(value) * 100).toFixed(2)}%`;
+        return (Number(value) * 100).toFixed(2) + "%";
     }
 
     function renderObservation() {
-        const governanceTarget = byId("governance-summary");
-        const target = byId("observation-summary");
-        const table = byId("observation-table").querySelector("tbody");
+        var governanceTarget = byId("governance-summary");
+        var target = byId("observation-summary");
+        var table = byId("observation-table").querySelector("tbody");
         if (state.governance) {
-            const governance = state.governance.governance || {};
-            governanceTarget.innerHTML = `
-                <div class="facts">
-                    <div class="fact"><span>Governance status</span><strong class="${state.governance.anyCandidateEligibleForHumanReview ? "warn" : "ok"}">${escapeHtml(state.governance.anyCandidateEligibleForHumanReview ? "human review allowed" : "not enough observation history")}</strong></div>
-                    <div class="fact"><span>Observation runs available</span><strong>${escapeHtml(state.governance.observationRunsAvailable)}</strong></div>
-                    <div class="fact"><span>Unique observation dates</span><strong>${escapeHtml(state.governance.uniqueObservationDateCount || "n/a")}</strong></div>
-                    <div class="fact"><span>Minimum required runs</span><strong>${escapeHtml(governance.minimum_observation_runs_before_review || 8)}</strong></div>
-                    <div class="fact"><span>Calendar weeks available</span><strong>${escapeHtml(state.governance.calendarWeeksAvailable)}</strong></div>
-                    <div class="fact"><span>Calendar span days</span><strong>${escapeHtml(state.governance.calendarSpanDays ?? "n/a")}</strong></div>
-                    <div class="fact"><span>Minimum required weeks</span><strong>${escapeHtml(governance.minimum_calendar_weeks_before_review || 8)}</strong></div>
-                    <div class="fact"><span>Cadence status</span><strong class="${state.governance.cadenceStatus === "cadence_ok_for_longitudinal_review" ? "ok" : "warn"}">${escapeHtml(state.governance.cadenceStatus || "unknown")}</strong></div>
-                    <div class="fact"><span>Same-day validation warning</span><strong class="${state.governance.sameDayRunCount ? "warn" : "ok"}">${escapeHtml(state.governance.sameDayRunCount ? "yes" : "no")}</strong></div>
-                    <div class="fact"><span>Archived observations</span><strong>${escapeHtml(state.governance.archivedObservationCount || 0)}</strong></div>
-                    <div class="fact"><span>Latest snapshot archived</span><strong>${escapeHtml(state.governance.latestSnapshotAlreadyArchived ? "yes" : "no")}</strong></div>
-                    <div class="fact"><span>Archive validation</span><strong>${escapeHtml(state.archiveValidation ? (state.archiveValidation.archiveValid ? "valid" : "review required") : "not run")}</strong></div>
-                    <div class="fact"><span>Unique archived timestamps</span><strong>${escapeHtml(state.archiveValidation ? state.archiveValidation.uniqueObservationTimestampCount : "n/a")}</strong></div>
-                    <div class="fact"><span>Duplicate timestamps</span><strong>${escapeHtml(state.archiveValidation ? state.archiveValidation.actualDuplicateTimestampCount : "n/a")}</strong></div>
-                    <div class="fact"><span>Missing archive files</span><strong>${escapeHtml(state.archiveValidation ? state.archiveValidation.missingArchiveFileCount : "n/a")}</strong></div>
-                    <div class="fact"><span>Monthly review generated</span><strong>${escapeHtml(state.monthlyReview ? state.monthlyReview.generatedAt : "not run")}</strong></div>
-                    <div class="fact"><span>Monthly human-review eligible</span><strong>${escapeHtml(state.monthlyReview ? (state.monthlyReview.humanReviewEligibility ? "yes" : "no") : "n/a")}</strong></div>
-                    <div class="fact"><span>Monthly live promotion blocked</span><strong class="danger">${escapeHtml(state.monthlyReview ? (state.monthlyReview.livePromotionBlocked ? "yes" : "review") : "n/a")}</strong></div>
-                    <div class="fact"><span>Eligible for human review</span><strong>${escapeHtml(state.governance.anyCandidateEligibleForHumanReview ? "yes" : "no")}</strong></div>
-                    <div class="fact"><span>Eligible for live promotion</span><strong class="danger">no</strong></div>
-                </div>
-            `;
+            var governance = state.governance.governance || {};
+            var governanceFacts = [
+                ["治理状态", state.governance.anyCandidateEligibleForHumanReview ? "允许人工审查" : "观测历史不足", state.governance.anyCandidateEligibleForHumanReview ? "warn" : "ok"],
+                ["可用观测轮次", String(state.governance.observationRunsAvailable)],
+                ["唯一观测日期", state.governance.uniqueObservationDateCount || "无"],
+                ["最低要求轮次", String(governance.minimum_observation_runs_before_review || 8)],
+                ["可用日历周数", String(state.governance.calendarWeeksAvailable)],
+                ["日历跨度天数", String(state.governance.calendarSpanDays ?? "无")],
+                ["最低要求周数", String(governance.minimum_calendar_weeks_before_review || 8)],
+                ["节奏状态", state.governance.cadenceStatus || "未知", state.governance.cadenceStatus === "cadence_ok_for_longitudinal_review" ? "ok" : "warn"],
+                ["同日验证警告", state.governance.sameDayRunCount ? "是" : "否", state.governance.sameDayRunCount ? "warn" : "ok"],
+                ["已归档观测", String(state.governance.archivedObservationCount || 0)],
+                ["最新快照已归档", state.governance.latestSnapshotAlreadyArchived ? "是" : "否"],
+                ["归档验证", state.archiveValidation ? (state.archiveValidation.archiveValid ? "有效" : "需要审查") : "未运行"],
+                ["唯一归档时间戳", state.archiveValidation ? String(state.archiveValidation.uniqueObservationTimestampCount) : "无"],
+                ["重复时间戳", state.archiveValidation ? String(state.archiveValidation.actualDuplicateTimestampCount) : "无"],
+                ["缺失归档文件", state.archiveValidation ? String(state.archiveValidation.missingArchiveFileCount) : "无"],
+                ["月审报告已生成", state.monthlyReview ? state.monthlyReview.generatedAt : "未运行"],
+                ["月审人工审查资格", state.monthlyReview ? (state.monthlyReview.humanReviewEligibility ? "是" : "否") : "无"],
+                ["月审实盘提升已阻止", state.monthlyReview ? (state.monthlyReview.livePromotionBlocked ? "是" : "审查中") : "无", "danger"],
+                ["符合人工审查条件", state.governance.anyCandidateEligibleForHumanReview ? "是" : "否"],
+                ["符合实盘提升条件", "否", "danger"]
+            ];
+            renderFacts(governanceTarget, governanceFacts);
         } else {
-            governanceTarget.innerHTML = '<p class="muted">No Phase 6T governance report found yet. Run <code>python research\\analyze_shadow_observation_history.py</code>.</p>';
+            governanceTarget.innerHTML = "<p class=\"muted\">尚未找到 Phase 6T 治理报告。请运行 <code>python research\\analyze_shadow_observation_history.py</code>。</p>";
         }
         if (!state.observation) {
-            target.innerHTML = '<p class="muted">No Phase 6S shadow observation log found yet. Run <code>python research\\run_phase6s_shadow_observation.py</code>.</p>';
+            target.innerHTML = "<p class=\"muted\">尚未找到 Phase 6S 影子观测日志。请运行 <code>python research\\run_phase6s_shadow_observation.py</code>。</p>";
             table.innerHTML = "";
             return;
         }
-        const counts = state.observation.statusCounts || {};
-        target.innerHTML = `
-            <div class="facts">
-                <div class="fact"><span>Latest observation date</span><strong>${escapeHtml(state.observation.generatedAt)}</strong></div>
-                <div class="fact"><span>Monitored symbols</span><strong>${escapeHtml(state.observation.monitoredSymbolCount)}</strong></div>
-                <div class="fact"><span>keep_watching</span><strong>${escapeHtml(counts.keep_watching || 0)}</strong></div>
-                <div class="fact"><span>needs_more_data</span><strong>${escapeHtml(counts.needs_more_data || 0)}</strong></div>
-                <div class="fact"><span>risk_warning</span><strong>${escapeHtml(counts.risk_warning || 0)}</strong></div>
-                <div class="fact"><span>candidate_degraded</span><strong>${escapeHtml(counts.candidate_degraded || 0)}</strong></div>
-                <div class="fact"><span>candidate_improved</span><strong>${escapeHtml(counts.candidate_improved || 0)}</strong></div>
-                <div class="fact"><span>Risk warnings</span><strong class="${(state.observation.riskWarningSymbols || []).length ? "warn" : "ok"}">${escapeHtml((state.observation.riskWarningSymbols || []).join(", ") || "none")}</strong></div>
-            </div>
-        `;
-        table.innerHTML = (state.observation.observations || []).map((row) => `
-            <tr>
-                <td><strong>${escapeHtml(row.symbol)}</strong></td>
-                <td>${escapeHtml(row.category)}</td>
-                <td>${escapeHtml(row.latest_price_date || "missing")}</td>
-                <td>${escapeHtml(row.price_coverage_rows)}</td>
-                <td>${escapeHtml(formatPercent(row.recent_return_proxy))}</td>
-                <td>${escapeHtml(formatPercent(row.volatility_proxy))}</td>
-                <td>${escapeHtml(row.risk_gate_status)}</td>
-                <td>${escapeHtml(row.monitoring_status)}</td>
-                <td>${escapeHtml((row.risk_gate_warnings || []).join(", ") || "none")}</td>
-            </tr>
-        `).join("");
+        var counts = state.observation.statusCounts || {};
+        var obsFacts = [
+            ["最新观测日期", state.observation.generatedAt],
+            ["监控标的", String(state.observation.monitoredSymbolCount)],
+            ["持续关注", String(counts.keep_watching || 0)],
+            ["需要更多数据", String(counts.needs_more_data || 0)],
+            ["风险警告", String(counts.risk_warning || 0)],
+            ["候选降级", String(counts.candidate_degraded || 0)],
+            ["候选改善", String(counts.candidate_improved || 0)],
+            ["风险警告", (state.observation.riskWarningSymbols || []).join(", ") || "无", (state.observation.riskWarningSymbols || []).length ? "warn" : "ok"]
+        ];
+        renderFacts(target, obsFacts);
+
+        var rowHtml = "";
+        var observations = state.observation.observations || [];
+        for (var oi = 0; oi < observations.length; oi++) {
+            var row = observations[oi];
+            rowHtml += "<tr>" +
+                "<td><strong>" + escapeHtml(row.symbol) + "</strong></td>" +
+                "<td>" + escapeHtml(row.category) + "</td>" +
+                "<td>" + escapeHtml(row.latest_price_date || "缺失") + "</td>" +
+                "<td>" + escapeHtml(row.price_coverage_rows) + "</td>" +
+                "<td>" + escapeHtml(formatPercent(row.recent_return_proxy)) + "</td>" +
+                "<td>" + escapeHtml(formatPercent(row.volatility_proxy)) + "</td>" +
+                "<td>" + escapeHtml(row.risk_gate_status) + "</td>" +
+                "<td>" + escapeHtml(row.monitoring_status) + "</td>" +
+                "<td>" + escapeHtml((row.risk_gate_warnings || []).join(", ") || "无") + "</td>" +
+                "</tr>";
+        }
+        table.innerHTML = rowHtml;
     }
 
     async function init() {
         try {
-            const [review, candidatesCsv, deferredCsv, checklist, universe, sector, monitoring, removalRules] = await Promise.all([
+            var results = await Promise.all([
                 loadJson(paths.review),
                 loadText(paths.candidates),
                 loadText(paths.deferred),
@@ -311,28 +342,22 @@
                 loadJson(paths.monitoring),
                 loadText(paths.removalRules)
             ]);
-            const observation = await loadJson(paths.observation).catch(() => null);
-            const observationSummary = await loadText(paths.observationSummary).catch(() => "");
-            const governance = await loadJson(paths.governance).catch(() => null);
-            const governanceSummary = await loadText(paths.governanceSummary).catch(() => "");
-            const historyManifest = await loadJson(paths.historyManifest).catch(() => null);
-            const archiveValidation = await loadJson(paths.archiveValidation).catch(() => null);
-            const monthlyReview = await loadJson(paths.monthlyReview).catch(() => null);
-            state.review = review;
-            state.candidates = parseCsv(candidatesCsv);
-            state.deferred = parseCsv(deferredCsv);
-            state.checklist = checklist;
-            state.universe = universe;
-            state.sector = sector;
-            state.monitoring = monitoring;
-            state.removalRules = removalRules;
-            state.observation = observation;
-            state.observationSummary = observationSummary;
-            state.governance = governance;
-            state.governanceSummary = governanceSummary;
-            state.historyManifest = historyManifest;
-            state.archiveValidation = archiveValidation;
-            state.monthlyReview = monthlyReview;
+            state.review = results[0];
+            state.candidates = parseCsv(results[1]);
+            state.deferred = parseCsv(results[2]);
+            state.checklist = results[3];
+            state.universe = results[4];
+            state.sector = results[5];
+            state.monitoring = results[6];
+            state.removalRules = results[7];
+
+            state.observation = await loadJson(paths.observation).catch(function() { return null; });
+            state.observationSummary = await loadText(paths.observationSummary).catch(function() { return ""; });
+            state.governance = await loadJson(paths.governance).catch(function() { return null; });
+            state.governanceSummary = await loadText(paths.governanceSummary).catch(function() { return ""; });
+            state.historyManifest = await loadJson(paths.historyManifest).catch(function() { return null; });
+            state.archiveValidation = await loadJson(paths.archiveValidation).catch(function() { return null; });
+            state.monthlyReview = await loadJson(paths.monthlyReview).catch(function() { return null; });
 
             renderExecutive();
             renderComparison();
@@ -343,26 +368,26 @@
             renderChecklist();
             renderObservation();
 
-            byId("load-state").innerHTML = '<strong class="ok">Loaded.</strong> Read-only sandbox data is available for human review.';
+            byId("load-state").innerHTML = "<strong class=\"ok\">已加载。</strong> 只读沙盘数据可供人工审查。";
         } catch (error) {
-            byId("load-state").innerHTML = `<strong class="danger">Load failed.</strong> ${escapeHtml(error.message)}`;
+            byId("load-state").innerHTML = "<strong class=\"danger\">加载失败。</strong> " + escapeHtml(error.message);
         }
     }
 
-    document.addEventListener("click", (event) => {
-        const button = event.target.closest("[data-copy]");
+    document.addEventListener("click", function(event) {
+        var button = event.target.closest("[data-copy]");
         if (button) {
             copyText(button.dataset.copy);
-            button.textContent = "Copied";
-            setTimeout(() => {
+            button.textContent = "已复制";
+            setTimeout(function() {
                 if (button.dataset.copy === "candidates") {
-                    button.textContent = "Copy Table";
+                    button.textContent = "复制表格";
                 } else if (button.dataset.copy === "observation") {
-                    button.textContent = "Copy Observation";
+                    button.textContent = "复制观测";
                 } else if (button.dataset.copy === "governance") {
-                    button.textContent = "Copy Governance";
+                    button.textContent = "复制治理";
                 } else {
-                    button.textContent = "Copy";
+                    button.textContent = "复制";
                 }
             }, 1200);
         }

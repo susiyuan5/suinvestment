@@ -1,69 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Research Sandbox Dashboard</title>
+    <title>研究沙盘仪表盘</title>
     <link rel="stylesheet" href="research-sandbox.css">
 </head>
 <body>
     <main class="page-shell">
         <header class="hero">
             <div>
-                <p class="eyebrow">Research-only / Shadow-only / Not live / Not trading advice</p>
-                <h1>Research Sandbox Dashboard</h1>
-                <p class="subtitle">Read-only review surface for Phase 6J-6Q research expansion results.</p>
+                <p class="eyebrow">仅研究 / 仅影子 / 非实盘 / 非交易建议</p>
+                <h1>研究沙盘仪表盘</h1>
+                <p class="subtitle">Phase 6J-6Q 研究扩展结果的只读审查界面</p>
             </div>
-            <a class="home-link" href="index.html">Default Dashboard</a>
+            <a class="home-link" href="index.html">默认仪表盘</a>
         </header>
 
-        <section class="safety-banner" aria-label="Research safety status">
-            <div><span>Active default universe</span><strong id="active-count">38</strong></div>
-            <div><span>Expanded universe</span><strong id="expanded-count">80 research-only</strong></div>
-            <div><span>Shadow universe</span><strong id="shadow-count">50 shadow-only</strong></div>
-            <div><span>Monitored symbols</span><strong id="monitored-count">12 monitoring-only</strong></div>
-            <div><span>Live/default behavior</span><strong>Unchanged</strong></div>
-            <div><span>Manual Trade Plan</span><strong>Unchanged</strong></div>
-            <div><span>Partial activation</span><strong id="activation-state">disabled_by_default</strong></div>
+        <section class="safety-banner" aria-label="研究安全状态">
+            <div><span>当前默认股票池</span><strong id="active-count">38</strong></div>
+            <div><span>扩展股票池</span><strong id="expanded-count">80 仅研究用</strong></div>
+            <div><span>影子股票池</span><strong id="shadow-count">50 仅影子用</strong></div>
+            <div><span>监控标的</span><strong id="monitored-count">12 仅监控用</strong></div>
+            <div><span>实盘/默认行为</span><strong>未改变</strong></div>
+            <div><span>手动交易计划</span><strong>未改变</strong></div>
+            <div><span>部分激活</span><strong id="activation-state">默认禁用</strong></div>
         </section>
 
         <section class="card" id="load-state">
-            Loading research review files...
+            正在加载研究审查文件...
         </section>
 
         <section class="grid two">
             <article class="card">
                 <div class="card-header">
-                    <h2>Executive Summary</h2>
-                    <button type="button" data-copy="executive">Copy</button>
+                    <h2>执行摘要</h2>
+                    <button type="button" data-copy="executive">复制</button>
                 </div>
                 <div id="executive-summary"></div>
             </article>
 
             <article class="card">
-                <h2>38 vs 80 Comparison</h2>
+                <h2>38 vs 80 对比</h2>
                 <div id="comparison-summary"></div>
             </article>
         </section>
 
         <section class="card">
             <div class="card-header">
-                <h2>Shadow Candidate Review</h2>
-                <button type="button" data-copy="candidates">Copy Table</button>
+                <h2>影子候选审查</h2>
+                <button type="button" data-copy="candidates">复制表格</button>
             </div>
             <div class="table-wrap">
                 <table id="candidate-table">
                     <thead>
                         <tr>
-                            <th>Symbol</th>
-                            <th>Category</th>
-                            <th>Why Selected</th>
-                            <th>Factor</th>
-                            <th>Regime</th>
-                            <th>Risk Notes</th>
-                            <th>Monitoring</th>
-                            <th>Readiness</th>
-                            <th>Rollback</th>
+                            <th>标的</th>
+                            <th>类别</th>
+                            <th>入选原因</th>
+                            <th>因子</th>
+                            <th>市场状态</th>
+                            <th>风险备注</th>
+                            <th>监控要求</th>
+                            <th>就绪状态</th>
+                            <th>回滚触发</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -73,26 +73,26 @@
 
         <section class="grid two">
             <article class="card">
-                <h2>Deferred / Rejected Summary</h2>
+                <h2>延迟/拒绝汇总</h2>
                 <div id="deferred-summary"></div>
             </article>
 
             <article class="card">
-                <h2>Risk Gates</h2>
+                <h2>风险门控</h2>
                 <div id="risk-gates"></div>
             </article>
         </section>
 
         <section class="grid two">
             <article class="card">
-                <h2>Monitoring Framework</h2>
+                <h2>监控框架</h2>
                 <div id="monitoring-framework"></div>
             </article>
 
             <article class="card">
                 <div class="card-header">
-                    <h2>Next Review Checklist</h2>
-                    <button type="button" data-copy="checklist">Copy</button>
+                    <h2>下次审查清单</h2>
+                    <button type="button" data-copy="checklist">复制</button>
                 </div>
                 <div id="next-checklist"></div>
             </article>
@@ -100,28 +100,28 @@
 
         <section class="card">
             <div class="card-header">
-                <h2>Shadow Observation Log</h2>
+                <h2>影子观测日志</h2>
                 <div class="button-row">
-                    <button type="button" data-copy="observation">Copy Observation</button>
-                    <button type="button" data-copy="governance">Copy Governance</button>
+                    <button type="button" data-copy="observation">复制观测</button>
+                    <button type="button" data-copy="governance">复制治理</button>
                 </div>
             </div>
-            <p class="warning-note">Shadow observation is research-only. No live promotion is allowed from this screen.</p>
+            <p class="warning-note">影子观测仅限研究用途。禁止从此界面提升至实盘。</p>
             <div id="governance-summary" class="observation-summary"></div>
             <div id="observation-summary" class="observation-summary"></div>
             <div class="table-wrap">
                 <table id="observation-table">
                     <thead>
                         <tr>
-                            <th>Symbol</th>
-                            <th>Category</th>
-                            <th>Latest Price Date</th>
-                            <th>Rows</th>
-                            <th>Recent Return Proxy</th>
-                            <th>Volatility Proxy</th>
-                            <th>Risk Gate</th>
-                            <th>Status</th>
-                            <th>Warnings</th>
+                            <th>标的</th>
+                            <th>类别</th>
+                            <th>最新价格日期</th>
+                            <th>行数</th>
+                            <th>近期收益代理</th>
+                            <th>波动率代理</th>
+                            <th>风险门控</th>
+                            <th>状态</th>
+                            <th>警告</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
