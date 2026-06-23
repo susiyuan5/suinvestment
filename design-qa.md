@@ -33,6 +33,10 @@ The desktop and mobile captures were checked separately for the watchlist rail, 
 - Localized the complete watchlist surface into Chinese.
 - Added persistent up/down ordering controls to every watchlist card.
 - Corrected fallback period slicing: 1D=2, 5D=6, 3M=14, 1Y=53 and 5Y=all available data points.
+- Split the technical chart into a 65% price panel and 35% MACD panel with a 130px MACD minimum.
+- Added a histogram-centered zero line, thicker positive/negative bars, and 1.8px MACD/signal lines.
+- Added a chart tooltip with date, price, MACD, signal and histogram values.
+- Verified AAPL/MSFT/NVDA/QQQ, all five timeframes, zero horizontal overflow and a 390px mobile viewport.
 
 **Implementation Checklist**
 

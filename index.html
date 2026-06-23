@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style.css?v=dca-l1-policy-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
-    <link rel="stylesheet" href="watchlist.css?v=watchlist-8">
+    <link rel="stylesheet" href="watchlist.css?v=watchlist-9">
   </head>
   <body>
     <div class="app-shell">
@@ -119,9 +119,12 @@
                   <button type="button" data-period="5y">5Y</button>
                 </div>
               </div>
-              <div id="watchlistChartLoading" class="watchlist-chart-loading">正在加载图表…</div>
-              <canvas id="watchlistPriceChart" aria-label="价格图表"></canvas>
-              <canvas id="watchlistMacdChart" aria-label="MACD 图表"></canvas>
+              <div id="watchlistChartPlot" class="watchlist-chart-plot">
+                <div id="watchlistChartLoading" class="watchlist-chart-loading">正在加载图表…</div>
+                <canvas id="watchlistPriceChart" aria-label="价格图表"></canvas>
+                <canvas id="watchlistMacdChart" aria-label="MACD 图表"></canvas>
+                <div id="watchlistChartTooltip" class="watchlist-chart-tooltip" role="status" aria-live="polite"></div>
+              </div>
               <div class="watchlist-chart-legend"><span>价格</span><span>MACD</span><span>信号线</span><span>柱状图</span></div>
             </article>
           </div>
@@ -586,6 +589,6 @@
     <script src="app.js?v=dca-l1-policy-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
-    <script src="watchlist.js?v=watchlist-3"></script>
+    <script src="watchlist.js?v=watchlist-4"></script>
   </body>
 </html>

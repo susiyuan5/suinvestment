@@ -3,9 +3,9 @@
 
   const KEY = "su-investment-pro:watchlist";
   const NAMES = { AAPL: "Apple Inc.", MSFT: "Microsoft Corporation", NVDA: "NVIDIA Corporation", TSLA: "Tesla, Inc.", AMZN: "Amazon.com, Inc.", GOOGL: "Alphabet Inc.", META: "Meta Platforms, Inc.", AMD: "Advanced Micro Devices, Inc.", QQQ: "Invesco QQQ Trust", SPY: "SPDR S&P 500 ETF Trust" };
-  const state = { symbols: loadSymbols(), active: "AAPL", period: "1y", quotes: {}, series: {}, timer: null };
+  const state = { symbols: loadSymbols(), active: "AAPL", period: "1y", quotes: {}, series: {}, timer: null, chartIndicators: null };
   const $ = (id) => document.getElementById(id);
-  const els = { cards: $("watchlistCards"), form: $("watchlistAddForm"), input: $("watchlistSymbolInput"), status: $("watchlistFormStatus"), symbol: $("watchlistActiveSymbol"), name: $("watchlistCompanyName"), meta: $("watchlistQuoteMeta"), price: $("watchlistPrice"), change: $("watchlistChange"), auto: $("watchlistAutoRefresh"), rate: $("watchlistRefreshRate"), refresh: $("watchlistRefreshBtn"), periods: $("watchlistPeriods"), loading: $("watchlistChartLoading"), priceCanvas: $("watchlistPriceChart"), macdCanvas: $("watchlistMacdChart"), caption: $("watchlistChartCaption") };
+  const els = { cards: $("watchlistCards"), form: $("watchlistAddForm"), input: $("watchlistSymbolInput"), status: $("watchlistFormStatus"), symbol: $("watchlistActiveSymbol"), name: $("watchlistCompanyName"), meta: $("watchlistQuoteMeta"), price: $("watchlistPrice"), change: $("watchlistChange"), auto: $("watchlistAutoRefresh"), rate: $("watchlistRefreshRate"), refresh: $("watchlistRefreshBtn"), periods: $("watchlistPeriods"), loading: $("watchlistChartLoading"), plot: $("watchlistChartPlot"), tooltip: $("watchlistChartTooltip"), priceCanvas: $("watchlistPriceChart"), macdCanvas: $("watchlistMacdChart"), caption: $("watchlistChartCaption") };
   if (!els.cards) return;
 
   function loadSymbols() { try { const value = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(value) && value.length) return value.slice(0, 8); } catch (_) {} return ["AAPL", "MSFT", "NVDA", "QQQ"]; }
@@ -94,7 +94,73 @@
   function grid(context, width, height) { context.strokeStyle = "#26344a"; context.lineWidth = 1; for (let index = 1; index < 5; index += 1) { const y = index * height / 5; context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke(); } }
   function draw() { const rows = state.series[state.active] || []; if (rows.length < 2) return; drawPrice(rows); drawMacd(rows); }
   function drawPrice(rows) { const { context, width, height } = setup(els.priceCanvas); context.clearRect(0, 0, width, height); grid(context, width, height); const values = rows.flatMap((row) => [row.low, row.high]); const min = Math.min(...values); const max = Math.max(...values); const pad = (max - min) * 0.08 || 1; const low = min - pad; const high = max + pad; const x = (index) => 10 + index * (width - 55) / (rows.length - 1); const y = (value) => 8 + (high - value) * (height - 24) / (high - low); const candle = Math.max(1, Math.min(7, (width - 55) / rows.length * 0.65)); rows.forEach((row, index) => { const up = row.close >= row.open; context.strokeStyle = context.fillStyle = up ? "#3ed59b" : "#ff6f7f"; context.beginPath(); context.moveTo(x(index), y(row.high)); context.lineTo(x(index), y(row.low)); context.stroke(); context.fillRect(x(index) - candle / 2, Math.min(y(row.open), y(row.close)), candle, Math.max(1, Math.abs(y(row.open) - y(row.close)))); }); context.fillStyle = "#8391a5"; context.font = "11px system-ui"; for (let index = 1; index < 5; index += 1) { const value = high - (high - low) * index / 5; context.fillText(value.toFixed(2), width - 43, index * height / 5 + 4); } }
-  function drawMacd(rows) { const { context, width, height } = setup(els.macdCanvas); context.clearRect(0, 0, width, height); grid(context, width, height); const closes = rows.map((row) => row.close); const fast = ema(closes, 12); const slow = ema(closes, 26); const macd = fast.map((value, index) => value - slow[index]); const signal = ema(macd, 9); const histogram = macd.map((value, index) => value - signal[index]); const abs = Math.max(...macd.concat(signal, histogram).map(Math.abs), 0.01); const x = (index) => index * (width - 6) / (rows.length - 1); const y = (value) => height / 2 - value * (height * 0.42) / abs; context.strokeStyle = "#617089"; context.beginPath(); context.moveTo(0, height / 2); context.lineTo(width, height / 2); context.stroke(); const barWidth = Math.max(1, (width - 6) / rows.length * 0.7); histogram.forEach((value, index) => { context.fillStyle = value >= 0 ? "rgba(62,213,155,.7)" : "rgba(255,111,127,.7)"; context.fillRect(x(index) - barWidth / 2, Math.min(y(value), height / 2), barWidth, Math.abs(y(value) - height / 2)); }); [[macd, "#f3b95f"], [signal, "#7b9cff"]].forEach(([values, color]) => { context.strokeStyle = color; context.lineWidth = 1.4; context.beginPath(); values.forEach((value, index) => index ? context.lineTo(x(index), y(value)) : context.moveTo(x(index), y(value))); context.stroke(); }); }
+  function drawMacd(rows) {
+    const { context, width, height } = setup(els.macdCanvas);
+    context.clearRect(0, 0, width, height);
+    grid(context, width, height);
+    const closes = rows.map((row) => row.close);
+    const fast = ema(closes, 12);
+    const slow = ema(closes, 26);
+    const macd = fast.map((value, index) => value - slow[index]);
+    const signal = ema(macd, 9);
+    const histogram = macd.map((value, index) => value - signal[index]);
+    const maxAbs = Math.max(...histogram.map(Math.abs), 0.0001);
+    const yMin = -maxAbs * 1.15;
+    const yMax = maxAbs * 1.15;
+    const plotLeft = 5;
+    const plotRight = Math.max(plotLeft + 1, width - 6);
+    const x = (index) => plotLeft + index * (plotRight - plotLeft) / (rows.length - 1);
+    const histogramY = (value) => 8 + (yMax - value) * (height - 16) / (yMax - yMin);
+    const lineMaxAbs = Math.max(...macd.concat(signal).map(Math.abs), 0.0001) * 1.15;
+    const lineY = (value) => 8 + (lineMaxAbs - value) * (height - 16) / (lineMaxAbs * 2);
+    const zeroY = histogramY(0);
+    const barWidth = Math.max(2, Math.min(12, (plotRight - plotLeft) / rows.length * 0.78));
+
+    context.strokeStyle = "rgba(190,205,225,.62)";
+    context.lineWidth = 1.25;
+    context.beginPath();
+    context.moveTo(plotLeft, zeroY);
+    context.lineTo(plotRight, zeroY);
+    context.stroke();
+
+    histogram.forEach((value, index) => {
+      context.fillStyle = value >= 0 ? "rgba(62,213,155,.9)" : "rgba(255,91,112,.9)";
+      context.fillRect(x(index) - barWidth / 2, Math.min(histogramY(value), zeroY), barWidth, Math.max(1, Math.abs(histogramY(value) - zeroY)));
+    });
+
+    [[macd, "#f3b95f"], [signal, "#7b9cff"]].forEach(([values, color]) => {
+      context.save();
+      context.beginPath();
+      context.rect(0, 0, width, height);
+      context.clip();
+      context.strokeStyle = color;
+      context.lineWidth = 1.8;
+      context.lineJoin = "round";
+      context.lineCap = "round";
+      context.beginPath();
+      values.forEach((value, index) => index ? context.lineTo(x(index), lineY(value)) : context.moveTo(x(index), lineY(value)));
+      context.stroke();
+      context.restore();
+    });
+    state.chartIndicators = { rows, macd, signal, histogram };
+  }
+
+  function showChartTooltip(event) {
+    const indicators = state.chartIndicators;
+    if (!indicators || !indicators.rows.length) return;
+    const canvasRect = els.priceCanvas.getBoundingClientRect();
+    const plotRect = els.plot.getBoundingClientRect();
+    const localX = Math.max(0, Math.min(canvasRect.width, event.clientX - canvasRect.left));
+    const index = Math.max(0, Math.min(indicators.rows.length - 1, Math.round((localX - 10) / Math.max(1, canvasRect.width - 55) * (indicators.rows.length - 1))));
+    const row = indicators.rows[index];
+    const formatValue = (value) => Number.isFinite(value) ? value.toFixed(4) : "--";
+    els.tooltip.innerHTML = `<strong>${new Date(row.time).toLocaleDateString("zh-CN")}</strong>价格：${fmt(row.close)}<br>MACD：${formatValue(indicators.macd[index])}<br>信号线：${formatValue(indicators.signal[index])}<br>柱状值：${formatValue(indicators.histogram[index])}`;
+    els.tooltip.classList.add("visible");
+    const left = Math.max(6, Math.min(plotRect.width - els.tooltip.offsetWidth - 6, event.clientX - plotRect.left + 12));
+    const top = Math.max(6, Math.min(plotRect.height - els.tooltip.offsetHeight - 6, event.clientY - plotRect.top + 12));
+    els.tooltip.style.left = `${left}px`;
+    els.tooltip.style.top = `${top}px`;
+  }
 
   function moveSymbol(symbol, direction) { const index = state.symbols.indexOf(symbol); const next = direction === "up" ? index - 1 : index + 1; if (index < 0 || next < 0 || next >= state.symbols.length) return; [state.symbols[index], state.symbols[next]] = [state.symbols[next], state.symbols[index]]; save(); renderCards(); }
   els.cards.addEventListener("click", (event) => { const move = event.target.closest("[data-move]"); if (move) { event.stopPropagation(); moveSymbol(move.dataset.target, move.dataset.move); return; } const remove = event.target.closest("[data-remove]"); if (remove) { event.stopPropagation(); const symbol = remove.dataset.remove; if (state.symbols.length === 1) return; state.symbols = state.symbols.filter((item) => item !== symbol); if (state.active === symbol) state.active = state.symbols[0]; save(); renderCards(); loadActive(); return; } const card = event.target.closest("[data-symbol]"); if (card) { state.active = card.dataset.symbol; renderCards(); renderQuote(); loadActive(); } });
@@ -104,5 +170,8 @@
   els.refresh.addEventListener("click", () => { refreshAll(); loadActive(); });
   function schedule() { clearInterval(state.timer); if (els.auto.checked) state.timer = setInterval(() => { refreshAll(); loadActive(); }, Number(els.rate.value) * 1000); }
   els.auto.addEventListener("change", schedule); els.rate.addEventListener("change", schedule); window.addEventListener("resize", () => requestAnimationFrame(draw));
+  els.plot.addEventListener("pointermove", showChartTooltip);
+  els.plot.addEventListener("pointerdown", showChartTooltip);
+  els.plot.addEventListener("pointerleave", () => els.tooltip.classList.remove("visible"));
   renderCards(); renderQuote(); refreshAll().then(loadActive); schedule();
 }());
