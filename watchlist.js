@@ -151,9 +151,71 @@ function renderQuote() {
 
   function ema(values, length) { const factor = 2 / (length + 1); const out = []; let value = values[0]; values.forEach((item, index) => { value = index ? item * factor + value * (1 - factor) : item; out.push(value); }); return out; }
   function setup(canvas) { const rect = canvas.getBoundingClientRect(); const dpr = Math.min(devicePixelRatio || 1, 2); canvas.width = Math.max(1, rect.width * dpr); canvas.height = Math.max(1, rect.height * dpr); const context = canvas.getContext("2d"); context.setTransform(dpr, 0, 0, dpr, 0, 0); return { context, width: rect.width, height: rect.height }; }
-  function grid(context, width, height) { context.strokeStyle = "#26344a"; context.lineWidth = 1; for (let index = 1; index < 5; index += 1) { const y = index * height / 5; context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke(); } }
+  function grid(context, plotLeft, plotRight, height) {
+    context.save();
+    context.strokeStyle = "rgba(79, 103, 132, .24)";
+    context.lineWidth = 1;
+    for (let index = 1; index < 5; index += 1) {
+      const y = index * height / 5;
+      context.beginPath();
+      context.moveTo(plotLeft, y);
+      context.lineTo(plotRight, y);
+      context.stroke();
+    }
+    context.restore();
+  }
   function draw() { const rows = state.series[state.active] || []; if (rows.length < 2) return; drawPrice(rows); drawMacd(rows); }
-  function drawPrice(rows) { const { context, width, height } = setup(els.priceCanvas); context.clearRect(0, 0, width, height); grid(context, width, height); const values = rows.flatMap((row) => [row.low, row.high]); const min = Math.min(...values); const max = Math.max(...values); const pad = (max - min) * 0.08 || 1; const low = min - pad; const high = max + pad; const x = (index) => 10 + index * (width - 55) / (rows.length - 1); const y = (value) => 8 + (high - value) * (height - 24) / (high - low); const candle = Math.max(1, Math.min(7, (width - 55) / rows.length * 0.65)); rows.forEach((row, index) => { const up = row.close >= row.open; context.strokeStyle = context.fillStyle = up ? "#3ed59b" : "#ff6f7f"; context.beginPath(); context.moveTo(x(index), y(row.high)); context.lineTo(x(index), y(row.low)); context.stroke(); context.fillRect(x(index) - candle / 2, Math.min(y(row.open), y(row.close)), candle, Math.max(1, Math.abs(y(row.open) - y(row.close)))); }); context.fillStyle = "#8391a5"; context.font = "11px system-ui"; for (let index = 1; index < 5; index += 1) { const value = high - (high - low) * index / 5; context.fillText(value.toFixed(2), width - 43, index * height / 5 + 4); } }
+  function drawPrice(rows) {
+    const { context, width, height } = setup(els.priceCanvas);
+    context.clearRect(0, 0, width, height);
+    const plotLeft = 10;
+    const plotRight = Math.max(plotLeft + 1, width - 58);
+    const plotTop = 12;
+    const plotBottom = height - 8;
+    const values = rows.map((row) => row.close);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const pad = (max - min) * 0.12 || Math.max(Math.abs(max) * 0.01, 1);
+    const low = min - pad;
+    const high = max + pad;
+    const x = (index) => plotLeft + index * (plotRight - plotLeft) / (rows.length - 1);
+    const y = (value) => plotTop + (high - value) * (plotBottom - plotTop) / (high - low);
+
+    grid(context, plotLeft, plotRight, height);
+
+    context.beginPath();
+    rows.forEach((row, index) => {
+      index ? context.lineTo(x(index), y(row.close)) : context.moveTo(x(index), y(row.close));
+    });
+    context.lineTo(plotRight, plotBottom);
+    context.lineTo(plotLeft, plotBottom);
+    context.closePath();
+    const fill = context.createLinearGradient(0, plotTop, 0, plotBottom);
+    fill.addColorStop(0, "rgba(62, 213, 155, .30)");
+    fill.addColorStop(.65, "rgba(62, 213, 155, .10)");
+    fill.addColorStop(1, "rgba(62, 213, 155, .015)");
+    context.fillStyle = fill;
+    context.fill();
+
+    context.beginPath();
+    rows.forEach((row, index) => {
+      index ? context.lineTo(x(index), y(row.close)) : context.moveTo(x(index), y(row.close));
+    });
+    context.strokeStyle = "#3ed59b";
+    context.lineWidth = 2;
+    context.lineJoin = "round";
+    context.lineCap = "round";
+    context.stroke();
+
+    context.fillStyle = "#8391a5";
+    context.font = "11px system-ui";
+    context.textAlign = "right";
+    context.textBaseline = "middle";
+    for (let index = 1; index < 5; index += 1) {
+      const value = high - (high - low) * index / 5;
+      context.fillText(value.toFixed(2), width - 7, index * height / 5);
+    }
+  }
     function drawMacd(rows) {
     const { context, width, height } = setup(els.macdCanvas);
     context.clearRect(0, 0, width, height);
@@ -163,42 +225,19 @@ function renderQuote() {
     const macd = fast.map((value, index) => value - slow[index]);
     const signal = ema(macd, 9);
     const histogram = macd.map((value, index) => value - signal[index]);
-    const allValues = macd.concat(signal).concat(histogram);
-    const maxAbs = Math.max(...allValues.map(Math.abs), 0.0001);
+    const maxAbs = Math.max(...histogram.map(Math.abs), 0.0001);
     const yMin = -maxAbs * 1.15;
     const yMax = maxAbs * 1.15;
     const plotLeft = 6;
     const plotRight = Math.max(plotLeft + 1, width - 56);
     const x = (index) => plotLeft + index * (plotRight - plotLeft) / (rows.length - 1);
     const mapY = (value) => 8 + (yMax - value) * (height - 16) / (yMax - yMin);
-    const barWidth = Math.max(2, Math.min(10, (plotRight - plotLeft) / rows.length * 0.75));
+    const chartWidth = plotRight - plotLeft;
+    const barWidth = Math.max(3, chartWidth / rows.length * 0.5);
     const zeroY = mapY(0);
 
-    // Y-axis grid lines and labels for MACD panel
-    context.strokeStyle = "rgba(131,145,165,.22)";
+    context.strokeStyle = "rgba(131,145,165,.28)";
     context.lineWidth = 1;
-    context.font = "10px system-ui";
-    context.textAlign = "right";
-    context.textBaseline = "middle";
-    [-maxAbs, -maxAbs * 0.5, 0, maxAbs * 0.5, maxAbs].forEach(function (value) {
-      const y = mapY(value);
-      if (Math.abs(value) > maxAbs * 0.001) {
-        context.beginPath();
-        context.moveTo(plotLeft, y);
-        context.lineTo(plotRight, y);
-        context.stroke();
-      }
-      if (value === 0) {
-        context.fillStyle = "#becde1";
-      } else {
-        context.fillStyle = "#8391a5";
-      }
-      context.fillText((value >= 0 ? "+" : "") + value.toFixed(2), width - 4, y);
-    });
-
-    // Prominent zero line
-    context.strokeStyle = "rgba(190,205,225,.72)";
-    context.lineWidth = 1.5;
     context.beginPath();
     context.moveTo(plotLeft, zeroY);
     context.lineTo(plotRight, zeroY);
@@ -206,28 +245,9 @@ function renderQuote() {
 
     // Draw histogram bars
     histogram.forEach(function (value, index) {
-      context.fillStyle = value >= 0 ? "rgba(62,213,155,.9)" : "rgba(255,91,112,.9)";
+      context.fillStyle = value >= 0 ? "rgba(62,213,155,.78)" : "rgba(255,111,127,.78)";
       const barY = mapY(value);
       context.fillRect(x(index) - barWidth / 2, Math.min(barY, zeroY), barWidth, Math.max(1, Math.abs(barY - zeroY)));
-    });
-
-    // Draw MACD and signal lines
-    [[macd, "#f3b95f"], [signal, "#7b9cff"]].forEach(function (pair) {
-      var values = pair[0], color = pair[1];
-      context.save();
-      context.beginPath();
-      context.rect(0, 0, width, height);
-      context.clip();
-      context.strokeStyle = color;
-      context.lineWidth = 1.5;
-      context.lineJoin = "round";
-      context.lineCap = "round";
-      context.beginPath();
-      values.forEach(function (value, index) {
-        index ? context.lineTo(x(index), mapY(value)) : context.moveTo(x(index), mapY(value));
-      });
-      context.stroke();
-      context.restore();
     });
     state.chartIndicators = { rows, macd, signal, histogram };
   }
@@ -241,7 +261,7 @@ function showChartTooltip(event) {
     const index = Math.max(0, Math.min(indicators.rows.length - 1, Math.round((localX - 10) / Math.max(1, plotRect2.width - 62) * (indicators.rows.length - 1))));
     const row = indicators.rows[index];
     const formatValue = (value) => Number.isFinite(value) ? value.toFixed(4) : "--";
-    els.tooltip.innerHTML = `<strong>${new Date(row.time).toLocaleDateString("zh-CN")}</strong>价格：${fmt(row.close)}<br>MACD：${formatValue(indicators.macd[index])}<br>信号线：${formatValue(indicators.signal[index])}<br>柱状值：${formatValue(indicators.histogram[index])}`;
+    els.tooltip.innerHTML = `<strong>${new Date(row.time).toLocaleDateString("zh-CN")}</strong>价格：${fmt(row.close)}<br>MACD 柱状值：${formatValue(indicators.histogram[index])}`;
     els.tooltip.classList.add("visible");
     const left = Math.max(6, Math.min(plotRect.width - els.tooltip.offsetWidth - 6, event.clientX - plotRect.left + 12));
     const top = Math.max(6, Math.min(plotRect.height - els.tooltip.offsetHeight - 6, event.clientY - plotRect.top + 12));
