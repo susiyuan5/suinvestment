@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#080d14">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://finnhub.io https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=dca-l1-policy-1">
+    <link rel="stylesheet" href="style.css?v=dca-l2-policy-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
     <link rel="stylesheet" href="watchlist.css?v=ws-v3">
@@ -320,7 +320,20 @@
                 <span>No trading execution</span>
                 <span>No broker connection</span>
               </div>
-              <p class="dca-preview-intro">The final manual amount applies the audited DCA multiplier to the original Manual Trade Plan amount. You must decide manually before buying.</p>
+              <p class="dca-preview-intro">DCA-L2 keeps a Base DCA plan, adds only verified dip/crash-fund amounts, then applies portfolio guards. You must decide manually before buying.</p>
+              <section class="dca-ledger-panel" aria-labelledby="dca-ledger-title">
+                <div>
+                  <h4 id="dca-ledger-title">Crash Fund Ledger / 下跌备用金账本</h4>
+                  <p id="dcaLedgerSummary">Waiting for DCA-L2 data.</p>
+                </div>
+                <div class="dca-ledger-form">
+                  <input id="dcaLedgerAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD confirmed use">
+                  <input id="dcaLedgerNote" type="text" autocomplete="off" placeholder="Manual note">
+                  <button id="dcaLedgerRecordBtn" class="secondary-button" type="button">Record confirmed manual use</button>
+                </div>
+                <div id="dcaLedgerEntries" class="dca-ledger-entries" aria-live="polite"></div>
+                <p class="dca-ledger-disclaimer">Bookkeeping only. This does not submit, place, or execute a trade.</p>
+              </section>
               <div id="dcaPreviewRows" class="dca-preview-rows" aria-live="polite">
                 <p class="dca-preview-empty">DCA policy waiting for data.</p>
               </div>
@@ -605,8 +618,8 @@
     </template>
 
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="dca-policy.js?v=dca-l1-policy-1"></script>
-    <script src="app.js?v=dca-l1-policy-1"></script>
+    <script src="dca-policy.js?v=dca-l2-policy-1"></script>
+    <script src="app.js?v=dca-l2-policy-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>

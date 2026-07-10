@@ -1,0 +1,62 @@
+[
+  {
+    "name": "normal fresh plan keeps base only",
+    "input": {"baseAmount": 100, "price": 100, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 2, "trendStatus": "above_sma", "volatilityPct": 2, "availableCash": 1000, "availableCashProvided": true, "monthlyBudget": 400, "crashFundBalance": 100, "date": "2026-07-06"},
+    "expected": {"state": "normal", "baseAmount": 100, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 100, "reasonCodes": []}
+  },
+  {
+    "name": "small drawdown adds bounded extra",
+    "input": {"baseAmount": 100, "price": 95, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 10, "trendStatus": "above_sma", "volatilityPct": 2, "monthlyBudget": 400, "crashFundBalance": 100, "date": "2026-07-06"},
+    "expected": {"state": "medium_drawdown", "baseAmount": 100, "extraAmount": 12.5, "crashFundAmount": 0, "finalAmount": 112.5, "reasonCodes": ["EXTRA_DIP_BUY"]}
+  },
+  {
+    "name": "deep drawdown uses extra and capped crash plan",
+    "input": {"baseAmount": 100, "price": 75, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 30, "trendStatus": "above_sma", "volatilityPct": 2, "monthlyBudget": 400, "crashFundInitial": 100, "crashFundBalance": 80, "date": "2026-07-06"},
+    "expected": {"state": "deep_drawdown", "baseAmount": 100, "extraAmount": 41.67, "crashFundAmount": 25, "crashFundWeeklyLimit": 25, "finalAmount": 166.67, "reasonCodes": ["EXTRA_DIP_BUY", "CRASH_FUND_PLANNED"]}
+  },
+  {
+    "name": "panic halves base and blocks extras",
+    "input": {"baseAmount": 100, "price": 80, "dataStatus": "fresh", "marketRegime": "Bear", "panicActive": true, "drawdownPct": 20, "trendStatus": "above_sma", "volatilityPct": 3, "monthlyBudget": 400, "crashFundBalance": 100, "date": "2026-07-06"},
+    "expected": {"state": "panic_bear_extreme_volatility", "baseAmount": 50, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 50, "reasonCodes": ["DEFENSIVE_BASE_50"]}
+  },
+  {
+    "name": "stale preserves base but prevents extra",
+    "input": {"baseAmount": 100, "price": 80, "dataStatus": "stale", "marketRegime": "Bull", "drawdownPct": 25, "trendStatus": "above_sma", "volatilityPct": 2, "monthlyBudget": 400, "crashFundBalance": 100, "date": "2026-07-06"},
+    "expected": {"state": "manual_review", "baseAmount": 100, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 100, "reasonCodes": ["DATA_MANUAL_REVIEW"]}
+  },
+  {
+    "name": "invalid price hard blocks all amounts",
+    "input": {"baseAmount": 100, "price": null, "dataStatus": "invalid", "marketRegime": "Bull", "drawdownPct": 20, "trendStatus": "above_sma", "volatilityPct": 2, "monthlyBudget": 400, "crashFundBalance": 100, "date": "2026-07-06"},
+    "expected": {"state": "hard_block", "baseAmount": 0, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 0, "reasonCodes": ["HARD_BLOCK_INVALID_PRICE"]}
+  },
+  {
+    "name": "market closed valid close preserves base only",
+    "input": {"baseAmount": 100, "price": 100, "dataStatus": "market_closed_last_close", "marketRegime": "Bull", "drawdownPct": 20, "trendStatus": "above_sma", "volatilityPct": 2, "monthlyBudget": 400, "crashFundBalance": 100, "date": "2026-07-04"},
+    "expected": {"state": "normal", "baseAmount": 100, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 100, "reasonCodes": ["MARKET_CLOSED_LAST_CLOSE"]}
+  },
+  {
+    "name": "explicit zero cash hard blocks all amounts",
+    "input": {"baseAmount": 100, "price": 100, "dataStatus": "fresh", "marketRegime": "Bull", "availableCashProvided": true, "availableCash": 0, "date": "2026-07-06"},
+    "expected": {"state": "hard_block", "baseAmount": 0, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 0, "reasonCodes": ["HARD_BLOCK_ZERO_CASH"]}
+  },
+  {
+    "name": "extreme drawdown requires review without extra",
+    "input": {"baseAmount": 100, "price": 60, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 35, "trendStatus": "above_sma", "volatilityPct": 2, "date": "2026-07-06"},
+    "expected": {"state": "extreme_drawdown_review", "baseAmount": 100, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 100, "reasonCodes": ["EXTREME_DRAWDOWN_REVIEW"]}
+  },
+  {
+    "name": "extreme volatility halves base and blocks extra",
+    "input": {"baseAmount": 100, "price": 80, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 25, "trendStatus": "above_sma", "volatilityPct": 6, "date": "2026-07-06"},
+    "expected": {"state": "panic_bear_extreme_volatility", "baseAmount": 50, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 50, "reasonCodes": ["DEFENSIVE_BASE_50"]}
+  },
+  {
+    "name": "concentration suppresses extra and crash but preserves base",
+    "input": {"baseAmount": 100, "price": 75, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 30, "trendStatus": "above_sma", "volatilityPct": 2, "currentAllocationPct": 30, "monthlyBudget": 400, "crashFundBalance": 100, "date": "2026-07-06"},
+    "expected": {"state": "deep_drawdown", "baseAmount": 100, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 100, "reasonCodes": ["EXTRA_BLOCKED_CONCENTRATION"]}
+  },
+  {
+    "name": "cash cap removes crash then extra before base",
+    "input": {"baseAmount": 100, "price": 75, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 30, "trendStatus": "above_sma", "volatilityPct": 2, "monthlyBudget": 400, "crashFundInitial": 100, "crashFundBalance": 100, "availableCashProvided": true, "availableCash": 400, "date": "2026-07-06"},
+    "expected": {"state": "deep_drawdown", "baseAmount": 100, "extraAmount": 20, "crashFundAmount": 0, "finalAmount": 120, "reasonCodes": ["EXTRA_DIP_BUY", "CRASH_FUND_PLANNED", "CASH_CAP_APPLIED"]}
+  }
+]

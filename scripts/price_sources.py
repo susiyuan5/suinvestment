@@ -17,6 +17,7 @@ SYMBOLS = ("BYDDY", "MSFT", "NVDA", "AAPL", "ASML", "KO", "QQQ", "SPY")
 OUT_FILE = Path("data/market-data.json")
 REPORT_FILE = Path("results/data_freshness/market_price_freshness.json")
 MAX_FRESH_AGE_HOURS = 24.0
+MAX_MARKET_CLOSED_AGE_HOURS = 96.0
 FUTURE_TOLERANCE = timedelta(minutes=5)
 REQUEST_TIMEOUT_SECONDS = 20
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) SuInvestmentPriceRefresh/1.0"
@@ -83,9 +84,9 @@ def is_publishable(result: dict, previous: dict) -> tuple[bool, str]:
     symbols = result.get("symbols", {})
     prior_symbols = previous.get("symbols", {})
     required = ("QQQ", "SPY")
-    if any(symbols.get(symbol, {}).get("validationStatus") != "validated" for symbol in required):
+    if any(symbols.get(symbol, {}).get("validationStatus") not in {"validated", "market_closed_last_close"} for symbol in required):
         return False, "QQQ and SPY must both be validated before publishing"
-    if not any(item.get("validationStatus") == "validated" for item in symbols.values()):
+    if not any(item.get("validationStatus") in {"validated", "market_closed_last_close"} for item in symbols.values()):
         return False, "No validated symbols were available"
     for symbol, current in symbols.items():
         old = prior_symbols.get(symbol, {})
@@ -159,6 +160,7 @@ def fetch_yahoo_daily(symbol: str) -> dict:
                 if isinstance(close, (int, float)) and math.isfinite(close) and close > 0
             ]
             regular_market_price = (result.get("meta") or {}).get("regularMarketPrice")
+            market_state = (result.get("meta") or {}).get("marketState")
             return build_snapshot(
                 symbol,
                 points,
@@ -166,6 +168,7 @@ def fetch_yahoo_daily(symbol: str) -> dict:
                 source_type="api",
                 trusted=True,
                 regular_market_price=regular_market_price,
+                market_state=market_state,
             )
         except Exception as error:
             errors.append(f"{host}: {error}")
@@ -215,6 +218,7 @@ def build_snapshot(
     source_type: str,
     trusted: bool,
     regular_market_price: object = None,
+    market_state: object = None,
 ) -> dict:
     if len(points) < 6:
         raise RuntimeError(f"{source} returned fewer than 6 valid closes")
@@ -240,6 +244,7 @@ def build_snapshot(
         "source": source,
         "sourceType": source_type,
         "trustedSource": trusted,
+        "marketState": str(market_state or "").upper() or None,
     }
 
 
@@ -269,10 +274,13 @@ def validate_snapshot(snapshot: dict, *, now: datetime | None = None) -> dict:
         move_pct is not None and move_pct > 40 and snapshot.get("trustedSource") is not True
     )
     stale = age_hours > MAX_FRESH_AGE_HOURS
+    market_closed = str(snapshot.get("marketState") or "").upper() == "CLOSED"
     if implausible_move:
         status, reason = "manual_review", "Implausible price move requires manual review"
     elif untrusted_large_move:
         status, reason = "manual_review", "Large move from an untrusted source requires manual review"
+    elif stale and market_closed and age_hours <= MAX_MARKET_CLOSED_AGE_HOURS:
+        status, reason = "market_closed_last_close", "Latest official close retained while the market is closed"
     elif stale:
         status, reason = "stale", f"Quote age {age_hours}h exceeds 24h"
     else:
@@ -284,8 +292,8 @@ def validate_snapshot(snapshot: dict, *, now: datetime | None = None) -> dict:
         "validationStatus": status,
         "validationReason": reason,
         "validationWarnings": warnings,
-        "stale": status != "validated",
-        "staleReason": "" if status == "validated" else reason,
+        "stale": status not in {"validated", "market_closed_last_close"},
+        "staleReason": "" if status in {"validated", "market_closed_last_close"} else reason,
     }
 
 

@@ -2,6 +2,10 @@
 
 Su Investment Pro is a weekly investment calculator, historical backtesting toolkit, and live market decision-support assistant. It is not an automatic trading bot. It never places real orders, never logs in to a brokerage account, and never submits buy or sell instructions through a broker API.
 
+## DCA-L2 Manual Plan
+
+The Manual Trade Plan uses DCA-L2: Base DCA, optional verified Extra Dip-Buy, and a separately tracked Crash Fund plan. It is manual decision support only. Signal labels and risk levels explain the plan; they do not independently cancel Base DCA except for documented hard data/cash blocks. See [DCA_L2_IMPLEMENTATION_REPORT.md](DCA_L2_IMPLEMENTATION_REPORT.md) for states, safety limits, ledger behavior, and backtest diagnostics.
+
 All suggestions are for manual review only. The final trading decision and any brokerage order must be placed manually by the user.
 
 ## Project Navigation

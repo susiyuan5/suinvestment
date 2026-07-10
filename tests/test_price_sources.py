@@ -67,6 +67,14 @@ class PriceSourceValidationTests(unittest.TestCase):
         self.assertEqual("unavailable", result["validationStatus"])
         self.assertTrue(result["stale"])
 
+    def test_recent_official_closed_market_quote_has_distinct_status(self):
+        result = price_sources.validate_snapshot(
+            candidate(quoteTimestamp="2026-06-18T13:30:00Z", marketState="CLOSED"),
+            now=datetime(2026, 6, 21, 12, tzinfo=timezone.utc),
+        )
+        self.assertEqual("market_closed_last_close", result["validationStatus"])
+        self.assertFalse(result["stale"])
+
     def test_successful_same_timestamp_api_quote_keeps_api_provenance(self):
         stale_quote = candidate(quoteTimestamp="2026-06-18T13:30:00Z")
 
