@@ -87,50 +87,22 @@ jobs:
       - name: Check dashboard JavaScript syntax
         run: node --check app.js
 
-      - name: Detect data changes
-        id: changes
-        run: |
-          if git diff --quiet -- data/backtest-prices.json; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Create or update refresh pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Refresh historical backtest prices"
+          branch: "automation/update-backtest-prices"
+          delete-branch: true
+          title: "Refresh historical backtest prices"
+          body: |
+            Automated historical backtest price refresh.
 
-      - name: Prepare pull request body
-        if: steps.changes.outputs.changed == 'true'
-        run: |
-          cat > pr-body.md <<EOF
-          Automated historical backtest price refresh.
-
-          Validation summary:
-          - QQQ row count: ${QQQ_ROW_COUNT}
-          - QQQ latest date: ${QQQ_LATEST_DATE}
-          - SPY row count: ${SPY_ROW_COUNT}
-          - SPY latest date: ${SPY_LATEST_DATE}
-          - Python tests: passed
-          - Node check: passed
-
-          This pull request updates data/backtest-prices.json only after snapshot validation, Python tests, and dashboard JavaScript syntax checks pass.
-          EOF
-
-      - name: Create pull request
-        if: steps.changes.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          branch="automation/update-backtest-prices-${{ github.run_id }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$branch"
-          git add data/backtest-prices.json
-          git commit -m "Refresh historical backtest prices"
-          git push --set-upstream origin "$branch"
-          gh pr create \
-            --title "Refresh historical backtest prices" \
-            --body-file pr-body.md \
-            --base main \
-            --head "$branch"
-
-      - name: No data changes
-        if: steps.changes.outputs.changed == 'false'
-        run: echo "Historical backtest prices are already up to date."
+            Validation completed before this pull request was opened:
+            - QQQ row count: ${{ env.QQQ_ROW_COUNT }}
+            - QQQ latest date: ${{ env.QQQ_LATEST_DATE }}
+            - SPY row count: ${{ env.SPY_ROW_COUNT }}
+            - SPY latest date: ${{ env.SPY_LATEST_DATE }}
+            - Python tests and dashboard syntax checks: passed
+          add-paths: |
+            data/backtest-prices.json

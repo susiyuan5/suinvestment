@@ -912,10 +912,14 @@ amountBreakdown: "金额分解",
     state.portfolio = normalizePortfolio(CONFIG.defaultStocks, { allowCustom: true });
   }
 
-  apiKeyInput.value = localStorage.getItem(STORAGE_KEYS.apiKey) || "";
+  // API keys are intentionally session-scoped. Do not revive legacy persistent keys.
+  localStorage.removeItem(STORAGE_KEYS.apiKey);
+  apiKeyInput.value = sessionStorage.getItem(STORAGE_KEYS.apiKey) || "";
 
   apiKeyInput.addEventListener("input", function () {
-    localStorage.setItem(STORAGE_KEYS.apiKey, apiKeyInput.value.trim());
+    const value = apiKeyInput.value.trim();
+    if (value) sessionStorage.setItem(STORAGE_KEYS.apiKey, value);
+    else sessionStorage.removeItem(STORAGE_KEYS.apiKey);
   });
 
   openSettingsBtn.addEventListener("click", openSettings);
@@ -1160,7 +1164,7 @@ amountBreakdown: "金额分解",
   }
 
   async function searchFinnhubSymbols(query, signal) {
-    var apiKey = localStorage.getItem(STORAGE_KEYS.apiKey);
+    var apiKey = sessionStorage.getItem(STORAGE_KEYS.apiKey);
     if (!apiKey) return null;
     try {
       var url = "https://finnhub.io/api/v1/search?q=" + encodeURIComponent(query) + "&token=" + apiKey;

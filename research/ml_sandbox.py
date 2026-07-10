@@ -4,7 +4,7 @@ import argparse
 import csv
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -216,12 +216,14 @@ def load_ml_table(pd: Any, config: MLSandboxConfig) -> Any:
     return frame
 
 
-def time_split(frame: Any) -> tuple[Any, Any, dict[str, Any]]:
+def time_split(frame: Any, *, purge_weeks: int = 12, embargo_weeks: int = 1) -> tuple[Any, Any, dict[str, Any]]:
     dates = sorted(frame["date"].dropna().unique())
     split_index = max(int(len(dates) * 0.80), 1)
     split_date = dates[split_index]
-    train = frame[frame["date"] < split_date].copy()
-    test = frame[frame["date"] >= split_date].copy()
+    purge_before = split_date - timedelta(weeks=purge_weeks)
+    test_start = split_date + timedelta(weeks=embargo_weeks)
+    train = frame[frame["date"] < purge_before].copy()
+    test = frame[frame["date"] >= test_start].copy()
     return train, test, {
         "train_start": train["date"].min().date().isoformat(),
         "train_end": train["date"].max().date().isoformat(),
@@ -229,6 +231,8 @@ def time_split(frame: Any) -> tuple[Any, Any, dict[str, Any]]:
         "test_end": test["date"].max().date().isoformat(),
         "train_rows": len(train),
         "test_rows": len(test),
+        "purge_weeks": purge_weeks,
+        "embargo_weeks": embargo_weeks,
     }
 
 
@@ -417,7 +421,7 @@ def walk_forward_regression(deps: dict[str, Any], train_clean: Any, target: str,
     for index in positions:
         cutoff = dates[index]
         next_dates = dates[index : min(index + 20, len(dates))]
-        train_part = train_clean[train_clean["date"] < cutoff]
+        train_part = train_clean[train_clean["date"] < cutoff - timedelta(weeks=12)]
         valid_part = train_clean[train_clean["date"].isin(next_dates)]
         if len(valid_part) < 12:
             continue
@@ -441,7 +445,7 @@ def walk_forward_classification(deps: dict[str, Any], train_clean: Any, target: 
     for index in positions:
         cutoff = dates[index]
         next_dates = dates[index : min(index + 20, len(dates))]
-        train_part = train_clean[train_clean["date"] < cutoff]
+        train_part = train_clean[train_clean["date"] < cutoff - timedelta(weeks=12)]
         valid_part = train_clean[train_clean["date"].isin(next_dates)]
         if len(valid_part) < 12 or train_part[target].nunique() < 2:
             continue

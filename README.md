@@ -57,6 +57,8 @@ Start with [PROJECT_NAVIGATION.md](PROJECT_NAVIGATION.md) for the live dashboard
 
 Manual overrides are entered per stock as a weekly percentage value, such as `-9.2`, `+12`, or `10.5`. Overrides are saved in the browser and take priority for that stock.
 
+Finnhub keys are stored in `sessionStorage` only. The application deliberately removes any legacy persistent key and does not migrate it; after a browser session ends, enter the key again if live lookup is needed. The static page CSP permits connections only to Finnhub and Yahoo Finance in addition to same-origin data files.
+
 ## Data Refresh Workflow / 数据刷新流程
 
 Use `scripts/update_backtest_prices.py` to maintain `data/backtest-prices.json`, which powers dashboard backtests, trend/volatility/drawdown, and QQQ/SPY Market Regime history.
@@ -120,6 +122,11 @@ Phase 6A adds a separate research universe scaffold for broader validation. See 
 - Phase 6X adds `python research\generate_shadow_monthly_review.py` and [SHADOW_MONTHLY_REVIEW_TEMPLATE.md](SHADOW_MONTHLY_REVIEW_TEMPLATE.md) for research-only monthly review summaries. The report reads existing readiness and archive validation outputs and cannot promote candidates.
 - Phase 6Y adds [SHADOW_OBSERVATION_LIFECYCLE.md](SHADOW_OBSERVATION_LIFECYCLE.md), a read-only governance map for Phase 6S-6X. It documents the operational flow and boundaries without running observations or changing live/default behavior.
 - Phase 6AA adds cadence guards for Shadow Observation reporting. Same-day repeated runs may validate the pipeline, but they do not count as monthly calendar evidence and cannot unlock human review or live promotion.
+- Phase 6AB adds frozen-observation outcome backfill via `python research\update_shadow_outcomes.py`. A candidate needs at least four observations with all 1-, 4-, and 12-week outcomes mature before it can be presented for human review; live promotion remains prohibited.
+
+## Versioned v2 Causal Baseline
+
+`python research\run_v2_causal_baseline.py` writes an isolated `research/results/v2/` artifact. It forms a signal from adjusted close at week `t`, executes at adjusted open in week `t+1`, and applies non-zero commission and slippage. It never rewrites Phase 3–6 output or changes dashboard/manual trade behavior.
 
 ## Live Calculator Signal
 

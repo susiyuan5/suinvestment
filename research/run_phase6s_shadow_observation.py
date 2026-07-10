@@ -8,6 +8,7 @@ dashboard inputs.
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import math
 from collections import Counter
@@ -63,6 +64,7 @@ def compute_observation(
     risk_config: dict,
     metric_entry: dict,
     generated_at: str,
+    input_hash: str,
 ) -> dict:
     symbol = candidate["symbol"]
     rows = price_entry.get("rows", []) if price_entry else []
@@ -102,6 +104,9 @@ def compute_observation(
 
     return {
         "symbol": symbol,
+        "input_hash": input_hash,
+        "code_version": "phase6s-shadow-v2",
+        "model_version": "phase6s-candidate-ranking-v1",
         "category": candidate.get("sector_category", ""),
         "observation_date": generated_at,
         "latest_price_date": latest_price_date,
@@ -123,6 +128,9 @@ def compute_observation(
 def write_csv(path: Path, rows: list[dict]) -> None:
     fieldnames = [
         "symbol",
+        "input_hash",
+        "code_version",
+        "model_version",
         "category",
         "observation_date",
         "latest_price_date",
@@ -199,6 +207,7 @@ def main() -> None:
     risk_config = executive.get("phase6m", {})
     generated_at = datetime.now(timezone.utc).isoformat()
     price_symbols = prices.get("symbols", {})
+    price_hash = hashlib.sha256(json.dumps(prices, sort_keys=True).encode("utf-8")).hexdigest()
 
     observations = [
         compute_observation(
@@ -207,6 +216,7 @@ def main() -> None:
             risk_config=risk_config,
             metric_entry=metrics.get(row["symbol"], {}),
             generated_at=generated_at,
+            input_hash=price_hash,
         )
         for row in candidates
     ]

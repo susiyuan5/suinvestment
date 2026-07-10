@@ -124,12 +124,14 @@ The automated workflow:
 7. Compiles `scripts/update_backtest_prices.py`.
 8. Runs `python -m unittest discover -s tests`.
 9. Runs `node --check app.js`.
-10. Opens a pull request only if `data/backtest-prices.json` changed and every validation step passed.
+10. Uses `peter-evans/create-pull-request@v7` to create or update the refresh pull request only if `data/backtest-prices.json` changed and every validation step passed.
 
-The workflow uses GitHub CLI (`gh`) to create the pull request and avoids a third-party pull-request action. It needs these repository permissions:
+The workflow needs these repository permissions:
 
 - `contents: write`
 - `pull-requests: write`
+
+In repository **Settings → Actions → General**, enable **Allow GitHub Actions to create and approve pull requests**. The YAML permissions alone cannot override that repository-level setting.
 
 PR-based updates are safer than direct pushes to `main` because the refreshed snapshot can be reviewed before merge. This matters because Market Regime can affect live recommendation outputs through real data inputs.
 

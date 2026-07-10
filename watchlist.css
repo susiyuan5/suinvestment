@@ -5,8 +5,16 @@
 .watchlist-panel {
   margin: 16px 0; padding: 0;
   border: 1px solid #1e2a38; background: #080e16; color: #dce6f0;
-  width: min(98vw, 1800px); margin-left: auto; margin-right: auto;
+  width: 100%; max-width: 1800px; box-sizing: border-box; margin-left: auto; margin-right: auto;
+  order: 1;
 }
+.watchlist-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; cursor: pointer; list-style: none; }
+.watchlist-summary::-webkit-details-marker { display: none; }
+.watchlist-summary .eyebrow { margin-bottom: 2px; }
+.watchlist-summary strong { color: #dce6f0; }
+.watchlist-summary-action { color: #7eb8f2; font-size: .82rem; font-weight: 700; }
+.watchlist-panel[open] .watchlist-summary-action { font-size: 0; }
+.watchlist-panel[open] .watchlist-summary-action::after { content: "收起盯盘"; font-size: .82rem; }
 .watchlist-heading {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 16px; padding: 12px 14px 10px;
@@ -20,7 +28,7 @@
 .watchlist-add-form label { display: block; margin-bottom: 4px; color: #6f7d91; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; }
 .watchlist-add-form > div { display: flex; }
 .watchlist-add-form input { min-width: 0; flex: 1; padding: 8px 10px; border: 1px solid #263445; border-radius: 6px 0 0 6px; background: #0a111d; color: #dce6f0; text-transform: uppercase; font-size: 0.82rem; }
-.watchlist-add-form input:focus { border-color: #4f9ee9; outline: none; }
+.watchlist-add-form input:focus { border-color: #4f9ee9; }
 .watchlist-add-form button { border: 0; border-radius: 0 6px 6px 0; background: #4f9ee9; color: #07111e; font-weight: 800; padding: 0 14px; cursor: pointer; font-size: 0.8rem; }
 .watchlist-add-form > span { display: block; min-height: 14px; margin-top: 3px; color: #ef9b9b; font-size: 0.7rem; }
 
@@ -37,7 +45,7 @@
 .ws-ticker-item {
   flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px; border: 1px solid #1e2c3c; border-radius: 6px;
-  background: #0f1825; cursor: pointer; font-size: 0.76rem; min-height: 28px;
+  background: #0f1825; color: #dce6f0; cursor: pointer; font-size: 0.76rem; min-height: 36px;
   transition: border-color 120ms, background 120ms;
 }
 .ws-ticker-item:hover { border-color: #3a5a78; background: #14202e; }
@@ -61,13 +69,13 @@
 
 .ws-card {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px 6px; align-items: start;
-  padding: 8px 10px 7px;
+  gap: 4px; align-items: start;
+  padding: 6px;
   border: 1px solid #1a2533; border-left: 3px solid transparent;
   background: #0f1825; cursor: pointer; min-width: 0;
   transition: border-color 120ms, background 120ms;
 }
+.ws-card-select { display: grid; grid-template-columns: 1fr auto; gap: 2px 6px; width: 100%; padding: 4px; border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; }
 .ws-card:hover { background: #15213a; border-color: #2a3d58; }
 .ws-card.active { background: #122238; border-left-color: #4f9ee9; border-color: #1e3550; }
 .ws-card .ws-card-sym { font-size: 0.82rem; font-weight: 800; color: #dce6f0; }
@@ -81,9 +89,9 @@
   display: flex; gap: 2px; margin-top: 4px; grid-column: 1 / -1;
 }
 .ws-card-actions button {
-  flex: 1; padding: 2px 4px; border: 1px solid #1e2c3c; border-radius: 4px;
-  background: #0a111c; color: #6f7d91; font-size: 0.62rem; cursor: pointer;
-  min-height: 0; line-height: 1.4; transition: border-color 120ms;
+  flex: 1; padding: 4px 5px; border: 1px solid #1e2c3c; border-radius: 4px;
+  background: #0a111c; color: #6f7d91; font-size: 0.68rem; cursor: pointer;
+  min-height: 36px; line-height: 1.4; transition: border-color 120ms;
 }
 .ws-card-actions button:hover:not(:disabled) { border-color: #4f9ee9; color: #b5cfe8; }
 .ws-card-actions button:disabled { cursor: not-allowed; opacity: 0.3; }
@@ -119,7 +127,8 @@
 .ws-refresh-group label { font-size: 0.74rem; color: #6f7d91; display: flex; align-items: center; gap: 4px; }
 .ws-refresh-group label input { width: 14px; height: 14px; min-height: 0; margin: 0; accent-color: #4f9ee9; }
 .ws-refresh-group select { padding: 5px 6px; border: 1px solid #1e2c3c; border-radius: 4px; background: #0a111c; color: #b5cfe8; font-size: 0.72rem; }
-.ws-refresh-group button { padding: 6px 12px; border: 0; border-radius: 4px; background: #4f9ee9; color: #07111e; font-weight: 800; font-size: 0.74rem; cursor: pointer; }
+.ws-refresh-group button { min-height: 36px; padding: 6px 12px; border: 0; border-radius: 4px; background: #4f9ee9; color: #07111e; font-weight: 800; font-size: 0.74rem; cursor: pointer; }
+.watchlist-panel button:focus-visible, .watchlist-panel input:focus-visible, .watchlist-panel select:focus-visible { outline: 3px solid rgba(102, 163, 255, .7); outline-offset: 2px; }
 
 /* Chart */
 .ws-chart-card { border: 1px solid #1a2533; background: #0f1825; padding: 10px 12px 12px; min-width: 0; }
@@ -127,7 +136,7 @@
 .ws-chart-header h3 { margin: 0; font-size: 0.9rem; color: #dce6f0; }
 .ws-chart-header p { margin: 2px 0 0; color: #6f7d91; font-size: 0.7rem; }
 .ws-periods { display: flex; gap: 3px; }
-.ws-periods button { padding: 5px 8px; border: 1px solid #1e2c3c; border-radius: 4px; background: #0a111c; color: #8391a5; cursor: pointer; font-size: 0.7rem; font-weight: 800; min-height: 0; line-height: 1.3; }
+.ws-periods button { padding: 5px 8px; border: 1px solid #1e2c3c; border-radius: 4px; background: #0a111c; color: #8391a5; cursor: pointer; font-size: 0.7rem; font-weight: 800; min-height: 36px; line-height: 1.3; }
 .ws-periods button:hover { border-color: #3a5a78; color: #b5cfe8; }
 .ws-periods button.active { border-color: #4f9ee9; background: #15283f; color: #b5cfe8; }
 

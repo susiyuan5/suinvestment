@@ -1,0 +1,28 @@
+name: Quality checks
+
+on:
+  pull_request:
+  push:
+    branches: [main, "codex/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Python tests
+        run: python -m unittest discover -s tests
+      - name: Node policy tests
+        run: node --test tests/dca-policy.test.js
+      - name: Static dashboard contracts
+        run: python scripts/check_static_contracts.py

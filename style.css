@@ -20,6 +20,18 @@
   box-sizing: border-box;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 html {
   min-height: 100%;
   background: var(--bg);
@@ -62,6 +74,8 @@ input:focus-visible {
   width: min(1440px, 100%);
   margin: 0 auto;
   padding: 14px 14px 48px;
+  display: flex;
+  flex-direction: column;
 }
 
 .hero {

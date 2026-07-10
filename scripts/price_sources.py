@@ -52,18 +52,24 @@ def main() -> None:
 
     summary = summarize_snapshot(result)
     result["summary"] = summary
-    write_json_atomic(OUT_FILE, result)
+    publishable, publish_reason = is_publishable(result, previous)
+    result["publishStatus"] = "published" if publishable else "skipped"
+    result["publishReason"] = publish_reason
+    if publishable:
+        write_json_atomic(OUT_FILE, result)
     write_json_atomic(
         REPORT_FILE,
         {
             "generatedAt": result["generatedAt"],
+            "publishStatus": result["publishStatus"],
+            "publishReason": publish_reason,
             **summary,
             "symbols": result["symbols"],
             "errors": result["errors"],
         },
     )
     print(
-        f"Wrote {OUT_FILE}: {summary['freshSymbols']}/{summary['totalSymbols']} "
+        f"{result['publishStatus'].title()} market snapshot: {summary['freshSymbols']}/{summary['totalSymbols']} "
         "fresh validated symbols"
     )
     if summary["staleSymbols"]:
@@ -71,6 +77,23 @@ def main() -> None:
             f"{summary['staleSymbols']} symbols remain stale/fallback and cannot "
             "enable an extra DCA buy."
         )
+
+
+def is_publishable(result: dict, previous: dict) -> tuple[bool, str]:
+    symbols = result.get("symbols", {})
+    prior_symbols = previous.get("symbols", {})
+    required = ("QQQ", "SPY")
+    if any(symbols.get(symbol, {}).get("validationStatus") != "validated" for symbol in required):
+        return False, "QQQ and SPY must both be validated before publishing"
+    if not any(item.get("validationStatus") == "validated" for item in symbols.values()):
+        return False, "No validated symbols were available"
+    for symbol, current in symbols.items():
+        old = prior_symbols.get(symbol, {})
+        current_time = parse_timestamp(current.get("quoteTimestamp"))
+        previous_time = parse_timestamp(old.get("quoteTimestamp"))
+        if current.get("validationStatus") == "validated" and previous_time and current_time and current_time < previous_time:
+            return False, f"{symbol} would regress the previous validated quote timestamp"
+    return True, "Validated references and monotonic quote timestamps"
 
 
 def fetch_best_snapshot(
