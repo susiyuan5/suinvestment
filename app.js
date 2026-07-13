@@ -5764,6 +5764,7 @@ function equalizeAllocations() {
       return {
         symbol: entry.stock.symbol,
         shares,
+        latestPrice: Number(entry.signal.latest_price || 0),
         averageCost,
         currentValue,
         currentAllocation: Number(position.current_allocation || 0),
@@ -5795,7 +5796,7 @@ function equalizeAllocations() {
     if (!holdings.length) {
       const empty = document.createElement("p");
       empty.className = "inline-holdings-empty";
-      empty.textContent = "No saved holdings yet. Add shares, cost, or current value in Portfolio Risk below. / 尚无已保存持仓，请在下方组合风险中录入份额、成本或当前市值。";
+      empty.textContent = "No saved holdings data is available in this browser. / 当前浏览器暂无已保存持仓数据。";
       inlineHoldingsRowsEl.appendChild(empty);
       return;
     }
@@ -5807,8 +5808,10 @@ function equalizeAllocations() {
       status.className = "inline-holding-status is-" + String(holding.dataStatus).replace(/[^a-z]/gi, "").toLowerCase();
       status.textContent = String(holding.dataStatus).replaceAll("_", " ");
       row.innerHTML = "<strong>" + escapeHtml(holding.symbol) + "</strong>" +
+        "<span>Shares / 份额 <b>" + (holding.shares > 0 ? holding.shares.toFixed(4).replace(/\.?0+$/, "") : "--") + "</b></span>" +
+        "<span>Price / 最新价 <b>" + (holding.latestPrice > 0 ? formatCurrency(holding.latestPrice) : "--") + "</b></span>" +
+        "<span>Avg Cost / 平均成本 <b>" + (holding.averageCost > 0 ? formatCurrency(holding.averageCost) : "--") + "</b></span>" +
         "<span>Value / 市值 <b>" + formatCurrency(holding.currentValue) + "</b></span>" +
-        "<span>Cost / 成本 <b>" + (holding.averageCost > 0 ? formatCurrency(holding.averageCost) : "--") + "</b></span>" +
         "<span>P/L / 浮盈亏 <b class=\"" + (holding.pnl > 0 ? "is-positive" : holding.pnl < 0 ? "is-negative" : "") + "\">" + pnlText + "</b></span>" +
         "<span>Allocation / 配置 <b>" + holding.currentAllocation.toFixed(2) + "% / " + holding.targetAllocation.toFixed(2) + "%</b></span>";
       row.appendChild(status);
