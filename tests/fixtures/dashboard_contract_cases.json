@@ -1,0 +1,29 @@
+{
+  "market_data": [
+    {"timestamp": 342000000, "now_ms": 360000000, "max_age_hours": 24, "expected": "fresh"},
+    {"timestamp": 252000000, "now_ms": 360000000, "max_age_hours": 24, "expected": "stale"},
+    {"timestamp": null, "now_ms": 360000000, "max_age_hours": 24, "expected": "missing"},
+    {"timestamp": 361000000, "now_ms": 360000000, "max_age_hours": 24, "expected": "stale"}
+  ],
+  "signal": {
+    "closes": [100, 98, 99, 95, 90, 92],
+    "expected_market_signals": {"latestClose": 92, "previousClose": 90, "weekAgoClose": 100, "dailyChange": 2.22, "weeklyChange": -8, "decisionChange": -8},
+    "score_input": {"decisionChange": -8, "weeklyChange": -8, "dailyChange": 2, "multiplier": 1.2, "dataAgeHours": 2, "dataSource": "API", "algorithm": {"market_regime": {"type": "Bull"}}},
+    "score_params": {"extremeWeeklyThreshold": 25, "volatilityDailyThreshold": 8},
+    "expected_score": 77
+  },
+  "portfolio": {
+    "defaults": [{"symbol": "AAPL"}, {"symbol": "MSFT"}],
+    "items": [{"symbol": " aapl ", "name": "Apple", "allocation": 0.33333}, {"symbol": "AAPL", "allocation": 0.5}, {"symbol": "BAD SYMBOL", "allocation": 0.2}, {"symbol": "MSFT", "allocation": 0.66667}],
+    "expected": [{"symbol": "AAPL", "name": "Apple", "allocation": 0.3333}, {"symbol": "MSFT", "name": "MSFT", "allocation": 0.6667}]
+  },
+  "backtest": {
+    "final_value": 1200,
+    "total_invested": 1000,
+    "weeks": 52,
+    "returns": [0.01, -0.02, 0.03],
+    "downside_returns": [-0.01, -0.02, 0.03],
+    "expected": {"cagr": 0.2, "annualized_volatility": 0.18147543451754933, "downside_deviation": 0.05099019513592785, "return_volatility": 0.025166114784235832, "sharpe": 2, "sortino": 2, "calmar": 2},
+    "dca_case": {"prices": [100, 110, 121], "weekly_amount": 100, "friction_rate": 0.01, "expected": {"final_value": 207.9, "total_invested": 200, "total_return": 3.95, "number_of_buys": 2, "total_friction_cost": 2}}
+  }
+}

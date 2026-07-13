@@ -1,0 +1,199 @@
+{
+  "version": "v2-nested-walk-forward",
+  "research_only": true,
+  "permanent_oos": true,
+  "input_path": "results/phase6/research_factor_report.csv",
+  "input_hash": "6e284bab86a621115d8885a8418099c9fceb1b0b453f4ff6b80dd539680a462d",
+  "outer_split": {
+    "train_start": "2015-01-02",
+    "train_end": "2023-12-08",
+    "test_start": "2024-03-15",
+    "test_end": "2026-06-15",
+    "train_rows": 17746,
+    "test_rows": 4488,
+    "purge_weeks": 12,
+    "embargo_weeks": 1
+  },
+  "results": [
+    {
+      "target": "forward_1w_return",
+      "task": "regression",
+      "selected_candidate": "ridge_alpha_10.0",
+      "selection_source": "inner_training_windows_only",
+      "outer_oos_rows": 4450,
+      "outer_oos_metric": "spearman",
+      "outer_oos_value": 0.0246747,
+      "inner_candidates": [
+        {
+          "candidate": "ridge_alpha_0.1",
+          "inner_score": 0.04465669,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "ridge_alpha_1.0",
+          "inner_score": 0.04472781,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "ridge_alpha_10.0",
+          "inner_score": 0.04504528,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "rf_reg_depth_3",
+          "inner_score": 0.03726919,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "rf_reg_depth_5",
+          "inner_score": 0.02994912,
+          "inner_windows": 21
+        }
+      ]
+    },
+    {
+      "target": "forward_4w_return",
+      "task": "regression",
+      "selected_candidate": "ridge_alpha_10.0",
+      "selection_source": "inner_training_windows_only",
+      "outer_oos_rows": 4336,
+      "outer_oos_metric": "spearman",
+      "outer_oos_value": 0.05967947,
+      "inner_candidates": [
+        {
+          "candidate": "ridge_alpha_0.1",
+          "inner_score": 0.04160432,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "ridge_alpha_1.0",
+          "inner_score": 0.04159732,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "ridge_alpha_10.0",
+          "inner_score": 0.04207023,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "rf_reg_depth_3",
+          "inner_score": 0.02418272,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "rf_reg_depth_5",
+          "inner_score": 0.01628512,
+          "inner_windows": 21
+        }
+      ]
+    },
+    {
+      "target": "forward_12w_return",
+      "task": "regression",
+      "selected_candidate": "ridge_alpha_0.1",
+      "selection_source": "inner_training_windows_only",
+      "outer_oos_rows": 4032,
+      "outer_oos_metric": "spearman",
+      "outer_oos_value": 0.14507061,
+      "inner_candidates": [
+        {
+          "candidate": "ridge_alpha_0.1",
+          "inner_score": 0.05782343,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "ridge_alpha_1.0",
+          "inner_score": 0.05766392,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "ridge_alpha_10.0",
+          "inner_score": 0.05632005,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "rf_reg_depth_3",
+          "inner_score": 0.01507152,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "rf_reg_depth_5",
+          "inner_score": 0.02533512,
+          "inner_windows": 21
+        }
+      ]
+    },
+    {
+      "target": "forward_4w_positive",
+      "task": "classification",
+      "selected_candidate": "logistic_c_1.0",
+      "selection_source": "inner_training_windows_only",
+      "outer_oos_rows": 4336,
+      "outer_oos_metric": "balanced_accuracy",
+      "outer_oos_value": 0.51919036,
+      "inner_candidates": [
+        {
+          "candidate": "logistic_c_0.1",
+          "inner_score": 0.51545204,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "logistic_c_1.0",
+          "inner_score": 0.51703738,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "logistic_c_10.0",
+          "inner_score": 0.51674089,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "rf_cls_depth_3",
+          "inner_score": 0.49254204,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "rf_cls_depth_5",
+          "inner_score": 0.49636882,
+          "inner_windows": 21
+        }
+      ]
+    },
+    {
+      "target": "forward_12w_positive",
+      "task": "classification",
+      "selected_candidate": "logistic_c_10.0",
+      "selection_source": "inner_training_windows_only",
+      "outer_oos_rows": 4032,
+      "outer_oos_metric": "balanced_accuracy",
+      "outer_oos_value": 0.53582939,
+      "inner_candidates": [
+        {
+          "candidate": "logistic_c_0.1",
+          "inner_score": 0.52404963,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "logistic_c_1.0",
+          "inner_score": 0.52807989,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "logistic_c_10.0",
+          "inner_score": 0.52893724,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "rf_cls_depth_3",
+          "inner_score": 0.51104588,
+          "inner_windows": 21
+        },
+        {
+          "candidate": "rf_cls_depth_5",
+          "inner_score": 0.51098736,
+          "inner_windows": 21
+        }
+      ]
+    }
+  ]
+}

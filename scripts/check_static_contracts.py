@@ -20,6 +20,9 @@ REQUIRED_IDS = {
     "watchlistCards",
     "watchlistTickerStrip",
     "watchlistChartSummary",
+    "projectHealthStatus",
+    "projectHealthDetails",
+    "watchlistHealthStatus",
 }
 
 

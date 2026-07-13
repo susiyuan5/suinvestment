@@ -1,0 +1,70 @@
+name: Update monthly shadow observation
+
+on:
+  schedule:
+    - cron: "15 13 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-monthly-shadow-observation
+  cancel-in-progress: true
+
+jobs:
+  update-shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Refresh expanded research prices
+        run: python research/run_phase6i_expanded_research.py
+      - name: Validate refreshed research prices
+        run: |
+          python - <<'PY'
+          import json
+          import math
+          from pathlib import Path
+          path = Path("data/research-prices-sector-balanced-80.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          symbols = payload.get("symbols", {})
+          required = set(payload.get("research_universe_symbols", [])) | {"QQQ", "SPY"}
+          if not required or required - set(symbols):
+              raise SystemExit(f"missing symbols: {sorted(required - set(symbols))}")
+          for symbol in required:
+              rows = symbols[symbol].get("rows", [])
+              if len(rows) < 260:
+                  raise SystemExit(f"{symbol} has insufficient history")
+              dates = [row.get("date") for row in rows]
+              if dates != sorted(set(dates)):
+                  raise SystemExit(f"{symbol} dates are not unique and increasing")
+              if any(not isinstance(row.get("close"), (int, float)) or not math.isfinite(row["close"]) or row["close"] <= 0 for row in rows):
+                  raise SystemExit(f"{symbol} contains invalid closes")
+          PY
+      - name: Generate frozen observation and outcomes
+        run: |
+          python research/run_phase6s_shadow_observation.py
+          python research/update_shadow_outcomes.py
+          python research/analyze_shadow_observation_history.py
+          python research/archive_shadow_observation_snapshot.py
+          python research/validate_shadow_observation_archive.py
+      - name: Run Shadow tests
+        run: python -m unittest tests.test_shadow_governance
+      - name: Create or update Shadow pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/update-shadow-observation
+          delete-branch: true
+          commit-message: "Refresh monthly shadow observation"
+          title: "Refresh monthly shadow observation"
+          body: |
+            Research-only monthly Shadow refresh. No live strategy, portfolio, broker, or Manual Trade Plan changes.
+          add-paths: |
+            data/research-prices-sector-balanced-80.json
+            research/results/phase6s/**

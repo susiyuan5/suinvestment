@@ -1,0 +1,76 @@
+{
+  "version": "project-health-v1",
+  "generated_at": "2026-07-13T03:10:05.877263+00:00",
+  "status": "healthy",
+  "status_scope": "Operational data and workflow health only; not strategy validation or trading approval.",
+  "manual_decision_only": true,
+  "broker_connected": false,
+  "automatic_trading": false,
+  "issues": [],
+  "market_snapshot": {
+    "generated_at": "2026-07-10T23:28:50.677038Z",
+    "lag_days": 3,
+    "fresh_symbols": 8,
+    "stale_symbols": 0
+  },
+  "historical_snapshot": {
+    "generated_at": "2026-07-10T15:59:13.794501+00:00",
+    "symbols": {
+      "QQQ": {
+        "row_count": 267,
+        "latest_date": "2026-07-10",
+        "lag_days": 3
+      },
+      "SPY": {
+        "row_count": 267,
+        "latest_date": "2026-07-10",
+        "lag_days": 3
+      }
+    }
+  },
+  "watchlist": {
+    "status": "ready",
+    "runtime_primary": "Yahoo Finance chart API",
+    "same_origin_fallback": "data/backtest-prices.json",
+    "fallback_symbol_rows": {
+      "AAPL": 267,
+      "MSFT": 267,
+      "NVDA": 267,
+      "QQQ": 267
+    },
+    "note": "The browser reports the actual per-session source separately at runtime."
+  },
+  "workflows": {
+    "market_update": {
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-07-10T23:28:59Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/29130425316"
+    },
+    "historical_update": {
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-07-13T02:41:31Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/29220017676"
+    },
+    "quality_checks": {
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-07-13T02:41:12Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/29220007344"
+    }
+  },
+  "shadow": {
+    "archived_observation_count": 2,
+    "observation_runs_available": 2,
+    "complete_mature_outcome_count": 0,
+    "human_review_gate": false,
+    "live_promotion_eligible": false
+  },
+  "versions": {
+    "market_input": "2026-07-10T23:28:50.677038Z",
+    "historical_input": "2026-07-10T15:59:13.794501+00:00",
+    "shadow_model": "phase6s-candidate-ranking-v1",
+    "v2_research": "v2-causal-baseline"
+  }
+}
