@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#080d14">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <title>当前持仓 | Current Holdings</title>
+    <link rel="stylesheet" href="holdings.css?v=holdings-1">
+  </head>
+  <body>
+    <main class="holdings-shell">
+      <header class="holdings-hero">
+        <div>
+          <p class="eyebrow">Portfolio snapshot / 持仓快照</p>
+          <h1>当前持仓</h1>
+          <p class="subtitle">从本浏览器已保存的持仓输入与本地行情快照生成。仅供手动复核，不连接券商，也不会执行交易。</p>
+        </div>
+        <div class="header-actions">
+          <button id="refreshButton" type="button" title="Reload local market snapshot">刷新快照</button>
+          <a href="index.html">返回仪表盘</a>
+        </div>
+      </header>
+
+      <section class="notice" aria-label="持仓数据说明">
+        <strong>只读持仓视图</strong>
+        <span>成本、份额、现金和备注来自仪表盘的“Edit holdings / 编辑持仓”；价格来自本地已校验快照。</span>
+      </section>
+
+      <section class="summary-grid" aria-label="持仓总览">
+        <article><span>持仓市值</span><strong id="totalStockValue">--</strong></article>
+        <article><span>可用现金</span><strong id="availableCash">--</strong></article>
+        <article><span>总资产</span><strong id="totalPortfolioValue">--</strong></article>
+        <article><span>累计浮盈亏</span><strong id="totalUnrealizedPnl">--</strong></article>
+        <article><span>持仓数量</span><strong id="holdingCount">--</strong></article>
+        <article><span>快照状态</span><strong id="snapshotStatus">加载中</strong></article>
+      </section>
+
+      <section class="holdings-panel" aria-labelledby="holdingsTableTitle">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Saved positions / 已保存持仓</p>
+            <h2 id="holdingsTableTitle">持仓明细</h2>
+          </div>
+          <p id="lastUpdated" class="last-updated">正在加载快照</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>代码</th><th>最新价</th><th>份额</th><th>平均成本</th><th>成本总额</th><th>当前市值</th><th>浮盈亏</th><th>当前配置</th><th>目标配置</th><th>数据状态</th><th>备注</th>
+              </tr>
+            </thead>
+            <tbody id="holdingsRows"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty-state" hidden>
+          <strong>尚无已保存持仓</strong>
+          <span>请在默认仪表盘的 Portfolio Risk / 组合风险中录入份额、成本或当前市值后，再返回此页查看。</span>
+          <a href="index.html#portfolio-risk-title">前往编辑持仓</a>
+        </div>
+      </section>
+
+      <p class="disclaimer">本页不构成投资建议。市值为本地快照估算，交易前请以券商或正式市场数据为准。</p>
+    </main>
+    <script src="holdings.js?v=holdings-1"></script>
+  </body>
+</html>

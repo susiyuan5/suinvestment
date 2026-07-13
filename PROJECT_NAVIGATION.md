@@ -24,6 +24,28 @@ Main files:
 - `style.css`
 - `tests/`: current Python unit test entry directory.
 
+## A.1 Current Holdings
+
+Entry:
+
+- `holdings.html`
+
+Purpose:
+
+- Read-only view of the browser's saved position inputs, available cash, and the local validated market snapshot.
+- Shows market value, cost basis, unrealized profit/loss, current allocation, target allocation, notes, and quote status.
+
+Main files:
+
+- `holdings.html`
+- `holdings.js`
+- `holdings.css`
+
+Important warning:
+
+- It reuses the `su-investment-pro:portfolio-risk` local browser state and does not write positions, place orders, or connect to a broker.
+- Position changes remain in the live dashboard's `Edit holdings` form.
+
 Important warning:
 
 - The live dashboard is not automatic trading.
