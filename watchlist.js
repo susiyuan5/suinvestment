@@ -3,9 +3,13 @@
 
   const KEY = "su-investment-pro:watchlist";
   const NAMES = { AAPL: "Apple Inc.", MSFT: "Microsoft Corporation", NVDA: "NVIDIA Corporation", TSLA: "Tesla, Inc.", AMZN: "Amazon.com, Inc.", GOOGL: "Alphabet Inc.", META: "Meta Platforms, Inc.", AMD: "Advanced Micro Devices, Inc.", QQQ: "Invesco QQQ Trust", SPY: "SPDR S&P 500 ETF Trust" };
-  const state = { symbols: loadSymbols(), active: "AAPL", period: "1y", quotes: {}, series: {}, timer: null, chartIndicators: null };
+  const state = {
+    symbols: loadSymbols(), active: "AAPL", period: "1y", quotes: {}, series: {}, timer: null,
+    chartIndicators: null, activeRequestId: 0, activeController: null, refreshPromise: null,
+    backtestPricesPromise: null
+  };
   const $ = (id) => document.getElementById(id);
-  const els = { ticker: $("watchlistTickerStrip"), cards: $("watchlistCards"), insight: $("watchlistInsight"), insightEmpty: $("watchlistInsight").querySelector(".ws-insight-empty"), cards: $("watchlistCards"), form: $("watchlistAddForm"), input: $("watchlistSymbolInput"), status: $("watchlistFormStatus"), symbol: $("watchlistActiveSymbol"), name: $("watchlistCompanyName"), meta: $("watchlistQuoteMeta"), price: $("watchlistPrice"), change: $("watchlistChange"), auto: $("watchlistAutoRefresh"), rate: $("watchlistRefreshRate"), refresh: $("watchlistRefreshBtn"), periods: $("watchlistPeriods"), loading: $("watchlistChartLoading"), plot: $("watchlistChartPlot"), tooltip: $("watchlistChartTooltip"), priceCanvas: $("watchlistPriceChart"), macdCanvas: $("watchlistMacdChart"), caption: $("watchlistChartCaption") };
+  const els = { ticker: $("watchlistTickerStrip"), cards: $("watchlistCards"), insight: $("watchlistInsight"), form: $("watchlistAddForm"), input: $("watchlistSymbolInput"), status: $("watchlistFormStatus"), symbol: $("watchlistActiveSymbol"), name: $("watchlistCompanyName"), meta: $("watchlistQuoteMeta"), price: $("watchlistPrice"), change: $("watchlistChange"), auto: $("watchlistAutoRefresh"), rate: $("watchlistRefreshRate"), refresh: $("watchlistRefreshBtn"), periods: $("watchlistPeriods"), loading: $("watchlistChartLoading"), plot: $("watchlistChartPlot"), tooltip: $("watchlistChartTooltip"), priceCanvas: $("watchlistPriceChart"), macdCanvas: $("watchlistMacdChart"), caption: $("watchlistChartCaption"), accessibleSummary: $("watchlistChartSummary") };
   if (!els.cards) return;
 
   function loadSymbols() { try { const value = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(value) && value.length) return value.slice(0, 8); } catch (_) {} return ["AAPL", "MSFT", "NVDA", "QQQ"]; }
@@ -19,7 +23,7 @@
       const quote = state.quotes[symbol] || {};
       const tone = quote.change >= 0 ? "positive" : "negative";
       const index = state.symbols.indexOf(symbol);
-      return `<article class="ws-card ${symbol === state.active ? "active" : ""}" data-symbol="${esc(symbol)}" role="button" tabindex="0" aria-label="查看 ${esc(symbol)}"><span class="ws-card-sym"><strong>${esc(symbol)}</strong><span>USD</span></span><span class=><strong>${fmt(quote.price)}</strong><span class="${tone}">${signed(quote.change)}</span></span><span class="ws-card-actions"><button data-move="up" data-target="${esc(symbol)}" type="button" ${index === 0 ? "disabled" : ""}>上移</button><button data-move="down" data-target="${esc(symbol)}" type="button" ${index === state.symbols.length - 1 ? "disabled" : ""}>下移</button><button class="ws-card-rm" data-remove="${esc(symbol)}" type="button">删除</button></span></article>`;
+      return `<article class="ws-card ${symbol === state.active ? "active" : ""}"><button class="ws-card-select" data-symbol="${esc(symbol)}" type="button" aria-pressed="${symbol === state.active}"><span class="ws-card-sym"><strong>${esc(symbol)}</strong><span class="ws-card-cur">USD</span></span><span><strong class="ws-card-pr">${fmt(quote.price)}</strong><span class="ws-card-ch ${tone === "positive" ? "pos" : "neg"}">${signed(quote.change)}</span></span></button><span class="ws-card-actions"><button data-move="up" data-target="${esc(symbol)}" type="button" ${index === 0 ? "disabled" : ""}>上移</button><button data-move="down" data-target="${esc(symbol)}" type="button" ${index === state.symbols.length - 1 ? "disabled" : ""}>下移</button><button class="ws-card-rm" data-remove="${esc(symbol)}" type="button">删除</button></span></article>`;
     }).join("");
   }
 
@@ -30,7 +34,7 @@
       const tone = (quote.change >= 0) ? "pos" : "neg";
       const price = Number.isFinite(quote.price) ? quote.price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "--";
       const change = Number.isFinite(quote.change) ? (quote.change >= 0 ? "+" : "") + quote.change.toFixed(2) + "%" : "--";
-      return "<span class=\"ws-ticker-item " + (symbol === state.active ? "active" : "") + "\" data-symbol=\"" + esc(symbol) + "\"><span class=\"ws-tick-sym\">" + esc(symbol) + "</span><span class=\"ws-tick-pr\">" + price + "</span><span class=\"ws-tick-ch " + tone + "\">" + change + "</span></span>";
+      return "<button type=\"button\" class=\"ws-ticker-item " + (symbol === state.active ? "active" : "") + "\" data-symbol=\"" + esc(symbol) + "\" aria-pressed=\"" + (symbol === state.active) + "\"><span class=\"ws-tick-sym\">" + esc(symbol) + "</span><span class=\"ws-tick-pr\">" + price + "</span><span class=\"ws-tick-ch " + tone + "\">" + change + "</span></button>";
     }).join("");
   }
 
@@ -48,37 +52,37 @@
     if (active && quote.price) {
       var tone = Number.isFinite(quote.change) ? (quote.change >= 0 ? "pos" : "neg") : "";
       html += "<div class=\"ws-insight-card\">";
-      html += "<h4>?? / Summary</h4>";
-      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">??</span><span class=\"ws-ir-value\">" + esc(active) + "</span></div>";
-      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">??</span><span class=\"ws-ir-value\">" + fmt(quote.price) + " USD</span></div>";
+      html += "<h4>摘要 / Summary</h4>";
+      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">代码</span><span class=\"ws-ir-value\">" + esc(active) + "</span></div>";
+      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">价格</span><span class=\"ws-ir-value\">" + fmt(quote.price) + " USD</span></div>";
       if (Number.isFinite(quote.change)) {
-        html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">??</span><span class=\"ws-ir-value " + tone + "\">" + (quote.change >= 0 ? "+" : "") + quote.change.toFixed(2) + "%</span></div>";
+        html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">涨跌</span><span class=\"ws-ir-value " + tone + "\">" + (quote.change >= 0 ? "+" : "") + quote.change.toFixed(2) + "%</span></div>";
       }
       html += "</div>";
     }
 
     if (haveIndicators && indicators.macd[lastIdx] !== undefined) {
       html += "<div class=\"ws-insight-card\">";
-      html += "<h4>MACD ??</h4>";
+      html += "<h4>MACD 指标</h4>";
       html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">MACD</span><span class=\"ws-ir-value\">" + val(indicators.macd[lastIdx]) + "</span></div>";
-      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">???</span><span class=\"ws-ir-value\">" + val(indicators.signal[lastIdx]) + "</span></div>";
-      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">???</span><span class=\"ws-ir-value\">" + val(indicators.histogram[lastIdx]) + "</span></div>";
+      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">信号线</span><span class=\"ws-ir-value\">" + val(indicators.signal[lastIdx]) + "</span></div>";
+      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">柱状图</span><span class=\"ws-ir-value\">" + val(indicators.histogram[lastIdx]) + "</span></div>";
       var macdTone = indicators.macd[lastIdx] >= 0 ? "pos" : "neg";
-      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">??</span><span class=\"ws-ir-value " + macdTone + "\">" + (indicators.macd[lastIdx] >= 0 ? "?? / Bullish" : "?? / Bearish") + "</span></div>";
+      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">状态</span><span class=\"ws-ir-value " + macdTone + "\">" + (indicators.macd[lastIdx] >= 0 ? "偏强 / Bullish" : "偏弱 / Bearish") + "</span></div>";
       html += "</div>";
     }
 
     if (haveIndicators && indicators.macd.length > 1) {
-      var trend = indicators.macd[lastIdx] > indicators.macd[lastIdx - 1] ? "??" : "??";
+      var trend = indicators.macd[lastIdx] > indicators.macd[lastIdx - 1] ? "增强" : "减弱";
       var trendEn = indicators.macd[lastIdx] > indicators.macd[lastIdx - 1] ? "Strengthening" : "Weakening";
       html += "<div class=\"ws-insight-card\">";
-      html += "<h4>?? / Momentum</h4>";
+      html += "<h4>动量 / Momentum</h4>";
       html += "<p>" + trend + " / " + trendEn + "</p>";
       html += "</div>";
     }
 
     if (!html) {
-      html = "<p class=\"ws-insight-empty\">???????????</p>";
+      html = "<p class=\"ws-insight-empty\">数据不足，暂不生成指标摘要。</p>";
     }
 
     els.insight.innerHTML = html;
@@ -89,14 +93,14 @@ function renderQuote() {
     els.name.textContent = NAMES[state.active] || "美国上市证券";
     els.price.textContent = fmt(quote.price);
     els.change.textContent = signed(quote.change);
-    els.change.className = Number.isFinite(quote.change) ? (quote.change >= 0 ? "positive" : "negative") : "";
+    els.change.className = Number.isFinite(quote.change) ? (quote.change >= 0 ? "pos" : "neg") : "";
     els.meta.textContent = quote.time ? `更新于 ${new Date(quote.time).toLocaleString("zh-CN")} / ${quote.source}` : "正在加载行情…";
   }
 
-  async function getChart(symbol, period) {
+  async function getChart(symbol, period, signal) {
     const settings = { "1d": ["1d", "5m"], "5d": ["5d", "15m"], "3mo": ["3mo", "1d"], "1y": ["1y", "1d"], "5y": ["5y", "1wk"] }[period];
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${settings[0]}&interval=${settings[1]}&includePrePost=false`;
-    const response = await fetch(url);
+    const response = await fetch(url, { signal });
     if (!response.ok) throw new Error("Quote request failed");
     const json = await response.json();
     const result = json.chart && json.chart.result && json.chart.result[0];
@@ -107,9 +111,23 @@ function renderQuote() {
     return { rows, meta: result.meta };
   }
 
+  async function getBacktestPrices() {
+    if (!state.backtestPricesPromise) {
+      state.backtestPricesPromise = fetch("data/backtest-prices.json", { cache: "force-cache" })
+        .then((response) => {
+          if (!response.ok) throw new Error("本地历史数据不可用");
+          return response.json();
+        })
+        .catch((error) => {
+          state.backtestPricesPromise = null;
+          throw error;
+        });
+    }
+    return state.backtestPricesPromise;
+  }
+
   async function getFallback(symbol, period) {
-    const response = await fetch("data/backtest-prices.json?v=" + Date.now());
-    const json = await response.json();
+    const json = await getBacktestPrices();
     const allRows = (json.symbols && json.symbols[symbol] || []).map((row) => ({ time: Date.parse(row.date), open: row.close, high: row.close, low: row.close, close: row.close }));
     if (!allRows.length) throw new Error("没有该股票的本地历史数据");
     const fallbackPoints = { "1d": 2, "5d": 6, "3mo": 14, "1y": 53, "5y": allRows.length };
@@ -117,36 +135,66 @@ function renderQuote() {
     return { rows, meta: { regularMarketPrice: allRows.at(-1).close, previousClose: allRows.at(-2)?.close } };
   }
 
+  function clearActiveView(message) {
+    state.series[state.active] = [];
+    state.chartIndicators = null;
+    els.priceCanvas.getContext("2d").clearRect(0, 0, els.priceCanvas.width, els.priceCanvas.height);
+    els.macdCanvas.getContext("2d").clearRect(0, 0, els.macdCanvas.width, els.macdCanvas.height);
+    els.insight.innerHTML = "<p class=\"ws-insight-empty\">" + esc(message) + "</p>";
+    if (els.accessibleSummary) els.accessibleSummary.textContent = message;
+  }
+
   async function loadActive() {
+    const symbol = state.active;
+    const period = state.period;
+    const requestId = ++state.activeRequestId;
+    if (state.activeController) state.activeController.abort();
+    const controller = new AbortController();
+    state.activeController = controller;
     els.loading.classList.remove("hidden");
     try {
       let data;
       let source = "Yahoo Finance";
-      try { data = await getChart(state.active, state.period); } catch (_) { data = await getFallback(state.active, state.period); source = "本地周线历史"; }
-      state.series[state.active] = data.rows;
+      try { data = await getChart(symbol, period, controller.signal); } catch (error) {
+        if (error.name === "AbortError") return;
+        data = await getFallback(symbol, period);
+        source = "本地周线历史";
+      }
+      if (requestId !== state.activeRequestId || symbol !== state.active || period !== state.period) return;
+      state.series[symbol] = data.rows;
       const last = data.rows.at(-1);
       const previous = Number.isFinite(data.meta.chartPreviousClose) ? data.meta.chartPreviousClose : (Number.isFinite(data.meta.previousClose) ? data.meta.previousClose : data.rows.at(-2)?.close);
       const price = Number.isFinite(data.meta.regularMarketPrice) ? data.meta.regularMarketPrice : last.close;
-      state.quotes[state.active] = { price, change: previous ? ((price - previous) / previous) * 100 : null, time: last.time, source };
+      state.quotes[symbol] = { price, change: previous ? ((price - previous) / previous) * 100 : null, time: last.time, source };
       renderCards(); renderTicker(); renderQuote(); draw(); renderInsight();
-      els.caption.textContent = `${state.active} / ${state.period.toUpperCase()} / ${data.rows.length} 个数据点`;
+      els.caption.textContent = `${symbol} / ${period.toUpperCase()} / ${data.rows.length} 个数据点`;
+      if (els.accessibleSummary) els.accessibleSummary.textContent = `${symbol} ${period.toUpperCase()} 图表，${data.rows.length} 个数据点，最新收盘价 ${fmt(last.close)}。`;
     } catch (error) {
+      if (error.name === "AbortError") return;
+      if (requestId !== state.activeRequestId) return;
       els.meta.textContent = error.message;
       els.caption.textContent = "行情暂不可用，请稍后重试或选择其他股票。";
+      clearActiveView("行情暂不可用，请稍后重试。");
     } finally { els.loading.classList.add("hidden"); }
   }
 
   async function refreshAll() {
+    if (state.refreshPromise) return state.refreshPromise;
     els.refresh.disabled = true;
-    await Promise.all(state.symbols.map(async (symbol) => {
+    state.refreshPromise = Promise.all(state.symbols.map(async (symbol) => {
       try {
         const data = await getChart(symbol, "5d"); const last = data.rows.at(-1); const previous = data.meta.chartPreviousClose || data.meta.previousClose || data.rows.at(-2)?.close; const price = data.meta.regularMarketPrice || last.close;
         state.quotes[symbol] = { price, change: previous ? ((price - previous) / previous) * 100 : null, time: last.time, source: "Yahoo Finance" };
       } catch (_) {
         try { const data = await getFallback(symbol, "5d"); const last = data.rows.at(-1); const previous = data.rows.at(-2)?.close; state.quotes[symbol] = { price: last.close, change: previous ? ((last.close - previous) / previous) * 100 : null, time: last.time, source: "本地周线历史" }; } catch (_) {}
       }
-    }));
-    renderCards(); renderTicker(); renderQuote(); renderInsight(); els.refresh.disabled = false;
+    })).then(() => {
+      renderCards(); renderTicker(); renderQuote(); renderInsight();
+    }).finally(() => {
+      els.refresh.disabled = false;
+      state.refreshPromise = null;
+    });
+    return state.refreshPromise;
   }
 
   function ema(values, length) { const factor = 2 / (length + 1); const out = []; let value = values[0]; values.forEach((item, index) => { value = index ? item * factor + value * (1 - factor) : item; out.push(value); }); return out; }
@@ -270,15 +318,24 @@ function showChartTooltip(event) {
   }
 
   function moveSymbol(symbol, direction) { const index = state.symbols.indexOf(symbol); const next = direction === "up" ? index - 1 : index + 1; if (index < 0 || next < 0 || next >= state.symbols.length) return; [state.symbols[index], state.symbols[next]] = [state.symbols[next], state.symbols[index]]; save(); renderCards(); }
-  els.cards.addEventListener("click", (event) => { const move = event.target.closest("[data-move]"); if (move) { event.stopPropagation(); moveSymbol(move.dataset.target, move.dataset.move); return; } const remove = event.target.closest("[data-remove]"); if (remove) { event.stopPropagation(); const symbol = remove.dataset.remove; if (state.symbols.length === 1) return; state.symbols = state.symbols.filter((item) => item !== symbol); if (state.active === symbol) state.active = state.symbols[0]; save(); renderCards(); loadActive(); return; } const card = event.target.closest("[data-symbol]"); if (card) { state.active = card.dataset.symbol; renderCards(); renderTicker(); renderQuote(); loadActive(); } });
-  els.cards.addEventListener("keydown", (event) => { if ((event.key === "Enter" || event.key === " ") && !event.target.closest("button")) { event.preventDefault(); event.target.click(); } });
+  function selectSymbol(symbol) {
+    if (!state.symbols.includes(symbol) || symbol === state.active) return;
+    state.active = symbol;
+    renderCards(); renderTicker(); renderQuote(); loadActive();
+  }
+  async function refreshDashboard() {
+    await refreshAll();
+    await loadActive();
+  }
+  els.cards.addEventListener("click", (event) => { const move = event.target.closest("[data-move]"); if (move) { moveSymbol(move.dataset.target, move.dataset.move); return; } const remove = event.target.closest("[data-remove]"); if (remove) { const symbol = remove.dataset.remove; if (state.symbols.length === 1) return; state.symbols = state.symbols.filter((item) => item !== symbol); if (state.active === symbol) state.active = state.symbols[0]; save(); renderCards(); renderTicker(); loadActive(); return; } const card = event.target.closest("[data-symbol]"); if (card) selectSymbol(card.dataset.symbol); });
+  els.ticker.addEventListener("click", (event) => { const ticker = event.target.closest("[data-symbol]"); if (ticker) selectSymbol(ticker.dataset.symbol); });
   els.form.addEventListener("submit", async (event) => { event.preventDefault(); const symbol = els.input.value.trim().toUpperCase().replace(/[^A-Z.\-]/g, ""); if (!symbol) { els.status.textContent = "请输入美股代码。"; return; } if (state.symbols.includes(symbol)) { els.status.textContent = "该股票已在自选列表中。"; return; } if (state.symbols.length >= 8) { els.status.textContent = "最多可添加 8 只股票。"; return; } state.symbols.push(symbol); state.active = symbol; save(); els.input.value = ""; els.status.textContent = "已添加，正在加载行情…"; renderCards(); await loadActive(); });
-  els.periods.addEventListener("click", (event) => { const button = event.target.closest("[data-period]"); if (!button) return; state.period = button.dataset.period; els.periods.querySelectorAll("button").forEach((item) => item.classList.toggle("active", item === button)); loadActive(); });
-  els.refresh.addEventListener("click", () => { refreshAll(); loadActive(); });
-  function schedule() { clearInterval(state.timer); if (els.auto.checked) state.timer = setInterval(() => { refreshAll(); loadActive(); }, Number(els.rate.value) * 1000); }
+  els.periods.addEventListener("click", (event) => { const button = event.target.closest("[data-period]"); if (!button) return; state.period = button.dataset.period; els.periods.querySelectorAll("button").forEach((item) => { const active = item === button; item.classList.toggle("active", active); item.setAttribute("aria-pressed", String(active)); }); loadActive(); });
+  els.refresh.addEventListener("click", refreshDashboard);
+  function schedule() { clearInterval(state.timer); if (els.auto.checked) state.timer = setInterval(refreshDashboard, Number(els.rate.value) * 1000); }
   els.auto.addEventListener("change", schedule); els.rate.addEventListener("change", schedule); window.addEventListener("resize", () => requestAnimationFrame(draw));
   els.plot.addEventListener("pointermove", showChartTooltip);
   els.plot.addEventListener("pointerdown", showChartTooltip);
   els.plot.addEventListener("pointerleave", () => els.tooltip.classList.remove("visible"));
-  renderCards(); renderQuote(); refreshAll().then(loadActive); schedule();
+  renderCards(); renderTicker(); renderQuote(); refreshDashboard(); schedule();
 }());

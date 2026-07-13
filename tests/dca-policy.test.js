@@ -2,6 +2,8 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const policy = require("../dca-policy.js");
 
 function risingCloses(length) {
@@ -121,4 +123,30 @@ test("favorable validated dip can increase the manual amount", function () {
   assert.equal(result.status, "active");
   assert.ok(result.multiplier > 1);
   assert.ok(result.finalAmount > 100);
+});
+
+test("DCA-L2 shared fixtures match browser policy", function () {
+  const config = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "dca-l2-policy-config.json"), "utf8"));
+  const fixtures = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures", "dca_l2_policy_cases.json"), "utf8"));
+  fixtures.forEach(function (fixture) {
+    const result = policy.evaluateDcaL2Policy(fixture.input, {}, config);
+    assert.equal(result.state, fixture.expected.state, fixture.name);
+    assert.equal(result.baseAmount, fixture.expected.baseAmount, fixture.name);
+    assert.equal(result.extraAmount, fixture.expected.extraAmount, fixture.name);
+    assert.equal(result.crashFundAmount, fixture.expected.crashFundAmount, fixture.name);
+    if (fixture.expected.crashFundWeeklyLimit !== undefined) assert.equal(result.crashFundWeeklyLimit, fixture.expected.crashFundWeeklyLimit, fixture.name);
+    assert.equal(result.finalAmount, fixture.expected.finalAmount, fixture.name);
+    assert.deepEqual(result.reasonCodes, fixture.expected.reasonCodes, fixture.name);
+  });
+});
+
+test("DCA-L2 recovery requires two distinct trading dates", function () {
+  const config = policy.DEFAULT_L2_CONFIG;
+  const once = policy.evaluateDcaL2Policy({ baseAmount: 100, price: 100, dataStatus: "fresh", marketRegime: "Bull", date: "2026-07-07" }, { defensiveLatched: true }, config);
+  assert.equal(once.state, "panic_bear_extreme_volatility");
+  assert.equal(once.defensiveNow, false);
+  const duplicate = policy.evaluateDcaL2Policy({ baseAmount: 100, price: 100, dataStatus: "fresh", marketRegime: "Bull", date: "2026-07-07" }, { defensiveLatched: true, recoveryConfirmations: once.recoveryConfirmations, lastRecoveryTradingDate: "2026-07-07" }, config);
+  assert.equal(duplicate.recoveryConfirmations, 1);
+  const recovered = policy.evaluateDcaL2Policy({ baseAmount: 100, price: 100, dataStatus: "fresh", marketRegime: "Bull", date: "2026-07-08" }, { defensiveLatched: true, recoveryConfirmations: once.recoveryConfirmations, lastRecoveryTradingDate: "2026-07-07" }, config);
+  assert.equal(recovered.state, "normal");
 });

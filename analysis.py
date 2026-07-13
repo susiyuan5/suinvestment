@@ -54,10 +54,12 @@ def run_analysis(
     analysis_config: AnalysisConfig,
     portfolio: dict[str, PortfolioHolding] | None = None,
     results_dir: str = "results",
+    now: datetime | None = None,
 ) -> list[AnalysisResult]:
     portfolio = portfolio or {}
+    analysis_now = now or datetime.now(timezone.utc)
     results = [
-        analyze_ticker(ticker, strategy_config, analysis_config, portfolio)
+        analyze_ticker(ticker, strategy_config, analysis_config, portfolio, now=analysis_now)
         for ticker in _unique_tickers(tickers)
     ]
     save_analysis_outputs(results, results_dir)
@@ -69,28 +71,29 @@ def analyze_ticker(
     strategy_config: StrategyConfig,
     analysis_config: AnalysisConfig,
     portfolio: dict[str, PortfolioHolding],
+    now: datetime | None = None,
 ) -> AnalysisResult:
     ticker = ticker.upper()
-    now = datetime.now(timezone.utc)
+    now = now or datetime.now(timezone.utc)
 
     if ticker not in {item.upper() for item in analysis_config.allowed_tickers}:
-        return _blocked_result(ticker, strategy_config, "Ticker is not in allowed_tickers.")
+        return _blocked_result(ticker, strategy_config, "Ticker is not in allowed_tickers.", now)
 
     try:
-        daily_prices = load_yahoo_daily_prices(ticker, _lookback_start_year(), now.date().isoformat())
+        daily_prices = load_yahoo_daily_prices(ticker, _lookback_start_year(now), now.date().isoformat())
         weekly_prices = daily_to_weekly(daily_prices)
     except Exception as error:
-        return _blocked_result(ticker, strategy_config, f"Market data is missing: {error}")
+        return _blocked_result(ticker, strategy_config, f"Market data is missing: {error}", now)
 
     if len(weekly_prices) < 2:
-        return _blocked_result(ticker, strategy_config, "Market data is insufficient for weekly_return.")
+        return _blocked_result(ticker, strategy_config, "Market data is insufficient for weekly_return.", now)
 
     latest = weekly_prices[-1]
     previous = weekly_prices[-2]
     weekly_return = calculate_weekly_return(latest.close, previous.close)
     age_hours = (now.date() - latest.date).days * 24
     if age_hours > analysis_config.stale_data_limit_hours:
-        return _blocked_result(ticker, strategy_config, "Market data is stale.")
+        return _blocked_result(ticker, strategy_config, "Market data is stale.", now)
 
     # Build list of weekly returns for risk adjustment
     weekly_returns_list: list[float] = []
@@ -202,10 +205,10 @@ def _write_report(path: str, results: list[AnalysisResult]) -> None:
             handle.write("\n")
 
 
-def _blocked_result(ticker: str, strategy_config: StrategyConfig, warning: str) -> AnalysisResult:
-    now = datetime.now(timezone.utc).isoformat()
+def _blocked_result(ticker: str, strategy_config: StrategyConfig, warning: str, now: datetime | None = None) -> AnalysisResult:
+    timestamp = (now or datetime.now(timezone.utc)).isoformat()
     return AnalysisResult(
-        date=now,
+        date=timestamp,
         ticker=ticker.upper(),
         latest_price=0.0,
         weekly_return=0.0,
@@ -278,8 +281,8 @@ def _average_abs_return(prices: list[PricePoint]) -> float:
     return sum(returns) / len(returns) if returns else 0.0
 
 
-def _lookback_start_year() -> str:
-    year = datetime.now(timezone.utc).year - 2
+def _lookback_start_year(now: datetime) -> str:
+    year = now.year - 2
     return f"{year}-01-01"
 
 

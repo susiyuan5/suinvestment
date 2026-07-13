@@ -1,5 +1,5 @@
 import unittest
-from datetime import date
+from datetime import date, datetime, timezone
 from unittest.mock import patch
 
 from analysis import MANUAL_TRADE_NOTE, analyze_ticker
@@ -57,6 +57,7 @@ class AnalysisTests(unittest.TestCase):
                 stale_data_limit_hours=24 * 30,
             ),
             portfolio={},
+            now=datetime(2026, 6, 6, tzinfo=timezone.utc),
         )
         self.assertIn(result.risk_level, {"Low", "Medium", "High"})
         self.assertGreater(result.buy_multiplier, 1.0)

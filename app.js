@@ -25,6 +25,7 @@
     overrides: "su-investment-pro:manual-overrides",
     portfolio: "su-investment-pro:portfolio",
     portfolioRisk: "su-investment-pro:portfolio-risk",
+    dcaL2Ledger: "su-investment-pro:dca-l2-ledger",
     language: "su-investment-pro:language",
     deployment: "su-investment-pro:deployment",
     backtestSettings: "su-investment-pro:backtest-settings"
@@ -853,12 +854,18 @@ amountBreakdown: "金额分解",
     deployment: normalizeDeployment(loadJson(STORAGE_KEYS.deployment, DEFAULT_DEPLOYMENT)),
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {}),
+    dcaL2Ledger: normalizeDcaL2Ledger(loadJson(STORAGE_KEYS.dcaL2Ledger, {})),
     language: normalizeLanguage(localStorage.getItem(STORAGE_KEYS.language))
   };
 
   const cardsEl = document.getElementById("cards");
   const orderTextEl = document.getElementById("orderText");
   const dcaPreviewRowsEl = document.getElementById("dcaPreviewRows");
+  const dcaLedgerSummaryEl = document.getElementById("dcaLedgerSummary");
+  const dcaLedgerEntriesEl = document.getElementById("dcaLedgerEntries");
+  const dcaLedgerAmountEl = document.getElementById("dcaLedgerAmount");
+  const dcaLedgerNoteEl = document.getElementById("dcaLedgerNote");
+  const dcaLedgerRecordBtn = document.getElementById("dcaLedgerRecordBtn");
   const copyStatusEl = document.getElementById("copyStatus");
   const refreshBtn = document.getElementById("refreshBtn");
   const copyBtn = document.getElementById("copyBtn");
@@ -912,16 +919,21 @@ amountBreakdown: "金额分解",
     state.portfolio = normalizePortfolio(CONFIG.defaultStocks, { allowCustom: true });
   }
 
-  apiKeyInput.value = localStorage.getItem(STORAGE_KEYS.apiKey) || "";
+  // API keys are intentionally session-scoped. Do not revive legacy persistent keys.
+  localStorage.removeItem(STORAGE_KEYS.apiKey);
+  apiKeyInput.value = sessionStorage.getItem(STORAGE_KEYS.apiKey) || "";
 
   apiKeyInput.addEventListener("input", function () {
-    localStorage.setItem(STORAGE_KEYS.apiKey, apiKeyInput.value.trim());
+    const value = apiKeyInput.value.trim();
+    if (value) sessionStorage.setItem(STORAGE_KEYS.apiKey, value);
+    else sessionStorage.removeItem(STORAGE_KEYS.apiKey);
   });
 
   openSettingsBtn.addEventListener("click", openSettings);
   closeSettingsBtn.addEventListener("click", closeSettings);
 
   refreshBtn.addEventListener("click", refreshMarketData);
+  if (dcaLedgerRecordBtn) dcaLedgerRecordBtn.addEventListener("click", recordDcaL2CrashFundUse);
   copyBtn.addEventListener("click", copyOrderList);
   if (runBacktestBtn) runBacktestBtn.addEventListener("click", function (event) {
     event.preventDefault();
@@ -1160,7 +1172,7 @@ amountBreakdown: "金额分解",
   }
 
   async function searchFinnhubSymbols(query, signal) {
-    var apiKey = localStorage.getItem(STORAGE_KEYS.apiKey);
+    var apiKey = sessionStorage.getItem(STORAGE_KEYS.apiKey);
     if (!apiKey) return null;
     try {
       var url = "https://finnhub.io/api/v1/search?q=" + encodeURIComponent(query) + "&token=" + apiKey;
@@ -1715,6 +1727,8 @@ amountBreakdown: "金额分解",
         source_type: weeklyData.sourceType || "weekly",
         source_validation_status: weeklyData.validationStatus || (weeklyData.stale ? "stale" : "weekly"),
         quote_timestamp: weeklyData.quoteTimestamp || null,
+        market_state: weeklyData.marketState || "",
+        market_closed_last_close: weeklyData.validationStatus === "market_closed_last_close",
         note: weeklyData.stale ? "Scheduled close snapshot; stale carried forward" : "Scheduled close snapshot",
         fetchedAt: weeklyData.fetchedAt,
         field_meta: weeklyData.field_meta,
@@ -1763,7 +1777,7 @@ amountBreakdown: "金额分解",
     const sourceTimestamp = Number.isFinite(quoteTimestamp) ? quoteTimestamp : fetchTimestamp;
     const validationStatus = item.validationStatus || (item.stale ? "stale" : "weekly");
     const freshnessOptions = {
-      stale: item.stale === true || validationStatus !== "validated",
+      stale: item.stale === true || (validationStatus !== "validated" && validationStatus !== "market_closed_last_close"),
       staleReason: item.staleReason || "",
       maxAgeHours: CONFIG.cacheHours
     };
@@ -1782,7 +1796,9 @@ amountBreakdown: "金额分解",
       sourceType: item.sourceType || "weekly",
       validationStatus,
       quoteTimestamp: item.quoteTimestamp || null,
-      stale: item.stale === true || validationStatus !== "validated",
+      marketState: item.marketState || "",
+      marketClosedLastClose: validationStatus === "market_closed_last_close",
+      stale: item.stale === true || (validationStatus !== "validated" && validationStatus !== "market_closed_last_close"),
       staleReason: item.staleReason || "",
       staleFrom: item.staleFrom || null,
       field_meta: {
@@ -2589,6 +2605,7 @@ amountBreakdown: "金额分解",
       data_source_type: row && row.source_type ? row.source_type : "unknown",
       data_validation_status: row && row.source_validation_status ? row.source_validation_status : "unknown",
       quote_timestamp: row && row.quote_timestamp ? row.quote_timestamp : null,
+      market_state: row && row.market_state ? row.market_state : "",
       data_freshness: getDataFreshness(row, dataAgeHours),
       data_age_hours: isFiniteNumber(dataAgeHours) ? round2(dataAgeHours) : null,
       manual_override_active: manualOverrideActive,
@@ -3229,6 +3246,7 @@ el.querySelector(".explanation-reason").textContent = reasons.join(" ");
 
   function getDataFreshness(row, dataAgeHours) {
     if (!row || row.source === "Unavailable") return "missing";
+    if (row.market_closed_last_close === true) return "market_closed";
     if (row.source === "Manual") {
       if (!Number.isFinite(row.override_applied_at)) return "stale";
       const overrideAgeHours = (Date.now() - row.override_applied_at) / (60 * 60 * 1000);
@@ -4867,42 +4885,48 @@ function equalizeAllocations() {
   }
 
   function applyDcaManualAmountPolicy(entries, portfolioRisk) {
-    entries.forEach(function (entry) {
+    const ledger = ensureDcaL2Ledger();
+    const used = getDcaL2CrashFundUsed(ledger);
+    const balance = round2(Math.max(0, ledger.initial - used));
+    const inputs = entries.map(function (entry) {
       const signal = entry.signal;
-      const history = getHistoricalPriceRows(signal.symbol);
-      const closes = history.map(function (row) { return row.close; });
-      const source = String(signal.data_source || "");
-      const marketStatus = getMarketRegimeDataStatus();
-      const marketMeta = state.marketRegime && state.marketRegime.field_meta
-        ? state.marketRegime.field_meta.marketRegime
-        : null;
-      const marketContextAvailable = !marketStatus.fallback && !!marketMeta && marketMeta.freshness === "fresh";
       const position = portfolioRisk.positions && portfolioRisk.positions[signal.symbol];
-      const concentrationEvaluated = portfolioRisk.total_stock_value > 0 && !!position;
-      const missingPrice = !isFiniteNumber(signal.latest_price);
-      const validatedApi = signal.data_freshness === "fresh" && signal.data_source_type === "api" && signal.data_validation_status === "validated";
-      const poorData = signal.data_freshness === "stale" || !validatedApi || /manual|fallback|cache|weekly|unavailable/i.test(source);
-      const dataQuality = missingPrice || signal.data_freshness === "missing" ? "missing" : poorData ? "poor" : "fresh";
-
-      try {
-        if (!window.DcaPolicy || typeof window.DcaPolicy.evaluateDcaPolicy !== "function") throw new Error("DCA policy module unavailable");
-        entry.dcaPolicy = window.DcaPolicy.evaluateDcaPolicy({
-          baseAmount: entry.baseManualAmount,
-          currentPrice: signal.latest_price,
-          closes,
-          dataQuality,
+      const baseAmount = round2(state.deployment.weeklyDeployment * entry.stock.allocation);
+      entry.baseManualAmount = baseAmount;
+      return {
+        entry,
+        baseAmount,
+        input: {
+          baseAmount,
+          price: signal.latest_price,
+          dataStatus: getDcaL2DataStatus(signal),
           marketRegime: state.marketRegime && state.marketRegime.type,
-          marketContextAvailable,
           panicActive: signal.panic_active || state.panicActive,
+          drawdownPct: signal.algorithm && signal.algorithm.drawdown,
+          trendStatus: signal.algorithm && signal.algorithm.trend && signal.algorithm.trend.status,
           volatilityPct: signal.algorithm && signal.algorithm.realized_weekly_volatility,
-          concentrationEvaluated,
-          currentAllocationPct: concentrationEvaluated ? position.current_allocation : null
-        }, DCA_POLICY_CONFIG);
-      } catch (error) {
-        entry.dcaPolicy = createDcaPolicyFallback(entry.baseManualAmount);
-      }
-      entry.finalManualAmount = round2(entry.dcaPolicy.finalAmount);
+          currentAllocationPct: position ? position.current_allocation : null,
+          monthlyBudget: state.deployment.monthlyBudget,
+          crashFundBalance: balance,
+          crashFundWeight: 0,
+          date: getDcaL2DecisionDate(signal),
+          availableCashProvided: portfolioRisk.available_cash_provided && portfolioRisk.available_cash <= 0,
+          availableCash: portfolioRisk.available_cash
+        }
+      };
     });
+    const provisional = inputs.map(function (item) { return evaluateDcaL2(item.input, ledger); });
+    updateDcaL2DefensiveState(ledger, provisional, inputs);
+    const deepBase = inputs.reduce(function (sum, item, index) {
+      return provisional[index].state === "deep_drawdown" ? sum + item.baseAmount : sum;
+    }, 0);
+    inputs.forEach(function (item, index) {
+      item.input.crashFundWeight = deepBase > 0 && provisional[index].state === "deep_drawdown" ? item.baseAmount / deepBase : 0;
+      const decision = evaluateDcaL2(item.input, ledger);
+      item.entry.dcaPolicy = decision;
+      item.entry.finalManualAmount = round2(decision.finalAmount);
+    });
+    saveDcaL2Ledger();
   }
 
   function createDcaPolicyFallback(baseAmount) {
@@ -4918,34 +4942,144 @@ function equalizeAllocations() {
     };
   }
 
+  function normalizeDcaL2Ledger(value) {
+    const raw = value && typeof value === "object" ? value : {};
+    const month = new Date().toISOString().slice(0, 7);
+    return {
+      month: typeof raw.month === "string" ? raw.month : month,
+      initial: isFiniteNumber(raw.initial) ? raw.initial : 0,
+      entries: Array.isArray(raw.entries) ? raw.entries.filter(function (item) { return item && isFiniteNumber(item.amount) && item.amount > 0; }) : [],
+      defensiveLatched: raw.defensiveLatched === true,
+      recoveryConfirmations: Number.isFinite(raw.recoveryConfirmations) ? raw.recoveryConfirmations : 0,
+      lastRecoveryTradingDate: typeof raw.lastRecoveryTradingDate === "string" ? raw.lastRecoveryTradingDate : ""
+    };
+  }
+
+  function ensureDcaL2Ledger() {
+    const month = new Date().toISOString().slice(0, 7);
+    if (state.dcaL2Ledger.month !== month) {
+      state.dcaL2Ledger = normalizeDcaL2Ledger({ month, initial: state.deployment.crashFund, entries: [] });
+    }
+    if (!isFiniteNumber(state.dcaL2Ledger.initial) || state.dcaL2Ledger.initial !== state.deployment.crashFund) {
+      state.dcaL2Ledger.initial = state.deployment.crashFund;
+    }
+    return state.dcaL2Ledger;
+  }
+
+  function getDcaL2CrashFundUsed(ledger) {
+    return round2((ledger.entries || []).reduce(function (sum, item) { return sum + Number(item.amount || 0); }, 0));
+  }
+
+  function saveDcaL2Ledger() {
+    saveJson(STORAGE_KEYS.dcaL2Ledger, state.dcaL2Ledger);
+  }
+
+  function getDcaL2DataStatus(signal) {
+    if (!signal || !isFiniteNumber(signal.latest_price) || signal.data_freshness === "missing" || signal.data_validation_status === "invalid") return "invalid";
+    if (signal.data_freshness === "market_closed" || signal.data_validation_status === "market_closed_last_close") return "market_closed_last_close";
+    if (signal.data_freshness === "stale" || signal.data_source_type === "fallback" || signal.data_validation_status !== "validated") return "stale";
+    return "fresh";
+  }
+
+  function getDcaL2DecisionDate(signal) {
+    const timestamp = signal && signal.quote_timestamp ? Date.parse(signal.quote_timestamp) : NaN;
+    return Number.isFinite(timestamp) ? new Date(timestamp).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+  }
+
+  function evaluateDcaL2(input, ledger) {
+    try {
+      if (!window.DcaPolicy || typeof window.DcaPolicy.evaluateDcaL2Policy !== "function") throw new Error("DCA-L2 policy module unavailable");
+      const policyState = {
+        crashFundInitial: ledger.initial,
+        crashFundBalance: round2(Math.max(0, ledger.initial - getDcaL2CrashFundUsed(ledger))),
+        defensiveLatched: ledger.defensiveLatched,
+        recoveryConfirmations: ledger.recoveryConfirmations,
+        lastRecoveryTradingDate: ledger.lastRecoveryTradingDate
+      };
+      const decision = window.DcaPolicy.evaluateDcaL2Policy(input, policyState, window.DcaPolicy.DEFAULT_L2_CONFIG);
+      return {
+        ...decision,
+        status: decision.state,
+        multiplier: input.baseAmount > 0 ? round2(decision.finalAmount / input.baseAmount) : 0,
+        warnings: decision.reasonCodes || [],
+        l2: true
+      };
+    } catch (error) {
+      const base = input.dataStatus === "invalid" ? 0 : round2(input.baseAmount);
+      return { status: "manual_review", state: "manual_review", baseAmount: base, extraAmount: 0, crashFundAmount: 0, finalAmount: base, multiplier: 1, reasonCodes: ["POLICY_ERROR_MANUAL_REVIEW"], warnings: ["DCA-L2 unavailable; Base DCA shown for manual review"], factorChain: [{ stage: "safety_fallback", status: "manual_review", detail: "Base DCA preserved" }], l2: true };
+    }
+  }
+
+  function updateDcaL2DefensiveState(ledger, decisions, inputs) {
+    const defensive = decisions.some(function (decision) { return decision.defensiveNow === true; });
+    if (defensive) {
+      ledger.defensiveLatched = true;
+      ledger.recoveryConfirmations = 0;
+      ledger.lastRecoveryTradingDate = "";
+      return;
+    }
+    if (!ledger.defensiveLatched) return;
+    const freshDate = inputs.map(function (item) { return item.input; }).filter(function (input) { return input.dataStatus === "fresh" && input.date; }).map(function (input) { return input.date; })[0];
+    if (freshDate && freshDate !== ledger.lastRecoveryTradingDate) {
+      ledger.recoveryConfirmations += 1;
+      ledger.lastRecoveryTradingDate = freshDate;
+    }
+    if (ledger.recoveryConfirmations >= 2) ledger.defensiveLatched = false;
+  }
+
+  function recordDcaL2CrashFundUse() {
+    const amount = Number(String(dcaLedgerAmountEl && dcaLedgerAmountEl.value || "").trim());
+    const ledger = ensureDcaL2Ledger();
+    const balance = round2(Math.max(0, ledger.initial - getDcaL2CrashFundUsed(ledger)));
+    if (!isFiniteNumber(amount) || amount <= 0 || amount > balance) {
+      copyStatusEl.textContent = "Crash Fund entry must be positive and no more than the current balance.";
+      return;
+    }
+    ledger.entries.push({ id: String(Date.now()), date: new Date().toISOString().slice(0, 10), amount: round2(amount), note: String(dcaLedgerNoteEl && dcaLedgerNoteEl.value || "").trim() });
+    saveDcaL2Ledger();
+    if (dcaLedgerAmountEl) dcaLedgerAmountEl.value = "";
+    if (dcaLedgerNoteEl) dcaLedgerNoteEl.value = "";
+    render();
+  }
+
+  function reverseDcaL2CrashFundUse(id) {
+    const ledger = ensureDcaL2Ledger();
+    ledger.entries = ledger.entries.filter(function (item) { return item.id !== id; });
+    saveDcaL2Ledger();
+    render();
+  }
+
   function applyDcaPortfolioSafetyCap(entries, portfolioRisk) {
     if (!portfolioRisk.available_cash_provided || portfolioRisk.available_cash <= 0) return;
     const maxUse = round2(portfolioRisk.available_cash * 0.30);
     const planned = round2(entries.reduce(function (sum, entry) { return sum + entry.finalManualAmount; }, 0));
     if (planned <= maxUse || planned <= 0) return;
-    const scale = maxUse / planned;
+    let reduction = planned - maxUse;
+    ["crashFundAmount", "extraAmount", "baseAmount"].forEach(function (field) {
+      if (reduction <= 0) return;
+      const componentTotal = entries.reduce(function (sum, entry) { return sum + Number(entry.dcaPolicy[field] || 0); }, 0);
+      if (componentTotal <= 0) return;
+      const componentReduction = Math.min(componentTotal, reduction);
+      entries.forEach(function (entry) {
+        const value = Number(entry.dcaPolicy[field] || 0);
+        const share = value / componentTotal;
+        entry.dcaPolicy[field] = round2(Math.max(0, value - componentReduction * share));
+      });
+      reduction = round2(reduction - componentReduction);
+    });
     entries.forEach(function (entry) {
-      entry.finalManualAmount = round2(entry.finalManualAmount * scale);
-      entry.dcaPolicy.finalAmount = entry.finalManualAmount;
-      entry.dcaPolicy.multiplier = entry.baseManualAmount > 0 ? round2(entry.finalManualAmount / entry.baseManualAmount) : 0;
-      if (entry.dcaPolicy.status === "active") entry.dcaPolicy.status = "caution";
-      entry.dcaPolicy.warnings.push("Final portfolio cash-use cap applied");
-      entry.dcaPolicy.factorChain.push({
-        stage: "portfolio_cash_cap",
-        status: "caution",
-        detail: "Scaled final manual amounts to 30% of available cash"
-      });
-      entry.dcaPolicy.factorChain.push({
-        stage: "final_manual_amount_after_cash_cap",
-        status: entry.dcaPolicy.status,
-        detail: "Final CAD " + entry.finalManualAmount.toFixed(2) + " at " + entry.dcaPolicy.multiplier.toFixed(2) + "x"
-      });
+      const policy = entry.dcaPolicy;
+      policy.finalAmount = round2(policy.baseAmount + policy.extraAmount + policy.crashFundAmount);
+      policy.reasonCodes = Array.from(new Set((policy.reasonCodes || []).concat(["CASH_CAP_APPLIED"])));
+      policy.factorChain.push({ stage: "portfolio_cash_cap", status: "capped", detail: "Crash Fund, then Extra, then Base reduced to the 30% cash cap" });
+      entry.finalManualAmount = policy.finalAmount;
     });
   }
 
-  function renderDcaPolicyPreview(entries) {
+  function renderDcaPolicyPreviewLegacy(entries) {
     if (!dcaPreviewRowsEl) return;
     dcaPreviewRowsEl.innerHTML = "";
+    renderDcaL2Ledger();
 
     if (!Array.isArray(entries) || !entries.length) {
       const empty = document.createElement("p");
@@ -4959,7 +5093,7 @@ function equalizeAllocations() {
       const signal = entry.signal || {};
       const policy = entry.dcaPolicy || createDcaPolicyFallback(entry.baseManualAmount || signal.suggested_buy_amount);
       const waiting = !state.dataQualityEvaluated;
-      const manualReview = policy.status === "manual_review" || policy.status === "blocked";
+      const manualReview = policy.status === "manual_review" || policy.status === "blocked" || policy.status === "extreme_drawdown_review" || policy.status === "hard_block";
       const baseAmount = isFiniteNumber(entry.baseManualAmount) ? formatCurrency(entry.baseManualAmount) : "--";
       const finalAmount = isFiniteNumber(entry.finalManualAmount) ? formatCurrency(entry.finalManualAmount) : baseAmount;
       const currentAction = signal.suggested_action ? displayAction(signal.suggested_action) : "--";
@@ -4989,6 +5123,14 @@ function equalizeAllocations() {
       current.innerHTML = "<h4>DCA Adjusted Manual Plan / DCA 调整手动计划</h4>";
       const currentGrid = document.createElement("div");
       currentGrid.className = "dca-preview-current-grid";
+      if (policy.l2) {
+        currentGrid.append(
+          createDcaPreviewValue("Base DCA / 基础定投", formatCurrency(policy.baseAmount)),
+          createDcaPreviewValue("Extra Dip-Buy / 额外逢跌买入", formatCurrency(policy.extraAmount)),
+          createDcaPreviewValue("Crash Fund Plan / 备用金计划", formatCurrency(policy.crashFundAmount)),
+          createDcaPreviewValue("Reason codes / 原因码", (policy.reasonCodes || []).join(", ") || "NONE")
+        );
+      }
       currentGrid.append(
         createDcaPreviewValue("Base Manual Amount / 原手动金额", baseAmount),
         createDcaPreviewValue("DCA Multiplier / DCA 倍数", formatMultiplier(policy.multiplier)),
@@ -5002,6 +5144,14 @@ function equalizeAllocations() {
 
       const stages = document.createElement("div");
       stages.className = "dca-preview-stages";
+      if (policy.l2) {
+        stages.append(
+          createDcaPreviewStage("Base DCA / 基础定投", formatCurrency(policy.baseAmount), "clear"),
+          createDcaPreviewStage("Extra Dip-Buy / 额外逢跌买入", formatCurrency(policy.extraAmount), policy.extraAmount > 0 ? "active" : "inactive"),
+          createDcaPreviewStage("Crash Fund / 下跌备用金", formatCurrency(policy.crashFundAmount), policy.crashFundAmount > 0 ? "active" : "inactive"),
+          createDcaPreviewStage("Final Manual Plan / 最终手动计划", finalAmount, policy.hardBlocked ? "warning" : "active")
+        );
+      }
       stages.append(
         createDcaPreviewStage("Base Manual Amount / 原手动金额", baseAmount, "neutral"),
         createDcaPreviewStage("Drawdown + RSI / 回撤与 RSI", "Raw " + formatMultiplier(policy.rawDipMultiplier) + " · RSI " + (isFiniteNumber(policy.rsi14) ? policy.rsi14.toFixed(2) : "N/A"), manualReview ? "warning" : "neutral"),
@@ -5042,6 +5192,67 @@ function equalizeAllocations() {
     });
   }
 
+  function renderDcaPolicyPreview(entries) {
+    if (!dcaPreviewRowsEl) return;
+    dcaPreviewRowsEl.innerHTML = "";
+    renderDcaL2Ledger();
+    if (!Array.isArray(entries) || !entries.length) {
+      dcaPreviewRowsEl.textContent = "DCA-L2 is waiting for market data.";
+      return;
+    }
+    entries.forEach(function (entry) {
+      const policy = entry.dcaPolicy || createDcaPolicyFallback(entry.baseManualAmount || 0);
+      const row = document.createElement("details");
+      row.className = "dca-preview-symbol";
+      const summary = document.createElement("summary");
+      const name = document.createElement("span");
+      name.className = "dca-preview-symbol-name";
+      name.textContent = entry.signal.symbol;
+      const amount = document.createElement("strong");
+      amount.textContent = formatCurrency(entry.finalManualAmount || 0);
+      const status = document.createElement("span");
+      const review = policy.manualReview || policy.status === "manual_review" || policy.status === "hard_block" || policy.status === "extreme_drawdown_review";
+      status.className = "dca-preview-status " + (review ? "is-warning" : "is-active");
+      status.textContent = String(policy.status || policy.state || "manual_review").replaceAll("_", " ");
+      summary.append(name, amount, status);
+      row.appendChild(summary);
+
+      const grid = document.createElement("div");
+      grid.className = "dca-preview-current dca-preview-current-grid";
+      grid.append(
+        createDcaPreviewValue("Base DCA", formatCurrency(policy.baseAmount !== undefined ? policy.baseAmount : entry.baseManualAmount)),
+        createDcaPreviewValue("Extra Dip-Buy", formatCurrency(policy.extraAmount || 0)),
+        createDcaPreviewValue("Crash Fund Plan", formatCurrency(policy.crashFundAmount || 0)),
+        createDcaPreviewValue("Final Manual Plan", formatCurrency(policy.finalAmount !== undefined ? policy.finalAmount : entry.finalManualAmount)),
+        createDcaPreviewValue("Cash Guard / Cap", policy.cashCapAmount === null || policy.cashCapAmount === undefined
+          ? "No explicit cash limit"
+          : "Pre " + formatCurrency(policy.preCapAmount || 0) + " -> cap " + formatCurrency(policy.cashCapAmount)),
+        createDcaPreviewValue("Signal / Risk", String(entry.signal.suggested_action) + " / " + String(entry.signal.risk_level)),
+        createDcaPreviewValue("Reason codes", (policy.reasonCodes || policy.warnings || []).join(", ") || "NONE")
+      );
+      row.appendChild(grid);
+
+      const chain = document.createElement("section");
+      chain.className = "dca-preview-chain";
+      const heading = document.createElement("h4");
+      heading.textContent = "DCA-L2 Factor Chain / DCA-L2 factors";
+      const list = document.createElement("ol");
+      (policy.factorChain || []).forEach(function (item) {
+        const line = document.createElement("li");
+        line.textContent = item.stage + " [" + item.status + "]: " + item.detail;
+        list.appendChild(line);
+      });
+      chain.append(heading, list);
+      row.appendChild(chain);
+
+      const safety = document.createElement("p");
+      safety.className = "dca-preview-row-safety";
+      safety.textContent = "Manual planning only. Not an order. No automatic trading. No broker connection.";
+      row.appendChild(safety);
+      dcaPreviewRowsEl.appendChild(row);
+    });
+  }
+
   function createDcaPreviewValue(label, value) {
     const item = document.createElement("div");
     const labelEl = document.createElement("span");
@@ -5050,6 +5261,32 @@ function equalizeAllocations() {
     valueEl.textContent = value;
     item.append(labelEl, valueEl);
     return item;
+  }
+
+  function renderDcaL2Ledger() {
+    if (!dcaLedgerSummaryEl || !dcaLedgerEntriesEl) return;
+    const ledger = ensureDcaL2Ledger();
+    const used = getDcaL2CrashFundUsed(ledger);
+    const balance = round2(Math.max(0, ledger.initial - used));
+    dcaLedgerSummaryEl.textContent = "Month " + ledger.month + " · Initial CAD " + ledger.initial.toFixed(2) + " · Confirmed use CAD " + used.toFixed(2) + " · Remaining CAD " + balance.toFixed(2) + " · Recovery confirmations " + ledger.recoveryConfirmations + "/2";
+    dcaLedgerEntriesEl.innerHTML = "";
+    if (!ledger.entries.length) {
+      dcaLedgerEntriesEl.textContent = "No confirmed manual Crash Fund use recorded for this month.";
+      return;
+    }
+    ledger.entries.forEach(function (entry) {
+      const row = document.createElement("div");
+      row.className = "dca-ledger-entry";
+      const text = document.createElement("span");
+      text.textContent = entry.date + " · CAD " + Number(entry.amount).toFixed(2) + (entry.note ? " · " + entry.note : "");
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "secondary-button";
+      remove.textContent = "Reverse record";
+      remove.addEventListener("click", function () { reverseDcaL2CrashFundUse(entry.id); });
+      row.append(text, remove);
+      dcaLedgerEntriesEl.appendChild(row);
+    });
   }
 
   function createDcaPreviewStage(label, value, tone) {
@@ -5263,9 +5500,14 @@ function equalizeAllocations() {
     const finalAmount = entry && isFiniteNumber(entry.finalManualAmount) ? entry.finalManualAmount : signal.suggested_buy_amount;
     const baseAmount = entry && isFiniteNumber(entry.baseManualAmount) ? entry.baseManualAmount : signal.suggested_buy_amount;
     const policy = entry && entry.dcaPolicy;
+    const l2 = policy && policy.l2;
+    const breakdown = l2
+      ? "DCA-L2: Base CAD " + policy.baseAmount.toFixed(2) + " + Extra CAD " + policy.extraAmount.toFixed(2) + " + Crash Fund CAD " + policy.crashFundAmount.toFixed(2) + " = Final CAD " + finalAmount.toFixed(2) + " [" + policy.status + "]"
+      : "DCA: Base CAD " + baseAmount.toFixed(2) + " x " + (policy ? policy.multiplier.toFixed(2) : "1.00") + " = Final CAD " + finalAmount.toFixed(2) + " [" + (policy ? policy.status : "fallback") + "]";
     return [
       signal.symbol + " - " + displayAction(signal.suggested_action) + " - CAD " + finalAmount.toFixed(2) + " - " + t("scoreLabel") + " " + signal.signal_score + " - " + t("riskLabel") + " " + displayRiskLevel(signal.risk_level),
-      "DCA: Base CAD " + baseAmount.toFixed(2) + " x " + (policy ? policy.multiplier.toFixed(2) : "1.00") + " = Final CAD " + finalAmount.toFixed(2) + " [" + (policy ? policy.status : "fallback") + "]",
+      breakdown,
+      l2 ? "Reason codes: " + (policy.reasonCodes || []).join(", ") : "",
       t("reasonLabel") + ": " + signal.reason,
       t("warningLabel") + ": " + signal.warning + (policy && policy.warnings.length ? " DCA: " + policy.warnings.join(" ") : "") + sentenceEnd()
     ].join("\n");

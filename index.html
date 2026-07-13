@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://finnhub.io https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=dca-l1-policy-1">
+    <link rel="stylesheet" href="style.css?v=dca-l2-policy-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
-    <link rel="stylesheet" href="watchlist.css?v=ws-v2">
+    <link rel="stylesheet" href="watchlist.css?v=ws-v3">
   </head>
   <body>
     <div class="app-shell">
@@ -25,499 +26,14 @@
         <button id="languageToggle" class="language-toggle" type="button" aria-label="Switch language">中文 / EN</button>
       </header>
 
-      <section class="overview-panel" aria-labelledby="overview-title">
-        <div class="overview-heading">
-          <div>
-            <p class="eyebrow">Overview</p>
-            <h2 id="overview-title">Dashboard Summary</h2>
-          </div>
-          <button id="openSettingsBtn" class="primary-button" type="button">Settings</button>
-        </div>
-        <div class="overview-grid">
-          <article class="overview-card">
-            <span>Weekly Deployment</span>
-            <strong id="overviewWeeklyDeployment">CAD 69.23</strong>
-          </article>
-          <article class="overview-card">
-            <span>Planned Buy Total</span>
-            <strong id="overviewPlannedBuyTotal">CAD 0.00</strong>
-          </article>
-          <article class="overview-card">
-            <span>Overall Risk</span>
-            <strong id="overviewOverallRisk">Loading</strong>
-          </article>
-          <article class="overview-card">
-            <span>Market Regime</span>
-            <strong id="overviewMarketRegime">Neutral</strong>
-          </article>
-          <article class="overview-card">
-            <span>Available Cash</span>
-            <strong id="overviewAvailableCash">Not provided</strong>
-          </article>
-        </div>
-      </section>
-
-            <!-- WS-REPLACED -->
-
-      <details id="dataQualityPanel" class="panel data-quality-panel">
-        <summary data-label="Show details" data-open-label="Hide details">
+      <details id="watchlist" class="watchlist-panel" aria-labelledby="watchlist-title">
+        <summary class="watchlist-summary">
           <span>
-            <span class="eyebrow">Data quality / &#25968;&#25454;&#36136;&#37327;</span>
-            <strong id="data-quality-title">Data Quality Summary / &#25968;&#25454;&#36136;&#37327;&#25688;&#35201;</strong>
+            <span class="eyebrow">Watchlist</span>
+            <strong>美股盯盘（次级工具）</strong>
           </span>
+          <span class="watchlist-summary-action">展开盯盘</span>
         </summary>
-        <div class="data-quality-content" aria-live="polite">
-          <div class="data-quality-grid">
-            <article class="data-quality-metric">
-              <span id="dataQualityFreshLabel">Fresh / &#26032;&#40092;</span>
-              <strong id="dataQualityFresh">--</strong>
-            </article>
-            <article class="data-quality-metric">
-              <span id="dataQualityStaleLabel">Stale / &#36807;&#26399;</span>
-              <strong id="dataQualityStale">--</strong>
-            </article>
-            <article class="data-quality-metric">
-              <span id="dataQualityManualLabel">Manual Override / &#25163;&#21160;&#35206;&#30422;</span>
-              <strong id="dataQualityManual">--</strong>
-            </article>
-            <article class="data-quality-metric">
-              <span id="dataQualityLegacyLabel">Legacy Override / &#26087;&#35206;&#30422;</span>
-              <strong id="dataQualityLegacy">--</strong>
-            </article>
-            <article class="data-quality-metric">
-              <span id="dataQualityFallbackLabel">Fallback / &#22791;&#29992;&#25968;&#25454;</span>
-              <strong id="dataQualityFallback">--</strong>
-            </article>
-            <article class="data-quality-metric">
-              <span id="dataQualityCacheLabel">Cache / &#32531;&#23384;</span>
-              <strong id="dataQualityCache">--</strong>
-            </article>
-            <article class="data-quality-metric market-regime">
-              <span id="dataQualityMarketLabel">Market Regime / &#24066;&#22330;&#29366;&#24577;</span>
-              <strong id="dataQualityMarketRegime">Loading</strong>
-            </article>
-          </div>
-          <p id="dataQualityWarning" class="data-quality-warning">Waiting for market data.</p>
-        </div>
-      </details>
-
-      <section class="panel settings-panel deployment-overview" aria-labelledby="settings-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Monthly settings</p>
-            <h2 id="settings-title">Deployment Plan</h2>
-          </div>
-        </div>
-
-        <div class="metrics-grid">
-          <article class="metric">
-            <span>Monthly Budget</span>
-            <strong>CAD 400.00</strong>
-          </article>
-          <article class="metric">
-            <span>Normal Pool</span>
-            <strong>CAD 300.00</strong>
-          </article>
-          <article class="metric">
-            <span>Crash Fund</span>
-            <strong>CAD 100.00</strong>
-          </article>
-          <article class="metric">
-            <span>Weekly Deployment</span>
-            <strong>CAD 69.23</strong>
-          </article>
-        </div>
-      </section>
-
-      <main class="dashboard-layout">
-        <div class="main-column">
-          <section id="panicBanner" class="panic-banner hidden" aria-live="polite">
-            <span>PANIC MODE ACTIVE</span>
-            <strong>QQQ buy signal is at or below -10%</strong>
-          </section>
-
-          <section class="panel signals-panel" aria-labelledby="holdings-title">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">Allocations</p>
-                <h2 id="holdings-title">This Tuesday</h2>
-              </div>
-              <div id="lastUpdated" class="last-updated">Waiting for data</div>
-            </div>
-
-            <div class="stock-search-panel" aria-label="Add stock">
-              <div class="stock-search-grid">
-                <label for="stockSearchInput">
-                  <span>Search stock</span>
-                  <input id="stockSearchInput" type="search" autocomplete="off" placeholder="Ticker or name, e.g. TSLA or Visa">
-                </label>
-                <label for="stockAllocationInput">
-                  <span>Allocation %</span>
-                  <input id="stockAllocationInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
-                </label>
-                <button id="stockSearchBtn" class="secondary-button" type="button">Search</button>
-              </div>
-              <div id="portfolioTotal" class="portfolio-total">Total allocation 100%</div>
-              <div id="stockSearchResults" class="stock-search-results" aria-live="polite"></div>
-            </div>
-
-            <div class="stock-list-shell">
-              <div class="stock-list-header" aria-hidden="true">
-                <span>Symbol</span>
-                <span>Allocation</span>
-                <span>Action</span>
-                <span>Price</span>
-                <span>1D</span>
-                <span>5D</span>
-                <span>Score</span>
-                <span>Strength</span>
-                <span>Risk</span>
-                <span>Multiplier</span>
-                <span>Suggested Buy</span>
-                <span>Source</span>
-                <span>Controls</span>
-              </div>
-              <div id="cards" class="cards-grid"></div>
-            </div>
-          </section>
-
-          <section class="panel research-panel" aria-labelledby="research-title">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">Secondary tools</p>
-                <h2 id="research-title">Research & Testing</h2>
-              </div>
-            </div>
-
-            <a class="research-sandbox-entry" href="research-sandbox.html" aria-label="Open read-only research sandbox dashboard">
-              <span class="research-status-pill">Research-only</span>
-              <span>
-                <strong>Open Research Sandbox / &#25171;&#24320;&#30740;&#31350;&#27801;&#30418;</strong>
-                <small>Read-only shadow observation review. Not live, not trading advice, no activation or order controls.</small>
-              </span>
-            </a>
-
-            <details class="tool-details algorithm-research-summary-panel">
-              <summary data-label="Show details" data-open-label="Hide details">
-                <span>
-                  <span class="eyebrow">Research summary / &#30740;&#31350;&#24635;&#32467;</span>
-                  <strong>Algorithm Research Summary / &#31639;&#27861;&#30740;&#31350;&#24635;&#32467;</strong>
-                </span>
-              </summary>
-
-              <div class="algorithm-research-content">
-                <p class="algorithm-research-lead">
-                  Current conclusion: validation supports more research, but not a live/default strategy change yet.<br>
-                  <span lang="zh">&#24403;&#21069;&#32467;&#35770;&#65306;&#29616;&#26377;&#39564;&#35777;&#25903;&#25345;&#32487;&#32493;&#30740;&#31350;&#65292;&#20294;&#36824;&#19981;&#25903;&#25345;&#20462;&#25913;&#23454;&#26102;&#25110;&#40664;&#35748;&#31574;&#30053;&#12290;</span>
-                </p>
-
-                <div class="algorithm-research-grid">
-                  <article class="algorithm-research-item">
-                    <span class="research-status-pill">Live signal</span>
-                    <h3>Enhanced Signal Model</h3>
-                    <p>Unchanged manual decision-support model.</p>
-                    <p lang="zh">&#20445;&#25345;&#19981;&#21464;&#65306;&#20165;&#29992;&#20110;&#25163;&#21160;&#20915;&#31574;&#36741;&#21161;&#12290;</p>
-                  </article>
-
-                  <article class="algorithm-research-item">
-                    <span class="research-status-pill">Python default</span>
-                    <h3>Simple Dip-Buy</h3>
-                    <p>Remains default; strong equal-invested efficiency, but may underinvest during strong uptrends.</p>
-                    <p lang="zh">&#32487;&#32493;&#20316;&#20026;&#40664;&#35748;&#65307;&#31561;&#39069;&#25237;&#20837;&#25928;&#29575;&#36739;&#24378;&#65292;&#20294;&#24378;&#19978;&#21319;&#36235;&#21183;&#20013;&#21487;&#33021;&#25237;&#20837;&#19981;&#36275;&#12290;</p>
-                  </article>
-
-                  <article class="algorithm-research-item">
-                    <span class="research-status-pill">Benchmark</span>
-                    <h3>Fixed Weekly DCA</h3>
-                    <p>Strongest cash-deployment baseline and required comparison benchmark.</p>
-                    <p lang="zh">&#26368;&#24378;&#30340;&#36164;&#37329;&#37096;&#32626;&#22522;&#20934;&#65292;&#26159;&#21518;&#32493;&#31574;&#30053;&#24517;&#39035;&#23545;&#27604;&#30340;&#26631;&#23610;&#12290;</p>
-                  </article>
-
-                  <article class="algorithm-research-item">
-                    <span class="research-status-pill">Optional mode</span>
-                    <h3>Risk-Adjusted v2</h3>
-                    <p>Optional tail-risk mode; not default.</p>
-                    <p lang="zh">&#21487;&#36873;&#30340;&#23614;&#37096;&#39118;&#38505;&#27169;&#24335;&#65307;&#19981;&#20316;&#20026;&#40664;&#35748;&#31574;&#30053;&#12290;</p>
-                  </article>
-
-                  <article class="algorithm-research-item">
-                    <span class="research-status-pill">Sandbox</span>
-                    <h3>Trend-aware Hybrid / v3</h3>
-                    <p>Reduces cash drag, but does not robustly beat Fixed DCA; not promoted.</p>
-                    <p lang="zh">&#33021;&#20943;&#23569;&#29616;&#37329;&#25302;&#32047;&#65292;&#20294;&#26410;&#31283;&#23450;&#36305;&#36194;&#22266;&#23450; DCA&#65307;&#26242;&#19981;&#21319;&#32423;&#12290;</p>
-                  </article>
-
-                  <article class="algorithm-research-item decision">
-                    <span class="research-status-pill">Decision</span>
-                    <h3>No promotion yet</h3>
-                    <p>No live strategy change or hybrid/v3 promotion is justified. Longer-history, broader-regime, out-of-sample validation is needed.</p>
-                    <p lang="zh">&#26242;&#19981;&#20462;&#25913;&#23454;&#26102;&#31574;&#30053;&#65292;&#20063;&#26242;&#19981;&#25512;&#24191;&#28151;&#21512;&#25110; v3 &#31574;&#30053;&#12290;&#38656;&#35201;&#26356;&#38271;&#21382;&#21490;&#12289;&#26356;&#22810;&#24066;&#22330;&#29615;&#22659;&#21644;&#26679;&#26412;&#22806;&#39564;&#35777;&#12290;</p>
-                  </article>
-                </div>
-
-                <p class="fine-print algorithm-research-link">
-                  Full research note: <a href="ALGORITHM_RESEARCH_SUMMARY.md">ALGORITHM_RESEARCH_SUMMARY.md</a>
-                </p>
-              </div>
-            </details>
-
-            <details class="tool-details algorithm-test-panel">
-              <summary>
-                <span>
-                  <span class="eyebrow">Algorithm test</span>
-                  <strong id="algorithm-test-title">Algorithm Test Panel</strong>
-                </span>
-              </summary>
-              <div class="algorithm-test-controls">
-                <label for="algorithmTestInput">
-                  <span>decision_change</span>
-                  <input id="algorithmTestInput" type="text" inputmode="decimal" autocomplete="off" value="-5">
-                </label>
-                <div id="algorithmTestPresets" class="algorithm-test-presets" aria-label="Preset decision_change values"></div>
-              </div>
-              <div id="algorithmTestResult" class="algorithm-test-result" aria-live="polite"></div>
-              <p class="fine-print algorithm-test-safety">
-                This test panel is manual decision support only. It does not change real portfolio data, market data, signals, or trade plans.
-              </p>
-            </details>
-
-            <details class="tool-details backtest-panel">
-              <summary>
-                <span>
-                  <span class="eyebrow">Backtest comparison</span>
-                  <strong id="backtest-title">Dip-buy vs Fixed DCA</strong>
-                </span>
-                <button id="runBacktestBtn" class="secondary-button" type="button">Run Backtest</button>
-              </summary>
-              <div id="backtestSummary" class="backtest-summary" aria-live="polite">
-                <p class="fine-print">Compare the current weekly dip-buy strategy with fixed weekly DCA using current tickers, allocations, and deployment settings.</p>
-              </div>
-            </details>
-          </section>
-
-          <details class="panel data-panel">
-            <summary>
-              <span>
-                <span class="eyebrow">Data source priority</span>
-                <strong id="data-title">Live Market Data</strong>
-              </span>
-            </summary>
-            <ol class="source-list">
-              <li>Finnhub</li>
-              <li>Yahoo Finance fallback</li>
-              <li>Cache</li>
-              <li>Manual Override</li>
-            </ol>
-            <p class="fine-print">
-              Buy signal uses the lower of the latest 1-day and 5-day moves. Manual overrides always take priority for that stock.
-            </p>
-          </details>
-        </div>
-
-        <aside class="dashboard-sidebar" aria-label="Portfolio risk and manual plan">
-          <section class="panel portfolio-risk-panel" aria-labelledby="portfolio-risk-title">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">Portfolio risk dashboard</p>
-                <h2 id="portfolio-risk-title">Portfolio Risk</h2>
-              </div>
-              <button id="savePortfolioRiskBtn" class="secondary-button" type="button">Save Portfolio</button>
-            </div>
-
-            <div id="portfolioRiskSummary" class="portfolio-risk-summary" aria-live="polite"></div>
-
-            <div class="portfolio-risk-form">
-              <label for="availableCashInput">
-                <span>Available Cash</span>
-                <input id="availableCashInput" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD available cash">
-              </label>
-              <details class="holdings-details">
-                <summary>Edit holdings</summary>
-                <div id="portfolioPositionInputs" class="portfolio-position-inputs" aria-live="polite"></div>
-              </details>
-            </div>
-          </section>
-
-          <section class="panel order-panel" aria-labelledby="order-title">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">Copy order list</p>
-                <h2 id="order-title">Manual Trade Plan</h2>
-              </div>
-              <button id="copyBtn" class="secondary-button" type="button">Copy</button>
-            </div>
-            <div id="orderRows" class="order-rows" aria-live="polite"></div>
-            <details id="dcaPolicyPreview" class="dca-preview-panel">
-              <summary>
-                <span>DCA Adjusted Manual Plan / DCA 调整手动计划</span>
-                <small>Manual planning only / 仅手动规划</small>
-              </summary>
-              <div class="dca-preview-safety" role="note">
-                <span>Manual planning only</span>
-                <span>Not an order</span>
-                <span>No automatic trading</span>
-                <span>No trading execution</span>
-                <span>No broker connection</span>
-              </div>
-              <p class="dca-preview-intro">The final manual amount applies the audited DCA multiplier to the original Manual Trade Plan amount. You must decide manually before buying.</p>
-              <div id="dcaPreviewRows" class="dca-preview-rows" aria-live="polite">
-                <p class="dca-preview-empty">DCA policy waiting for data.</p>
-              </div>
-              <p class="dca-preview-disclaimer">Manual decision support only. Not an order, not broker-connected, and never used for automatic execution.</p>
-            </details>
-            <details class="order-copy-details">
-              <summary>Copy text details</summary>
-              <pre id="orderText" class="order-text copy-buffer"></pre>
-            </details>
-            <p id="copyStatus" class="status-line" role="status"></p>
-          </section>
-        </aside>
-      </main>
-    </div>
-
-    <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="price-settings-title">
-      <div class="modal-card">
-        <div class="modal-heading">
-          <div>
-            <p class="eyebrow">Live market data</p>
-            <h2 id="price-settings-title">Price Settings</h2>
-          </div>
-          <button id="closeSettingsBtn" class="icon-button" type="button" aria-label="Close price settings">×</button>
-        </div>
-
-        <section class="deployment-form" aria-labelledby="deployment-settings-title">
-          <div class="modal-subheading">
-            <h3 id="deployment-settings-title">Deployment Settings</h3>
-            <div class="deployment-actions">
-              <button id="saveDeploymentBtn" class="secondary-button" type="button">Save</button>
-              <button id="resetDeploymentBtn" class="secondary-button" type="button">Reset</button>
-            </div>
-          </div>
-          <div class="deployment-input-grid">
-            <label for="monthlyBudgetInput">
-              <span>Monthly Budget</span>
-              <input id="monthlyBudgetInput" data-deployment-field="monthlyBudget" type="text" inputmode="decimal" autocomplete="off">
-            </label>
-            <label for="normalPoolInput">
-              <span>Normal Pool</span>
-              <input id="normalPoolInput" data-deployment-field="normalPool" type="text" inputmode="decimal" autocomplete="off">
-            </label>
-            <label for="crashFundInput">
-              <span>Crash Fund</span>
-              <input id="crashFundInput" data-deployment-field="crashFund" type="text" inputmode="decimal" autocomplete="off">
-            </label>
-            <label for="weeklyDeploymentInput">
-              <span>Weekly Deployment</span>
-              <input id="weeklyDeploymentInput" data-deployment-field="weeklyDeployment" type="text" inputmode="decimal" autocomplete="off">
-            </label>
-          </div>
-          <p id="deploymentStatus" class="status-line deployment-status" role="status"></p>
-        </section>
-
-        <label class="api-key-row" for="apiKey">
-          <span>Finnhub API Key</span>
-          <input id="apiKey" type="password" autocomplete="off" placeholder="Enter key for live prices">
-        </label>
-
-        <button id="refreshBtn" class="primary-button modal-refresh" type="button">Refresh Prices</button>
-
-        <div class="modal-note">
-          <strong>Source priority</strong>
-          <span>Finnhub → Yahoo fallback → Cache → Manual Override</span>
-        </div>
-      </div>
-    </div>
-
-    <template id="stockCardTemplate">
-      <article class="stock-card">
-        <div class="stock-topline stock-row-header">
-          <div class="stock-identity stock-primary-info">
-            <h3></h3>
-            <span class="allocation"></span>
-          </div>
-          <span class="action-badge"></span>
-          <div class="price-row">
-            <span class="price"></span>
-            <span class="note"></span>
-          </div>
-          <span class="source-badge"></span>
-          <button class="remove-stock stock-action-button" type="button" aria-label="Remove stock">Remove</button>
-        </div>
-
-        <div class="stock-values">
-          <div>
-            <span>1D</span>
-            <strong class="daily-change"></strong>
-          </div>
-          <div>
-            <span>5D</span>
-            <strong class="five-day-change"></strong>
-          </div>
-          <div>
-            <span>signal_score</span>
-            <strong class="weekly-change"></strong>
-          </div>
-          <div>
-            <span>signal_strength</span>
-            <strong class="signal-strength"></strong>
-          </div>
-          <div>
-            <span>risk_level</span>
-            <strong class="risk-level"></strong>
-          </div>
-          <div>
-            <span>Multiplier</span>
-            <strong class="multiplier"></strong>
-          </div>
-          <div>
-            <span>Buy</span>
-            <strong class="buy-amount"></strong>
-          </div>
-        </div>
-
-        <details class="stock-details-row expanded-detail-panel">
-          <summary>Details</summary>
-          <details class="decision-context">
-            <summary>reason / warning</summary>
-            <div>
-              <span>reason</span>
-              <p class="decision-reason"></p>
-            </div>
-            <div>
-              <span>warning</span>
-              <p class="decision-warning"></p>
-            </div>
-          </details>
-          <details class="algorithm-details">
-            <summary>Algorithm Details</summary>
-            <div class="algorithm-grid">
-              <div><span></span><strong data-algo-field="market"></strong></div>
-              <div><span></span><strong data-algo-field="trend"></strong></div>
-              <div><span></span><strong data-algo-field="volatility"></strong></div>
-              <div><span></span><strong data-algo-field="drawdown"></strong></div>
-              <div><span></span><strong data-algo-field="final"></strong></div>
-            </div>
-            <p class="algorithm-explanation"></p>
-          </details>
-          <details class="override-row">
-            <summary>Manual Override</summary>
-            <input class="override-input" type="text" inputmode="decimal" autocomplete="off" placeholder="Manual weekly %, e.g. -9.2">
-            <div class="override-actions">
-              <button class="apply-override" type="button">Apply Override</button>
-              <button class="clear-override" type="button">Clear Override</button>
-            </div>
-          </details>
-        </details>
-      </article>
-    </template>
-
-    <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="dca-policy.js?v=dca-l1-policy-1"></script>
-    <script src="app.js?v=dca-l1-policy-1"></script>
-    <script src="signal-detail.js?v=phase3-i18n-1"></script>
-    <script src="order-panel.js?v=phase3-i18n-1"></script>
-    <script src="watchlist.js?v=watchlist-4"></script>
-  <section id="watchlist" class="watchlist-panel" aria-labelledby="watchlist-title">
         <div class="watchlist-heading">
           <div>
             <p class="eyebrow">美股行情监控</p>
@@ -567,7 +83,7 @@
                   <label><input id="watchlistAutoRefresh" type="checkbox" checked> 自动</label>
                   <select id="watchlistRefreshRate" aria-label="刷新间隔">
                     <option value="10">10s</option>
-                    <option value="30">30s</option>
+                    <option value="30" selected>30s</option>
                     <option value="60">60s</option>
                   </select>
                   <button id="watchlistRefreshBtn" type="button">刷新</button>
@@ -582,19 +98,20 @@
                   <p id="watchlistChartCaption">历史价格会随所选股票和周期更新。</p>
                 </div>
                 <div id="watchlistPeriods" class="ws-periods" role="group" aria-label="图表周期">
-                  <button type="button" data-period="1d">1D</button>
-                  <button type="button" data-period="5d">5D</button>
-                  <button type="button" data-period="3mo">3M</button>
-                  <button type="button" data-period="1y" class="active">1Y</button>
-                  <button type="button" data-period="5y">5Y</button>
+                  <button type="button" data-period="1d" aria-pressed="false">1D</button>
+                  <button type="button" data-period="5d" aria-pressed="false">5D</button>
+                  <button type="button" data-period="3mo" aria-pressed="false">3M</button>
+                  <button type="button" data-period="1y" class="active" aria-pressed="true">1Y</button>
+                  <button type="button" data-period="5y" aria-pressed="false">5Y</button>
                 </div>
               </div>
               <div id="watchlistChartPlot" class="ws-chart-plot">
                 <div id="watchlistChartLoading" class="ws-chart-loading">正在加载图表…</div>
-                <canvas id="watchlistPriceChart" aria-label="价格图表"></canvas>
-                <canvas id="watchlistMacdChart" aria-label="MACD 图表"></canvas>
+                <canvas id="watchlistPriceChart" aria-label="价格图表" aria-describedby="watchlistChartSummary"></canvas>
+                <canvas id="watchlistMacdChart" aria-label="MACD 图表" aria-describedby="watchlistChartSummary"></canvas>
                 <div id="watchlistChartTooltip" class="ws-chart-tooltip" role="status" aria-live="polite"></div>
               </div>
+              <p id="watchlistChartSummary" class="visually-hidden" aria-live="polite">图表正在加载。</p>
               <div class="ws-chart-legend">
                 <span>价格</span><span>MACD</span><span>信号线</span><span>柱状图</span>
               </div>
@@ -614,32 +131,7 @@
         </div>
 
         <p class="watchlist-disclaimer">行情仅供盯盘和辅助决策；交易前请以券商报价为准。</p>
-      </section>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#080d14">
-    <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=dca-l1-policy-1">
-    <link rel="stylesheet" href="stock-search.css?v=order-row-1">
-    <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
-    <link rel="stylesheet" href="watchlist.css?v=ws-v2">
-  </head>
-  <body>
-    <div class="app-shell">
-      <header class="hero">
-        <div>
-          <p class="eyebrow">Quant decision support</p>
-          <h1>Quant Decision Dashboard</h1>
-          <p class="hero-copy">Review signals, portfolio risk, and manual trade plans before placing your own orders.</p>
-        </div>
-        <div class="schedule-card" aria-label="Execution schedule">
-          <span>Every Tuesday</span>
-          <strong>12:00 PM</strong>
-        </div>
-        <button id="languageToggle" class="language-toggle" type="button" aria-label="Switch language">中文 / EN</button>
-      </header>
+      </details>
 
       <section class="overview-panel" aria-labelledby="overview-title">
         <div class="overview-heading">
@@ -673,8 +165,6 @@
         </div>
       </section>
 
-            <!-- WS-REPLACED -->
-
       <details id="dataQualityPanel" class="panel data-quality-panel">
         <summary data-label="Show details" data-open-label="Hide details">
           <span>
@@ -684,38 +174,21 @@
         </summary>
         <div class="data-quality-content" aria-live="polite">
           <div class="data-quality-grid">
-            <article class="data-quality-metric">
-              <span id="dataQualityFreshLabel">Fresh / &#26032;&#40092;</span>
-              <strong id="dataQualityFresh">--</strong>
-            </article>
-            <article class="data-quality-metric">
-              <span id="dataQualityStaleLabel">Stale / &#36807;&#26399;</span>
-              <strong id="dataQualityStale">--</strong>
-            </article>
-            <article class="data-quality-metric">
-              <span id="dataQualityManualLabel">Manual Override / &#25163;&#21160;&#35206;&#30422;</span>
-              <strong id="dataQualityManual">--</strong>
-            </article>
-            <article class="data-quality-metric">
-              <span id="dataQualityLegacyLabel">Legacy Override / &#26087;&#35206;&#30422;</span>
-              <strong id="dataQualityLegacy">--</strong>
-            </article>
-            <article class="data-quality-metric">
-              <span id="dataQualityFallbackLabel">Fallback / &#22791;&#29992;&#25968;&#25454;</span>
-              <strong id="dataQualityFallback">--</strong>
-            </article>
-            <article class="data-quality-metric">
-              <span id="dataQualityCacheLabel">Cache / &#32531;&#23384;</span>
-              <strong id="dataQualityCache">--</strong>
-            </article>
-            <article class="data-quality-metric market-regime">
-              <span id="dataQualityMarketLabel">Market Regime / &#24066;&#22330;&#29366;&#24577;</span>
-              <strong id="dataQualityMarketRegime">Loading</strong>
-            </article>
+            <article class="data-quality-metric"><span id="dataQualityFreshLabel">Fresh / &#26032;&#40092;</span><strong id="dataQualityFresh">--</strong></article>
+            <article class="data-quality-metric"><span id="dataQualityStaleLabel">Stale / &#36807;&#26399;</span><strong id="dataQualityStale">--</strong></article>
+            <article class="data-quality-metric"><span id="dataQualityManualLabel">Manual Override / &#25163;&#21160;&#35206;&#30422;</span><strong id="dataQualityManual">--</strong></article>
+            <article class="data-quality-metric"><span id="dataQualityLegacyLabel">Legacy Override / &#26087;&#35206;&#30422;</span><strong id="dataQualityLegacy">--</strong></article>
+            <article class="data-quality-metric"><span id="dataQualityFallbackLabel">Fallback / &#22791;&#29992;&#25968;&#25454;</span><strong id="dataQualityFallback">--</strong></article>
+            <article class="data-quality-metric"><span id="dataQualityCacheLabel">Cache / &#32531;&#23384;</span><strong id="dataQualityCache">--</strong></article>
+            <article class="data-quality-metric market-regime"><span id="dataQualityMarketLabel">Market Regime / &#24066;&#22330;&#29366;&#24577;</span><strong id="dataQualityMarketRegime">Loading</strong></article>
           </div>
           <p id="dataQualityWarning" class="data-quality-warning">Waiting for market data.</p>
         </div>
       </details>
+
+
+
+
 
       <section class="panel settings-panel deployment-overview" aria-labelledby="settings-title">
         <div class="section-heading">
@@ -797,137 +270,9 @@
             </div>
           </section>
 
-          <section class="panel research-panel" aria-labelledby="research-title">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">Secondary tools</p>
-                <h2 id="research-title">Research & Testing</h2>
-              </div>
-            </div>
 
-            <a class="research-sandbox-entry" href="research-sandbox.html" aria-label="Open read-only research sandbox dashboard">
-              <span class="research-status-pill">Research-only</span>
-              <span>
-                <strong>Open Research Sandbox / &#25171;&#24320;&#30740;&#31350;&#27801;&#30418;</strong>
-                <small>Read-only shadow observation review. Not live, not trading advice, no activation or order controls.</small>
-              </span>
-            </a>
 
-            <details class="tool-details algorithm-research-summary-panel">
-              <summary data-label="Show details" data-open-label="Hide details">
-                <span>
-                  <span class="eyebrow">Research summary / &#30740;&#31350;&#24635;&#32467;</span>
-                  <strong>Algorithm Research Summary / &#31639;&#27861;&#30740;&#31350;&#24635;&#32467;</strong>
-                </span>
-              </summary>
 
-              <div class="algorithm-research-content">
-                <p class="algorithm-research-lead">
-                  Current conclusion: validation supports more research, but not a live/default strategy change yet.<br>
-                  <span lang="zh">&#24403;&#21069;&#32467;&#35770;&#65306;&#29616;&#26377;&#39564;&#35777;&#25903;&#25345;&#32487;&#32493;&#30740;&#31350;&#65292;&#20294;&#36824;&#19981;&#25903;&#25345;&#20462;&#25913;&#23454;&#26102;&#25110;&#40664;&#35748;&#31574;&#30053;&#12290;</span>
-                </p>
-
-                <div class="algorithm-research-grid">
-                  <article class="algorithm-research-item">
-                    <span class="research-status-pill">Live signal</span>
-                    <h3>Enhanced Signal Model</h3>
-                    <p>Unchanged manual decision-support model.</p>
-                    <p lang="zh">&#20445;&#25345;&#19981;&#21464;&#65306;&#20165;&#29992;&#20110;&#25163;&#21160;&#20915;&#31574;&#36741;&#21161;&#12290;</p>
-                  </article>
-
-                  <article class="algorithm-research-item">
-                    <span class="research-status-pill">Python default</span>
-                    <h3>Simple Dip-Buy</h3>
-                    <p>Remains default; strong equal-invested efficiency, but may underinvest during strong uptrends.</p>
-                    <p lang="zh">&#32487;&#32493;&#20316;&#20026;&#40664;&#35748;&#65307;&#31561;&#39069;&#25237;&#20837;&#25928;&#29575;&#36739;&#24378;&#65292;&#20294;&#24378;&#19978;&#21319;&#36235;&#21183;&#20013;&#21487;&#33021;&#25237;&#20837;&#19981;&#36275;&#12290;</p>
-                  </article>
-
-                  <article class="algorithm-research-item">
-                    <span class="research-status-pill">Benchmark</span>
-                    <h3>Fixed Weekly DCA</h3>
-                    <p>Strongest cash-deployment baseline and required comparison benchmark.</p>
-                    <p lang="zh">&#26368;&#24378;&#30340;&#36164;&#37329;&#37096;&#32626;&#22522;&#20934;&#65292;&#26159;&#21518;&#32493;&#31574;&#30053;&#24517;&#39035;&#23545;&#27604;&#30340;&#26631;&#23610;&#12290;</p>
-                  </article>
-
-                  <article class="algorithm-research-item">
-                    <span class="research-status-pill">Optional mode</span>
-                    <h3>Risk-Adjusted v2</h3>
-                    <p>Optional tail-risk mode; not default.</p>
-                    <p lang="zh">&#21487;&#36873;&#30340;&#23614;&#37096;&#39118;&#38505;&#27169;&#24335;&#65307;&#19981;&#20316;&#20026;&#40664;&#35748;&#31574;&#30053;&#12290;</p>
-                  </article>
-
-                  <article class="algorithm-research-item">
-                    <span class="research-status-pill">Sandbox</span>
-                    <h3>Trend-aware Hybrid / v3</h3>
-                    <p>Reduces cash drag, but does not robustly beat Fixed DCA; not promoted.</p>
-                    <p lang="zh">&#33021;&#20943;&#23569;&#29616;&#37329;&#25302;&#32047;&#65292;&#20294;&#26410;&#31283;&#23450;&#36305;&#36194;&#22266;&#23450; DCA&#65307;&#26242;&#19981;&#21319;&#32423;&#12290;</p>
-                  </article>
-
-                  <article class="algorithm-research-item decision">
-                    <span class="research-status-pill">Decision</span>
-                    <h3>No promotion yet</h3>
-                    <p>No live strategy change or hybrid/v3 promotion is justified. Longer-history, broader-regime, out-of-sample validation is needed.</p>
-                    <p lang="zh">&#26242;&#19981;&#20462;&#25913;&#23454;&#26102;&#31574;&#30053;&#65292;&#20063;&#26242;&#19981;&#25512;&#24191;&#28151;&#21512;&#25110; v3 &#31574;&#30053;&#12290;&#38656;&#35201;&#26356;&#38271;&#21382;&#21490;&#12289;&#26356;&#22810;&#24066;&#22330;&#29615;&#22659;&#21644;&#26679;&#26412;&#22806;&#39564;&#35777;&#12290;</p>
-                  </article>
-                </div>
-
-                <p class="fine-print algorithm-research-link">
-                  Full research note: <a href="ALGORITHM_RESEARCH_SUMMARY.md">ALGORITHM_RESEARCH_SUMMARY.md</a>
-                </p>
-              </div>
-            </details>
-
-            <details class="tool-details algorithm-test-panel">
-              <summary>
-                <span>
-                  <span class="eyebrow">Algorithm test</span>
-                  <strong id="algorithm-test-title">Algorithm Test Panel</strong>
-                </span>
-              </summary>
-              <div class="algorithm-test-controls">
-                <label for="algorithmTestInput">
-                  <span>decision_change</span>
-                  <input id="algorithmTestInput" type="text" inputmode="decimal" autocomplete="off" value="-5">
-                </label>
-                <div id="algorithmTestPresets" class="algorithm-test-presets" aria-label="Preset decision_change values"></div>
-              </div>
-              <div id="algorithmTestResult" class="algorithm-test-result" aria-live="polite"></div>
-              <p class="fine-print algorithm-test-safety">
-                This test panel is manual decision support only. It does not change real portfolio data, market data, signals, or trade plans.
-              </p>
-            </details>
-
-            <details class="tool-details backtest-panel">
-              <summary>
-                <span>
-                  <span class="eyebrow">Backtest comparison</span>
-                  <strong id="backtest-title">Dip-buy vs Fixed DCA</strong>
-                </span>
-                <button id="runBacktestBtn" class="secondary-button" type="button">Run Backtest</button>
-              </summary>
-              <div id="backtestSummary" class="backtest-summary" aria-live="polite">
-                <p class="fine-print">Compare the current weekly dip-buy strategy with fixed weekly DCA using current tickers, allocations, and deployment settings.</p>
-              </div>
-            </details>
-          </section>
-
-          <details class="panel data-panel">
-            <summary>
-              <span>
-                <span class="eyebrow">Data source priority</span>
-                <strong id="data-title">Live Market Data</strong>
-              </span>
-            </summary>
-            <ol class="source-list">
-              <li>Finnhub</li>
-              <li>Yahoo Finance fallback</li>
-              <li>Cache</li>
-              <li>Manual Override</li>
-            </ol>
-            <p class="fine-print">
-              Buy signal uses the lower of the latest 1-day and 5-day moves. Manual overrides always take priority for that stock.
-            </p>
-          </details>
         </div>
 
         <aside class="dashboard-sidebar" aria-label="Portfolio risk and manual plan">
@@ -975,7 +320,20 @@
                 <span>No trading execution</span>
                 <span>No broker connection</span>
               </div>
-              <p class="dca-preview-intro">The final manual amount applies the audited DCA multiplier to the original Manual Trade Plan amount. You must decide manually before buying.</p>
+              <p class="dca-preview-intro">DCA-L2 keeps a Base DCA plan, adds only verified dip/crash-fund amounts, then applies portfolio guards. You must decide manually before buying.</p>
+              <section class="dca-ledger-panel" aria-labelledby="dca-ledger-title">
+                <div>
+                  <h4 id="dca-ledger-title">Crash Fund Ledger / 下跌备用金账本</h4>
+                  <p id="dcaLedgerSummary">Waiting for DCA-L2 data.</p>
+                </div>
+                <div class="dca-ledger-form">
+                  <input id="dcaLedgerAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD confirmed use">
+                  <input id="dcaLedgerNote" type="text" autocomplete="off" placeholder="Manual note">
+                  <button id="dcaLedgerRecordBtn" class="secondary-button" type="button">Record confirmed manual use</button>
+                </div>
+                <div id="dcaLedgerEntries" class="dca-ledger-entries" aria-live="polite"></div>
+                <p class="dca-ledger-disclaimer">Bookkeeping only. This does not submit, place, or execute a trade.</p>
+              </section>
               <div id="dcaPreviewRows" class="dca-preview-rows" aria-live="polite">
                 <p class="dca-preview-empty">DCA policy waiting for data.</p>
               </div>
@@ -989,6 +347,138 @@
           </section>
         </aside>
       </main>
+
+<section class="panel research-panel" aria-labelledby="research-title">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Secondary tools</p>
+            <h2 id="research-title">Research & Testing</h2>
+          </div>
+        </div>
+
+        <a class="research-sandbox-entry" href="research-sandbox.html" aria-label="Open read-only research sandbox dashboard">
+          <span class="research-status-pill">Research-only</span>
+          <span>
+            <strong>Open Research Sandbox / &#25171;&#24320;&#30740;&#31350;&#27801;&#30418;</strong>
+            <small>Read-only shadow observation review. Not live, not trading advice, no activation or order controls.</small>
+          </span>
+        </a>
+
+        <details class="tool-details algorithm-research-summary-panel">
+          <summary data-label="Show details" data-open-label="Hide details">
+            <span>
+              <span class="eyebrow">Research summary / &#30740;&#31350;&#24635;&#32467;</span>
+              <strong>Algorithm Research Summary / &#31639;&#27861;&#30740;&#31350;&#24635;&#32467;</strong>
+            </span>
+          </summary>
+
+          <div class="algorithm-research-content">
+            <p class="algorithm-research-lead">
+              Current conclusion: validation supports more research, but not a live/default strategy change yet.<br>
+              <span lang="zh">&#24403;&#21069;&#32467;&#35770;&#65306;&#29616;&#26377;&#39564;&#35777;&#25903;&#25345;&#32487;&#32493;&#30740;&#31350;&#65292;&#20294;&#36824;&#19981;&#25903;&#25345;&#20462;&#25913;&#23454;&#26102;&#25110;&#40664;&#35748;&#31574;&#30053;&#12290;</span>
+            </p>
+
+            <div class="algorithm-research-grid">
+              <article class="algorithm-research-item">
+                <span class="research-status-pill">Live signal</span>
+                <h3>Enhanced Signal Model</h3>
+                <p>Unchanged manual decision-support model.</p>
+                <p lang="zh">&#20445;&#25345;&#19981;&#21464;&#65306;&#20165;&#29992;&#20110;&#25163;&#21160;&#20915;&#31574;&#36741;&#21161;&#12290;</p>
+              </article>
+
+              <article class="algorithm-research-item">
+                <span class="research-status-pill">Python default</span>
+                <h3>Simple Dip-Buy</h3>
+                <p>Remains default; strong equal-invested efficiency, but may underinvest during strong uptrends.</p>
+                <p lang="zh">&#32487;&#32493;&#20316;&#20026;&#40664;&#35748;&#65307;&#31561;&#39069;&#25237;&#20837;&#25928;&#29575;&#36739;&#24378;&#65292;&#20294;&#24378;&#19978;&#21319;&#36235;&#21183;&#20013;&#21487;&#33021;&#25237;&#20837;&#19981;&#36275;&#12290;</p>
+              </article>
+
+              <article class="algorithm-research-item">
+                <span class="research-status-pill">Benchmark</span>
+                <h3>Fixed Weekly DCA</h3>
+                <p>Strongest cash-deployment baseline and required comparison benchmark.</p>
+                <p lang="zh">&#26368;&#24378;&#30340;&#36164;&#37329;&#37096;&#32626;&#22522;&#20934;&#65292;&#26159;&#21518;&#32493;&#31574;&#30053;&#24517;&#39035;&#23545;&#27604;&#30340;&#26631;&#23610;&#12290;</p>
+              </article>
+
+              <article class="algorithm-research-item">
+                <span class="research-status-pill">Optional mode</span>
+                <h3>Risk-Adjusted v2</h3>
+                <p>Optional tail-risk mode; not default.</p>
+                <p lang="zh">&#21487;&#36873;&#30340;&#23614;&#37096;&#39118;&#38505;&#27169;&#24335;&#65307;&#19981;&#20316;&#20026;&#40664;&#35748;&#31574;&#30053;&#12290;</p>
+              </article>
+
+              <article class="algorithm-research-item">
+                <span class="research-status-pill">Sandbox</span>
+                <h3>Trend-aware Hybrid / v3</h3>
+                <p>Reduces cash drag, but does not robustly beat Fixed DCA; not promoted.</p>
+                <p lang="zh">&#33021;&#20943;&#23569;&#29616;&#37329;&#25302;&#32047;&#65292;&#20294;&#26410;&#31283;&#23450;&#36305;&#36194;&#22266;&#23450; DCA&#65307;&#26242;&#19981;&#21319;&#32423;&#12290;</p>
+              </article>
+
+              <article class="algorithm-research-item decision">
+                <span class="research-status-pill">Decision</span>
+                <h3>No promotion yet</h3>
+                <p>No live strategy change or hybrid/v3 promotion is justified. Longer-history, broader-regime, out-of-sample validation is needed.</p>
+                <p lang="zh">&#26242;&#19981;&#20462;&#25913;&#23454;&#26102;&#31574;&#30053;&#65292;&#20063;&#26242;&#19981;&#25512;&#24191;&#28151;&#21512;&#25110; v3 &#31574;&#30053;&#12290;&#38656;&#35201;&#26356;&#38271;&#21382;&#21490;&#12289;&#26356;&#22810;&#24066;&#22330;&#29615;&#22659;&#21644;&#26679;&#26412;&#22806;&#39564;&#35777;&#12290;</p>
+              </article>
+            </div>
+
+            <p class="fine-print algorithm-research-link">
+              Full research note: <a href="ALGORITHM_RESEARCH_SUMMARY.md">ALGORITHM_RESEARCH_SUMMARY.md</a>
+            </p>
+          </div>
+        </details>
+
+        <details class="tool-details algorithm-test-panel">
+          <summary>
+            <span>
+              <span class="eyebrow">Algorithm test</span>
+              <strong id="algorithm-test-title">Algorithm Test Panel</strong>
+            </span>
+          </summary>
+          <div class="algorithm-test-controls">
+            <label for="algorithmTestInput">
+              <span>decision_change</span>
+              <input id="algorithmTestInput" type="text" inputmode="decimal" autocomplete="off" value="-5">
+            </label>
+            <div id="algorithmTestPresets" class="algorithm-test-presets" aria-label="Preset decision_change values"></div>
+          </div>
+          <div id="algorithmTestResult" class="algorithm-test-result" aria-live="polite"></div>
+          <p class="fine-print algorithm-test-safety">
+            This test panel is manual decision support only. It does not change real portfolio data, market data, signals, or trade plans.
+          </p>
+        </details>
+
+        <details class="tool-details backtest-panel">
+          <summary>
+            <span>
+              <span class="eyebrow">Backtest comparison</span>
+              <strong id="backtest-title">Dip-buy vs Fixed DCA</strong>
+            </span>
+            <button id="runBacktestBtn" class="secondary-button" type="button">Run Backtest</button>
+          </summary>
+          <div id="backtestSummary" class="backtest-summary" aria-live="polite">
+            <p class="fine-print">Compare the current weekly dip-buy strategy with fixed weekly DCA using current tickers, allocations, and deployment settings.</p>
+          </div>
+        </details>
+      </section>
+
+<details class="panel data-panel">
+        <summary>
+          <span>
+            <span class="eyebrow">Data source priority</span>
+            <strong id="data-title">Live Market Data</strong>
+          </span>
+        </summary>
+        <ol class="source-list">
+          <li>Finnhub</li>
+          <li>Yahoo Finance fallback</li>
+          <li>Cache</li>
+          <li>Manual Override</li>
+        </ol>
+        <p class="fine-print">
+          Buy signal uses the lower of the latest 1-day and 5-day moves. Manual overrides always take priority for that stock.
+        </p>
+      </details>
     </div>
 
     <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="price-settings-title">
@@ -1128,8 +618,8 @@
     </template>
 
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="dca-policy.js?v=dca-l1-policy-1"></script>
-    <script src="app.js?v=dca-l1-policy-1"></script>
+    <script src="dca-policy.js?v=dca-l2-policy-1"></script>
+    <script src="app.js?v=dca-l2-policy-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>

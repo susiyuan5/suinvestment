@@ -18,6 +18,7 @@ OBSERVATION_FILE = ROOT / "research" / "results" / "phase6s" / "shadow-observati
 VALIDATION_FILE = ROOT / "research" / "results" / "phase6s" / "shadow-observation-validation-report.json"
 OUT_DIR = ROOT / "research" / "results" / "phase6s"
 HISTORY_MANIFEST_FILE = OUT_DIR / "history" / "shadow-observation-history-manifest.json"
+OUTCOME_FILE = OUT_DIR / "shadow-observation-outcomes.json"
 
 
 def load_json(path: Path) -> dict:
@@ -86,12 +87,16 @@ def candidate_status(
     risk_warnings: int,
     missing_data: int,
     degraded: int,
+    mature_outcome_count: int,
     governance: dict,
 ) -> str:
     if observation_count < int(governance["minimum_observation_runs_before_review"]):
         return "not_enough_observation_history"
     if calendar_weeks < float(governance["minimum_calendar_weeks_before_review"]):
         return "not_enough_calendar_history"
+    minimum_outcomes = int(governance.get("minimum_mature_outcomes_before_review", 4))
+    if mature_outcome_count < minimum_outcomes:
+        return "not_enough_mature_outcomes"
     if risk_warnings > int(governance["maximum_allowed_risk_warning_count"]):
         return "blocked_by_risk_warning"
     if degraded > int(governance["maximum_allowed_candidate_degraded_count"]):
@@ -106,6 +111,7 @@ def main() -> None:
     observation_log = load_json(OBSERVATION_FILE)
     validation = load_json(VALIDATION_FILE) if VALIDATION_FILE.exists() else {}
     history_manifest = load_history_manifest()
+    outcomes_payload = load_json(OUTCOME_FILE) if OUTCOME_FILE.exists() else {"outcomes": []}
 
     observations = observation_log.get("observations", [])
     if not observations:
@@ -129,6 +135,11 @@ def main() -> None:
     improved_count = status_counts.get("candidate_improved", 0)
     missing_data_count = sum(1 for row in observations if row.get("missing_price_warning") or not row.get("price_available"))
     latest_already_archived = generated_at in archived_timestamps
+    mature_outcomes_by_symbol: Counter[str] = Counter()
+    for outcome in outcomes_payload.get("outcomes", []):
+        horizons = outcome.get("outcomes", {})
+        if all(horizons.get(str(horizon), {}).get("status") == "matured" for horizon in (1, 4, 12)):
+            mature_outcomes_by_symbol[outcome.get("symbol", "")] += 1
 
     calendar_weeks = cadence["calendar_span_weeks"]
 
@@ -145,6 +156,7 @@ def main() -> None:
             risk_warnings=symbol_risk,
             missing_data=symbol_missing,
             degraded=symbol_degraded,
+            mature_outcome_count=mature_outcomes_by_symbol[symbol],
             governance=governance,
         )
         symbol_statuses[symbol] = {
@@ -153,6 +165,7 @@ def main() -> None:
             "risk_warning_count": symbol_risk,
             "missing_data_count": symbol_missing,
             "candidate_degraded_count": symbol_degraded,
+            "mature_outcome_count": mature_outcomes_by_symbol[symbol],
             "eligible_for_live_promotion": False,
         }
         status_summary[status] += 1
@@ -193,6 +206,8 @@ def main() -> None:
         "candidateDegradedCount": degraded_count,
         "candidateImprovedCount": improved_count,
         "missingDataCount": missing_data_count,
+        "minimumMatureOutcomesBeforeReview": int(governance.get("minimum_mature_outcomes_before_review", 4)),
+        "matureOutcomeCounts": dict(mature_outcomes_by_symbol),
         "minimumRunCountMet": minimum_runs_met,
         "minimumCalendarWeeksMet": minimum_weeks_met,
         "anyCandidateEligibleForHumanReview": bool(eligible_human_review),
