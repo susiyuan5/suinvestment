@@ -87,6 +87,14 @@
 
     els.insight.innerHTML = html;
   }
+  function publishDataStatus() {
+    const sources = {};
+    state.symbols.forEach(function (symbol) {
+      const source = state.quotes[symbol] && state.quotes[symbol].source;
+      if (source) sources[source] = (sources[source] || 0) + 1;
+    });
+    window.dispatchEvent(new CustomEvent("watchlist:data-status", { detail: { sources, symbolCount: state.symbols.length } }));
+  }
 function renderQuote() {
     const quote = state.quotes[state.active] || {};
     els.symbol.textContent = state.active;
@@ -166,7 +174,7 @@ function renderQuote() {
       const previous = Number.isFinite(data.meta.chartPreviousClose) ? data.meta.chartPreviousClose : (Number.isFinite(data.meta.previousClose) ? data.meta.previousClose : data.rows.at(-2)?.close);
       const price = Number.isFinite(data.meta.regularMarketPrice) ? data.meta.regularMarketPrice : last.close;
       state.quotes[symbol] = { price, change: previous ? ((price - previous) / previous) * 100 : null, time: last.time, source };
-      renderCards(); renderTicker(); renderQuote(); draw(); renderInsight();
+      renderCards(); renderTicker(); renderQuote(); draw(); renderInsight(); publishDataStatus();
       els.caption.textContent = `${symbol} / ${period.toUpperCase()} / ${data.rows.length} 个数据点`;
       if (els.accessibleSummary) els.accessibleSummary.textContent = `${symbol} ${period.toUpperCase()} 图表，${data.rows.length} 个数据点，最新收盘价 ${fmt(last.close)}。`;
     } catch (error) {
@@ -175,6 +183,7 @@ function renderQuote() {
       els.meta.textContent = error.message;
       els.caption.textContent = "行情暂不可用，请稍后重试或选择其他股票。";
       clearActiveView("行情暂不可用，请稍后重试。");
+      publishDataStatus();
     } finally { els.loading.classList.add("hidden"); }
   }
 
@@ -189,7 +198,7 @@ function renderQuote() {
         try { const data = await getFallback(symbol, "5d"); const last = data.rows.at(-1); const previous = data.rows.at(-2)?.close; state.quotes[symbol] = { price: last.close, change: previous ? ((last.close - previous) / previous) * 100 : null, time: last.time, source: "本地周线历史" }; } catch (_) {}
       }
     })).then(() => {
-      renderCards(); renderTicker(); renderQuote(); renderInsight();
+      renderCards(); renderTicker(); renderQuote(); renderInsight(); publishDataStatus();
     }).finally(() => {
       els.refresh.disabled = false;
       state.refreshPromise = null;

@@ -1,6 +1,15 @@
 (function () {
   "use strict";
 
+  const requiredModules = ["MarketData", "SignalEngine", "PortfolioPolicy", "BacktestEngine", "DcaPolicy"];
+  const missingModules = requiredModules.filter(function (name) { return !globalThis[name]; });
+  if (missingModules.length) {
+    const warning = document.getElementById("dataQualityWarning");
+    if (warning) warning.textContent = "Required policy module missing; enhanced buy suggestions are disabled for manual review.";
+    console.error("Required dashboard modules missing:", missingModules.join(", "));
+    return;
+  }
+
   const CONFIG = {
     cacheHours: 24,
     weeklySnapshotUrl: "data/market-data.json",
@@ -1610,23 +1619,11 @@ amountBreakdown: "金额分解",
   }
 
   function createFieldMeta(source, timestamp, options) {
-    const ts = Number(timestamp);
-    const opts = options || {};
-    return {
-      source: source || "Unavailable",
-      timestamp: Number.isFinite(ts) ? ts : null,
-      freshness: opts.freshness || getFreshnessFromTimestamp(ts, opts),
-      stale_reason: opts.staleReason || ""
-    };
+    return MarketData.fieldMeta(source, timestamp, options, Date.now(), CONFIG.cacheHours);
   }
 
   function getFreshnessFromTimestamp(timestamp, options) {
-    const opts = options || {};
-    if (opts.missing) return "missing";
-    if (opts.stale) return "stale";
-    if (!Number.isFinite(timestamp)) return "missing";
-    const ageHours = (Date.now() - timestamp) / (60 * 60 * 1000);
-    return ageHours > (opts.maxAgeHours || CONFIG.cacheHours) ? "stale" : "fresh";
+    return MarketData.freshness(timestamp, options, Date.now(), CONFIG.cacheHours);
   }
 
   function cloneFieldMeta(meta) {
@@ -2050,20 +2047,11 @@ amountBreakdown: "金额分解",
   }
 
   function calculateMarketSignals(closes) {
-    const latestClose = closes[closes.length - 1];
-    const previousClose = closes[closes.length - 2];
-    const lookback = Math.min(5, closes.length - 1);
-    const weekAgoClose = closes[closes.length - 1 - lookback];
-    const dailyChange = round2(((latestClose - previousClose) / previousClose) * 100);
-    const weeklyChange = round2(((latestClose - weekAgoClose) / weekAgoClose) * 100);
-    const decisionChange = calculateDecisionChange(weeklyChange, dailyChange);
-    return { latestClose, previousClose, weekAgoClose, dailyChange, weeklyChange, decisionChange };
+    return SignalEngine.marketSignals(closes);
   }
 
   function calculateDecisionChange() {
-    const values = Array.prototype.slice.call(arguments).filter(isFiniteNumber);
-    if (!values.length) return null;
-    return Math.min.apply(null, values);
+    return SignalEngine.decisionChange.apply(null, arguments);
   }
 
   function getDecisionChange(row) {
@@ -2705,50 +2693,7 @@ amountBreakdown: "金额分解",
   }
 
   function calculateSignalScore(input) {
-    if (!isFiniteNumber(input.decisionChange)) return 10;
-
-    let score = 50;
-    const move = input.decisionChange;
-
-    if (move < 0) score += Math.min(36, Math.abs(move) * 2.4);
-    if (move > 0) score -= Math.min(36, move * 2.8);
-
-    if (isFiniteNumber(input.weeklyChange) && input.weeklyChange <= -20) score += 4;
-    if (isFiniteNumber(input.dailyChange) && input.dailyChange <= -8) score += 3;
-    if (isFiniteNumber(input.weeklyChange) && Math.abs(input.weeklyChange) >= ALGORITHM_PARAMS.extremeWeeklyThreshold) score -= 12;
-    if (isFiniteNumber(input.dailyChange) && Math.abs(input.dailyChange) >= ALGORITHM_PARAMS.volatilityDailyThreshold) score -= 5;
-
-    if (input.algorithm) {
-      const trend = input.algorithm.trend || {};
-      const regime = input.algorithm.market_regime || {};
-      if (trend.status === "healthy_pullback") score += 9;
-      if (trend.status === "strong_downtrend") score -= trend.severe ? 18 : 12;
-      if (isFiniteNumber(input.algorithm.realized_weekly_volatility) && input.algorithm.realized_weekly_volatility >= 6) score -= 8;
-      if (isFiniteNumber(input.algorithm.drawdown)) {
-        if (input.algorithm.drawdown > 35) score -= 20;
-        else if (input.algorithm.drawdown >= 20) score -= 10;
-        else if (input.algorithm.drawdown >= 10) score -= 3;
-      }
-      if (regime.type === "Bull") score += 4;
-      if (regime.type === "Correction") score -= 7;
-      if (regime.type === "Bear") score -= 15;
-    }
-
-    if (isFiniteNumber(input.dataAgeHours)) {
-      if (input.dataAgeHours > 24) score -= 20;
-      else if (input.dataAgeHours > 6) score -= 8;
-    } else {
-      score -= 25;
-    }
-
-    if (/cache/i.test(input.dataSource)) score -= 15;
-    if (/manual/i.test(input.dataSource) || input.manualOverrideActive) score -= 10;
-    if (/unavailable/i.test(input.dataSource)) score -= 45;
-
-    if (input.panicActive) score += 6;
-    score += (input.multiplier - 1) * 18;
-
-    return clamp(Math.round(score), 0, 100);
+    return SignalEngine.score(input, ALGORITHM_PARAMS);
   }
 
   function getSuggestedAction(signal) {
@@ -3732,6 +3677,17 @@ allocWrapper.appendChild(editBtn);
   }
 
   function simulateBacktestStrategy(aligned, mode, btConf) {
+    return BacktestEngine.simulateStrategy(aligned, mode, {
+      weeklyAmount: btConf && btConf.weeklyAmt > 0 ? btConf.weeklyAmt : state.deployment.weeklyDeployment,
+      weeklyDeployment: state.deployment.weeklyDeployment,
+      frictionCostRate: btConf && btConf.frictionCostRate ? btConf.frictionCostRate : 0,
+      marketRegime: calculateBacktestMarketRegime,
+      enhancedMultiplier: calculateBacktestEnhancedMultiplier,
+      smoothMultiplier: function (weeklyReturn) { return getMultiplier(weeklyReturn, null, weeklyReturn); },
+      oldMultiplier: getOldHardThresholdMultiplier,
+      round2: round2
+    });
+    /* Unreachable compatibility body below is kept until the next mechanical app.js cleanup. */
     var btWeekly = btConf && btConf.weeklyAmt > 0 ? btConf.weeklyAmt : state.deployment.weeklyDeployment;
     var btFriction = btConf && btConf.frictionCostRate ? btConf.frictionCostRate : 0;
     const positions = aligned.reduce(function (items, item) {
@@ -3833,43 +3789,27 @@ allocWrapper.appendChild(editBtn);
   }
 
   function calculateCAGR(finalValue, totalInvested, numberOfWeeks) {
-    if (totalInvested <= 0 || numberOfWeeks < 1) return null;
-    var years = numberOfWeeks / 52;
-    if (years <= 0) return null;
-    return Math.pow(finalValue / totalInvested, 1 / years) - 1;
+    return BacktestEngine.cagr(finalValue, totalInvested, numberOfWeeks);
   }
 
   function calculateAnnualizedVolatility(weeklyReturns) {
-    if (!Array.isArray(weeklyReturns) || weeklyReturns.length < 2) return null;
-    var mean = weeklyReturns.reduce(function (s, r) { return s + r; }, 0) / weeklyReturns.length;
-    var variance = weeklyReturns.reduce(function (s, r) { return s + (r - mean) * (r - mean); }, 0) / (weeklyReturns.length - 1);
-    if (variance <= 0) return null;
-    return Math.sqrt(variance) * Math.sqrt(52);
+    return BacktestEngine.annualizedVolatility(weeklyReturns);
   }
 
   function calculateDownsideDeviation(weeklyReturns) {
-    if (!Array.isArray(weeklyReturns) || weeklyReturns.length < 2) return null;
-    var negativeReturns = weeklyReturns.filter(function (r) { return r < 0; });
-    if (negativeReturns.length < 2) return 0;
-    var mean = negativeReturns.reduce(function (s, r) { return s + r; }, 0) / negativeReturns.length;
-    var variance = negativeReturns.reduce(function (s, r) { return s + (r - mean) * (r - mean); }, 0) / (negativeReturns.length - 1);
-    if (variance <= 0) return 0;
-    return Math.sqrt(variance) * Math.sqrt(52);
+    return BacktestEngine.downsideDeviation(weeklyReturns);
   }
 
   function calculateSharpe(cagr, annualizedVol) {
-    if (cagr === null || cagr === undefined || annualizedVol === null || annualizedVol === undefined || annualizedVol <= 0) return null;
-    return cagr / annualizedVol;
+    return BacktestEngine.sharpe(cagr, annualizedVol);
   }
 
   function calculateSortino(cagr, downsideDev) {
-    if (cagr === null || cagr === undefined || downsideDev === null || downsideDev === undefined || downsideDev <= 0) return null;
-    return cagr / downsideDev;
+    return BacktestEngine.sortino(cagr, downsideDev);
   }
 
   function calculateCalmar(cagr, maxDrawdownPct) {
-    if (cagr === null || cagr === undefined || maxDrawdownPct === null || maxDrawdownPct === undefined || maxDrawdownPct <= 0) return null;
-    return cagr / (Math.abs(maxDrawdownPct) / 100);
+    return BacktestEngine.calmar(cagr, maxDrawdownPct);
   }
 
   function formatMetric(value, decimals) {
@@ -3920,12 +3860,7 @@ allocWrapper.appendChild(editBtn);
   }
 
   function calculateReturnVolatility(returns) {
-    if (!Array.isArray(returns) || returns.length < 2) return 0;
-    const average = returns.reduce(function (sum, value) { return sum + value; }, 0) / returns.length;
-    const variance = returns.reduce(function (sum, value) {
-      return sum + Math.pow(value - average, 2);
-    }, 0) / (returns.length - 1);
-    return Math.sqrt(variance);
+    return BacktestEngine.returnVolatility(returns);
   }
 
   function riskAdjustedBacktestScore(data) {
@@ -5577,31 +5512,11 @@ function equalizeAllocations() {
   }
 
   function normalizePortfolio(items, options) {
-    const allowCustom = options && options.allowCustom;
-    const defaultSymbols = new Set(CONFIG.defaultStocks.map(function (stock) { return stock.symbol; }));
-    const seen = new Set();
-    return (Array.isArray(items) ? items : []).reduce(function (portfolio, item) {
-      const symbol = normalizeSymbol(item && item.symbol);
-      const allocation = Number(item && item.allocation);
-      const supported = defaultSymbols.has(symbol);
-      if (!symbol || (!supported && !allowCustom) || seen.has(symbol) || !Number.isFinite(allocation) || allocation < 0) {
-        return portfolio;
-      }
-
-      seen.add(symbol);
-      portfolio.push({
-        symbol,
-        name: String(item.name || symbol).trim() || symbol,
-        allocation: round2(allocation * 100) / 100
-      });
-      return portfolio;
-    }, []);
+    return PortfolioPolicy.normalizePortfolio(items, CONFIG.defaultStocks, options && options.allowCustom);
   }
 
   function normalizeSymbol(value) {
-    const symbol = String(value || "").trim().toUpperCase();
-    if (!/^[A-Z0-9.-]{1,12}$/.test(symbol)) return "";
-    return symbol;
+    return PortfolioPolicy.normalizeSymbol(value);
   }
 
   function parseAllocation(value) {

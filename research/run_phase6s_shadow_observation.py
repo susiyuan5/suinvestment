@@ -65,6 +65,7 @@ def compute_observation(
     metric_entry: dict,
     generated_at: str,
     input_hash: str,
+    as_of_rank: int,
 ) -> dict:
     symbol = candidate["symbol"]
     rows = price_entry.get("rows", []) if price_entry else []
@@ -107,6 +108,12 @@ def compute_observation(
         "input_hash": input_hash,
         "code_version": "phase6s-shadow-v2",
         "model_version": "phase6s-candidate-ranking-v1",
+        "as_of_rank": as_of_rank,
+        "as_of_signal": {
+            "factor_usefulness": candidate.get("factor_usefulness", "pending"),
+            "regime_usefulness": candidate.get("regime_usefulness", "pending"),
+            "activation_readiness": candidate.get("activation_readiness", "shadow_only"),
+        },
         "category": candidate.get("sector_category", ""),
         "observation_date": generated_at,
         "latest_price_date": latest_price_date,
@@ -131,6 +138,8 @@ def write_csv(path: Path, rows: list[dict]) -> None:
         "input_hash",
         "code_version",
         "model_version",
+        "as_of_rank",
+        "as_of_signal",
         "category",
         "observation_date",
         "latest_price_date",
@@ -153,6 +162,7 @@ def write_csv(path: Path, rows: list[dict]) -> None:
         for row in rows:
             csv_row = row.copy()
             csv_row["risk_gate_warnings"] = ";".join(row["risk_gate_warnings"])
+            csv_row["as_of_signal"] = json.dumps(row["as_of_signal"], sort_keys=True)
             writer.writerow(csv_row)
 
 
@@ -217,8 +227,9 @@ def main() -> None:
             metric_entry=metrics.get(row["symbol"], {}),
             generated_at=generated_at,
             input_hash=price_hash,
+            as_of_rank=index,
         )
-        for row in candidates
+        for index, row in enumerate(candidates, start=1)
     ]
 
     status_counts = Counter(row["monitoring_status"] for row in observations)

@@ -1,0 +1,37 @@
+name: Build project health
+
+on:
+  schedule:
+    - cron: "45 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: build-project-health
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build health report atomically
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/build_project_health.py
+      - name: Validate health report
+        run: |
+          python -m unittest tests.test_project_health
+          python -m json.tool results/health/project-health.json > /dev/null
+      - name: Commit derived health report
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update project health report"
+          file_pattern: results/health/project-health.json results/health/project-health.md

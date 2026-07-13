@@ -17,6 +17,7 @@ Start with [PROJECT_NAVIGATION.md](PROJECT_NAVIGATION.md) for the live dashboard
 - `index.html` - App markup
 - `style.css` - Dark mobile-first dashboard UI
 - `app.js` - Market fetching, weekly snapshot loading, cache, manual overrides, panic mode, and order calculation
+- `market-data.js`, `signal-engine.js`, `portfolio-policy.js`, `backtest-engine.js` - browser/Node-compatible pure policy modules loaded before `app.js`
 - `scripts/update-market-data.js` - GitHub Actions script that calculates weekly percentage changes
 - `scripts/update_backtest_prices.py` - Historical weekly snapshot updater for dashboard backtests and market regime inputs
 - `data/market-data.json` - Weekly market snapshot served by GitHub Pages
@@ -131,6 +132,14 @@ Phase 6A adds a separate research universe scaffold for broader validation. See 
 ## Versioned v2 Causal Baseline
 
 `python research\run_v2_causal_baseline.py` writes an isolated `research/results/v2/` artifact. It forms a signal from adjusted close at week `t`, executes at adjusted open in week `t+1`, and applies non-zero commission and slippage. It never rewrites Phase 3–6 output or changes dashboard/manual trade behavior.
+
+Run `python -m research.v2_validation` for block-bootstrap, BH-FDR, category-neutral IC, turnover, and cost-adjusted factor diagnostics. Run `python -m research.v2_ml_validation` for nested walk-forward selection with a permanent outer OOS set. Both write only beneath `research/results/v2/`.
+
+The monthly Shadow workflow refreshes research prices, validates coverage, freezes a new observation, backfills absolute and QQQ-relative 1/4/12-week outcomes, and opens a research-only PR. Pending horizons never count as evidence and Shadow can never trigger automatic promotion.
+
+## Project Health
+
+`python scripts\build_project_health.py` atomically generates `results/health/project-health.json` and `.md`. The dashboard Data Quality section shows operational Healthy/Warning/Blocked status plus the current Watchlist source. This status covers data and workflow operation only; it is not evidence that a strategy works and never authorizes a trade.
 
 ## Live Calculator Signal
 
