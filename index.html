@@ -6,31 +6,38 @@
     <meta name="theme-color" content="#080d14">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://finnhub.io https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>Quant Decision Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=dca-l2-policy-1">
+    <link rel="stylesheet" href="style.css?v=professional-layout-2">
     <link rel="stylesheet" href="stock-search.css?v=order-row-1">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
-    <link rel="stylesheet" href="watchlist.css?v=ws-v3">
+    <link rel="stylesheet" href="watchlist.css?v=professional-layout-2">
   </head>
   <body>
     <div class="app-shell">
       <header class="hero">
-        <div>
-          <p class="eyebrow">Quant decision support</p>
-          <h1>Quant Decision Dashboard</h1>
-          <p class="hero-copy">Review signals, portfolio risk, and manual trade plans before placing your own orders.</p>
+        <div class="hero-brand">
+          <p class="eyebrow">Investment workspace / 投资工作台</p>
+          <h1>量化定投决策台</h1>
+          <p class="hero-copy">Quant DCA decision dashboard</p>
         </div>
-        <div class="schedule-card" aria-label="Execution schedule">
-          <span>Every Tuesday</span>
-          <strong>12:00 PM</strong>
+        <div class="hero-status" aria-label="Dashboard status">
+          <span class="hero-status-label">数据更新时间 / Updated</span>
+          <strong id="lastUpdated">等待数据 / Waiting for data</strong>
         </div>
-        <button id="languageToggle" class="language-toggle" type="button" aria-label="Switch language">中文 / EN</button>
+        <div class="hero-tools">
+          <div class="schedule-card" aria-label="Execution schedule">
+            <span>执行计划 / Schedule</span>
+            <strong>每周二 12:00</strong>
+          </div>
+          <button id="openSettingsBtn" class="primary-button hero-settings" type="button">设置 / Settings</button>
+          <button id="languageToggle" class="language-toggle" type="button" aria-label="Switch language">中文 / EN</button>
+        </div>
       </header>
 
       <details id="watchlist" class="watchlist-panel" aria-labelledby="watchlist-title">
         <summary class="watchlist-summary">
           <span>
             <span class="eyebrow">Watchlist</span>
-            <strong>美股盯盘（次级工具）</strong>
+            <strong>美股盯盘（辅助工具）</strong>
           </span>
           <span class="watchlist-summary-action">展开盯盘</span>
         </summary>
@@ -136,10 +143,10 @@
       <section class="overview-panel" aria-labelledby="overview-title">
         <div class="overview-heading">
           <div>
-            <p class="eyebrow">Overview</p>
-            <h2 id="overview-title">Dashboard Summary</h2>
+            <p class="eyebrow">Overview / 总览</p>
+            <h2 id="overview-title">资产与计划总览</h2>
           </div>
-          <button id="openSettingsBtn" class="primary-button" type="button">Settings</button>
+          <p class="section-supporting-copy">Assets, risk and this week's manual plan / 资产、风险与本周手工计划</p>
         </div>
         <div class="overview-grid">
           <article class="overview-card">
@@ -207,15 +214,16 @@
 
 
 
-      <section class="panel settings-panel deployment-overview" aria-labelledby="settings-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Monthly settings</p>
-            <h2 id="settings-title">Deployment Plan</h2>
-          </div>
-        </div>
+      <details class="panel settings-panel deployment-overview" aria-labelledby="settings-title">
+        <summary class="deployment-summary">
+          <span>
+            <span class="eyebrow">Budget setup / 预算设置</span>
+            <strong id="settings-title">完整预算构成</strong>
+          </span>
+          <span class="deployment-summary-action">查看明细 / Details</span>
+        </summary>
 
-        <div class="metrics-grid">
+        <div class="metrics-grid deployment-metrics">
           <article class="metric">
             <span>Monthly Budget</span>
             <strong>CAD 400.00</strong>
@@ -233,7 +241,7 @@
             <strong>CAD 69.23</strong>
           </article>
         </div>
-      </section>
+      </details>
 
       <main class="dashboard-layout">
         <div class="main-column">
@@ -245,10 +253,10 @@
           <section class="panel signals-panel" aria-labelledby="holdings-title">
             <div class="section-heading compact">
               <div>
-                <p class="eyebrow">Allocations</p>
-                <h2 id="holdings-title">This Tuesday</h2>
+                <p class="eyebrow">Signals / 信号</p>
+                <h2 id="holdings-title">本周定投决策</h2>
               </div>
-              <div id="lastUpdated" class="last-updated">Waiting for data</div>
+              <p class="section-supporting-copy">逐项核对后再执行 / Review before manual action</p>
             </div>
 
             <div class="stock-search-panel" aria-label="Add stock">
@@ -316,7 +324,7 @@
             </div>
           </section>
 
-          <section class="panel order-panel" aria-labelledby="order-title">
+          <section class="panel order-panel" aria-labelledby="order-title" hidden aria-hidden="true">
             <div class="section-heading compact">
               <div>
                 <p class="eyebrow">Copy order list</p>
@@ -640,7 +648,7 @@
     <script src="signal-engine.js?v=contracts-1"></script>
     <script src="portfolio-policy.js?v=contracts-1"></script>
     <script src="backtest-engine.js?v=contracts-1"></script>
-    <script src="app.js?v=dca-l2-policy-1"></script>
+    <script src="app.js?v=professional-layout-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>

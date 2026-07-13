@@ -127,9 +127,9 @@
   const I18N = {
     en: {
       pageTitle: "Quant Decision Dashboard",
-      heroEyebrow: "Quant decision support",
+      heroEyebrow: "Investment workspace / 投资工作台",
       heroTitle: "Quant Decision Dashboard",
-      heroCopy: "Review signals, portfolio risk, and manual trade plans before placing your own orders.",
+      heroCopy: "DCA planning, portfolio risk and manual decisions.",
       scheduleLabel: "Every Tuesday",
       monthlySettings: "Monthly settings",
       deploymentPlan: "Deployment Plan",
@@ -275,8 +275,8 @@ amountBreakdown: "Amount Breakdown",
       extremeMoveWarning: "Extreme weekly move; manual review required",
       panicTitle: "PANIC MODE ACTIVE",
       panicBody: "QQQ buy signal is at or below -10%",
-      allocations: "Allocations",
-      thisTuesday: "This Tuesday",
+      allocations: "Signals",
+      thisTuesday: "This Week's DCA Decisions",
       searchStock: "Search stock",
       searchPlaceholder: "Ticker or name, e.g. TSLA or Visa",
       allocationPercent: "Allocation %",
@@ -418,7 +418,7 @@ amountBreakdown: "Amount Breakdown",
       details: "Details",
       hide: "Hide",
       overview: "Overview",
-      dashboardSummary: "Dashboard Summary",
+      dashboardSummary: "Assets & Plan Overview",
       researchEyebrow: "Secondary tools",
       researchTesting: "Research & Testing",
       dataQualityEyebrow: "Data quality / 数据质量",
@@ -480,9 +480,9 @@ amountBreakdown: "Amount Breakdown",
     },
     zh: {
       pageTitle: "量化投资助手",
-      heroEyebrow: "量化决策辅助",
-      heroTitle: "量化投资助手",
-      heroCopy: "下单前，先检查信号、组合风险和本次操作计划。",
+      heroEyebrow: "投资工作台 / Investment workspace",
+      heroTitle: "量化定投决策台",
+      heroCopy: "定投计划、组合风险与手工决策。",
       scheduleLabel: "每周二",
       monthlySettings: "月度设置",
       deploymentPlan: "投入计划",
@@ -532,8 +532,8 @@ amountBreakdown: "Amount Breakdown",
       extremeMoveWarning: "周波动极大，请手动复核",
       panicTitle: "恐慌模式已开启",
       panicBody: "QQQ 买入信号小于或等于 -10%",
-      allocations: "配置",
-      thisTuesday: "本周二",
+      allocations: "信号",
+      thisTuesday: "本周定投决策",
       searchStock: "搜索股票",
       searchPlaceholder: "股票代码或名称，例如 TSLA 或 Visa",
       allocationPercent: "配置比例 %",
@@ -772,7 +772,7 @@ amountBreakdown: "金额分解",
       details: "详情",
       hide: "收起",
       overview: "总览",
-      dashboardSummary: "面板总览",
+      dashboardSummary: "资产与计划总览",
       researchEyebrow: "辅助工具",
       researchTesting: "研究与测试",
       dataQualityEyebrow: "Data quality / 数据质量",
@@ -925,6 +925,8 @@ amountBreakdown: "金额分解",
     crashFund: document.getElementById("crashFundInput"),
     weeklyDeployment: document.getElementById("weeklyDeploymentInput")
   };
+
+  arrangeDashboardSections();
 
   if (!state.portfolio.length) {
     state.portfolio = normalizePortfolio(CONFIG.defaultStocks, { allowCustom: true });
@@ -6116,7 +6118,29 @@ function equalizeAllocations() {
   }
 
   function normalizeLanguage(value) {
-    return value === "zh" ? "zh" : "en";
+    return value === "en" ? "en" : "zh";
+  }
+
+  function arrangeDashboardSections() {
+    const shell = document.querySelector(".app-shell");
+    const dashboard = document.querySelector(".dashboard-layout");
+    const deployment = document.querySelector(".deployment-overview");
+    const watchlist = document.getElementById("watchlist");
+    const sidebar = document.querySelector(".dashboard-sidebar");
+    const orderPanel = document.querySelector(".order-panel");
+    const riskPanel = document.querySelector(".portfolio-risk-panel");
+
+    if (dashboard && deployment && dashboard.nextElementSibling !== deployment) {
+      dashboard.insertAdjacentElement("afterend", deployment);
+    }
+    if (sidebar && orderPanel && riskPanel && sidebar.firstElementChild !== orderPanel) {
+      sidebar.insertBefore(orderPanel, riskPanel);
+    }
+    if (shell && watchlist) {
+      const anchor = deployment || dashboard || settingsModal;
+      if (anchor && anchor.nextElementSibling !== watchlist) anchor.insertAdjacentElement("afterend", watchlist);
+      else if (!anchor && shell.lastElementChild !== watchlist) shell.appendChild(watchlist);
+    }
   }
 
   function toggleLanguage() {
