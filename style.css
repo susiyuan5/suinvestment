@@ -1606,62 +1606,129 @@ input::placeholder {
   line-height: 1.45;
 }
 
-.holdings-page-entry {
+.inline-holdings-panel {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
   gap: 12px;
   margin: 0 0 14px;
-  padding: 14px 16px;
-  border: 1px solid rgba(66, 215, 177, 0.38);
+  padding: 16px;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(66, 215, 177, 0.08);
-  color: var(--text);
-  text-decoration: none;
+  background: var(--panel);
 }
 
-.holdings-page-entry:hover,
-.holdings-page-entry:focus-visible {
-  border-color: rgba(66, 215, 177, 0.8);
-  background: rgba(66, 215, 177, 0.13);
+.inline-holdings-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.holdings-page-entry-icon {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 1px solid rgba(66, 215, 177, 0.5);
+.inline-holdings-heading a {
+  padding: 7px 10px;
+  border: 1px solid var(--line);
   border-radius: 6px;
-  color: var(--accent);
-  background: #0c1720;
-  font-size: 1.05rem;
+  color: var(--soft);
+  background: var(--panel-2);
+  font-size: .8rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.holdings-page-entry strong,
-.holdings-page-entry small {
+.inline-holdings-heading a:hover,
+.inline-holdings-heading a:focus-visible {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.inline-holdings-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.inline-holdings-stats > div,
+.inline-holding-row {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel-2);
+}
+
+.inline-holdings-stats > div {
+  padding: 10px;
+}
+
+.inline-holdings-stats span,
+.inline-holding-row > span {
   display: block;
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 800;
 }
 
-.holdings-page-entry strong {
-  margin-top: 2px;
+.inline-holdings-stats strong {
+  display: block;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.inline-holdings-rows {
+  display: grid;
+  gap: 7px;
+}
+
+.inline-holding-row {
+  display: grid;
+  grid-template-columns: minmax(60px, .65fr) repeat(4, minmax(0, 1fr)) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+.inline-holding-row > strong {
   font-size: 1rem;
 }
 
-.holdings-page-entry small {
+.inline-holding-row b {
+  display: block;
   margin-top: 3px;
-  color: var(--soft);
-  line-height: 1.4;
+  color: var(--text);
+  font-size: .88rem;
 }
 
-.holdings-page-entry-action {
-  padding: 7px 10px;
-  border: 1px solid rgba(66, 215, 177, 0.44);
-  border-radius: 6px;
-  color: var(--accent);
-  font-size: .8rem;
+.inline-holding-row b.is-positive {
+  color: var(--positive);
+}
+
+.inline-holding-row b.is-negative {
+  color: var(--negative);
+}
+
+.inline-holding-status {
+  width: fit-content;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--soft);
+  font-size: .72rem;
   font-weight: 800;
-  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.inline-holding-status.is-fresh {
+  border-color: rgba(79, 195, 161, .5);
+  color: var(--positive);
+}
+
+.inline-holdings-empty {
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 7px;
+  color: var(--soft);
+  font-size: .86rem;
+  line-height: 1.45;
 }
 
 .algorithm-research-content {
@@ -3727,13 +3794,33 @@ input::placeholder {
 }
 
 @media (max-width: 719px) {
-  .holdings-page-entry {
-    grid-template-columns: auto minmax(0, 1fr);
-    padding: 12px;
+  .inline-holdings-panel {
+    padding: 14px;
   }
 
-  .holdings-page-entry-action {
-    grid-column: 2;
+  .inline-holdings-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inline-holdings-heading a {
+    width: fit-content;
+  }
+
+  .inline-holdings-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inline-holding-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .inline-holding-row > strong {
+    grid-column: 1 / -1;
+  }
+
+  .inline-holding-status {
     justify-self: start;
   }
 

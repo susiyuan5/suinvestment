@@ -34,6 +34,7 @@ Purpose:
 
 - Read-only view of the browser's saved position inputs, available cash, and the local validated market snapshot.
 - Shows market value, cost basis, unrealized profit/loss, current allocation, target allocation, notes, and quote status.
+- The same read-only holdings snapshot is also rendered directly beneath the live dashboard's `Dashboard Summary / 总览` panel.
 
 Main files:
 

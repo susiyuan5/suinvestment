@@ -26,16 +26,6 @@
         <button id="languageToggle" class="language-toggle" type="button" aria-label="Switch language">中文 / EN</button>
       </header>
 
-      <a class="holdings-page-entry" href="holdings.html" aria-label="Open current holdings page">
-        <span class="holdings-page-entry-icon" aria-hidden="true">▣</span>
-        <span>
-          <span class="eyebrow">Portfolio / 持仓</span>
-          <strong>Current Holdings / 当前持仓</strong>
-          <small>Review saved shares, cost basis, market value, allocation, and local quote status.</small>
-        </span>
-        <span class="holdings-page-entry-action">Open / 打开</span>
-      </a>
-
       <details id="watchlist" class="watchlist-panel" aria-labelledby="watchlist-title">
         <summary class="watchlist-summary">
           <span>
@@ -172,6 +162,20 @@
             <span>Available Cash</span>
             <strong id="overviewAvailableCash">Not provided</strong>
           </article>
+        </div>
+      </section>
+
+      <section class="inline-holdings-panel" aria-labelledby="inline-holdings-title">
+        <div class="inline-holdings-heading">
+          <div>
+            <p class="eyebrow">Portfolio / 持仓</p>
+            <h2 id="inline-holdings-title">Current Holdings / 当前持仓</h2>
+          </div>
+          <a href="#portfolio-risk-title">Edit holdings below / 在下方编辑持仓</a>
+        </div>
+        <div id="inlineHoldingsStats" class="inline-holdings-stats" aria-live="polite"></div>
+        <div id="inlineHoldingsRows" class="inline-holdings-rows" aria-live="polite">
+          <p class="inline-holdings-empty">Loading saved holdings / 正在加载已保存持仓</p>
         </div>
       </section>
 

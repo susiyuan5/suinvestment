@@ -899,6 +899,8 @@ amountBreakdown: "金额分解",
   const overviewOverallRiskEl = document.getElementById("overviewOverallRisk");
   const overviewMarketRegimeEl = document.getElementById("overviewMarketRegime");
   const overviewAvailableCashEl = document.getElementById("overviewAvailableCash");
+  const inlineHoldingsStatsEl = document.getElementById("inlineHoldingsStats");
+  const inlineHoldingsRowsEl = document.getElementById("inlineHoldingsRows");
   const dataQualityPanelEl = document.getElementById("dataQualityPanel");
   const dataQualityFreshEl = document.getElementById("dataQualityFresh");
   const dataQualityStaleEl = document.getElementById("dataQualityStale");
@@ -4813,6 +4815,7 @@ function equalizeAllocations() {
     renderPortfolioTotal();
     renderPortfolioRiskSummary(portfolioRisk);
     renderOverviewSummary(portfolioRisk);
+    renderInlineHoldings(entries, portfolioRisk);
     renderDataQualitySummary(entries.map(function (entry) {
       return entry.signal;
     }));
@@ -5747,6 +5750,70 @@ function equalizeAllocations() {
     if (overviewAvailableCashEl) {
       overviewAvailableCashEl.textContent = portfolioRisk.available_cash_provided ? formatCurrency(portfolioRisk.available_cash) : t("notProvided");
     }
+  }
+
+  function renderInlineHoldings(entries, portfolioRisk) {
+    if (!inlineHoldingsStatsEl || !inlineHoldingsRowsEl) return;
+    const positions = portfolioRisk && portfolioRisk.positions ? portfolioRisk.positions : {};
+    const holdings = (entries || []).map(function (entry) {
+      const position = positions[entry.stock.symbol] || {};
+      const shares = Number(position.shares || 0);
+      const averageCost = Number(position.average_cost || 0);
+      const currentValue = Number(position.current_value || 0);
+      const costBasis = shares > 0 && averageCost > 0 ? round2(shares * averageCost) : null;
+      return {
+        symbol: entry.stock.symbol,
+        shares,
+        averageCost,
+        currentValue,
+        currentAllocation: Number(position.current_allocation || 0),
+        targetAllocation: Number(position.target_allocation || 0),
+        pnl: costBasis !== null ? round2(currentValue - costBasis) : null,
+        dataStatus: entry.signal.data_freshness || "unknown"
+      };
+    }).filter(function (holding) {
+      return holding.shares > 0 || holding.currentValue > 0 || holding.averageCost > 0;
+    });
+
+    inlineHoldingsStatsEl.innerHTML = "";
+    [
+      ["Holdings Value / 持仓市值", formatCurrency(portfolioRisk ? portfolioRisk.total_stock_value : 0)],
+      ["Portfolio Total / 总资产", formatCurrency(portfolioRisk ? portfolioRisk.total_portfolio_value : 0)],
+      ["Available Cash / 可用现金", portfolioRisk && portfolioRisk.available_cash_provided ? formatCurrency(portfolioRisk.available_cash) : "Not provided / 未提供"],
+      ["Positions / 持仓数量", String(holdings.length)]
+    ].forEach(function (item) {
+      const metric = document.createElement("div");
+      const label = document.createElement("span");
+      const value = document.createElement("strong");
+      label.textContent = item[0];
+      value.textContent = item[1];
+      metric.append(label, value);
+      inlineHoldingsStatsEl.appendChild(metric);
+    });
+
+    inlineHoldingsRowsEl.innerHTML = "";
+    if (!holdings.length) {
+      const empty = document.createElement("p");
+      empty.className = "inline-holdings-empty";
+      empty.textContent = "No saved holdings yet. Add shares, cost, or current value in Portfolio Risk below. / 尚无已保存持仓，请在下方组合风险中录入份额、成本或当前市值。";
+      inlineHoldingsRowsEl.appendChild(empty);
+      return;
+    }
+    holdings.forEach(function (holding) {
+      const row = document.createElement("article");
+      row.className = "inline-holding-row";
+      const pnlText = holding.pnl === null ? "--" : formatCurrency(holding.pnl);
+      const status = document.createElement("span");
+      status.className = "inline-holding-status is-" + String(holding.dataStatus).replace(/[^a-z]/gi, "").toLowerCase();
+      status.textContent = String(holding.dataStatus).replaceAll("_", " ");
+      row.innerHTML = "<strong>" + escapeHtml(holding.symbol) + "</strong>" +
+        "<span>Value / 市值 <b>" + formatCurrency(holding.currentValue) + "</b></span>" +
+        "<span>Cost / 成本 <b>" + (holding.averageCost > 0 ? formatCurrency(holding.averageCost) : "--") + "</b></span>" +
+        "<span>P/L / 浮盈亏 <b class=\"" + (holding.pnl > 0 ? "is-positive" : holding.pnl < 0 ? "is-negative" : "") + "\">" + pnlText + "</b></span>" +
+        "<span>Allocation / 配置 <b>" + holding.currentAllocation.toFixed(2) + "% / " + holding.targetAllocation.toFixed(2) + "%</b></span>";
+      row.appendChild(status);
+      inlineHoldingsRowsEl.appendChild(row);
+    });
   }
 
   function renderDataQualitySummary(signals) {
