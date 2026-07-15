@@ -12,6 +12,7 @@
         observationSummary: "research/results/phase6s/shadow-observation-summary.md",
         governance: "research/results/phase6s/shadow-observation-governance-report.json",
         governanceSummary: "research/results/phase6s/shadow-observation-governance-summary.md",
+        outcomes: "research/results/phase6s/shadow-observation-outcomes.json",
         historyManifest: "research/results/phase6s/history/shadow-observation-history-manifest.json",
         archiveValidation: "research/results/phase6s/history/shadow-observation-archive-validation-report.json",
         monthlyReview: "research/results/phase6s/shadow-monthly-review-report.json"
@@ -32,7 +33,8 @@
         governanceSummary: "",
         historyManifest: null,
         archiveValidation: null,
-        monthlyReview: null
+        monthlyReview: null,
+        outcomes: null
     };
 
     function byId(id) {
@@ -330,6 +332,91 @@
         table.innerHTML = rowHtml;
     }
 
+    function wilsonInterval(wins, total) {
+        if (!total) return null;
+        var z = 1.96;
+        var p = wins / total;
+        var denominator = 1 + z * z / total;
+        var center = (p + z * z / (2 * total)) / denominator;
+        var margin = z * Math.sqrt((p * (1 - p) + z * z / (4 * total)) / total) / denominator;
+        return [Math.max(0, center - margin), Math.min(1, center + margin)];
+    }
+
+    function formatRate(value) {
+        return value === null || value === undefined ? "N/A" : (value * 100).toFixed(1) + "%";
+    }
+
+    function renderShadowMaturity() {
+        var summary = byId("shadow-maturity-summary");
+        var status = byId("shadow-maturity-status");
+        var warning = byId("shadow-maturity-warning");
+        var table = byId("shadow-maturity-table");
+        if (!summary || !status || !warning || !table) return;
+        var governance = state.governance || {};
+        var rules = governance.governance || {};
+        var outcomes = state.outcomes || {};
+        var rows = Array.isArray(outcomes.outcomes) ? outcomes.outcomes : [];
+        var horizons = [1, 4, 12];
+        var metrics = outcomes.metrics && outcomes.metrics.horizons ? outcomes.metrics.horizons : {};
+        var runCurrent = Number(governance.observationRunsAvailable || 0);
+        var runRequired = Number(rules.minimum_observation_runs_before_review || 8);
+        var weeksCurrent = Number(governance.calendarWeeksAvailable || governance.calendarSpanWeeks || 0);
+        var weeksRequired = Number(rules.minimum_calendar_weeks_before_review || 8);
+        var matureCurrent = rows.filter(function (row) {
+            return horizons.every(function (horizon) { return row.outcomes && row.outcomes[String(horizon)] && row.outcomes[String(horizon)].status === "matured"; });
+        }).length;
+        var matureRequired = Number(rules.minimum_mature_outcomes_before_review || governance.minimumMatureOutcomesBeforeReview || 4);
+        var missingRate = Number(governance.missingDataCount || 0);
+        var blockedBy = [];
+        if (runCurrent < runRequired) blockedBy.push("观测轮次不足");
+        if (weeksCurrent < weeksRequired) blockedBy.push("日历跨度不足");
+        if (matureCurrent < matureRequired) blockedBy.push("成熟样本不足");
+        if (Number(governance.riskWarningCount || 0) > Number(rules.maximum_allowed_risk_warning_count || 0)) blockedBy.push("风险警告");
+        if (missingRate > Number(rules.maximum_allowed_missing_data_count || 0)) blockedBy.push("缺失数据");
+
+        var nextDates = [];
+        rows.forEach(function (row) {
+            var timestamp = Date.parse(row.observation_timestamp || "");
+            if (!Number.isFinite(timestamp)) return;
+            horizons.forEach(function (horizon) {
+                var outcome = row.outcomes && row.outcomes[String(horizon)];
+                if (outcome && outcome.status !== "matured") {
+                    var due = timestamp + horizon * 7 * 24 * 60 * 60 * 1000;
+                    if (due > Date.now()) nextDates.push(due);
+                }
+            });
+        });
+        var nextDate = nextDates.length ? new Date(Math.min.apply(null, nextDates)).toISOString().slice(0, 10) : "N/A";
+        var latest = governance.latestObservationTimestamp || governance.latestObservationDate || "N/A";
+        var maxDeficit = Math.max(runRequired - runCurrent, weeksRequired - weeksCurrent, matureRequired - matureCurrent, 0);
+        renderFacts(summary, [
+            ["距离人工复核门槛", maxDeficit ? "还差 " + maxDeficit + " 个关键单位" : "已满足基础门槛", maxDeficit ? "warn" : "ok"],
+            ["阻止门禁", blockedBy.join("、") || "无", blockedBy.length ? "warn" : "ok"],
+            ["观测轮次", runCurrent + " / " + runRequired],
+            ["日历跨度（周）", weeksCurrent + " / " + weeksRequired],
+            ["完整成熟样本", matureCurrent + " / " + matureRequired],
+            ["最近一次观察", latest],
+            ["下一批预计成熟", nextDate],
+            ["调参状态", maxDeficit ? "暂停调参" : "仍需人工复核", "warn"]
+        ]);
+        status.textContent = maxDeficit ? "样本不足" : "可进入人工复核";
+        status.className = "pill " + (maxDeficit ? "warn" : "ok");
+        warning.textContent = maxDeficit ? "当前被 " + blockedBy.join("、") + " 阻止；样本不足前不调参，避免对少量结果过拟合。" : "基础门槛已满足，但仍不得自动提升至实盘，必须完成正式人工复核。";
+
+        var tbody = table.querySelector("tbody");
+        tbody.innerHTML = horizons.map(function (horizon) {
+            var horizonRows = rows.map(function (row) { return row.outcomes && row.outcomes[String(horizon)]; }).filter(function (item) { return item && item.status === "matured"; });
+            var wins = horizonRows.filter(function (item) { return Number(item.relative_return) > 0; }).length;
+            var interval = wilsonInterval(wins, horizonRows.length);
+            var dueDates = rows.map(function (row) {
+                var item = row.outcomes && row.outcomes[String(horizon)];
+                var timestamp = Date.parse(row.observation_timestamp || "");
+                return item && item.status !== "matured" && Number.isFinite(timestamp) ? new Date(timestamp + horizon * 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) : null;
+            }).filter(Boolean).sort();
+            return "<tr><td>" + horizon + " 周</td><td>" + horizonRows.length + "</td><td>" + formatRate(horizonRows.length ? wins / horizonRows.length : null) + "</td><td>" + (interval ? formatRate(interval[0]) + "–" + formatRate(interval[1]) : "N/A") + "</td><td>" + (dueDates[0] || "N/A") + "</td></tr>";
+        }).join("");
+    }
+
     async function init() {
         try {
             var results = await Promise.all([
@@ -358,6 +445,7 @@
             state.historyManifest = await loadJson(paths.historyManifest).catch(function() { return null; });
             state.archiveValidation = await loadJson(paths.archiveValidation).catch(function() { return null; });
             state.monthlyReview = await loadJson(paths.monthlyReview).catch(function() { return null; });
+            state.outcomes = await loadJson(paths.outcomes).catch(function() { return null; });
 
             renderExecutive();
             renderComparison();
@@ -367,6 +455,7 @@
             renderMonitoring();
             renderChecklist();
             renderObservation();
+            renderShadowMaturity();
 
             byId("load-state").innerHTML = "<strong class=\"ok\">已加载。</strong> 只读沙盘数据可供人工审查。";
         } catch (error) {

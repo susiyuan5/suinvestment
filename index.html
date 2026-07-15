@@ -33,6 +33,40 @@
         </div>
       </header>
 
+      <section id="decisionSummary" class="decision-summary" aria-labelledby="decision-summary-title" data-testid="decision-summary">
+        <div class="decision-summary-heading">
+          <div>
+            <p class="eyebrow">Today / 今天</p>
+            <h2 id="decision-summary-title">Today&#39;s decision brief / 今天该看什么</h2>
+          </div>
+          <span id="decisionSummaryStatus" class="decision-summary-status" data-state="loading">Loading</span>
+        </div>
+        <div class="decision-summary-grid">
+          <article class="decision-summary-item">
+            <span>Market state / 市场状态</span>
+            <strong id="decisionMarketState">Loading</strong>
+          </article>
+          <article class="decision-summary-item">
+            <span>Data as of / 数据截至</span>
+            <strong id="decisionDataAsOf">Waiting for data</strong>
+          </article>
+          <article class="decision-summary-item">
+            <span>Source / 数据源</span>
+            <strong id="decisionDataSource">Waiting</strong>
+          </article>
+          <article class="decision-summary-item">
+            <span>Manual review / 人工复核</span>
+            <strong id="decisionReviewState">Required</strong>
+          </article>
+          <article class="decision-summary-item decision-summary-action">
+            <span>Recommended action / 建议动作</span>
+            <strong id="decisionAction">Waiting for data</strong>
+            <small id="decisionReason">No recommendation is generated before data quality is evaluated.</small>
+          </article>
+        </div>
+        <p class="decision-summary-note">Operational data health does not validate strategy performance. Research and backtest results remain secondary review tools.</p>
+      </section>
+
       <details id="watchlist" class="watchlist-panel" aria-labelledby="watchlist-title">
         <summary class="watchlist-summary">
           <span>
@@ -207,6 +241,16 @@
           </div>
           <p id="dataQualityWarning" class="data-quality-warning">Waiting for market data.</p>
           <p class="project-health-line"><span id="projectHealthDetails">Loading operational health report.</span> <a href="results/health/project-health.md">Detailed report</a></p>
+          <section class="health-history" aria-labelledby="health-history-title">
+            <div class="health-history-heading">
+              <strong id="health-history-title">Operational trend / 运行趋势</strong>
+              <span id="healthHistoryWindow">Last 90 days</span>
+            </div>
+            <div id="healthHistoryMetrics" class="health-history-grid" aria-live="polite">
+              <span class="health-history-empty">Loading health history.</span>
+            </div>
+            <p id="healthHistoryTrend" class="health-history-trend" aria-live="polite">Waiting for historical observations.</p>
+          </section>
         </div>
       </details>
 
@@ -352,8 +396,8 @@
                   <p id="dcaLedgerSummary">Waiting for DCA-L2 data.</p>
                 </div>
                 <div class="dca-ledger-form">
-                  <input id="dcaLedgerAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD confirmed use">
-                  <input id="dcaLedgerNote" type="text" autocomplete="off" placeholder="Manual note">
+                  <input id="dcaLedgerAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD confirmed use" aria-label="Confirmed crash fund use amount">
+                  <input id="dcaLedgerNote" type="text" autocomplete="off" placeholder="Manual note" aria-label="Manual crash fund note">
                   <button id="dcaLedgerRecordBtn" class="secondary-button" type="button">Record confirmed manual use</button>
                 </div>
                 <div id="dcaLedgerEntries" class="dca-ledger-entries" aria-live="polite"></div>
@@ -632,7 +676,7 @@
           </details>
           <details class="override-row">
             <summary>Manual Override</summary>
-            <input class="override-input" type="text" inputmode="decimal" autocomplete="off" placeholder="Manual weekly %, e.g. -9.2">
+            <input class="override-input" type="text" inputmode="decimal" autocomplete="off" placeholder="Manual weekly %, e.g. -9.2" aria-label="Manual weekly percentage override">
             <div class="override-actions">
               <button class="apply-override" type="button">Apply Override</button>
               <button class="clear-override" type="button">Clear Override</button>

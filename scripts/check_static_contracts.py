@@ -23,6 +23,9 @@ REQUIRED_IDS = {
     "projectHealthStatus",
     "projectHealthDetails",
     "watchlistHealthStatus",
+    "decisionSummary",
+    "decisionAction",
+    "healthHistoryMetrics",
 }
 
 

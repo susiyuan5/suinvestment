@@ -139,7 +139,7 @@ The monthly Shadow workflow refreshes research prices, validates coverage, freez
 
 ## Project Health
 
-`python scripts\build_project_health.py` atomically generates `results/health/project-health.json` and `.md`. The dashboard Data Quality section shows operational Healthy/Warning/Blocked status plus the current Watchlist source. This status covers data and workflow operation only; it is not evidence that a strategy works and never authorizes a trade.
+`python scripts\build_project_health.py` atomically generates `results/health/project-health.json`, `.md`, and a 90-day `project-health-history.json` trend. The dashboard Data Quality section shows operational Healthy/Warning/Blocked status, the current Watchlist source, and recent delay/failure/degradation/JS-error/latency metrics. This status covers data and workflow operation only; it is not evidence that a strategy works and never authorizes a trade.
 
 ## Live Calculator Signal
 
@@ -421,6 +421,8 @@ The system will block or warn when:
 3. Go to Pages.
 4. Set the source to the branch and folder containing `index.html`.
 5. Open the published Pages URL.
+
+After the Pages deployment completes, the `GitHub Pages smoke and accessibility audit` workflow runs the desktop/mobile smoke paths, failed-data safety path, keyboard flow, 200% zoom check, Canvas alternative check, and target-size/semantic audit. Use the workflow's `BASE_URL` input for a custom Pages domain.
 
 ## Deploy to Vercel
 

@@ -4,7 +4,7 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
-from scripts.build_project_health import build_health, generate
+from scripts.build_project_health import build_health, build_history, generate
 
 
 NOW = datetime(2026, 7, 13, tzinfo=timezone.utc)
@@ -32,6 +32,7 @@ class ProjectHealthTests(unittest.TestCase):
             self.assertEqual(payload["status"], "healthy")
             self.assertFalse(payload["shadow"]["live_promotion_eligible"])
             self.assertEqual(payload["watchlist"]["status"], "ready")
+            self.assertIn("operational_metrics", payload)
 
     def test_stale_snapshot_blocks_health(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -58,3 +59,14 @@ class ProjectHealthTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 generate(root, output, now=NOW, workflows=SUCCESS)
             self.assertEqual(report.read_text(encoding="utf-8"), "last-valid")
+
+    def test_health_history_is_retained_for_the_last_90_days(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture_root(root)
+            output = root / "results" / "health"
+            payload = build_health(root, now=NOW, workflows=SUCCESS)
+            history = build_history(output / "project-health-history.json", payload, now=NOW)
+            self.assertEqual(history["retention_days"], 90)
+            self.assertEqual(len(history["entries"]), 1)
+            self.assertIn("workflow_failure_rate", history["entries"][0])

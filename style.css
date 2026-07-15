@@ -176,6 +176,96 @@ h3 {
   gap: 14px;
 }
 
+.decision-summary {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid rgba(79, 195, 161, 0.45);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(16, 35, 43, 0.96), rgba(16, 23, 34, 0.96));
+  box-shadow: var(--shadow);
+}
+
+.decision-summary-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.decision-summary-heading h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.decision-summary-status {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.decision-summary-status[data-state="ready"] {
+  border-color: rgba(79, 195, 161, 0.55);
+  color: var(--accent);
+}
+
+.decision-summary-status[data-state="blocked"],
+.decision-summary-status[data-state="warning"] {
+  border-color: rgba(255, 200, 87, 0.55);
+  color: var(--warning);
+}
+
+.decision-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.decision-summary-item {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(116, 143, 173, 0.26);
+  border-radius: 7px;
+  background: rgba(10, 17, 29, 0.58);
+}
+
+.decision-summary-item span,
+.decision-summary-item small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.decision-summary-item strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.decision-summary-action {
+  grid-column: span 2;
+}
+
+.decision-summary-action strong {
+  color: var(--accent);
+}
+
+.decision-summary-action small {
+  margin-top: 4px;
+}
+
+.decision-summary-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
 .overview-panel {
   display: grid;
   gap: 12px;
@@ -311,6 +401,63 @@ h3 {
   border-color: rgba(255, 200, 87, 0.42);
   color: #ffe6a3;
   background: rgba(255, 200, 87, 0.10);
+}
+
+.health-history {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.health-history-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.health-history-heading strong {
+  color: var(--text);
+}
+
+.health-history-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.health-history-grid > div {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+
+.health-history-grid span,
+.health-history-grid small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+
+.health-history-grid strong {
+  display: block;
+  margin: 3px 0;
+  font-size: 0.9rem;
+}
+
+.health-history-empty,
+.health-history-trend {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.health-history-trend {
+  margin: 0;
 }
 
 .project-health-line { margin: 10px 0 0; color: var(--muted); font-size: .82rem; }
@@ -3398,6 +3545,7 @@ body {
 }
 
 .hero,
+.decision-summary,
 .overview-panel,
 .inline-holdings-panel,
 .data-quality-panel,
@@ -3410,14 +3558,15 @@ body {
 }
 
 .hero { order: 0; }
-.overview-panel { order: 1; }
-.inline-holdings-panel { order: 2; }
-.data-quality-panel { order: 3; }
-.dashboard-layout { order: 4; }
-.deployment-overview { order: 5; }
-.watchlist-panel { order: 6; }
-.research-panel { order: 7; }
-.data-panel { order: 8; }
+.decision-summary { order: 1; }
+.overview-panel { order: 2; }
+.inline-holdings-panel { order: 3; }
+.data-quality-panel { order: 4; }
+.dashboard-layout { order: 5; }
+.deployment-overview { order: 6; }
+.watchlist-panel { order: 7; }
+.research-panel { order: 8; }
+.data-panel { order: 9; }
 
 .hero {
   grid-template-columns: minmax(0, 1fr) minmax(190px, auto) auto;
@@ -3882,6 +4031,26 @@ body {
   }
 
   .overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .decision-summary {
+    padding: 11px;
+  }
+
+  .decision-summary-heading {
+    align-items: flex-start;
+  }
+
+  .decision-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .decision-summary-action {
+    grid-column: 1 / -1;
+  }
+
+  .health-history-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

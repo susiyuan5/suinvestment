@@ -106,6 +106,13 @@ function renderQuote() {
   }
 
   async function getChart(symbol, period, signal) {
+    // The shipped same-origin snapshot is the quiet, deterministic default on
+    // GitHub Pages. Live Yahoo requests remain a fallback for added symbols.
+    try {
+      return await getFallback(symbol, period);
+    } catch (_) {
+      // Continue to the live provider when the local snapshot has no symbol.
+    }
     const settings = { "1d": ["1d", "5m"], "5d": ["5d", "15m"], "3mo": ["3mo", "1d"], "1y": ["1y", "1d"], "5y": ["5y", "1wk"] }[period];
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${settings[0]}&interval=${settings[1]}&includePrePost=false`;
     const response = await fetch(url, { signal });
@@ -116,7 +123,7 @@ function renderQuote() {
     const quote = result.indicators.quote[0];
     const close = result.indicators.adjclose ? result.indicators.adjclose[0].adjclose : quote.close;
     const rows = result.timestamp.map((time, index) => ({ time: time * 1000, open: quote.open[index], high: quote.high[index], low: quote.low[index], close: close[index] })).filter((row) => [row.open, row.high, row.low, row.close].every(Number.isFinite));
-    return { rows, meta: result.meta };
+    return { rows, meta: result.meta, source: "Yahoo Finance" };
   }
 
   async function getBacktestPrices() {
@@ -168,6 +175,7 @@ function renderQuote() {
         data = await getFallback(symbol, period);
         source = "本地周线历史";
       }
+      source = data.source || (source === "Yahoo Finance" ? "本地周线历史" : source);
       if (requestId !== state.activeRequestId || symbol !== state.active || period !== state.period) return;
       state.series[symbol] = data.rows;
       const last = data.rows.at(-1);
@@ -193,7 +201,7 @@ function renderQuote() {
     state.refreshPromise = Promise.all(state.symbols.map(async (symbol) => {
       try {
         const data = await getChart(symbol, "5d"); const last = data.rows.at(-1); const previous = data.meta.chartPreviousClose || data.meta.previousClose || data.rows.at(-2)?.close; const price = data.meta.regularMarketPrice || last.close;
-        state.quotes[symbol] = { price, change: previous ? ((price - previous) / previous) * 100 : null, time: last.time, source: "Yahoo Finance" };
+        state.quotes[symbol] = { price, change: previous ? ((price - previous) / previous) * 100 : null, time: last.time, source: data.source || "本地周线历史" };
       } catch (_) {
         try { const data = await getFallback(symbol, "5d"); const last = data.rows.at(-1); const previous = data.rows.at(-2)?.close; state.quotes[symbol] = { price: last.close, change: previous ? ((last.close - previous) / previous) * 100 : null, time: last.time, source: "本地周线历史" }; } catch (_) {}
       }
