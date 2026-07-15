@@ -1,0 +1,42 @@
+name: GitHub Pages smoke and accessibility audit
+
+on:
+  workflow_run:
+    workflows: ["pages-build-deployment"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Published GitHub Pages URL"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BASE_URL: ${{ github.event.inputs.base_url || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install browser test dependencies
+        run: npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run deployed smoke test
+        run: node scripts/e2e-smoke.mjs
+      - name: Run accessibility and mobile audit
+        run: node scripts/a11y-mobile-audit.mjs
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-smoke-evidence
+          path: output/playwright/

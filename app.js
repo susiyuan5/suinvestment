@@ -848,6 +848,8 @@ amountBreakdown: "金额分解",
     autocompleteAbortController: null,
     weeklySnapshot: null,
     backtestSnapshot: null,
+    healthReport: null,
+    healthHistory: null,
     backtestSettings: loadJson(STORAGE_KEYS.backtestSettings, {
       startDate: "",
       endDate: "",
@@ -899,6 +901,13 @@ amountBreakdown: "金额分解",
   const overviewOverallRiskEl = document.getElementById("overviewOverallRisk");
   const overviewMarketRegimeEl = document.getElementById("overviewMarketRegime");
   const overviewAvailableCashEl = document.getElementById("overviewAvailableCash");
+  const decisionSummaryStatusEl = document.getElementById("decisionSummaryStatus");
+  const decisionMarketStateEl = document.getElementById("decisionMarketState");
+  const decisionDataAsOfEl = document.getElementById("decisionDataAsOf");
+  const decisionDataSourceEl = document.getElementById("decisionDataSource");
+  const decisionReviewStateEl = document.getElementById("decisionReviewState");
+  const decisionActionEl = document.getElementById("decisionAction");
+  const decisionReasonEl = document.getElementById("decisionReason");
   const inlineHoldingsStatsEl = document.getElementById("inlineHoldingsStats");
   const inlineHoldingsRowsEl = document.getElementById("inlineHoldingsRows");
   const dataQualityPanelEl = document.getElementById("dataQualityPanel");
@@ -927,6 +936,12 @@ amountBreakdown: "金额分解",
   };
 
   arrangeDashboardSections();
+
+  window.addEventListener("project-health:loaded", function (event) {
+    state.healthReport = event.detail && event.detail.report ? event.detail.report : event.detail || null;
+    state.healthHistory = event.detail && event.detail.history ? event.detail.history : null;
+    renderDecisionSummary(window.__SUINVESTMENT_PORTFOLIO_RISK__);
+  });
 
   if (!state.portfolio.length) {
     state.portfolio = normalizePortfolio(CONFIG.defaultStocks, { allowCustom: true });
@@ -1703,6 +1718,32 @@ amountBreakdown: "金额分解",
         failures.push("Finnhub: " + describeError(error));
       }
     }
+
+    // Prefer the shipped same-origin snapshot when no live API key was
+    // supplied. This keeps the Pages runtime deterministic and avoids
+    // browser-level CORS errors for an optional provider.
+    if (!apiKey && weeklyData) return {
+      symbol,
+      price: weeklyData.price,
+      latestClose: weeklyData.latestClose,
+      previousClose: weeklyData.previousClose,
+      weekAgoClose: weeklyData.weekAgoClose,
+      dailyChange: weeklyData.dailyChange,
+      weeklyChange: weeklyData.weeklyChange,
+      decisionChange: weeklyData.decisionChange,
+      source: weeklyData.source || "Weekly",
+      source_type: weeklyData.sourceType || "weekly",
+      source_validation_status: weeklyData.validationStatus || (weeklyData.stale ? "stale" : "weekly"),
+      quote_timestamp: weeklyData.quoteTimestamp || null,
+      market_state: weeklyData.marketState || "",
+      market_closed_last_close: weeklyData.validationStatus === "market_closed_last_close",
+      note: weeklyData.stale ? "Scheduled close snapshot; stale carried forward" : "Scheduled close snapshot",
+      fetchedAt: weeklyData.fetchedAt,
+      field_meta: weeklyData.field_meta,
+      snapshot_stale: weeklyData.stale,
+      snapshot_stale_reason: weeklyData.staleReason,
+      snapshot_stale_from: weeklyData.staleFrom
+    };
 
     try {
       const yahoo = await fetchYahooSnapshot(symbol);
@@ -3691,105 +3732,6 @@ allocWrapper.appendChild(editBtn);
       oldMultiplier: getOldHardThresholdMultiplier,
       round2: round2
     });
-    /* Unreachable compatibility body below is kept until the next mechanical app.js cleanup. */
-    var btWeekly = btConf && btConf.weeklyAmt > 0 ? btConf.weeklyAmt : state.deployment.weeklyDeployment;
-    var btFriction = btConf && btConf.frictionCostRate ? btConf.frictionCostRate : 0;
-    const positions = aligned.reduce(function (items, item) {
-      items[item.stock.symbol] = {
-        shares: 0,
-        invested: 0,
-        buys: 0,
-        avg_buy_price: 0
-      };
-      return items;
-    }, {});
-    const history = [];
-    let totalInvested = 0;
-    let totalBuys = 0;
-    let totalFrictionCost = 0;
-    let weightedAverageNumerator = 0;
-    let peakValue = 0;
-    let maxDrawdown = 0;
-    const returnHistory = [];
-
-    for (let index = 1; index < aligned[0].prices.length; index += 1) {
-      const marketRegime = calculateBacktestMarketRegime(aligned, index);
-      aligned.forEach(function (item) {
-        const symbol = item.stock.symbol;
-        const current = item.prices[index].close;
-        const previous = item.prices[index - 1].close;
-        const weeklyReturn = previous > 0 ? ((current - previous) / previous) * 100 : 0;
-        var baseAmount = btWeekly * item.stock.allocation;
-        var effectiveFriction = 1 - btFriction;
-        let multiplier = 1;
-        if (mode === "enhanced") multiplier = calculateBacktestEnhancedMultiplier(item.prices, index, weeklyReturn, marketRegime);
-        else if (mode === "smooth") multiplier = getMultiplier(weeklyReturn, null, weeklyReturn);
-        else if (mode === "old") multiplier = getOldHardThresholdMultiplier(weeklyReturn);
-        var rawAmount = mode === "dca" ? baseAmount : baseAmount * multiplier;
-        if (rawAmount <= 0 || current <= 0) return;
-        var effectiveAmount = rawAmount * effectiveFriction;
-        var weeklyFriction = rawAmount - effectiveAmount;
-        const sharesBought = effectiveAmount / current;
-        const position = positions[symbol];
-        position.shares += sharesBought;
-        position.invested += rawAmount;
-        position.buys += 1;
-        totalInvested += rawAmount;
-        totalBuys += 1;
-        totalFrictionCost += weeklyFriction;
-      });
-
-      const value = aligned.reduce(function (sum, item) {
-        return sum + positions[item.stock.symbol].shares * item.prices[index].close;
-      }, 0);
-      const previousValue = history.length ? history[history.length - 1].value : 0;
-      if (previousValue > 0) returnHistory.push((value - previousValue) / previousValue);
-      peakValue = Math.max(peakValue, value);
-      const drawdown = peakValue > 0 ? ((peakValue - value) / peakValue) * 100 : 0;
-      maxDrawdown = Math.max(maxDrawdown, drawdown);
-      history.push({ date: aligned[0].prices[index].date, value });
-    }
-
-    const finalValue = history.length ? history[history.length - 1].value : 0;
-    const tickerRows = aligned.map(function (item) {
-      const position = positions[item.stock.symbol];
-      const avgBuyPrice = position.shares > 0 ? position.invested / position.shares : 0;
-      position.avg_buy_price = avgBuyPrice;
-      weightedAverageNumerator += avgBuyPrice * position.invested;
-      return {
-        symbol: item.stock.symbol,
-        invested: round2(position.invested),
-        buys: position.buys,
-        avg_buy_price: round2(avgBuyPrice),
-        final_value: round2(position.shares * item.prices[item.prices.length - 1].close)
-      };
-    });
-
-    var worstWeekReturn = returnHistory.length > 0 ? Math.min.apply(null, returnHistory) : 0;
-    var bestWeekReturn = returnHistory.length > 0 ? Math.max.apply(null, returnHistory) : 0;
-    var numberOfWeeks = aligned[0].prices.length - 1;
-    var totalPotential = numberOfWeeks * state.deployment.weeklyDeployment;
-    var cashUsageRatio = totalPotential > 0 ? round2((totalInvested / totalPotential) * 100) : 0;
-    var avgWeeklyBuy = numberOfWeeks > 0 ? round2(totalInvested / numberOfWeeks) : 0;
-
-    return {
-      final_value: round2(finalValue),
-      total_invested: round2(totalInvested),
-      total_return: totalInvested > 0 ? round2(((finalValue - totalInvested) / totalInvested) * 100) : 0,
-      max_drawdown: round2(maxDrawdown),
-      volatility: round2(calculateReturnVolatility(returnHistory) * 100),
-      number_of_buys: totalBuys,
-      average_buy_price: totalInvested > 0 ? round2(weightedAverageNumerator / totalInvested) : 0,
-      tickers: tickerRows,
-      equity_curve: history,
-      return_history: returnHistory,
-      worst_week_return: round2(worstWeekReturn * 100),
-      best_week_return: round2(bestWeekReturn * 100),
-      total_friction_cost: round2(totalFrictionCost),
-      average_weekly_buy: avgWeeklyBuy,
-      cash_usage_ratio: cashUsageRatio,
-      number_of_weeks: numberOfWeeks
-    };
   }
 
   function calculateCAGR(finalValue, totalInvested, numberOfWeeks) {
@@ -5754,6 +5696,60 @@ function equalizeAllocations() {
     }
   }
 
+  function renderDecisionSummary(portfolioRisk) {
+    if (!decisionSummaryStatusEl) return;
+    const zh = state.language === "zh";
+    const signals = window.__SUINVESTMENT_SIGNALS__ || [];
+    const evaluated = state.dataQualityEvaluated;
+    const degradedSignals = signals.filter(function (signal) {
+      return signal.data_source === "Unavailable" || signal.data_freshness === "missing" || signal.data_freshness === "stale";
+    });
+    const fallbackSignals = signals.filter(function (signal) { return isFallbackSource(signal); });
+    const cachedSignals = signals.filter(function (signal) { return /cache/i.test(String(signal.data_source || "")); });
+    const regime = state.marketRegime || getNeutralMarketRegime("QQQ");
+    const latestTimestamp = signals.reduce(function (latest, signal) {
+      const timestamp = Number.isFinite(signal.fetchedAt) ? signal.fetchedAt : Date.parse(signal.quote_timestamp || "");
+      return Number.isFinite(timestamp) ? Math.max(latest, timestamp) : latest;
+    }, 0);
+    const dataSource = !evaluated
+      ? (zh ? "等待数据" : "Waiting")
+      : degradedSignals.length
+        ? (zh ? "降级 / 不可用" : "Degraded / unavailable")
+        : cachedSignals.length
+          ? (zh ? "缓存" : "Cache")
+          : fallbackSignals.length
+            ? (zh ? "定时快照 / 备用" : "Scheduled / fallback")
+            : (zh ? "实时 / API" : "Real-time / API");
+    const action = !evaluated
+      ? (zh ? "等待数据" : "Waiting for data")
+      : degradedSignals.length
+        ? (zh ? "暂停买入" : "Do not buy")
+        : portfolioRisk && portfolioRisk.total_planned_buy_amount > 0
+          ? (zh ? "复核手动计划" : "Review manual plan")
+          : (zh ? "复核信号" : "Review signals");
+    const reason = !evaluated
+      ? (zh ? "数据质量尚未评估，不生成增强买入建议。" : "Data quality is not evaluated; no enhanced buy recommendation is generated.")
+      : degradedSignals.length
+        ? (zh ? "存在不可用或过期数据，必须先人工复核。" : "Unavailable or stale data is present; manual review is required before action.")
+        : signals.find(function (signal) { return signal.warning && signal.warning !== t("none"); })?.warning
+          || (zh ? "数据可用；仅将结果作为人工决策辅助。" : "Data is available; use this only as manual decision support.");
+    const review = !evaluated
+      ? (zh ? "等待数据" : "Waiting")
+      : degradedSignals.length
+        ? (zh ? "允许复核；买入已阻止" : "Review allowed; buying blocked")
+        : (zh ? "允许复核；仅人工" : "Review allowed; manual only");
+    const status = !evaluated ? "loading" : degradedSignals.length ? "blocked" : "ready";
+
+    decisionSummaryStatusEl.textContent = status === "ready" ? (zh ? "可供复核" : "Ready for review") : status === "blocked" ? (zh ? "需先处理数据" : "Data attention") : (zh ? "加载中" : "Loading");
+    decisionSummaryStatusEl.dataset.state = status;
+    if (decisionMarketStateEl) decisionMarketStateEl.textContent = localizeMarketRegime(regime);
+    if (decisionDataAsOfEl) decisionDataAsOfEl.textContent = latestTimestamp ? formatDateTime(latestTimestamp) : regime.latest_date || (zh ? "等待数据" : "Waiting for data");
+    if (decisionDataSourceEl) decisionDataSourceEl.textContent = dataSource;
+    if (decisionReviewStateEl) decisionReviewStateEl.textContent = review;
+    if (decisionActionEl) decisionActionEl.textContent = action;
+    if (decisionReasonEl) decisionReasonEl.textContent = reason;
+  }
+
   function renderInlineHoldings(entries, portfolioRisk) {
     if (!inlineHoldingsStatsEl || !inlineHoldingsRowsEl) return;
     const positions = portfolioRisk && portfolioRisk.positions ? portfolioRisk.positions : {};
@@ -5839,6 +5835,7 @@ function equalizeAllocations() {
       dataQualityWarningEl.classList.toggle("is-warning", !!summary.warning);
     }
     dataQualityPanelEl.classList.toggle("has-warning", !!summary.warning);
+    renderDecisionSummary(window.__SUINVESTMENT_PORTFOLIO_RISK__);
   }
 
   function summarizeDataQuality(signals) {
