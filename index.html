@@ -394,8 +394,15 @@
                 <div>
                   <h4 id="dca-ledger-title">Crash Fund Ledger / 下跌备用金账本</h4>
                   <p id="dcaLedgerSummary">Waiting for DCA-L2 data.</p>
+                  <div id="dcaBudgetSummary" class="dca-budget-summary" aria-live="polite">Monthly budget waiting for DCA-L2 data.</div>
                 </div>
                 <div class="dca-ledger-form">
+                  <select id="dcaLedgerType" aria-label="Ledger type">
+                    <option value="base">Base</option>
+                    <option value="extra">Extra</option>
+                    <option value="crash" selected>Crash</option>
+                  </select>
+                  <input id="dcaLedgerSymbol" type="text" autocomplete="off" placeholder="Ticker (optional)" aria-label="Ledger ticker">
                   <input id="dcaLedgerAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD confirmed use" aria-label="Confirmed crash fund use amount">
                   <input id="dcaLedgerNote" type="text" autocomplete="off" placeholder="Manual note" aria-label="Manual crash fund note">
                   <button id="dcaLedgerRecordBtn" class="secondary-button" type="button">Record confirmed manual use</button>

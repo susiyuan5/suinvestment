@@ -1,0 +1,19 @@
+[
+  {
+    "name": "multi-stock crash fund total is capped",
+    "items": [
+      {"decision": {"base_amount": 100, "extra_amount": 40, "crash_fund_amount": 25}, "currentAllocationPct": 10},
+      {"decision": {"base_amount": 100, "extra_amount": 40, "crash_fund_amount": 25}, "currentAllocationPct": 10}
+    ],
+    "options": {"normalPool": 200, "crashFund": 30},
+    "expected": {"plannedNormal": 200, "plannedCrash": 30, "totalPlanned": 230, "unallocatedCash": 0}
+  },
+  {
+    "name": "very high concentration leaves unallocated cash",
+    "items": [
+      {"decision": {"base_amount": 100, "extra_amount": 40, "crash_fund_amount": 25}, "currentAllocationPct": 40}
+    ],
+    "options": {"normalPool": 100, "crashFund": 25},
+    "expected": {"plannedNormal": 0, "plannedCrash": 0, "totalPlanned": 0, "unallocatedCash": 125}
+  }
+]

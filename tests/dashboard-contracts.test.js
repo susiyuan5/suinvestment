@@ -29,6 +29,14 @@ test("portfolio golden fixtures", function () {
   actual.forEach((row, index) => close(row.allocation, fixture.portfolio.expected[index].allocation));
 });
 
+test("v1 Crash Fund ledger records migrate to typed reversible v2 crash entries", function () {
+  const ledger = portfolio.normalizeDcaL2Ledger({ month: "2026-07", initial: 100, entries: [{ id: "legacy", date: "2026-07-07", amount: 12.5, note: "legacy use" }] }, "2026-07");
+  assert.equal(ledger.version, "dca-l2-v2");
+  assert.equal(ledger.entries[0].type, "crash");
+  assert.equal(ledger.entries[0].reversible, true);
+  assert.equal(portfolio.dcaL2LedgerUsed(ledger, "crash"), 12.5);
+});
+
 test("backtest metric golden fixtures", function () {
   const row = fixture.backtest;
   close(backtest.cagr(row.final_value, row.total_invested, row.weeks), row.expected.cagr);

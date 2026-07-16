@@ -59,4 +59,25 @@
     "input": {"baseAmount": 100, "price": 75, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 30, "trendStatus": "above_sma", "volatilityPct": 2, "monthlyBudget": 400, "crashFundInitial": 100, "crashFundBalance": 100, "availableCashProvided": true, "availableCash": 400, "date": "2026-07-06"},
     "expected": {"state": "deep_drawdown", "baseAmount": 100, "extraAmount": 20, "crashFundAmount": 0, "finalAmount": 120, "reasonCodes": ["EXTRA_DIP_BUY", "CRASH_FUND_PLANNED", "CASH_CAP_APPLIED"]}
   }
+,
+  {
+    "name": "explicit zero crash weight stays zero",
+    "input": {"baseAmount": 100, "price": 75, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 30, "trendStatus": "above_sma", "volatilityPct": 2, "crashFundInitial": 100, "crashFundBalance": 100, "crashFundWeight": 0, "date": "2026-07-06"},
+    "expected": {"state": "deep_drawdown", "baseAmount": 100, "extraAmount": 41.67, "crashFundAmount": 0, "finalAmount": 141.67, "reasonCodes": ["EXTRA_DIP_BUY", "CRASH_FUND_EMPTY"]}
+  },
+  {
+    "name": "invalid negative crash weight is safe and reviewable",
+    "input": {"baseAmount": 100, "price": 75, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 30, "trendStatus": "above_sma", "volatilityPct": 2, "crashFundInitial": 100, "crashFundBalance": 100, "crashFundWeight": -1, "date": "2026-07-06"},
+    "expected": {"state": "deep_drawdown", "baseAmount": 100, "extraAmount": 41.67, "crashFundAmount": 0, "finalAmount": 141.67, "reasonCodes": ["EXTRA_DIP_BUY", "CRASH_FUND_WEIGHT_INVALID_MANUAL_REVIEW", "CRASH_FUND_EMPTY"]}
+  },
+  {
+    "name": "zero base and zero crash weight produce zero",
+    "input": {"baseAmount": 0, "price": 75, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 30, "trendStatus": "above_sma", "volatilityPct": 2, "crashFundInitial": 100, "crashFundBalance": 100, "crashFundWeight": 0, "date": "2026-07-06"},
+    "expected": {"state": "deep_drawdown", "baseAmount": 0, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 0, "reasonCodes": ["CRASH_FUND_EMPTY"]}
+  },
+  {
+    "name": "very high concentration blocks all components",
+    "input": {"baseAmount": 100, "price": 75, "dataStatus": "fresh", "marketRegime": "Bull", "drawdownPct": 30, "trendStatus": "above_sma", "volatilityPct": 2, "currentAllocationPct": 35, "crashFundInitial": 100, "crashFundBalance": 100, "date": "2026-07-06"},
+    "expected": {"state": "concentration_blocked", "baseAmount": 0, "extraAmount": 0, "crashFundAmount": 0, "finalAmount": 0, "reasonCodes": ["CONCENTRATION_VERY_HIGH_BLOCKED"]}
+  }
 ]

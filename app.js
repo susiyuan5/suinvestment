@@ -865,7 +865,11 @@ amountBreakdown: "金额分解",
     deployment: normalizeDeployment(loadJson(STORAGE_KEYS.deployment, DEFAULT_DEPLOYMENT)),
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {}),
-    dcaL2Ledger: normalizeDcaL2Ledger(loadJson(STORAGE_KEYS.dcaL2Ledger, {})),
+     dcaL2Ledger: normalizeDcaL2Ledger(loadJson(STORAGE_KEYS.dcaL2Ledger, {})),
+     dcaL2Config: DcaPolicy.SAFE_L2_CONFIG,
+     dcaL2ConfigReady: false,
+     dcaL2ConfigError: "",
+     dcaBudgetReport: null,
     language: normalizeLanguage(localStorage.getItem(STORAGE_KEYS.language))
   };
 
@@ -873,8 +877,11 @@ amountBreakdown: "金额分解",
   const orderTextEl = document.getElementById("orderText");
   const dcaPreviewRowsEl = document.getElementById("dcaPreviewRows");
   const dcaLedgerSummaryEl = document.getElementById("dcaLedgerSummary");
+  const dcaBudgetSummaryEl = document.getElementById("dcaBudgetSummary");
   const dcaLedgerEntriesEl = document.getElementById("dcaLedgerEntries");
   const dcaLedgerAmountEl = document.getElementById("dcaLedgerAmount");
+  const dcaLedgerTypeEl = document.getElementById("dcaLedgerType");
+  const dcaLedgerSymbolEl = document.getElementById("dcaLedgerSymbol");
   const dcaLedgerNoteEl = document.getElementById("dcaLedgerNote");
   const dcaLedgerRecordBtn = document.getElementById("dcaLedgerRecordBtn");
   const copyStatusEl = document.getElementById("copyStatus");
@@ -1063,7 +1070,24 @@ amountBreakdown: "金额分解",
   renderAlgorithmTestPresets();
   renderAlgorithmTestPanel();
   renderSkeleton();
-  refreshMarketData();
+  initializeDcaL2Config();
+
+  async function initializeDcaL2Config() {
+    try {
+      const config = await fetchJson("data/dca-l2-policy-config.json?v=" + Date.now());
+      if (!DcaPolicy.validateL2Config(config) || config.version !== "dca-l2-v2") throw new Error("invalid dca-l2-v2 policy configuration");
+      state.dcaL2Config = DcaPolicy.setL2Config(config);
+      state.dcaL2ConfigReady = true;
+      state.dcaL2ConfigError = "";
+    } catch (error) {
+      state.dcaL2Config = DcaPolicy.setL2Config(null);
+      state.dcaL2ConfigReady = false;
+      state.dcaL2ConfigError = "DCA-L2 configuration unavailable; Base amounts only and manual review required.";
+      if (dataQualityWarningEl) dataQualityWarningEl.textContent = state.dcaL2ConfigError;
+    }
+    render();
+    refreshMarketData();
+  }
 
   async function refreshMarketData() {
     if (state.loading) {
@@ -4727,7 +4751,6 @@ function equalizeAllocations() {
       entry.baseManualRisk = entry.signal.risk_level;
     });
     applyDcaManualAmountPolicy(entries, portfolioRisk);
-    applyDcaPortfolioSafetyCap(entries, portfolioRisk);
 
     const targetTotal = round2(entries.reduce(function (sum, entry) {
       return sum + entry.finalManualAmount;
@@ -4768,8 +4791,9 @@ function equalizeAllocations() {
 
   function applyDcaManualAmountPolicy(entries, portfolioRisk) {
     const ledger = ensureDcaL2Ledger();
-    const used = getDcaL2CrashFundUsed(ledger);
-    const balance = round2(Math.max(0, ledger.initial - used));
+    const crashUsed = getDcaL2LedgerUsed(ledger, "crash");
+    const normalUsed = getDcaL2LedgerUsed(ledger, "base") + getDcaL2LedgerUsed(ledger, "extra");
+    const balance = round2(Math.max(0, ledger.initial - crashUsed));
     const inputs = entries.map(function (entry) {
       const signal = entry.signal;
       const position = portfolioRisk.positions && portfolioRisk.positions[signal.symbol];
@@ -4788,27 +4812,61 @@ function equalizeAllocations() {
           trendStatus: signal.algorithm && signal.algorithm.trend && signal.algorithm.trend.status,
           volatilityPct: signal.algorithm && signal.algorithm.realized_weekly_volatility,
           currentAllocationPct: position ? position.current_allocation : null,
-          monthlyBudget: state.deployment.monthlyBudget,
-          crashFundBalance: balance,
-          crashFundWeight: 0,
+           monthlyBudget: state.deployment.monthlyBudget,
+           normalPool: state.deployment.normalPool,
+           crashFundInitial: state.deployment.crashFund,
+           normalPoolUsed: normalUsed,
+           crashFundUsed: crashUsed,
+           crashFundBalance: balance,
           date: getDcaL2DecisionDate(signal),
-          availableCashProvided: portfolioRisk.available_cash_provided && portfolioRisk.available_cash <= 0,
-          availableCash: portfolioRisk.available_cash
+           availableCashProvided: portfolioRisk.available_cash_provided,
+           availableCash: portfolioRisk.available_cash
         }
       };
     });
-    const provisional = inputs.map(function (item) { return evaluateDcaL2(item.input, ledger); });
+    const provisional = inputs.map(function (item) {
+      return state.dcaL2ConfigReady ? evaluateDcaL2(item.input, ledger) : createDcaL2SafeFallback(item.baseAmount, state.dcaL2ConfigError);
+    });
     updateDcaL2DefensiveState(ledger, provisional, inputs);
     const deepBase = inputs.reduce(function (sum, item, index) {
       return provisional[index].state === "deep_drawdown" ? sum + item.baseAmount : sum;
     }, 0);
-    inputs.forEach(function (item, index) {
-      item.input.crashFundWeight = deepBase > 0 && provisional[index].state === "deep_drawdown" ? item.baseAmount / deepBase : 0;
-      const decision = evaluateDcaL2(item.input, ledger);
-      item.entry.dcaPolicy = decision;
-      item.entry.finalManualAmount = round2(decision.finalAmount);
+    const planned = PortfolioPolicy.allocateDcaL2Plan(inputs.map(function (item, index) {
+      const input = { ...item.input };
+      if (deepBase > 0 && provisional[index].state === "deep_drawdown") input.crashFundWeight = item.baseAmount / deepBase;
+      const decision = state.dcaL2ConfigReady ? evaluateDcaL2(input, ledger) : createDcaL2SafeFallback(item.baseAmount, state.dcaL2ConfigError);
+      return { entry: item.entry, decision, currentAllocationPct: input.currentAllocationPct };
+    }), {
+      normalPool: state.deployment.normalPool,
+      normalPoolUsed: normalUsed,
+      crashFund: state.deployment.crashFund,
+      crashFundUsed: crashUsed,
+      highPct: state.dcaL2Config.concentration.highPct,
+      veryHighPct: state.dcaL2Config.concentration.veryHighPct,
+      portfolioCashCap: portfolioRisk.available_cash_provided ? Math.min(portfolioRisk.available_cash, portfolioRisk.available_cash * state.dcaL2Config.cashUsageCap) : null
     });
+    planned.items.forEach(function (item) {
+      item.entry.dcaPolicy = item.decision;
+      item.entry.finalManualAmount = round2(item.decision.finalAmount);
+    });
+    state.dcaBudgetReport = planned;
     saveDcaL2Ledger();
+  }
+
+  function createDcaL2SafeFallback(baseAmount, detail) {
+    return {
+      state: "manual_review",
+      status: "manual_review",
+      baseAmount: round2(Math.max(0, baseAmount)),
+      extraAmount: 0,
+      crashFundAmount: 0,
+      finalAmount: round2(Math.max(0, baseAmount)),
+      reasonCodes: ["POLICY_CONFIG_UNAVAILABLE"],
+      warnings: ["Base amount only; manual review required"],
+      manualReview: true,
+      factorChain: [{ stage: "config", status: "manual_review", detail: detail || "Base amount only" }],
+      l2: true
+    };
   }
 
   function createDcaPolicyFallback(baseAmount) {
@@ -4825,31 +4883,22 @@ function equalizeAllocations() {
   }
 
   function normalizeDcaL2Ledger(value) {
-    const raw = value && typeof value === "object" ? value : {};
-    const month = new Date().toISOString().slice(0, 7);
-    return {
-      month: typeof raw.month === "string" ? raw.month : month,
-      initial: isFiniteNumber(raw.initial) ? raw.initial : 0,
-      entries: Array.isArray(raw.entries) ? raw.entries.filter(function (item) { return item && isFiniteNumber(item.amount) && item.amount > 0; }) : [],
-      defensiveLatched: raw.defensiveLatched === true,
-      recoveryConfirmations: Number.isFinite(raw.recoveryConfirmations) ? raw.recoveryConfirmations : 0,
-      lastRecoveryTradingDate: typeof raw.lastRecoveryTradingDate === "string" ? raw.lastRecoveryTradingDate : ""
-    };
+    return PortfolioPolicy.normalizeDcaL2Ledger(value, new Date().toISOString().slice(0, 7));
   }
 
   function ensureDcaL2Ledger() {
     const month = new Date().toISOString().slice(0, 7);
-    if (state.dcaL2Ledger.month !== month) {
-      state.dcaL2Ledger = normalizeDcaL2Ledger({ month, initial: state.deployment.crashFund, entries: [] });
-    }
-    if (!isFiniteNumber(state.dcaL2Ledger.initial) || state.dcaL2Ledger.initial !== state.deployment.crashFund) {
-      state.dcaL2Ledger.initial = state.deployment.crashFund;
-    }
+    if (state.dcaL2Ledger.month !== month) state.dcaL2Ledger.month = month;
+    if (!isFiniteNumber(state.dcaL2Ledger.initial) || state.dcaL2Ledger.initial !== state.deployment.crashFund) state.dcaL2Ledger.initial = state.deployment.crashFund;
     return state.dcaL2Ledger;
   }
 
   function getDcaL2CrashFundUsed(ledger) {
-    return round2((ledger.entries || []).reduce(function (sum, item) { return sum + Number(item.amount || 0); }, 0));
+    return getDcaL2LedgerUsed(ledger, "crash");
+  }
+
+  function getDcaL2LedgerUsed(ledger, type) {
+    return PortfolioPolicy.dcaL2LedgerUsed(ledger, type);
   }
 
   function saveDcaL2Ledger() {
@@ -4876,9 +4925,9 @@ function equalizeAllocations() {
         crashFundBalance: round2(Math.max(0, ledger.initial - getDcaL2CrashFundUsed(ledger))),
         defensiveLatched: ledger.defensiveLatched,
         recoveryConfirmations: ledger.recoveryConfirmations,
-        lastRecoveryTradingDate: ledger.lastRecoveryTradingDate
+         lastRecoveryWeek: ledger.lastRecoveryWeek
       };
-      const decision = window.DcaPolicy.evaluateDcaL2Policy(input, policyState, window.DcaPolicy.DEFAULT_L2_CONFIG);
+       const decision = window.DcaPolicy.evaluateDcaL2Policy(input, policyState, state.dcaL2Config);
       return {
         ...decision,
         status: decision.state,
@@ -4902,24 +4951,53 @@ function equalizeAllocations() {
     }
     if (!ledger.defensiveLatched) return;
     const freshDate = inputs.map(function (item) { return item.input; }).filter(function (input) { return input.dataStatus === "fresh" && input.date; }).map(function (input) { return input.date; })[0];
-    if (freshDate && freshDate !== ledger.lastRecoveryTradingDate) {
+    const freshWeek = freshDate ? isoWeekIdLocal(freshDate) : "";
+    if (freshWeek && freshWeek !== ledger.lastRecoveryWeek) {
+      if (ledger.lastRecoveryWeek && !consecutiveIsoWeeksLocal(ledger.lastRecoveryWeek, freshWeek)) ledger.recoveryConfirmations = 0;
       ledger.recoveryConfirmations += 1;
-      ledger.lastRecoveryTradingDate = freshDate;
+      ledger.lastRecoveryWeek = freshWeek;
     }
-    if (ledger.recoveryConfirmations >= 2) ledger.defensiveLatched = false;
+    if (ledger.recoveryConfirmations >= Number(state.dcaL2Config.recovery.requiredDistinctPlanWeeks || state.dcaL2Config.recovery.requiredDistinctTradingDays || 2)) ledger.defensiveLatched = false;
+  }
+
+  function isoWeekIdLocal(value) {
+    const parsed = new Date(String(value) + "T00:00:00Z");
+    if (!Number.isFinite(parsed.getTime())) return "";
+    const day = parsed.getUTCDay() || 7;
+    parsed.setUTCDate(parsed.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(parsed.getUTCFullYear(), 0, 1));
+    const week = Math.ceil((((parsed - yearStart) / 86400000) + 1) / 7);
+    return parsed.getUTCFullYear() + "-W" + String(week).padStart(2, "0");
+  }
+
+  function consecutiveIsoWeeksLocal(previous, current) {
+    const parse = function (value) {
+      const match = /^([0-9]{4})-W([0-9]{2})$/.exec(value);
+      if (!match) return null;
+      const monday = new Date(Date.UTC(Number(match[1]), 0, 4));
+      const day = monday.getUTCDay() || 7;
+      monday.setUTCDate(monday.getUTCDate() - day + 1 + (Number(match[2]) - 1) * 7);
+      return monday;
+    };
+    const prior = parse(previous); const next = parse(current);
+    return !!prior && !!next && next.getTime() - prior.getTime() === 7 * 86400000;
   }
 
   function recordDcaL2CrashFundUse() {
     const amount = Number(String(dcaLedgerAmountEl && dcaLedgerAmountEl.value || "").trim());
     const ledger = ensureDcaL2Ledger();
-    const balance = round2(Math.max(0, ledger.initial - getDcaL2CrashFundUsed(ledger)));
+    const type = ["base", "extra", "crash"].includes(String(dcaLedgerTypeEl && dcaLedgerTypeEl.value)) ? String(dcaLedgerTypeEl.value) : "crash";
+    const balance = type === "crash"
+      ? round2(Math.max(0, ledger.initial - getDcaL2CrashFundUsed(ledger)))
+      : round2(Math.max(0, state.deployment.normalPool - getDcaL2LedgerUsed(ledger, "base") - getDcaL2LedgerUsed(ledger, "extra")));
     if (!isFiniteNumber(amount) || amount <= 0 || amount > balance) {
       copyStatusEl.textContent = "Crash Fund entry must be positive and no more than the current balance.";
       return;
     }
-    ledger.entries.push({ id: String(Date.now()), date: new Date().toISOString().slice(0, 10), amount: round2(amount), note: String(dcaLedgerNoteEl && dcaLedgerNoteEl.value || "").trim() });
+    ledger.entries.push({ id: String(Date.now()), month: ledger.month, type, symbol: String(dcaLedgerSymbolEl && dcaLedgerSymbolEl.value || "").trim().toUpperCase(), date: new Date().toISOString().slice(0, 10), amount: round2(amount), note: String(dcaLedgerNoteEl && dcaLedgerNoteEl.value || "").trim(), reversible: true });
     saveDcaL2Ledger();
     if (dcaLedgerAmountEl) dcaLedgerAmountEl.value = "";
+    if (dcaLedgerSymbolEl) dcaLedgerSymbolEl.value = "";
     if (dcaLedgerNoteEl) dcaLedgerNoteEl.value = "";
     render();
   }
@@ -4929,33 +5007,6 @@ function equalizeAllocations() {
     ledger.entries = ledger.entries.filter(function (item) { return item.id !== id; });
     saveDcaL2Ledger();
     render();
-  }
-
-  function applyDcaPortfolioSafetyCap(entries, portfolioRisk) {
-    if (!portfolioRisk.available_cash_provided || portfolioRisk.available_cash <= 0) return;
-    const maxUse = round2(portfolioRisk.available_cash * 0.30);
-    const planned = round2(entries.reduce(function (sum, entry) { return sum + entry.finalManualAmount; }, 0));
-    if (planned <= maxUse || planned <= 0) return;
-    let reduction = planned - maxUse;
-    ["crashFundAmount", "extraAmount", "baseAmount"].forEach(function (field) {
-      if (reduction <= 0) return;
-      const componentTotal = entries.reduce(function (sum, entry) { return sum + Number(entry.dcaPolicy[field] || 0); }, 0);
-      if (componentTotal <= 0) return;
-      const componentReduction = Math.min(componentTotal, reduction);
-      entries.forEach(function (entry) {
-        const value = Number(entry.dcaPolicy[field] || 0);
-        const share = value / componentTotal;
-        entry.dcaPolicy[field] = round2(Math.max(0, value - componentReduction * share));
-      });
-      reduction = round2(reduction - componentReduction);
-    });
-    entries.forEach(function (entry) {
-      const policy = entry.dcaPolicy;
-      policy.finalAmount = round2(policy.baseAmount + policy.extraAmount + policy.crashFundAmount);
-      policy.reasonCodes = Array.from(new Set((policy.reasonCodes || []).concat(["CASH_CAP_APPLIED"])));
-      policy.factorChain.push({ stage: "portfolio_cash_cap", status: "capped", detail: "Crash Fund, then Extra, then Base reduced to the 30% cash cap" });
-      entry.finalManualAmount = policy.finalAmount;
-    });
   }
 
   function renderDcaPolicyPreviewLegacy(entries) {
@@ -5150,7 +5201,14 @@ function equalizeAllocations() {
     const ledger = ensureDcaL2Ledger();
     const used = getDcaL2CrashFundUsed(ledger);
     const balance = round2(Math.max(0, ledger.initial - used));
-    dcaLedgerSummaryEl.textContent = "Month " + ledger.month + " · Initial CAD " + ledger.initial.toFixed(2) + " · Confirmed use CAD " + used.toFixed(2) + " · Remaining CAD " + balance.toFixed(2) + " · Recovery confirmations " + ledger.recoveryConfirmations + "/2";
+    const requiredWeeks = Number(state.dcaL2Config.recovery.requiredDistinctPlanWeeks || state.dcaL2Config.recovery.requiredDistinctTradingDays || 2);
+    dcaLedgerSummaryEl.textContent = "Month " + ledger.month + " · Crash Fund confirmed use CAD " + used.toFixed(2) + " · Remaining CAD " + balance.toFixed(2) + " · Recovery plan weeks " + ledger.recoveryConfirmations + "/" + requiredWeeks;
+    if (dcaBudgetSummaryEl) {
+      const report = state.dcaBudgetReport;
+      dcaBudgetSummaryEl.textContent = report
+        ? "Base: used CAD " + report.normalPoolUsed.toFixed(2) + " + planned " + report.plannedNormal.toFixed(2) + " / remaining " + report.normalPoolRemaining.toFixed(2) + " · Extra shares Normal Pool · Crash: used CAD " + report.crashFundUsed.toFixed(2) + " + planned " + report.plannedCrash.toFixed(2) + " / remaining " + report.crashFundRemaining.toFixed(2) + " · Unallocated CAD " + report.unallocatedCash.toFixed(2) + (state.dcaL2ConfigReady ? "" : " · MANUAL REVIEW: config unavailable")
+        : "Monthly Base / Extra / Crash budget report unavailable; manual review required.";
+    }
     dcaLedgerEntriesEl.innerHTML = "";
     if (!ledger.entries.length) {
       dcaLedgerEntriesEl.textContent = "No confirmed manual Crash Fund use recorded for this month.";
@@ -5160,7 +5218,7 @@ function equalizeAllocations() {
       const row = document.createElement("div");
       row.className = "dca-ledger-entry";
       const text = document.createElement("span");
-      text.textContent = entry.date + " · CAD " + Number(entry.amount).toFixed(2) + (entry.note ? " · " + entry.note : "");
+      text.textContent = entry.date + " · " + (entry.type || "crash") + (entry.symbol ? " · " + entry.symbol : "") + " · CAD " + Number(entry.amount).toFixed(2) + (entry.note ? " · " + entry.note : "");
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "secondary-button";

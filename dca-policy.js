@@ -1,9 +1,9 @@
 (function (root, factory) {
   "use strict";
-  const api = factory();
+  const api = factory(typeof module === "object" && module.exports ? module : null);
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root) root.DcaPolicy = api;
-})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+})(typeof globalThis !== "undefined" ? globalThis : this, function (runtimeModule) {
   "use strict";
 
   const DEFAULT_CONFIG = Object.freeze({
@@ -34,7 +34,7 @@
     no_broker_no_auto_trade: true
   });
 
-  const DEFAULT_L2_CONFIG = Object.freeze({
+  const SAFE_L2_CONFIG = Object.freeze({
     version: "dca-l2-v1",
     cashUsageCap: 0.30,
     base: { normal: 1.0, defensive: 0.5 },
@@ -42,15 +42,43 @@
     volatility: { elevatedPct: 4, extremePct: 6 },
     concentration: { highPct: 25, veryHighPct: 35 },
     crashFund: { weeklyReleaseInitialMonthlyBudgetPct: 0.25 },
-    recovery: { requiredDistinctTradingDays: 2 }
+    recovery: { requiredDistinctPlanWeeks: 2, requiredDistinctTradingDays: 2 },
+    budget: { defaultNormalPool: 300, defaultCrashFund: 100, schedule: "weekly_tuesday" },
+    configValid: false
   });
+  let DEFAULT_L2_CONFIG = loadNodeL2Config() || SAFE_L2_CONFIG;
+
+  function loadNodeL2Config() {
+    if (!runtimeModule || typeof runtimeModule.require !== "function") return null;
+    try {
+      const fs = runtimeModule.require("node:fs");
+      const path = runtimeModule.require("node:path");
+      const configPath = path.join(__dirname, "data", "dca-l2-policy-config.json");
+      const parsed = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      return validateL2Config(parsed) ? parsed : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function validateL2Config(config) {
+    return !!config && (config.version === "dca-l2-v1" || config.version === "dca-l2-v2") && config.concentration && Number.isFinite(Number(config.concentration.veryHighPct)) && config.recovery && Number.isFinite(Number(config.recovery.requiredDistinctPlanWeeks || config.recovery.requiredDistinctTradingDays));
+  }
+
+  function setL2Config(config) {
+    DEFAULT_L2_CONFIG = validateL2Config(config) ? Object.freeze({ ...config, configValid: true }) : SAFE_L2_CONFIG;
+    return DEFAULT_L2_CONFIG;
+  }
+
+  function getL2Config() { return DEFAULT_L2_CONFIG; }
 
   function evaluateDcaL2Policy(input, policyState, overrides) {
-    const config = mergeL2Config(overrides);
+    const config = mergeL2Config(overrides || DEFAULT_L2_CONFIG);
     const data = input || {};
     const state = { ...(policyState || {}) };
     if (state.crashFundInitial === undefined && Number.isFinite(Number(data.crashFundInitial))) state.crashFundInitial = Number(data.crashFundInitial);
     if (state.crashFundBalance === undefined && Number.isFinite(Number(data.crashFundBalance))) state.crashFundBalance = Number(data.crashFundBalance);
+    configureL2BudgetState(data, state, config);
     const baseOriginal = roundMoney(nonNegative(data.baseAmount));
     const price = Number(data.price);
     const quality = String(data.dataStatus || "invalid").toLowerCase();
@@ -74,6 +102,11 @@
     const recovery = updateL2Recovery(state, String(data.date || ""), quality, defensiveNow, config);
     const defensive = defensiveNow || recovery.latched;
     let base = baseOriginal;
+    if (config.configValid === false) {
+      reasons.push("POLICY_CONFIG_UNAVAILABLE");
+      chain.push(l2Stage("config", "manual_review", "base amount only; extra and Crash Fund blocked"));
+      return l2Finish("manual_review", base, 0, 0, reasons, chain, config, recovery, availableCash, cashProvided, state);
+    }
     if (stale) {
       reasons.push("DATA_MANUAL_REVIEW");
       chain.push(l2Stage("data_quality", "manual_review", "base preserved; extra blocked"));
@@ -98,8 +131,14 @@
       return l2Finish("extreme_drawdown_review", base, 0, 0, reasons, chain, config, recovery, availableCash, cashProvided, state);
     }
     const strongDowntrend = ["strong_downtrend", "severe_downtrend", "manual_review"].includes(trend);
+    const veryHighConcentration = Number.isFinite(concentration) && concentration >= config.concentration.veryHighPct;
     const highConcentration = Number.isFinite(concentration) && concentration >= config.concentration.highPct;
     const elevated = volatility >= config.volatility.elevatedPct;
+    if (veryHighConcentration) {
+      reasons.push("CONCENTRATION_VERY_HIGH_BLOCKED");
+      chain.push(l2Stage("concentration", "manual_review", "veryHighPct reached; all components blocked"));
+      return l2Finish("concentration_blocked", 0, 0, 0, reasons, chain, config, recovery, availableCash, cashProvided, state);
+    }
     let tier = l2ExtraTier(drawdown, config);
     let extraPct = tier.pct;
     if (strongDowntrend) { extraPct = 0; reasons.push("EXTRA_BLOCKED_STRONG_DOWNTREND"); }
@@ -110,9 +149,12 @@
     if (tier.state === "deep_drawdown" && !strongDowntrend && !highConcentration && !elevated) {
       const configuredInitial = Number.isFinite(Number(data.crashFundInitial))
         ? Number(data.crashFundInitial)
-        : (Number.isFinite(Number(state.crashFundInitial)) ? Number(state.crashFundInitial) : (Number(data.monthlyBudget) || 0));
+        : (Number.isFinite(Number(state.crashFundInitial)) ? Number(state.crashFundInitial) : (Number(config.budget && config.budget.defaultCrashFund) || Number(data.monthlyBudget) || 0));
       const weeklyLimit = roundMoney(configuredInitial * config.crashFund.weeklyReleaseInitialMonthlyBudgetPct);
-      crash = roundMoney(Math.min(weeklyLimit, Math.max(0, Number(data.crashFundBalance) || 0)) * Math.max(0, Number(data.crashFundWeight) || 1));
+      const weightInfo = crashFundWeight(data);
+      if (weightInfo.reason) reasons.push(weightInfo.reason);
+      const balance = Number.isFinite(Number(data.crashFundBalance)) ? Number(data.crashFundBalance) : (Number.isFinite(Number(state.crashFundBalance)) ? Number(state.crashFundBalance) : 0);
+      crash = roundMoney(Math.min(weeklyLimit, Math.max(0, balance)) * weightInfo.value);
       reasons.push(crash > 0 ? "CRASH_FUND_PLANNED" : "CRASH_FUND_EMPTY");
     }
     if (extra > 0) reasons.push("EXTRA_DIP_BUY");
@@ -135,11 +177,55 @@
   }
 
   function updateL2Recovery(state, date, quality, defensiveNow, config) {
-    if (defensiveNow) return { latched: true, confirmations: 0, lastDate: "" };
-    if (!state.defensiveLatched) return { latched: false, confirmations: 0, lastDate: "" };
+    if (defensiveNow) return { latched: true, confirmations: 0, lastWeek: "" };
+    if (!state.defensiveLatched) return { latched: false, confirmations: 0, lastWeek: "" };
     const valid = quality === "fresh" && !!date;
-    const count = valid && date !== state.lastRecoveryTradingDate ? (Number(state.recoveryConfirmations) || 0) + 1 : (Number(state.recoveryConfirmations) || 0);
-    return { latched: count < config.recovery.requiredDistinctTradingDays, confirmations: count, lastDate: valid ? date : (state.lastRecoveryTradingDate || "") };
+    const week = valid ? isoWeekId(date) : "";
+    const priorWeek = String(state.lastRecoveryWeek || "");
+    let count = Number(state.recoveryConfirmations) || 0;
+    if (week && week !== priorWeek) {
+      if (priorWeek && !consecutiveIsoWeeks(priorWeek, week)) count = 0;
+      count += 1;
+    }
+    const required = Math.max(1, Number(config.recovery.requiredDistinctPlanWeeks || config.recovery.requiredDistinctTradingDays || 2));
+    return { latched: count < required, confirmations: count, lastWeek: week || priorWeek };
+  }
+
+  function configureL2BudgetState(data, state, config) {
+    const crashInitial = Number.isFinite(Number(data.crashFundInitial))
+      ? Number(data.crashFundInitial)
+      : (Number.isFinite(Number(state.crashFundInitial)) ? Number(state.crashFundInitial) : (Number.isFinite(Number(data.crashFund)) ? Number(data.crashFund) : Number(config.budget && config.budget.defaultCrashFund) || 0));
+    const monthly = Number(data.monthlyBudget);
+    const normalPool = Number.isFinite(Number(data.normalPool))
+      ? Number(data.normalPool)
+      : (Number.isFinite(monthly) ? Math.max(0, monthly - crashInitial) : Number(config.budget && config.budget.defaultNormalPool) || 0);
+    const normalUsed = Number.isFinite(Number(data.normalPoolUsed)) ? Number(data.normalPoolUsed) : (Number(state.normalPoolUsed) || 0);
+    const crashUsed = Number.isFinite(Number(data.crashFundUsed)) ? Number(data.crashFundUsed) : (Number(state.crashFundUsed) || 0);
+    state._normalPoolRemaining = roundMoney(Math.max(0, normalPool - normalUsed));
+    state._crashFundRemaining = roundMoney(Math.max(0, crashInitial - crashUsed));
+  }
+
+  function isoWeekId(value) {
+    const parsed = new Date(String(value) + "T00:00:00Z");
+    if (!Number.isFinite(parsed.getTime())) return "";
+    const day = parsed.getUTCDay() || 7;
+    parsed.setUTCDate(parsed.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(parsed.getUTCFullYear(), 0, 1));
+    const week = Math.ceil((((parsed - yearStart) / 86400000) + 1) / 7);
+    return parsed.getUTCFullYear() + "-W" + String(week).padStart(2, "0");
+  }
+
+  function consecutiveIsoWeeks(previous, current) {
+    const parse = function (value) {
+      const match = /^([0-9]{4})-W([0-9]{2})$/.exec(value);
+      if (!match) return null;
+      const date = new Date(Date.UTC(Number(match[1]), 0, 4));
+      const day = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() - day + 1 + (Number(match[2]) - 1) * 7);
+      return date;
+    };
+    const prior = parse(previous); const next = parse(current);
+    return !!prior && !!next && next.getTime() - prior.getTime() === 7 * 86400000;
   }
 
   function l2ExtraTier(drawdown, config) {
@@ -153,8 +239,28 @@
   function l2Interpolate(value, start, end, low, high) { return low + (high - low) * Math.min(1, Math.max(0, (value - start) / (end - start))); }
   function l2Stage(stage, status, detail) { return { stage, status, detail }; }
   function l2Blocked(reason, detail) { return { state: "hard_block", baseAmount: 0, extraAmount: 0, crashFundAmount: 0, preCapAmount: 0, finalAmount: 0, cashCapAmount: 0, reasonCodes: [reason], factorChain: [l2Stage("hard_block", "blocked", detail)], manualReview: false, hardBlocked: true, recoveryConfirmations: 0, crashFundBalance: 0, crashFundWeeklyLimit: 0 }; }
+
+  function crashFundWeight(data) {
+    if (!Object.prototype.hasOwnProperty.call(data, "crashFundWeight")) return { value: 1, reason: null };
+    const value = Number(data.crashFundWeight);
+    if (!Number.isFinite(value) || value < 0) return { value: 0, reason: "CRASH_FUND_WEIGHT_INVALID_MANUAL_REVIEW" };
+    return { value, reason: null };
+  }
   function l2Finish(stateName, base, extra, crash, reasons, chain, config, recovery, availableCash, cashProvided, policyState) {
     const preCap = roundMoney(base + extra + crash);
+    const normalRemaining = Number.isFinite(Number(policyState._normalPoolRemaining)) ? roundMoney(policyState._normalPoolRemaining) : null;
+    const crashRemaining = Number.isFinite(Number(policyState._crashFundRemaining)) ? roundMoney(policyState._crashFundRemaining) : null;
+    if (normalRemaining !== null) {
+      const originalBase = base;
+      base = roundMoney(Math.min(base, normalRemaining));
+      extra = roundMoney(Math.min(extra, Math.max(0, normalRemaining - base)));
+      if (base < originalBase || extra < Math.max(0, preCap - originalBase - crash)) reasons.push("NORMAL_POOL_BUDGET_APPLIED");
+    }
+    if (crashRemaining !== null) {
+      const originalCrash = crash;
+      crash = roundMoney(Math.min(crash, crashRemaining));
+      if (crash < originalCrash) reasons.push("CRASH_FUND_BUDGET_APPLIED");
+    }
     const cap = cashProvided && Number.isFinite(availableCash) ? roundMoney(availableCash * config.cashUsageCap) : null;
     let finalBase = base, finalExtra = extra, finalCrash = crash;
     if (cap !== null && finalBase + finalExtra + finalCrash > cap) {
@@ -165,9 +271,9 @@
       reasons.push("CASH_CAP_APPLIED"); chain.push(l2Stage("cash_cap", "capped", "cap " + cap.toFixed(2)));
     }
     const finalAmount = roundMoney(finalBase + finalExtra + finalCrash);
-    return { state: stateName, baseAmount: roundMoney(finalBase), extraAmount: roundMoney(finalExtra), crashFundAmount: roundMoney(finalCrash), preCapAmount: preCap, finalAmount, cashCapAmount: cap, reasonCodes: l2OrderedReasons(reasons), factorChain: chain.concat([l2Stage("final_amount", stateName, finalAmount.toFixed(2))]), manualReview: ["manual_review", "extreme_drawdown_review"].includes(stateName), hardBlocked: false, recoveryConfirmations: recovery.confirmations, crashFundBalance: roundMoney(Number(policyState.crashFundBalance) || 0), crashFundWeeklyLimit: roundMoney((Number(policyState.crashFundInitial) || 0) * config.crashFund.weeklyReleaseInitialMonthlyBudgetPct) };
+    return { state: stateName, baseAmount: roundMoney(finalBase), extraAmount: roundMoney(finalExtra), crashFundAmount: roundMoney(finalCrash), preCapAmount: preCap, finalAmount, cashCapAmount: cap, reasonCodes: l2OrderedReasons(reasons), factorChain: chain.concat([l2Stage("final_amount", stateName, finalAmount.toFixed(2))]), manualReview: ["manual_review", "extreme_drawdown_review", "concentration_blocked"].includes(stateName) || reasons.includes("CRASH_FUND_WEIGHT_INVALID_MANUAL_REVIEW"), hardBlocked: false, recoveryConfirmations: recovery.confirmations, crashFundBalance: roundMoney(Number(policyState.crashFundBalance) || 0), crashFundWeeklyLimit: roundMoney((Number(policyState.crashFundInitial) || 0) * config.crashFund.weeklyReleaseInitialMonthlyBudgetPct) };
   }
-  function l2OrderedReasons(reasons) { const order = ["HARD_BLOCK", "DEFENSIVE", "EXTREME", "DATA", "MARKET", "EXTRA", "CRASH", "CASH", "ELEVATED"]; return Array.from(new Set(reasons)).sort((a, b) => order.findIndex(x => a.startsWith(x)) - order.findIndex(x => b.startsWith(x))); }
+  function l2OrderedReasons(reasons) { const order = ["HARD_BLOCK", "DEFENSIVE", "EXTREME", "DATA", "MARKET", "CONCENTRATION", "EXTRA", "CRASH", "NORMAL", "CASH", "ELEVATED", "PORTFOLIO"]; const rank = function (value) { const primary = order.findIndex(x => value.startsWith(x)); const secondary = value === "CRASH_FUND_WEIGHT_INVALID_MANUAL_REVIEW" ? 0 : (value === "CRASH_FUND_EMPTY" ? 1 : 0); return (primary < 0 ? order.length : primary) * 10 + secondary; }; return Array.from(new Set(reasons)).sort((a, b) => rank(a) - rank(b)); }
 
   function evaluateDcaPolicy(input, overrides) {
     const config = Object.assign({}, DEFAULT_CONFIG, overrides || {});
@@ -474,7 +580,8 @@
   }
 
   function roundMoney(value) {
-    return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.round((number + Number.EPSILON) * 100) / 100 : 0;
   }
 
   function roundMultiplier(value) {
@@ -496,6 +603,10 @@
   return {
     DEFAULT_CONFIG,
     DEFAULT_L2_CONFIG,
+    SAFE_L2_CONFIG,
+    setL2Config,
+    getL2Config,
+    validateL2Config,
     evaluateDcaPolicy,
     evaluateDcaL2Policy,
     calculateRsi,

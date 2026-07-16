@@ -1,0 +1,248 @@
+{
+  "assumptions": {
+    "commission_bps": 10.0,
+    "config_source": "data/dca-l2-policy-config.json",
+    "execution": "Tuesday/first same-week available adjusted open",
+    "fixed_parameters": true,
+    "future_data": false,
+    "same_cycle_close_signal": false,
+    "schedule": "weekly Tuesday; holiday uses first available trading day after Tuesday",
+    "signal": "prior valid trading day adjusted close",
+    "slippage_bps": 5.0
+  },
+  "comparisons": {
+    "budget_matched_fixed_minus_dca_l2_invested": 0.0,
+    "budget_matched_fixed_vs_dca_l2_final_value": 0.0,
+    "reserve_matched_fixed_minus_dca_l2_invested": 0.0
+  },
+  "config_version": "dca-l2-v2",
+  "data_issues": [
+    {
+      "count": 1283,
+      "execution_date": "",
+      "kind": "missing_adjusted_close",
+      "signal_date": "2021-06-01",
+      "symbol": "BYDDY"
+    },
+    {
+      "count": 1283,
+      "execution_date": "",
+      "kind": "missing_adjusted_close",
+      "signal_date": "2021-06-01",
+      "symbol": "MSFT"
+    },
+    {
+      "count": 1283,
+      "execution_date": "",
+      "kind": "missing_adjusted_close",
+      "signal_date": "2021-06-01",
+      "symbol": "NVDA"
+    },
+    {
+      "count": 1283,
+      "execution_date": "",
+      "kind": "missing_adjusted_close",
+      "signal_date": "2021-06-01",
+      "symbol": "AAPL"
+    },
+    {
+      "count": 1283,
+      "execution_date": "",
+      "kind": "missing_adjusted_close",
+      "signal_date": "2021-06-01",
+      "symbol": "ASML"
+    },
+    {
+      "count": 1283,
+      "execution_date": "",
+      "kind": "missing_adjusted_close",
+      "signal_date": "2021-06-01",
+      "symbol": "KO"
+    },
+    {
+      "count": 1283,
+      "execution_date": "",
+      "kind": "missing_adjusted_close",
+      "signal_date": "2021-06-01",
+      "symbol": "QQQ"
+    },
+    {
+      "count": 1283,
+      "execution_date": "",
+      "kind": "missing_adjusted_close",
+      "signal_date": "2021-06-01",
+      "symbol": "SPY"
+    }
+  ],
+  "research_only": true,
+  "strategies": {
+    "budget_matched_fixed_dca": {
+      "attribution": {
+        "AAPL": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "ASML": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "BYDDY": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "KO": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "MSFT": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "NVDA": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        }
+      },
+      "base_invested": 0.0,
+      "calmar": null,
+      "cash_balance": 0.0,
+      "cash_drag": 0,
+      "commission_bps": 10.0,
+      "crash_invested": 0.0,
+      "external_deposits": 0.0,
+      "extra_invested": 0.0,
+      "final_value": 0.0,
+      "investment_ratio": 0,
+      "max_drawdown_52w": 0.0,
+      "slippage_bps": 5.0,
+      "strategy": "budget_matched_fixed_dca",
+      "total_friction_cost": 0.0,
+      "total_investment": 0.0,
+      "total_return": 0.0
+    },
+    "dca_l2_v2": {
+      "attribution": {
+        "AAPL": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "ASML": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "BYDDY": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "KO": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "MSFT": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "NVDA": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        }
+      },
+      "base_invested": 0.0,
+      "calmar": null,
+      "cash_balance": 0.0,
+      "cash_drag": 0,
+      "commission_bps": 10.0,
+      "crash_invested": 0.0,
+      "external_deposits": 0.0,
+      "extra_invested": 0.0,
+      "final_value": 0.0,
+      "investment_ratio": 0,
+      "max_drawdown_52w": 0.0,
+      "slippage_bps": 5.0,
+      "strategy": "dca_l2_v2",
+      "total_friction_cost": 0.0,
+      "total_investment": 0.0,
+      "total_return": 0.0
+    },
+    "equal_total_invested": {
+      "normalized": {
+        "budget_matched_fixed_dca": {
+          "final_value_per_invested": null,
+          "scaled_final_value": null
+        },
+        "dca_l2_v2": {
+          "final_value_per_invested": null,
+          "scaled_final_value": null
+        },
+        "reserve_matched_fixed_dca": {
+          "final_value_per_invested": null,
+          "scaled_final_value": null
+        }
+      },
+      "strategy": "equal_total_invested",
+      "target_total_invested": 0.0
+    },
+    "reserve_matched_fixed_dca": {
+      "attribution": {
+        "AAPL": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "ASML": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "BYDDY": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "KO": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "MSFT": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        },
+        "NVDA": {
+          "final_value": 0.0,
+          "invested": 0.0,
+          "pnl": 0.0
+        }
+      },
+      "base_invested": 0.0,
+      "calmar": null,
+      "cash_balance": 0.0,
+      "cash_drag": 0,
+      "commission_bps": 10.0,
+      "crash_invested": 0.0,
+      "external_deposits": 0.0,
+      "extra_invested": 0.0,
+      "final_value": 0.0,
+      "investment_ratio": 0,
+      "max_drawdown_52w": 0.0,
+      "slippage_bps": 5.0,
+      "strategy": "reserve_matched_fixed_dca",
+      "total_friction_cost": 0.0,
+      "total_investment": 0.0,
+      "total_return": 0.0
+    }
+  }
+}
