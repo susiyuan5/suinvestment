@@ -1,7 +1,7 @@
 # Project Health
 
 - Status: **HEALTHY**
-- Generated: `2026-07-19T14:41:25.047407+00:00`
+- Generated: `2026-07-20T15:32:52.662156+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
@@ -10,8 +10,8 @@
 
 ## Historical Coverage
 
-- QQQ: 267 rows; latest `2026-07-10`; lag `9` days
-- SPY: 267 rows; latest `2026-07-10`; lag `9` days
+- QQQ: 267 rows; latest `2026-07-10`; lag `10` days
+- SPY: 267 rows; latest `2026-07-10`; lag `10` days
 
 ## Workflows
 
