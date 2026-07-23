@@ -598,8 +598,9 @@
 
         <label class="api-key-row" for="apiKey">
           <span>Finnhub API Key</span>
-          <input id="apiKey" type="password" autocomplete="off" placeholder="Enter key for live prices">
+          <input id="apiKey" type="password" autocomplete="off" placeholder="Enter key for live prices" aria-describedby="apiKeyStorageNote">
         </label>
+        <p id="apiKeyStorageNote" class="status-line">Saved permanently in this browser. Clear the field to forget it.</p>
 
         <button id="refreshBtn" class="primary-button modal-refresh" type="button">Refresh Prices</button>
 
@@ -699,7 +700,7 @@
     <script src="signal-engine.js?v=contracts-1"></script>
     <script src="portfolio-policy.js?v=contracts-1"></script>
     <script src="backtest-engine.js?v=contracts-1"></script>
-    <script src="app.js?v=professional-layout-1"></script>
+    <script src="app.js?v=persistent-finnhub-key-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>
