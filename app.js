@@ -301,6 +301,7 @@ amountBreakdown: "Amount Breakdown",
       closePriceSettings: "Close price settings",
       finnhubApiKey: "Finnhub API Key",
       apiKeyPlaceholder: "Enter key for live prices",
+      apiKeyStorageNote: "Saved permanently in this browser. Clear the field to forget it.",
       refreshPrices: "Refresh Prices",
       sourcePriority: "Source priority",
       sourcePriorityLine: "Finnhub → Yahoo fallback → Cache → Manual Override",
@@ -558,6 +559,7 @@ amountBreakdown: "Amount Breakdown",
       closePriceSettings: "关闭价格设置",
       finnhubApiKey: "Finnhub API Key",
       apiKeyPlaceholder: "输入实时价格 API Key",
+      apiKeyStorageNote: "密钥将永久保存在此浏览器中；清空输入框即可删除。",
       refreshPrices: "刷新价格",
       sourcePriority: "数据源优先级",
       sourcePriorityLine: "Finnhub → Yahoo 备用 → 缓存数据 → 手动输入",
@@ -954,14 +956,20 @@ amountBreakdown: "金额分解",
     state.portfolio = normalizePortfolio(CONFIG.defaultStocks, { allowCustom: true });
   }
 
-  // API keys are intentionally session-scoped. Do not revive legacy persistent keys.
-  localStorage.removeItem(STORAGE_KEYS.apiKey);
-  apiKeyInput.value = sessionStorage.getItem(STORAGE_KEYS.apiKey) || "";
+  // This dashboard runs on the user's private device, so keep the Finnhub key
+  // across browser restarts. Migrate an active session key once for a seamless
+  // transition from the previous session-only behavior.
+  const storedApiKey = localStorage.getItem(STORAGE_KEYS.apiKey)
+    || sessionStorage.getItem(STORAGE_KEYS.apiKey)
+    || "";
+  apiKeyInput.value = storedApiKey;
+  if (storedApiKey) localStorage.setItem(STORAGE_KEYS.apiKey, storedApiKey);
+  sessionStorage.removeItem(STORAGE_KEYS.apiKey);
 
   apiKeyInput.addEventListener("input", function () {
     const value = apiKeyInput.value.trim();
-    if (value) sessionStorage.setItem(STORAGE_KEYS.apiKey, value);
-    else sessionStorage.removeItem(STORAGE_KEYS.apiKey);
+    if (value) localStorage.setItem(STORAGE_KEYS.apiKey, value);
+    else localStorage.removeItem(STORAGE_KEYS.apiKey);
   });
 
   openSettingsBtn.addEventListener("click", openSettings);
@@ -1224,7 +1232,7 @@ amountBreakdown: "金额分解",
   }
 
   async function searchFinnhubSymbols(query, signal) {
-    var apiKey = sessionStorage.getItem(STORAGE_KEYS.apiKey);
+    var apiKey = localStorage.getItem(STORAGE_KEYS.apiKey);
     if (!apiKey) return null;
     try {
       var url = "https://finnhub.io/api/v1/search?q=" + encodeURIComponent(query) + "&token=" + apiKey;
@@ -6309,6 +6317,7 @@ function equalizeAllocations() {
     setText(".modal-heading .eyebrow", t("liveMarketDataEyebrow"));
     setText("#price-settings-title", t("priceSettings"));
     setText(".api-key-row span", t("finnhubApiKey"));
+    setText("#apiKeyStorageNote", t("apiKeyStorageNote"));
     setText("#refreshBtn", state.loading ? t("refreshing") : t("refreshPrices"));
     setText(".modal-note strong", t("sourcePriority"));
     setText(".modal-note span", t("sourcePriorityLine"));
