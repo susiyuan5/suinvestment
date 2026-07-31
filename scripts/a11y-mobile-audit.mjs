@@ -6,7 +6,7 @@ const baseUrl = (process.env.BASE_URL || "").replace(/\/$/, "") + "/";
 if (!process.env.BASE_URL) throw new Error("BASE_URL is required");
 
 async function auditPage(browser, name, viewport, zoom = 1) {
-  const context = await browser.newContext({ viewport });
+  const context = await browser.newContext({ viewport, locale: "zh-CN" });
   const page = await context.newPage();
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => document.querySelector("#projectHealthStatus")?.textContent && !/loading/i.test(document.querySelector("#projectHealthStatus").textContent), null, { timeout: 15000 });
@@ -70,7 +70,7 @@ async function main() {
     await auditPage(browser, "a11y-mobile-200-percent", { width: 390, height: 844 }, 2)
   ];
 
-  const keyboardContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const keyboardContext = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "zh-CN" });
   const keyboardPage = await keyboardContext.newPage();
   await keyboardPage.goto(baseUrl, { waitUntil: "domcontentloaded" });
   await keyboardPage.locator("#watchlist > summary").focus();

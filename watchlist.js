@@ -52,7 +52,7 @@
     if (active && quote.price) {
       var tone = Number.isFinite(quote.change) ? (quote.change >= 0 ? "pos" : "neg") : "";
       html += "<div class=\"ws-insight-card\">";
-      html += "<h4>摘要 / Summary</h4>";
+      html += "<h4>摘要</h4>";
       html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">代码</span><span class=\"ws-ir-value\">" + esc(active) + "</span></div>";
       html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">价格</span><span class=\"ws-ir-value\">" + fmt(quote.price) + " USD</span></div>";
       if (Number.isFinite(quote.change)) {
@@ -68,16 +68,15 @@
       html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">信号线</span><span class=\"ws-ir-value\">" + val(indicators.signal[lastIdx]) + "</span></div>";
       html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">柱状图</span><span class=\"ws-ir-value\">" + val(indicators.histogram[lastIdx]) + "</span></div>";
       var macdTone = indicators.macd[lastIdx] >= 0 ? "pos" : "neg";
-      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">状态</span><span class=\"ws-ir-value " + macdTone + "\">" + (indicators.macd[lastIdx] >= 0 ? "偏强 / Bullish" : "偏弱 / Bearish") + "</span></div>";
+      html += "<div class=\"ws-insight-row\"><span class=\"ws-ir-label\">状态</span><span class=\"ws-ir-value " + macdTone + "\">" + (indicators.macd[lastIdx] >= 0 ? "偏强" : "偏弱") + "</span></div>";
       html += "</div>";
     }
 
     if (haveIndicators && indicators.macd.length > 1) {
       var trend = indicators.macd[lastIdx] > indicators.macd[lastIdx - 1] ? "增强" : "减弱";
-      var trendEn = indicators.macd[lastIdx] > indicators.macd[lastIdx - 1] ? "Strengthening" : "Weakening";
       html += "<div class=\"ws-insight-card\">";
-      html += "<h4>动量 / Momentum</h4>";
-      html += "<p>" + trend + " / " + trendEn + "</p>";
+      html += "<h4>动量</h4>";
+      html += "<p>" + trend + "</p>";
       html += "</div>";
     }
 
