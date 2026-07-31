@@ -16,9 +16,34 @@
 .stock-search-grid label {
   display: grid;
   gap: 6px;
+  min-width: 0;
   color: var(--soft);
   font-size: 0.84rem;
   font-weight: 800;
+}
+
+.stock-search-grid input,
+.stock-search-grid button {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 719px) {
+  .stock-search-panel {
+    width: calc(100% - 20px);
+    min-width: 0;
+    max-width: calc(100% - 20px);
+    overflow: hidden;
+  }
+
+  .stock-search-grid,
+  .stock-search-grid label,
+  .stock-search-grid input,
+  .stock-search-grid button {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
 }
 
 .portfolio-total {
