@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import tempfile
+import urllib.parse
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -16,6 +17,8 @@ WORKFLOWS = {
     "market_update": "update-market-data.yml",
     "historical_update": "update-backtest-prices.yml",
     "quality_checks": "quality.yml",
+    "pages_smoke": "pages-smoke.yml",
+    "shadow_update": "update-shadow-observation.yml",
 }
 HISTORY_RETENTION_DAYS = 90
 HISTORY_FILENAME = "project-health-history.json"
@@ -63,7 +66,37 @@ def workflow_statuses(repository: str | None, token: str | None) -> dict:
     return output
 
 
-def build_health(root: Path, *, now: datetime, workflows: dict) -> dict:
+def pending_automation_prs(repository: str | None, token: str | None) -> dict:
+    targets = {
+        "historical_prices": "automation/update-backtest-prices",
+        "shadow_observation": "automation/update-shadow-observation",
+    }
+    if not repository or not token:
+        return {key: None for key in targets}
+    owner = repository.split("/", 1)[0]
+    output = {}
+    for key, branch in targets.items():
+        query = urllib.parse.urlencode({"state": "open", "head": f"{owner}:{branch}", "per_page": 1})
+        request = urllib.request.Request(
+            f"https://api.github.com/repos/{repository}/pulls?{query}",
+            headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json", "User-Agent": "suinvestment-health/1.0"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                rows = json.loads(response.read().decode("utf-8"))
+            pull = rows[0] if rows else None
+            output[key] = None if not pull else {
+                "number": pull.get("number"),
+                "updated_at": pull.get("updated_at"),
+                "url": pull.get("html_url"),
+                "head": branch,
+            }
+        except Exception as error:
+            output[key] = {"status": "unknown", "error": str(error), "head": branch}
+    return output
+
+
+def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates: dict | None = None) -> dict:
     market = load(root / "data" / "market-data.json")
     historical = load(root / "data" / "backtest-prices.json")
     if not isinstance(market, dict) or not isinstance(historical, dict):
@@ -93,9 +126,16 @@ def build_health(root: Path, *, now: datetime, workflows: dict) -> dict:
     if not watchlist_fallback_ready:
         issues.append("watchlist_fallback_unavailable")
 
-    for name, status in workflows.items():
-        if status.get("conclusion") not in {"success", "neutral"}:
-            issues.append(f"workflow_{name}_{status.get('conclusion', 'unknown')}")
+    for name, workflow in workflows.items():
+        if workflow.get("conclusion") not in {"success", "neutral"}:
+            issues.append(f"workflow_{name}_{workflow.get('conclusion', 'unknown')}")
+
+    pending_updates = pending_updates or {}
+    for name, pull in pending_updates.items():
+        if isinstance(pull, dict) and pull.get("number"):
+            issues.append(f"pending_{name}_pr")
+        elif isinstance(pull, dict) and pull.get("status") == "unknown":
+            issues.append(f"pending_{name}_status_unknown")
 
     manifest = load(root / "research" / "results" / "phase6s" / "history" / "shadow-observation-history-manifest.json", {"entries": []})
     outcomes = load(root / "research" / "results" / "phase6s" / "shadow-observation-outcomes.json", {"outcomes": []})
@@ -103,12 +143,21 @@ def build_health(root: Path, *, now: datetime, workflows: dict) -> dict:
     runtime_metrics = load(root / "results" / "health" / RUNTIME_METRICS_FILENAME, {})
     if not isinstance(runtime_metrics, dict):
         runtime_metrics = {}
+    v2_summary = load(root / "results" / "dca_l2" / "v2" / "summary.json", {})
+    v2_validity = v2_summary.get("validity", {}) if isinstance(v2_summary, dict) else {}
+    if v2_summary and not v2_validity.get("valid"):
+        issues.append("v2_research_pipeline_invalid")
     complete_mature = sum(
         all(row.get("outcomes", {}).get(str(horizon), {}).get("status") == "matured" for horizon in (1, 4, 12))
         for row in outcomes.get("outcomes", [])
     )
     status = "blocked" if any("history_unhealthy" in issue or issue == "market_snapshot_stale" for issue in issues) else "warning" if issues else "healthy"
-    failed_workflows = sum(1 for item in workflows.values() if item.get("conclusion") not in {"success", "neutral"})
+    failure_conclusions = {"failure", "cancelled", "timed_out", "action_required", "startup_failure"}
+    failed_workflows = sum(1 for item in workflows.values() if item.get("conclusion") in failure_conclusions)
+    known_workflows = sum(1 for item in workflows.values() if item.get("conclusion") not in {None, "", "unknown", "pending"})
+    pages_conclusion = workflows.get("pages_smoke", {}).get("conclusion")
+    watchlist_runtime_status = "ready" if pages_conclusion in {"success", "neutral"} else "degraded" if pages_conclusion in failure_conclusions else "unknown"
+    watchlist_status = "degraded" if not watchlist_fallback_ready or watchlist_runtime_status == "degraded" else "ready" if watchlist_runtime_status == "ready" else "unknown"
     observation_total = max(1, int(governance.get("observationRunsAvailable", 0) or 0) * int(governance.get("uniqueMonitoredSymbolCount", 0) or 0))
     shadow_missing_count = governance.get("missingDataCount")
     if shadow_missing_count is not None:
@@ -130,13 +179,16 @@ def build_health(root: Path, *, now: datetime, workflows: dict) -> dict:
         },
         "historical_snapshot": {"generated_at": historical.get("generatedAt"), "symbols": historical_rows},
         "watchlist": {
-            "status": "ready" if watchlist_fallback_ready else "degraded",
+            "status": watchlist_status,
+            "static_fallback_status": "ready" if watchlist_fallback_ready else "degraded",
+            "synthetic_probe_status": watchlist_runtime_status,
             "runtime_primary": "Yahoo Finance chart API",
             "same_origin_fallback": "data/backtest-prices.json",
             "fallback_symbol_rows": watchlist_coverage,
             "note": "The browser reports the actual per-session source separately at runtime.",
         },
         "workflows": workflows,
+        "pending_updates": pending_updates,
         "shadow": {
             "archived_observation_count": len(manifest.get("entries", [])),
             "observation_runs_available": governance.get("observationRunsAvailable", 0),
@@ -144,12 +196,19 @@ def build_health(root: Path, *, now: datetime, workflows: dict) -> dict:
             "human_review_gate": bool(governance.get("anyCandidateEligibleForHumanReview", False)),
             "live_promotion_eligible": False,
         },
+        "research_pipeline": {
+            "dca_l2_v2_valid": v2_validity.get("valid") if v2_summary else None,
+            "schedule_event_count": v2_validity.get("schedule_event_count"),
+            "executed_trade_count": v2_validity.get("executed_trade_count"),
+            "research_only": True,
+        },
         "operational_metrics": {
             "data_delay_count": sum(1 for lag in [market_lag] + [row["lag_days"] for row in historical_rows.values()] if lag is None or lag > 0),
-            "workflow_failure_rate": failed_workflows / max(1, len(workflows)),
-            "watchlist_degradation_ratio": 0 if watchlist_fallback_ready else 1,
+            "workflow_failure_rate": failed_workflows / max(1, known_workflows),
+            "workflow_unknown_count": sum(1 for item in workflows.values() if item.get("conclusion") in {None, "", "unknown", "pending"}),
+            "watchlist_degradation_ratio": 0 if watchlist_status == "ready" else 1 if watchlist_status == "degraded" else None,
             "shadow_missing_rate": shadow_missing_rate,
-            "page_js_error_count": runtime_metrics.get("page_js_error_count", 0),
+            "page_js_error_count": runtime_metrics.get("page_js_error_count"),
             "data_source_response_ms": runtime_metrics.get("data_source_response_ms"),
         },
         "versions": {
@@ -168,7 +227,7 @@ def history_entry(payload: dict) -> dict:
         "workflow_failure_rate": metrics.get("workflow_failure_rate", 0),
         "watchlist_degradation_ratio": metrics.get("watchlist_degradation_ratio", 0),
         "shadow_missing_rate": metrics.get("shadow_missing_rate"),
-        "page_js_error_count": metrics.get("page_js_error_count", 0),
+        "page_js_error_count": metrics.get("page_js_error_count"),
         "data_source_response_ms": metrics.get("data_source_response_ms"),
     }
 
@@ -208,8 +267,18 @@ def markdown(payload: dict) -> str:
     lines += ["", "## Workflows", ""]
     for name, row in payload["workflows"].items():
         lines.append(f"- {name}: `{row.get('status')}` / `{row.get('conclusion')}`")
+    lines += ["", "## Pending Automated Updates", ""]
+    for name, row in payload.get("pending_updates", {}).items():
+        if isinstance(row, dict) and row.get("number"):
+            lines.append(f"- {name}: PR #{row['number']} pending ({row.get('url')})")
+        elif isinstance(row, dict) and row.get("status") == "unknown":
+            lines.append(f"- {name}: status unknown")
+        else:
+            lines.append(f"- {name}: none")
     lines += ["", "## Watchlist", "", f"- Static fallback status: `{payload['watchlist']['status']}`", f"- Runtime primary: `{payload['watchlist']['runtime_primary']}`", f"- Same-origin fallback: `{payload['watchlist']['same_origin_fallback']}`"]
     lines += ["", "## Shadow", "", f"- Observation runs: `{payload['shadow']['observation_runs_available']}`", f"- Complete mature outcomes: `{payload['shadow']['complete_mature_outcome_count']}`", f"- Human review gate: `{payload['shadow']['human_review_gate']}`", "- Live promotion eligible: `false`", ""]
+    research = payload.get("research_pipeline", {})
+    lines += ["## Research Pipeline", "", f"- DCA-L2 v2 valid: `{research.get('dca_l2_v2_valid')}`", f"- Schedule events: `{research.get('schedule_event_count')}`", f"- Executed trades: `{research.get('executed_trade_count')}`", "- Scope: `research_only`", ""]
     return "\n".join(lines)
 
 
@@ -221,8 +290,8 @@ def write_atomic(path: Path, content: str) -> None:
     temporary.replace(path)
 
 
-def generate(root: Path, output_dir: Path, *, now: datetime, workflows: dict) -> dict:
-    payload = build_health(root, now=now, workflows=workflows)
+def generate(root: Path, output_dir: Path, *, now: datetime, workflows: dict, pending_updates: dict | None = None) -> dict:
+    payload = build_health(root, now=now, workflows=workflows, pending_updates=pending_updates)
     write_atomic(output_dir / "project-health.json", json.dumps(payload, indent=2) + "\n")
     write_atomic(output_dir / "project-health.md", markdown(payload))
     history = build_history(output_dir / HISTORY_FILENAME, payload, now=now)
@@ -237,7 +306,8 @@ def main() -> None:
     args = parser.parse_args()
     now = datetime.fromisoformat(args.now.replace("Z", "+00:00")) if args.now else datetime.now(timezone.utc)
     workflows = workflow_statuses(os.getenv("GITHUB_REPOSITORY"), os.getenv("GITHUB_TOKEN"))
-    payload = generate(ROOT, args.output_dir, now=now, workflows=workflows)
+    pending_updates = pending_automation_prs(os.getenv("GITHUB_REPOSITORY"), os.getenv("GITHUB_TOKEN"))
+    payload = generate(ROOT, args.output_dir, now=now, workflows=workflows, pending_updates=pending_updates)
     print(f"project_health_status={payload['status']}")
 
 

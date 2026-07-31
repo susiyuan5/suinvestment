@@ -6,6 +6,7 @@ from pathlib import Path
 
 from scripts.price_sources import is_publishable
 from scripts.update_backtest_prices import SYMBOLS, validate_snapshot, write_json_atomic
+from scripts.update_backtest_daily_prices import validate_adjusted_snapshot
 
 
 def rows(latest: str = "2026-06-05"):
@@ -50,3 +51,19 @@ class SnapshotIntegrityTests(unittest.TestCase):
         self.assertTrue(is_publishable(result, {"symbols": {}})[0])
         result["symbols"]["SPY"]["validationStatus"] = "stale_fallback"
         self.assertFalse(is_publishable(result, {"symbols": {}})[0])
+
+    def test_v2_adjusted_snapshot_requires_complete_positive_ohlc(self):
+        row = {
+            "date": "2026-06-10", "open": 100.0, "high": 102.0, "low": 99.0, "close": 101.0,
+            "adjusted_open": 100.0, "adjusted_high": 102.0, "adjusted_low": 99.0, "adjusted_close": 101.0,
+        }
+        rows_by_symbol = {symbol: [{**row, "date": (date(2025, 1, 1) + timedelta(days=index)).isoformat()} for index in range(260)] for symbol in SYMBOLS}
+        payload = {
+            "version": "adjusted-daily-v2", "research_only": True,
+            "symbols": rows_by_symbol,
+            "metadata": {symbol: {"validationStatus": "validated"} for symbol in SYMBOLS},
+        }
+        validate_adjusted_snapshot(payload, previous={"symbols": {}}, max_lag_days=10, as_of=rows_by_symbol["QQQ"][-1]["date"])
+        payload["symbols"]["QQQ"][-1]["adjusted_open"] = math.nan
+        with self.assertRaisesRegex(RuntimeError, "invalid adjusted OHLC"):
+            validate_adjusted_snapshot(payload, previous={"symbols": {}}, max_lag_days=10, as_of=rows_by_symbol["QQQ"][-1]["date"])

@@ -8,6 +8,8 @@ on:
 permissions:
   actions: read
   contents: write
+  pull-requests: write
+  statuses: write
 
 concurrency:
   group: build-project-health
@@ -18,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Build health report atomically
@@ -30,8 +32,34 @@ jobs:
         run: |
           python -m unittest tests.test_project_health
           python -m json.tool results/health/project-health.json > /dev/null
-      - name: Commit derived health report
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Create or update health report pull request
+        id: create-pr
+        uses: peter-evans/create-pull-request@v8
         with:
-          commit_message: "Update project health report"
-          file_pattern: results/health/project-health.json results/health/project-health.md
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/update-project-health
+          delete-branch: true
+          commit-message: "Update project health report"
+          title: "Update project health report"
+          body: "Read-only operational health summary generated from validated snapshots and GitHub workflow state."
+          add-paths: |
+            results/health/project-health.json
+            results/health/project-health.md
+            results/health/project-health-history.json
+
+      - name: Mark generated commit verified
+        if: steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ steps.create-pr.outputs.pull-request-head-sha }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -f state=success -f context=verify -f description="Project health validation passed"
+
+      - name: Merge validated health report pull request
+        if: steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --merge --delete-branch
+
+      - name: Report unchanged health
+        if: steps.create-pr.outputs.pull-request-number == ''
+        run: echo "Project health report is unchanged; preserving the last valid files."

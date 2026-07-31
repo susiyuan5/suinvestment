@@ -35,9 +35,30 @@ async function auditPage(browser, name, viewport, zoom = 1) {
     const rect = element.getBoundingClientRect();
     return { id: element.id, width: Math.round(rect.width), height: Math.round(rect.height) };
   }).filter((item) => item.width < 24 || item.height < 24));
-  const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 4);
+  const overflow = await page.evaluate(() => {
+    const viewportWidth = document.documentElement.clientWidth;
+    const elements = Array.from(document.querySelectorAll("body *")).flatMap((element) => {
+      const rect = element.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0 || (rect.right <= viewportWidth + 4 && rect.left >= -4)) return [];
+      return [{
+        tag: element.tagName,
+        id: element.id,
+        className: typeof element.className === "string" ? element.className.slice(0, 120) : "",
+        left: Math.round(rect.left),
+        right: Math.round(rect.right),
+        width: Math.round(rect.width),
+        text: (element.textContent || "").trim().replace(/\s+/g, " ").slice(0, 80)
+      }];
+    }).slice(0, 20);
+    return {
+      horizontalOverflow: document.documentElement.scrollWidth > viewportWidth + 4,
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth,
+      elements
+    };
+  });
   await context.close();
-  return { name, viewport, zoom, violations: semanticViolations, focusTargets, smallTargets: visibleTargets, horizontalOverflow };
+  return { name, viewport, zoom, violations: semanticViolations, focusTargets, smallTargets: visibleTargets, ...overflow };
 }
 
 async function main() {
@@ -72,7 +93,13 @@ async function main() {
   await fs.writeFile("output/playwright/a11y-mobile-audit.json", JSON.stringify(report, null, 2) + "\n");
   await browser.close();
   if (critical.length) throw new Error(`Accessibility audit found ${critical.length} serious/critical violation(s)`);
-  if (results.some((result) => result.horizontalOverflow)) throw new Error("Accessibility audit found horizontal overflow");
+  const undersized = results.flatMap((result) => result.smallTargets.map((target) => ({ page: result.name, ...target })));
+  if (undersized.length) throw new Error(`Accessibility audit found undersized interactive targets: ${JSON.stringify(undersized)}`);
+  const overflowing = results.filter((result) => result.horizontalOverflow);
+  if (overflowing.length) {
+    const detail = overflowing.map((result) => `${result.name}: ${result.documentWidth}px > ${result.viewportWidth}px; ${JSON.stringify(result.elements.slice(0, 5))}`).join(" | ");
+    throw new Error(`Accessibility audit found horizontal overflow: ${detail}`);
+  }
   console.log("Accessibility/mobile audit passed: desktop, mobile, 200% zoom, keyboard, canvas alternative, and target-size evidence captured.");
 }
 

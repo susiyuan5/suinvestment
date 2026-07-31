@@ -62,7 +62,7 @@ Start with [PROJECT_NAVIGATION.md](PROJECT_NAVIGATION.md) for the live dashboard
 
 Manual overrides are entered per stock as a weekly percentage value, such as `-9.2`, `+12`, or `10.5`. Overrides are saved in the browser and take priority for that stock.
 
-Finnhub keys are stored in `sessionStorage` only. The application deliberately removes any legacy persistent key and does not migrate it; after a browser session ends, enter the key again if live lookup is needed. The static page CSP permits connections only to Finnhub and Yahoo Finance in addition to same-origin data files.
+Finnhub keys are stored persistently in this browser's `localStorage` for use on the owner's private computer. An active legacy `sessionStorage` key is migrated once; clearing the API key field removes the persistent value. The key is never committed or sent anywhere except Finnhub requests. The static page CSP permits connections only to Finnhub and Yahoo Finance in addition to same-origin data files.
 
 ## Data Refresh Workflow / 数据刷新流程
 
@@ -72,14 +72,17 @@ Run the manual refresh workflow after weekly data updates, before stable release
 
 ```powershell
 python scripts\update_backtest_prices.py
-python -m py_compile scripts\update_backtest_prices.py
+python scripts\update_backtest_daily_prices.py
+python dca_l2_backtest_v2.py
+python -m py_compile scripts\update_backtest_prices.py scripts\update_backtest_daily_prices.py dca_l2_backtest_v2.py
 python -m unittest discover -s tests
-node --check app.js
+node --test tests/*.test.js
+python scripts\check_static_contracts.py
 ```
 
 Post-refresh, confirm QQQ and SPY exist in `data/backtest-prices.json`, each has at least 50 weekly rows, latest dates are recent, and the dashboard Data Quality Summary shows a computed QQQ/SPY Market Regime source rather than Neutral fallback.
 
-Full workflow, GitHub Actions automation, and failure-handling notes are in `DATA_REFRESH_WORKFLOW.md`. The automated workflow opens a pull request when refreshed historical data changes and validation passes.
+The versioned adjusted-OHLC input is written to `data/v2/backtest-adjusted-daily.json`. DCA-L2 v2 must report a non-zero schedule and executed trades with `validity.valid=true`; otherwise the workflow fails and preserves the last valid artifacts. Full workflow, GitHub Actions automation, and failure-handling notes are in `DATA_REFRESH_WORKFLOW.md`. The automated workflow opens and merges a data-only pull request only after Python, Node, static-contract, snapshot, and v2 validity checks pass.
 
 ## Phase 5 Research Stack
 
@@ -438,7 +441,9 @@ This app stores API keys, cache snapshots, and manual overrides in the browser's
 ## Tests
 
 ```bash
-python -m unittest discover tests
+python -m unittest discover -s tests
+npm test
+python scripts/check_static_contracts.py
 ```
 
 

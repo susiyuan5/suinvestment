@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs/promises";
 import { chromium } from "playwright";
 
 const baseUrl = (process.env.BASE_URL || "").replace(/\/$/, "") + "/";
@@ -14,6 +15,8 @@ async function waitForDashboard(page) {
 }
 
 async function main() {
+  const startedAt = Date.now();
+  await fs.mkdir("output/playwright", { recursive: true });
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
@@ -32,6 +35,15 @@ async function main() {
   const healthPayload = await healthResponse.json();
   assert.ok(["healthy", "warning", "blocked"].includes(healthPayload.status), "health report should have a known status");
 
+  await page.locator("#openSettingsBtn").click();
+  await page.locator("#apiKey").fill("browser-persistence-test-key");
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.locator("#openSettingsBtn").click();
+  assert.equal(await page.locator("#apiKey").inputValue(), "browser-persistence-test-key", "Finnhub key should persist across reloads");
+  await page.locator("#apiKey").fill("");
+  assert.equal(await page.evaluate(() => localStorage.getItem("su-investment-pro:finnhub-key")), null, "clearing the Finnhub key should remove persistent storage");
+  await page.locator("#closeSettingsBtn").click();
+
   const watchlist = page.locator("#watchlist");
   await watchlist.locator(":scope > summary").click();
   await page.locator("#watchlistCards .ws-card-select").first().waitFor({ state: "visible" });
@@ -40,6 +52,19 @@ async function main() {
   await page.locator("#watchlistCards .ws-card-select").nth(1).click();
   await page.waitForFunction((symbol) => document.querySelector("#watchlistActiveSymbol")?.textContent === symbol, symbols[1]);
   assert.ok((await page.locator("#watchlistChartSummary").textContent()).trim().length > 0, "canvas chart should have accessible alternative text");
+
+  const runtimeEvidence = {
+    generated_at: new Date().toISOString(),
+    base_url: baseUrl,
+    elapsed_ms: Date.now() - startedAt,
+    project_health_status: await page.locator("#projectHealthStatus").textContent(),
+    watchlist_source_status: await page.locator("#watchlistHealthStatus").textContent(),
+    page_js_error_count: pageErrors.length,
+    console_error_count: consoleErrors.length,
+    page_errors: pageErrors,
+    console_errors: consoleErrors
+  };
+  await fs.writeFile("output/playwright/e2e-smoke.json", JSON.stringify(runtimeEvidence, null, 2) + "\n");
 
   assert.deepEqual(consoleErrors, [], `core modules emitted console errors: ${consoleErrors.join(" | ")}`);
   assert.deepEqual(pageErrors, [], `homepage emitted page errors: ${pageErrors.join(" | ")}`);

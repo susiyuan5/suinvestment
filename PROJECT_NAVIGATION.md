@@ -110,6 +110,7 @@ Safety:
 ## D. Data Files
 
 - `data/backtest-prices.json`: live/backtest data used by current dashboard workflows, dashboard backtests, and QQQ/SPY market-regime history.
+- `data/v2/backtest-adjusted-daily.json`: versioned research-only adjusted daily OHLC input for causal DCA-L2 v2; it never replaces the legacy dashboard snapshot.
 - `data/research-prices.json`: research-only universe historical price data.
 - `data/research-universe.json`: active 38-symbol research universe definition.
 - `data/research-universe-expansion-plan.json`: planning-only expansion proposal.

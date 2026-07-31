@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import math
+import os
 from collections import defaultdict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -21,14 +23,16 @@ from dca_l2_policy import evaluate_dca_l2_policy, load_config, plan_portfolio_dc
 
 LIVE_SYMBOLS = ("BYDDY", "MSFT", "NVDA", "AAPL", "ASML", "KO")
 ALLOCATIONS = {"BYDDY": 0.30, "MSFT": 0.22, "NVDA": 0.18, "AAPL": 0.15, "ASML": 0.10, "KO": 0.05}
-DEFAULT_PRICES = Path("data/backtest-daily-prices.json")
+DEFAULT_PRICES = Path("data/v2/backtest-adjusted-daily.json")
 DEFAULT_OUTPUT = Path("results/dca_l2/v2")
 
 
 def run_backtest(prices_path: str | Path = DEFAULT_PRICES, output_dir: str | Path = DEFAULT_OUTPUT, as_of: str | None = None, commission_bps: float = 10, slippage_bps: float = 5) -> dict[str, Any]:
     if commission_bps < 0 or slippage_bps < 0:
         raise ValueError("commission and slippage must be non-negative")
-    payload = json.loads(Path(prices_path).read_text(encoding="utf-8"))
+    price_file = Path(prices_path)
+    price_bytes = price_file.read_bytes()
+    payload = json.loads(price_bytes.decode("utf-8"))
     config = load_config()
     series, missing = load_adjusted_series(payload, as_of)
     symbols = tuple(symbol for symbol in LIVE_SYMBOLS if symbol in series)
@@ -64,6 +68,8 @@ def run_backtest(prices_path: str | Path = DEFAULT_PRICES, output_dir: str | Pat
             for strategy in strategies.values():
                 strategy["cash"] += monthly_budget
                 strategy["external_deposits"] += monthly_budget
+            strategies["dca_l2_v2"]["normal_used"] = 0.0
+            strategies["dca_l2_v2"]["crash_used"] = 0.0
         qqq_closes = history(series["QQQ"], signal_date, "adj_close")
         market = market_regime(qqq_closes)
         volatility = rolling_volatility(qqq_closes, 12)
@@ -127,14 +133,35 @@ def run_backtest(prices_path: str | Path = DEFAULT_PRICES, output_dir: str | Pat
         "reserve_matched_fixed_minus_dca_l2_invested": round(summaries["reserve_matched_fixed_dca"]["total_investment"] - summaries["dca_l2_v2"]["total_investment"], 2),
         "budget_matched_fixed_vs_dca_l2_final_value": round(summaries["budget_matched_fixed_dca"]["final_value"] - summaries["dca_l2_v2"]["final_value"], 2),
     }
+    executed_trade_count = sum(1 for row in trades if float(row.get("gross_invested") or 0) > 0)
+    blocking_issue_kinds = {"missing_adjusted_close"}
+    blocking_issues = [row for row in issues if row.get("kind") in blocking_issue_kinds]
+    valid = bool(schedule) and executed_trade_count > 0 and summaries["dca_l2_v2"]["total_investment"] > 0 and not blocking_issues
+    validity = {
+        "valid": valid,
+        "schedule_event_count": len(schedule),
+        "executed_trade_count": executed_trade_count,
+        "blocking_issue_count": len(blocking_issues),
+        "blocking_issue_kinds": sorted({row.get("kind") for row in blocking_issues}),
+    }
+    provenance = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "price_path": str(price_file).replace("\\", "/"),
+        "price_schema_version": payload.get("version"),
+        "price_generated_at": payload.get("generatedAt"),
+        "input_hash": hashlib.sha256(price_bytes).hexdigest(),
+        "code_version": os.getenv("GITHUB_SHA") or "working-tree",
+        "code_hash": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "as_of": as_of,
+    }
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
-    write_json(output / "summary.json", {"research_only": True, "config_version": config["version"], "assumptions": assumptions(commission_bps, slippage_bps), "strategies": summaries, "comparisons": comparisons, "data_issues": issues})
+    write_json(output / "summary.json", {"research_only": True, "validity": validity, "provenance": provenance, "config_version": config["version"], "assumptions": assumptions(commission_bps, slippage_bps), "strategies": summaries, "comparisons": comparisons, "data_issues": issues})
     write_csv(output / "summary.csv", [flatten_summary(name, value) for name, value in summaries.items()])
     write_csv(output / "trades.csv", trades, ["strategy", "symbol", "signal_date", "execution_date", "status", "execution_price", "gross_invested", "commission", "slippage_cost", "base", "extra", "crash"])
     write_csv(output / "decisions.csv", decisions, ["strategy", "symbol", "signal_date", "execution_date", "state", "base_amount", "extra_amount", "crash_fund_amount", "final_amount", "reason_codes", "planned_normal", "planned_crash", "total_planned", "unallocated_cash"])
     write_csv(output / "data_issues.csv", issues, ["kind", "symbol", "signal_date", "execution_date", "count"])
-    return {"research_only": True, "config_version": config["version"], "strategies": summaries, "comparisons": comparisons, "data_issues": issues, "output": str(output)}
+    return {"research_only": True, "validity": validity, "provenance": provenance, "config_version": config["version"], "strategies": summaries, "comparisons": comparisons, "data_issues": issues, "output": str(output)}
 
 
 def load_adjusted_series(payload: dict[str, Any], as_of: str | None) -> tuple[dict[str, dict[str, dict[str, float]]], list[dict[str, Any]]]:
@@ -290,14 +317,17 @@ def summarize(name: str, strategy: dict[str, Any], series: dict[str, dict[str, d
     curve = [row["value"] for row in strategy["equity_curve"]]
     max_dd = rolling_max_drawdown(curve, 52)
     years = max(1 / 52, len(curve) / 52)
-    annual_return = (final_value / invested) ** (1 / years) - 1 if invested > 0 and final_value > 0 else 0.0
+    contributed = strategy["external_deposits"]
+    annual_return = (final_value / contributed) ** (1 / years) - 1 if contributed > 0 and final_value > 0 else 0.0
     calmar = annual_return / max_dd if max_dd > 0 else None
     attribution = {}
     for symbol in symbols:
         value = strategy["shares"][symbol] * series[symbol][final_date]["adj_close"] if final_date and final_date in series[symbol] else 0.0
         invested_symbol = strategy["symbol_invested"][symbol]
         attribution[symbol] = {"final_value": round(value, 2), "invested": round(invested_symbol, 2), "pnl": round(value - invested_symbol, 2)}
-    return {"strategy": name, "external_deposits": round(strategy["external_deposits"], 2), "total_investment": round(invested, 2), "base_invested": round(strategy["base_invested"], 2), "extra_invested": round(strategy["extra_invested"], 2), "crash_invested": round(strategy["crash_invested"], 2), "cash_balance": round(strategy["cash"], 2), "total_friction_cost": round(strategy["commission"] + strategy["slippage"], 2), "final_value": round(final_value, 2), "total_return": round(final_value - invested, 2), "max_drawdown_52w": round(max_dd, 6), "calmar": round(calmar, 6) if calmar is not None else None, "investment_ratio": round(invested / strategy["external_deposits"], 6) if strategy["external_deposits"] else 0, "cash_drag": round(strategy["cash"] / final_value, 6) if final_value else 0, "attribution": attribution, "commission_bps": commission_bps, "slippage_bps": slippage_bps}
+    asset_final_value = sum(row["final_value"] for row in attribution.values())
+    net_profit = final_value - contributed
+    return {"strategy": name, "external_deposits": round(contributed, 2), "total_investment": round(invested, 2), "base_invested": round(strategy["base_invested"], 2), "extra_invested": round(strategy["extra_invested"], 2), "crash_invested": round(strategy["crash_invested"], 2), "cash_balance": round(strategy["cash"], 2), "total_friction_cost": round(strategy["commission"] + strategy["slippage"], 2), "asset_final_value": round(asset_final_value, 2), "asset_profit": round(asset_final_value - invested, 2), "final_value": round(final_value, 2), "total_return": round(net_profit, 2), "total_return_pct": round(net_profit / contributed * 100, 6) if contributed else 0, "max_drawdown_52w": round(max_dd, 6), "calmar": round(calmar, 6) if calmar is not None else None, "investment_ratio": round(invested / contributed, 6) if contributed else 0, "cash_drag": round(strategy["cash"] / final_value, 6) if final_value else 0, "attribution": attribution, "commission_bps": commission_bps, "slippage_bps": slippage_bps}
 
 
 def rolling_max_drawdown(values: list[float], window: int) -> float:
@@ -312,7 +342,7 @@ def rolling_max_drawdown(values: list[float], window: int) -> float:
 
 def equal_total_invested(summaries: dict[str, dict[str, Any]]) -> dict[str, Any]:
     target = max((value["total_investment"] for value in summaries.values()), default=0)
-    return {"strategy": "equal_total_invested", "target_total_invested": target, "normalized": {name: {"final_value_per_invested": round(value["final_value"] / value["total_investment"], 6) if value["total_investment"] else None, "scaled_final_value": round(value["final_value"] * target / value["total_investment"], 2) if value["total_investment"] else None} for name, value in summaries.items()}}
+    return {"strategy": "equal_total_invested", "target_total_invested": target, "cash_excluded": True, "normalized": {name: {"asset_value_per_invested": round(value["asset_final_value"] / value["total_investment"], 6) if value["total_investment"] else None, "scaled_asset_final_value": round(value["asset_final_value"] * target / value["total_investment"], 2) if value["total_investment"] else None} for name, value in summaries.items()}}
 
 
 def issue(kind: str, signal_date: str, execution_date: str, symbol: str) -> dict[str, Any]:
@@ -351,8 +381,8 @@ def main() -> int:
     parser.add_argument("--slippage-bps", type=float, default=5)
     args = parser.parse_args()
     result = run_backtest(args.prices, args.output, args.as_of, args.commission_bps, args.slippage_bps)
-    print(json.dumps({"output": result["output"], "research_only": True, "strategies": list(result["strategies"])}, indent=2))
-    return 0
+    print(json.dumps({"output": result["output"], "research_only": True, "valid": result["validity"]["valid"], "strategies": list(result["strategies"])}, indent=2))
+    return 0 if result["validity"]["valid"] else 1
 
 
 if __name__ == "__main__":

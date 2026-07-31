@@ -124,10 +124,10 @@
 .ws-price-group em.neg { color: #ff6f7f; }
 
 .ws-refresh-group { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.ws-refresh-group label { font-size: 0.74rem; color: #6f7d91; display: flex; align-items: center; gap: 4px; }
-.ws-refresh-group label input { width: 14px; height: 14px; min-height: 0; margin: 0; accent-color: #4f9ee9; }
-.ws-refresh-group select { padding: 5px 6px; border: 1px solid #1e2c3c; border-radius: 4px; background: #0a111c; color: #b5cfe8; font-size: 0.72rem; }
-.ws-refresh-group button { min-height: 36px; padding: 6px 12px; border: 0; border-radius: 4px; background: #4f9ee9; color: #07111e; font-weight: 800; font-size: 0.74rem; cursor: pointer; }
+.ws-refresh-group label { min-height: 44px; padding: 0 4px; font-size: 0.74rem; color: #6f7d91; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.ws-refresh-group label input { width: 24px; height: 24px; min-height: 24px; margin: 0; accent-color: #4f9ee9; cursor: pointer; }
+.ws-refresh-group select { min-height: 44px; padding: 5px 8px; border: 1px solid #1e2c3c; border-radius: 4px; background: #0a111c; color: #b5cfe8; font-size: 0.72rem; }
+.ws-refresh-group button { min-height: 44px; padding: 6px 12px; border: 0; border-radius: 4px; background: #4f9ee9; color: #07111e; font-weight: 800; font-size: 0.74rem; cursor: pointer; }
 .watchlist-panel button:focus-visible, .watchlist-panel input:focus-visible, .watchlist-panel select:focus-visible { outline: 3px solid rgba(102, 163, 255, .7); outline-offset: 2px; }
 
 /* Chart */
@@ -201,12 +201,21 @@
   .ws-refresh-group { width: 100%; }
 }
 @media (max-width: 599px) {
+  .watchlist-panel,
+  .watchlist-shell,
+  .ws-workspace,
+  .ws-center,
+  .ws-quote-card,
+  .ws-price-bar,
+  .ws-refresh-group { min-width: 0; max-width: 100%; }
   .ws-workspace { padding: 8px; }
   .ws-chart-card { padding: 8px; }
   .ws-chart-plot { height: clamp(460px, 58vh, 640px); }
   .ws-quote-card { flex-direction: column; align-items: flex-start; gap: 8px; }
   .ws-symbol-line h3 { font-size: 1rem; }
   .ws-price-group strong { font-size: 1.5rem; }
+  .ws-price-group { min-width: 0; flex-wrap: wrap; white-space: normal; overflow-wrap: anywhere; }
+  .ws-refresh-group { flex-wrap: wrap; }
   .ws-ticker-item { font-size: 0.7rem; padding: 3px 7px; }
 }
 
