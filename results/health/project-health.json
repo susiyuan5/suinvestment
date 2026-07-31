@@ -1,45 +1,46 @@
 {
   "version": "project-health-v1",
-  "generated_at": "2026-07-31T15:48:33.346314+00:00",
-  "status": "blocked",
+  "generated_at": "2026-07-31T22:02:50.187200+00:00",
+  "status": "warning",
   "status_scope": "Operational data and workflow health only; not strategy validation or trading approval.",
   "manual_decision_only": true,
   "broker_connected": false,
   "automatic_trading": false,
   "issues": [
-    "qqq_history_unhealthy",
-    "spy_history_unhealthy"
+    "workflow_pages_smoke_pending"
   ],
   "market_snapshot": {
-    "generated_at": "2026-07-30T23:33:02.797290Z",
-    "lag_days": 1,
+    "generated_at": "2026-07-31T22:00:55.651080Z",
+    "lag_days": 0,
     "fresh_symbols": 8,
     "stale_symbols": 0
   },
   "historical_snapshot": {
-    "generated_at": "2026-07-10T15:59:13.794501+00:00",
+    "generated_at": "2026-07-31T22:01:53.928470+00:00",
     "symbols": {
       "QQQ": {
-        "row_count": 267,
-        "latest_date": "2026-07-10",
-        "lag_days": 21
+        "row_count": 270,
+        "latest_date": "2026-07-31",
+        "lag_days": 0
       },
       "SPY": {
-        "row_count": 267,
-        "latest_date": "2026-07-10",
-        "lag_days": 21
+        "row_count": 270,
+        "latest_date": "2026-07-31",
+        "lag_days": 0
       }
     }
   },
   "watchlist": {
-    "status": "ready",
+    "status": "unknown",
+    "static_fallback_status": "ready",
+    "synthetic_probe_status": "unknown",
     "runtime_primary": "Yahoo Finance chart API",
     "same_origin_fallback": "data/backtest-prices.json",
     "fallback_symbol_rows": {
-      "AAPL": 267,
-      "MSFT": 267,
-      "NVDA": 267,
-      "QQQ": 267
+      "AAPL": 270,
+      "MSFT": 270,
+      "NVDA": 270,
+      "QQQ": 270
     },
     "note": "The browser reports the actual per-session source separately at runtime."
   },
@@ -47,40 +48,63 @@
     "market_update": {
       "status": "completed",
       "conclusion": "success",
-      "updated_at": "2026-07-30T23:33:09Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/30590854127"
+      "updated_at": "2026-07-31T22:01:10Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/30668534587"
     },
     "historical_update": {
       "status": "completed",
       "conclusion": "success",
-      "updated_at": "2026-07-25T13:41:18Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/30160188165"
+      "updated_at": "2026-07-31T22:02:13Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/30668566662"
     },
     "quality_checks": {
       "status": "completed",
       "conclusion": "success",
-      "updated_at": "2026-07-23T11:30:07Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/30003333008"
+      "updated_at": "2026-07-31T21:59:20Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/30668431707"
+    },
+    "pages_smoke": {
+      "status": "in_progress",
+      "conclusion": "pending",
+      "updated_at": "2026-07-31T22:02:00Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/30668592903"
+    },
+    "shadow_update": {
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-07-31T22:02:33Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/30668623015"
     }
   },
+  "pending_updates": {
+    "historical_prices": null,
+    "shadow_observation": null
+  },
   "shadow": {
-    "archived_observation_count": 2,
-    "observation_runs_available": 2,
+    "archived_observation_count": 3,
+    "observation_runs_available": 3,
     "complete_mature_outcome_count": 0,
     "human_review_gate": false,
     "live_promotion_eligible": false
   },
+  "research_pipeline": {
+    "dca_l2_v2_valid": true,
+    "schedule_event_count": 269,
+    "executed_trade_count": 4842,
+    "research_only": true
+  },
   "operational_metrics": {
-    "data_delay_count": 3,
+    "data_delay_count": 0,
     "workflow_failure_rate": 0.0,
-    "watchlist_degradation_ratio": 0,
+    "workflow_unknown_count": 1,
+    "watchlist_degradation_ratio": null,
     "shadow_missing_rate": 0.0,
-    "page_js_error_count": 0,
+    "page_js_error_count": null,
     "data_source_response_ms": null
   },
   "versions": {
-    "market_input": "2026-07-30T23:33:02.797290Z",
-    "historical_input": "2026-07-10T15:59:13.794501+00:00",
+    "market_input": "2026-07-31T22:00:55.651080Z",
+    "historical_input": "2026-07-31T22:01:53.928470+00:00",
     "shadow_model": "phase6s-candidate-ranking-v1",
     "v2_research": "v2-causal-baseline"
   }
