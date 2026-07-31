@@ -14,14 +14,20 @@
   }
 
   function normalizePortfolio(items, defaultStocks, allowCustom) {
-    const supportedSymbols = new Set((defaultStocks || []).map((stock) => stock.symbol));
+    const options = defaultStocks && !Array.isArray(defaultStocks) ? defaultStocks : null;
+    const supported = Array.isArray(defaultStocks) ? defaultStocks : [];
+    const supportedSymbols = new Set(supported.map((stock) => stock.symbol));
+    const customAllowed = options ? options.allowCustom === true : allowCustom === true;
     const seen = new Set();
     return (Array.isArray(items) ? items : []).reduce(function (portfolio, item) {
       const symbol = normalizeSymbol(item && item.symbol);
       const allocation = Number(item && item.allocation);
-      if (!symbol || (!supportedSymbols.has(symbol) && !allowCustom) || seen.has(symbol) || !Number.isFinite(allocation) || allocation < 0) return portfolio;
+      if (!symbol || (!supportedSymbols.has(symbol) && !customAllowed) || seen.has(symbol) || !Number.isFinite(allocation) || allocation < 0) return portfolio;
       seen.add(symbol);
-      portfolio.push({ symbol, name: String(item.name || symbol).trim() || symbol, allocation: round2(allocation * 100) / 100 });
+      portfolio.push({ symbol, name: String(item.name || symbol).trim() || symbol, allocation: round2(allocation * 100) / 100,
+        asset_type: String(item.asset_type || "stock"), bucket: String(item.bucket || "satellite"), sector: String(item.sector || ""),
+        target_allocation: Number.isFinite(Number(item.target_allocation)) ? Number(item.target_allocation) : allocation,
+        signal_role: String(item.signal_role || "satellite_dca_l2"), preset_version: String(item.preset_version || "") });
       return portfolio;
     }, []);
   }

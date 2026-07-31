@@ -66,7 +66,9 @@
     status.textContent = value.charAt(0).toUpperCase() + value.slice(1);
     status.dataset.status = value;
     const issueCount = Array.isArray(payload.issues) ? payload.issues.length : 0;
-    detail.textContent = issueCount ? issueCount + " operational issue(s); see report." : "Operational data and workflows are healthy. Manual decision only.";
+    const core = payload.core_satellite || {};
+    const coreNote = core.preset_version ? " Core-Satellite " + core.preset_version + "; SPY " + (core.spy_data_status || "unknown") + "; QQQ " + (core.qqq_risk_signal_status || "unknown") + "." : "";
+    detail.textContent = issueCount ? issueCount + " operational issue(s); see report." + coreNote : "Operational data and workflows are healthy. Manual decision only." + coreNote;
     if (watchlist) {
       const watchlistStatus = payload.watchlist && payload.watchlist.status;
       watchlist.textContent = watchlistStatus === "ready" ? "Ready" : watchlistStatus === "degraded" ? "Degraded" : "Unknown";

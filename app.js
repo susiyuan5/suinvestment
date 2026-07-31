@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const requiredModules = ["MarketData", "MarketAnalysis", "SignalEngine", "PortfolioPolicy", "BacktestEngine", "DcaPolicy", "SettingsStorage"];
+  const requiredModules = ["MarketData", "MarketAnalysis", "SignalEngine", "PortfolioPolicy", "BacktestEngine", "DcaPolicy", "SettingsStorage", "CoreSatellitePolicy"];
   const missingModules = requiredModules.filter(function (name) { return !globalThis[name]; });
   if (missingModules.length) {
     const warning = document.getElementById("dataQualityWarning");
@@ -18,14 +18,8 @@
     qqqPanicThreshold: -10,
     panicMultiplier: 1.3,
     panicSymbols: new Set(["MSFT", "NVDA", "AAPL", "ASML"]),
-    defaultStocks: [
-      { symbol: "BYDDY", name: "BYD Company Limited", allocation: 0.3 },
-      { symbol: "MSFT", name: "Microsoft Corporation", allocation: 0.22 },
-      { symbol: "NVDA", name: "NVIDIA Corporation", allocation: 0.18 },
-      { symbol: "AAPL", name: "Apple Inc.", allocation: 0.15 },
-      { symbol: "ASML", name: "ASML Holding N.V.", allocation: 0.1 },
-      { symbol: "KO", name: "The Coca-Cola Company", allocation: 0.05 }
-    ]
+    defaultStocks: CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET),
+    coreSatellitePresetUrl: "data/core-satellite-v1.json"
   };
 
   const STORAGE_KEYS = {
@@ -37,6 +31,7 @@
     language: "su-investment-pro:language",
     deployment: "su-investment-pro:deployment",
     backtestSettings: "su-investment-pro:backtest-settings"
+    ,coreSatelliteBackup: "su-investment-pro:core-satellite-backup"
   };
 
   const DEFAULT_DEPLOYMENT = {
@@ -862,6 +857,9 @@ amountBreakdown: "金额分解",
       benchmark: "dca"
     }),
     portfolio: normalizePortfolio(loadJson(STORAGE_KEYS.portfolio, CONFIG.defaultStocks), { allowCustom: true }),
+    coreSatellitePreset: CoreSatellitePolicy.PRESET,
+    coreSatellitePresetReady: false,
+    coreSatellitePresetError: "",
     portfolioRiskInput: normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {})),
     deployment: normalizeDeployment(loadJson(STORAGE_KEYS.deployment, DEFAULT_DEPLOYMENT)),
     cache: loadJson(STORAGE_KEYS.cache, {}),
@@ -904,6 +902,17 @@ amountBreakdown: "金额分解",
   const savePortfolioRiskBtn = document.getElementById("savePortfolioRiskBtn");
   const portfolioPositionInputsEl = document.getElementById("portfolioPositionInputs");
   const portfolioRiskSummaryEl = document.getElementById("portfolioRiskSummary");
+  const coreSatellitePresetVersionEl = document.getElementById("coreSatellitePresetVersion");
+  const coreTargetAllocationEl = document.getElementById("coreTargetAllocation");
+  const satelliteTargetAllocationEl = document.getElementById("satelliteTargetAllocation");
+  const techSatelliteAllocationEl = document.getElementById("techSatelliteAllocation");
+  const spyBasePlanEl = document.getElementById("spyBasePlan");
+  const satellitePlanTotalEl = document.getElementById("satellitePlanTotal");
+  const cashRetainedPlanEl = document.getElementById("cashRetainedPlan");
+  const coreSatelliteStatusEl = document.getElementById("coreSatelliteStatus");
+  const coreSatelliteRebalanceNoticeEl = document.getElementById("coreSatelliteRebalanceNotice");
+  const applyCoreSatellitePresetBtn = document.getElementById("applyCoreSatellitePresetBtn");
+  const restorePortfolioBackupBtn = document.getElementById("restorePortfolioBackupBtn");
   const overviewWeeklyDeploymentEl = document.getElementById("overviewWeeklyDeployment");
   const overviewPlannedBuyTotalEl = document.getElementById("overviewPlannedBuyTotal");
   const overviewOverallRiskEl = document.getElementById("overviewOverallRisk");
@@ -954,6 +963,25 @@ amountBreakdown: "金额分解",
   if (!state.portfolio.length) {
     state.portfolio = normalizePortfolio(CONFIG.defaultStocks, { allowCustom: true });
   }
+
+  function applyCoreSatellitePreset() {
+    if (!state.coreSatellitePresetReady) { window.alert("Core-Satellite preset unavailable; manual review required."); return; }
+    if (!window.confirm("Back up the current portfolio and apply the Core-Satellite v1 60/40 preset?")) return;
+    saveJson(STORAGE_KEYS.coreSatelliteBackup, state.portfolio);
+    state.portfolio = normalizePortfolio(CoreSatellitePolicy.rowsForPreset(state.coreSatellitePreset), { allowCustom: true });
+    saveJson(STORAGE_KEYS.portfolio, state.portfolio);
+    renderPortfolioTotal(); renderPortfolioRiskInputs(); render();
+  }
+  function restorePortfolioBackup() {
+    const backup = loadJson(STORAGE_KEYS.coreSatelliteBackup, null);
+    if (!Array.isArray(backup) || !backup.length) { window.alert("No portfolio backup is available."); return; }
+    if (!window.confirm("Restore the backed-up portfolio?")) return;
+    state.portfolio = normalizePortfolio(backup, { allowCustom: true });
+    saveJson(STORAGE_KEYS.portfolio, state.portfolio);
+    renderPortfolioTotal(); renderPortfolioRiskInputs(); render();
+  }
+  if (applyCoreSatellitePresetBtn) applyCoreSatellitePresetBtn.addEventListener("click", applyCoreSatellitePreset);
+  if (restorePortfolioBackupBtn) restorePortfolioBackupBtn.addEventListener("click", restorePortfolioBackup);
 
   // This dashboard runs on the user's private device, so keep the Finnhub key
   // across browser restarts. Migrate an active session key once for a seamless
@@ -1085,6 +1113,16 @@ amountBreakdown: "金额分解",
       state.dcaL2ConfigReady = false;
       state.dcaL2ConfigError = "DCA-L2 configuration unavailable; Base amounts only and manual review required.";
       if (dataQualityWarningEl) dataQualityWarningEl.textContent = state.dcaL2ConfigError;
+    }
+    try {
+      const preset = await CoreSatellitePolicy.loadPreset(CONFIG.coreSatellitePresetUrl + "?v=" + Date.now());
+      state.coreSatellitePreset = preset;
+      state.coreSatellitePresetReady = true;
+      state.coreSatellitePresetError = "";
+    } catch (error) {
+      state.coreSatellitePresetReady = false;
+      state.coreSatellitePresetError = "Core-Satellite preset unavailable; base amounts only and manual review required.";
+      if (dataQualityWarningEl) dataQualityWarningEl.textContent = state.coreSatellitePresetError;
     }
     render();
     refreshMarketData();
@@ -4743,8 +4781,32 @@ function equalizeAllocations() {
       item.entry.dcaPolicy = item.decision;
       item.entry.finalManualAmount = round2(item.decision.finalAmount);
     });
+    const satelliteDecisions = {};
+    planned.items.forEach(function (item) { satelliteDecisions[item.entry.signal.symbol] = { finalAmount: item.decision.finalAmount, crashFundAmount: item.decision.crashFundAmount }; });
+    state.coreSatellitePlan = CoreSatellitePolicy.plan({
+      preset: state.coreSatellitePreset, baseBudget: state.deployment.weeklyDeployment, crashFundRemaining: balance,
+      actualAllocations: Object.keys(portfolioRisk.positions || {}).reduce(function (map, symbol) { map[symbol] = portfolioRisk.positions[symbol].current_allocation; return map; }, {}),
+      satelliteDecisions: satelliteDecisions, spyDataValid: Boolean(state.rows.get("SPY") && getDcaL2DataStatus(buildSignalObject({ symbol: "SPY" }, state.rows.get("SPY"))) === "fresh"),
+      safetyBlocked: !state.coreSatellitePresetReady, spyCrashEnhancement: 0
+    });
     state.dcaBudgetReport = planned;
+    state.coreSatellitePlan.items.forEach(function (item) { const entry = inputs.find(function (candidate) { return candidate.entry.signal.symbol === item.symbol; }); if (entry) { entry.entry.coreSatellitePlan = item; entry.entry.finalManualAmount = item.finalAmount; } });
+    renderCoreSatelliteSummary(state.coreSatellitePlan);
     saveDcaL2Ledger();
+  }
+
+  function renderCoreSatelliteSummary(plan) {
+    if (!plan) return;
+    const summary = plan.summary || {};
+    if (coreSatellitePresetVersionEl) coreSatellitePresetVersionEl.textContent = state.coreSatellitePresetReady ? plan.version : "Unavailable";
+    if (coreTargetAllocationEl) coreTargetAllocationEl.textContent = (summary.coreTargetPct || 60) + "% / " + (summary.spyActualPct || 0).toFixed(2) + "%";
+    if (satelliteTargetAllocationEl) satelliteTargetAllocationEl.textContent = (summary.satelliteTargetPct || 40) + "% / " + (summary.satelliteActualPct || 0).toFixed(2) + "%";
+    if (techSatelliteAllocationEl) techSatelliteAllocationEl.textContent = (summary.technologyActualPct || 0).toFixed(2) + "%";
+    if (spyBasePlanEl) spyBasePlanEl.textContent = "CAD " + plan.spyBase.toFixed(2) + " / CAD " + plan.spyRedirected.toFixed(2);
+    if (satellitePlanTotalEl) satellitePlanTotalEl.textContent = "CAD " + plan.items.filter(function (row) { return row.bucket === "satellite"; }).reduce(function (sum, row) { return sum + row.finalAmount; }, 0).toFixed(2);
+    if (cashRetainedPlanEl) cashRetainedPlanEl.textContent = "CAD " + plan.cashRetained.toFixed(2);
+    if (coreSatelliteStatusEl) coreSatelliteStatusEl.textContent = state.coreSatellitePresetReady ? "Manual planning only" : "Manual review required";
+    if (coreSatelliteRebalanceNoticeEl) coreSatelliteRebalanceNoticeEl.textContent = plan.summary.spyActualPct >= 65 || plan.summary.satelliteActualPct >= 45 ? "Deviation exceeds 5 percentage points: consider manual rebalancing; no automatic sale." : "QQQ is a technology-risk signal only; no automatic trading.";
   }
 
   function createDcaL2SafeFallback(baseAmount, detail) {
