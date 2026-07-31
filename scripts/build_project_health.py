@@ -147,6 +147,10 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
     v2_validity = v2_summary.get("validity", {}) if isinstance(v2_summary, dict) else {}
     if v2_summary and not v2_validity.get("valid"):
         issues.append("v2_research_pipeline_invalid")
+    core_summary = load(root / "results" / "dca_l2" / "v2" / "core-satellite-v1" / "summary.json", {})
+    core_validity = core_summary.get("validity", {}) if isinstance(core_summary, dict) else {}
+    core_preset = load(root / "data" / "core-satellite-v1.json", {})
+    core_strategy = (core_summary.get("strategies", {}).get("core_satellite_v1", {}) if isinstance(core_summary, dict) else {})
     complete_mature = sum(
         all(row.get("outcomes", {}).get(str(horizon), {}).get("status") == "matured" for horizon in (1, 4, 12))
         for row in outcomes.get("outcomes", [])
@@ -201,6 +205,17 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
             "schedule_event_count": v2_validity.get("schedule_event_count"),
             "executed_trade_count": v2_validity.get("executed_trade_count"),
             "research_only": True,
+        },
+        "core_satellite": {
+            "preset_version": core_preset.get("version"),
+            "spy_data_status": "fresh" if historical_rows.get("SPY", {}).get("lag_days") is not None and historical_rows["SPY"]["lag_days"] <= 10 else "unavailable",
+            "qqq_risk_signal_status": "available" if historical_rows.get("QQQ", {}).get("row_count", 0) >= 50 else "unavailable",
+            "core_target_pct": float((core_preset.get("core") or {}).get("target_allocation", 0)) * 100,
+            "satellite_target_pct": round(sum(float(row.get("target_allocation", 0)) for row in core_preset.get("satellites", [])) * 100, 6) if isinstance(core_preset.get("satellites"), list) else None,
+            "technology_concentration_pct": core_strategy.get("technology_concentration"),
+            "recent_backtest_valid": core_validity.get("valid") if core_summary else None,
+            "fund_redirection_anomaly_count": sum(1 for row in (core_summary.get("data_issues", []) if isinstance(core_summary, dict) else []) if "redirect" in str(row).lower()),
+            "healthy_scope_note": "Healthy is operational workflow status only; it does not mean the strategy is effective or trading is approved.",
         },
         "operational_metrics": {
             "data_delay_count": sum(1 for lag in [market_lag] + [row["lag_days"] for row in historical_rows.values()] if lag is None or lag > 0),

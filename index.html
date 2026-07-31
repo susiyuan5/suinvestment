@@ -287,6 +287,23 @@
         </div>
       </details>
 
+      <section id="coreSatelliteSummary" class="panel core-satellite-summary" aria-labelledby="coreSatelliteTitle">
+        <div class="section-heading compact">
+          <div><p class="eyebrow">Core / Satellite</p><h2 id="coreSatelliteTitle">60% SPY core + 40% satellite</h2></div>
+          <div class="core-satellite-actions"><button id="applyCoreSatellitePresetBtn" class="secondary-button" type="button">Apply 60/40 preset</button><button id="restorePortfolioBackupBtn" class="secondary-button" type="button">Restore backup</button></div>
+        </div>
+        <div class="core-satellite-grid" aria-live="polite">
+          <span>Preset</span><strong id="coreSatellitePresetVersion">Loading</strong>
+          <span>Core target / current</span><strong id="coreTargetAllocation">60% / --</strong>
+          <span>Satellite target / current</span><strong id="satelliteTargetAllocation">40% / --</strong>
+          <span>Technology concentration</span><strong id="techSatelliteAllocation">--</strong>
+          <span>SPY base / redirect</span><strong id="spyBasePlan">CAD 0.00 / CAD 0.00</strong>
+          <span>Satellite planned</span><strong id="satellitePlanTotal">CAD 0.00</strong>
+          <span>Cash retained</span><strong id="cashRetainedPlan">CAD 0.00</strong>
+          <span id="coreSatelliteStatus">Manual review required</span><strong id="coreSatelliteRebalanceNotice">QQQ is a technology-risk signal only; no automatic trading.</strong>
+        </div>
+      </section>
+
       <main class="dashboard-layout">
         <div class="main-column">
           <section id="panicBanner" class="panic-banner hidden" aria-live="polite">
@@ -700,6 +717,7 @@
     <script src="market-analysis.js?v=contracts-1"></script>
     <script src="signal-engine.js?v=contracts-1"></script>
     <script src="portfolio-policy.js?v=contracts-1"></script>
+    <script src="core-satellite-policy.js?v=core-satellite-v1"></script>
     <script src="backtest-engine.js?v=contracts-1"></script>
     <script src="settings-storage.js?v=persistent-key-1"></script>
     <script src="app.js?v=project-hardening-3"></script>
