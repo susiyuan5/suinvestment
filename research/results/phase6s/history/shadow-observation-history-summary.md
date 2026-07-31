@@ -2,9 +2,9 @@
 
 This archive is research-only longitudinal evidence. It is not a promotion signal and does not affect live/default behavior.
 
-- Archived observation count: `2`
-- Unique observation timestamp count: `2`
-- Latest archived observation timestamp: `2026-06-19T02:02:01.345244+00:00`
+- Archived observation count: `3`
+- Unique observation timestamp count: `3`
+- Latest archived observation timestamp: `2026-07-31T21:38:56.665501+00:00`
 - Duplicate observation timestamps: `2026-06-19T00:36:16.089451+00:00`
 - Warnings: `none`
 
@@ -12,5 +12,6 @@ This archive is research-only longitudinal evidence. It is not a promotion signa
 
 - `2026-06-19T00:36:16.089451+00:00`: 12 symbols, folder `research/results/phase6s/history/20260619-003616089451Z0000`
 - `2026-06-19T02:02:01.345244+00:00`: 12 symbols, folder `research/results/phase6s/history/20260619-020201345244Z0000`
+- `2026-07-31T21:38:56.665501+00:00`: 12 symbols, folder `research/results/phase6s/history/20260731-213856665501Z0000`
 
 Minimum 8 real observation runs and 8 calendar weeks are still required before human review. Live promotion is never automatic.
