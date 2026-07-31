@@ -1,12 +1,11 @@
 # Project Health
 
 - Status: **WARNING**
-- Generated: `2026-07-31T23:11:48.197530+00:00`
+- Generated: `2026-07-31T23:39:34.852778+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
-- `workflow_historical_update_pending`
 - `workflow_quality_checks_pending`
 
 ## Historical Coverage
@@ -17,7 +16,7 @@
 ## Workflows
 
 - market_update: `completed` / `success`
-- historical_update: `in_progress` / `pending`
+- historical_update: `completed` / `success`
 - quality_checks: `in_progress` / `pending`
 - pages_smoke: `completed` / `success`
 - shadow_update: `completed` / `success`
