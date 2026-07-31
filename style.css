@@ -467,11 +467,22 @@ h3 {
 #projectHealthStatus[data-status="blocked"] { color: var(--danger); }
 
 .core-satellite-summary { margin: 1rem 0; }
+.weekly-decision-plan { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.weekly-decision-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.weekly-decision-heading h3 { margin: 0; }
+.weekly-decision-preset-notice, .weekly-decision-safety { color: var(--warning); }
+.weekly-decision-safety[data-state="ready"] { color: var(--accent); }
+.weekly-decision-rows { display: grid; gap: .55rem; }
+.weekly-decision-row { display: grid; grid-template-columns: 5rem repeat(5, minmax(7rem, 1fr)) minmax(12rem, 2fr); gap: .5rem; align-items: center; padding: .65rem; border: 1px solid var(--border); border-radius: .5rem; background: rgba(255,255,255,.02); }
+.weekly-decision-row strong { color: var(--text); }
+.weekly-decision-row span, .weekly-decision-row p { margin: 0; color: var(--muted); font-size: .82rem; overflow-wrap: anywhere; }
+.weekly-decision-cash { grid-template-columns: 8rem 10rem 1fr; }
 .core-satellite-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .core-satellite-grid { display: grid; grid-template-columns: minmax(11rem, 1fr) minmax(11rem, 1.5fr); gap: .55rem 1rem; margin-top: .75rem; }
 .core-satellite-grid span { color: var(--muted); }
 .core-satellite-grid strong { overflow-wrap: anywhere; }
 @media (max-width: 640px) { .core-satellite-grid { grid-template-columns: 1fr; gap: .25rem; } .core-satellite-grid strong { margin-bottom: .45rem; } .core-satellite-actions { width: 100%; } }
+@media (max-width: 900px) { .weekly-decision-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .weekly-decision-row strong, .weekly-decision-row p { grid-column: 1 / -1; } }
 
 .data-quality-panel.has-warning {
   border-color: rgba(255, 200, 87, 0.38);

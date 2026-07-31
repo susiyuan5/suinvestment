@@ -22,3 +22,9 @@ test("preset is exactly 100 percent and QQQ has no buy row", () => {
   assert.equal(total, 1);
   assert.equal(policy.plan({ baseBudget: 100, crashFundRemaining: 10, actualAllocations: { QQQ: 99 } }).items.some((row) => row.symbol === "QQQ"), false);
 });
+test("planner conservation includes retained cash exactly once", () => {
+  const result = policy.plan({ baseBudget: 69.23, crashFundRemaining: 100, actualAllocations: {}, satelliteDecisions: {} });
+  const allocated = result.items.reduce((sum, row) => sum + row.finalAmount, 0) + result.cashRetained;
+  assert.equal(allocated, result.conservation.source);
+  assert.equal(result.items.some((row) => row.symbol === "QQQ"), false);
+});

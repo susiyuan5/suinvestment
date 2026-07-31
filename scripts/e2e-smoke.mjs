@@ -18,7 +18,7 @@ async function main() {
   const startedAt = Date.now();
   await fs.mkdir("output/playwright", { recursive: true });
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
   await context.route("https://finnhub.io/api/v1/**", async (route) => {
     const requestUrl = new URL(route.request().url());
     const payload = requestUrl.pathname.endsWith("/quote")
@@ -76,7 +76,7 @@ async function main() {
   assert.deepEqual(consoleErrors, [], `core modules emitted console errors: ${consoleErrors.join(" | ")}`);
   assert.deepEqual(pageErrors, [], `homepage emitted page errors: ${pageErrors.join(" | ")}`);
 
-  const failedContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const failedContext = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
   const failedPage = await failedContext.newPage();
   await failedPage.route("**/data/market-data.json*", (route) => route.fulfill({
     status: 200,
@@ -99,7 +99,7 @@ async function main() {
   await failedPage.close();
   await failedContext.close();
 
-  const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "zh-CN" });
   const mobile = await mobileContext.newPage();
   await waitForDashboard(mobile);
   assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), true, "mobile page should not overflow horizontally");

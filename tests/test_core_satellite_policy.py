@@ -31,6 +31,11 @@ class CoreSatellitePolicyTests(unittest.TestCase):
         self.assertNotIn("QQQ", [row["symbol"] for row in result["items"]])
         self.assertFalse(result["summary"]["qqqGeneratesBuyAmount"])
 
+    def test_weekly_budget_and_approved_crash_fund_are_conserved_once(self):
+        result = plan_core_satellite(base_budget=69.23, crash_fund_remaining=100, actual_allocations={}, satellite_decisions={})
+        allocated = sum(row["finalAmount"] for row in result["items"]) + result["cashRetained"]
+        self.assertEqual(result["conservation"]["source"], allocated)
+
 
 if __name__ == "__main__":
     unittest.main()
