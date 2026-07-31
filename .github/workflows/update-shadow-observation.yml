@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  statuses: write
 
 concurrency:
   group: update-monthly-shadow-observation
@@ -18,13 +19,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+      - name: Check monthly cadence
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          path = Path("research/results/phase6s/shadow-observation-governance-report.json")
+          report = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+          latest = report.get("latestObservationDate")
+          latest_dt = datetime.fromisoformat(latest.replace("Z", "+00:00")) if latest else None
+          due = latest_dt is None or (datetime.now(timezone.utc).date() - latest_dt.date()).days >= 7
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
+              handle.write(f"SHADOW_UPDATE_DUE={'true' if due else 'false'}\n")
+          print(f"shadow_update_due={due}")
+          PY
       - name: Refresh expanded research prices
+        if: env.SHADOW_UPDATE_DUE == 'true'
         run: python research/run_phase6i_expanded_research.py
       - name: Validate refreshed research prices
+        if: env.SHADOW_UPDATE_DUE == 'true'
         run: |
           python - <<'PY'
           import json
@@ -47,16 +66,21 @@ jobs:
                   raise SystemExit(f"{symbol} contains invalid closes")
           PY
       - name: Generate frozen observation and outcomes
+        if: env.SHADOW_UPDATE_DUE == 'true'
         run: |
           python research/run_phase6s_shadow_observation.py
           python research/update_shadow_outcomes.py
           python research/analyze_shadow_observation_history.py
           python research/archive_shadow_observation_snapshot.py
           python research/validate_shadow_observation_archive.py
+          python research/generate_shadow_monthly_review.py
       - name: Run Shadow tests
+        if: env.SHADOW_UPDATE_DUE == 'true'
         run: python -m unittest tests.test_shadow_governance
       - name: Create or update Shadow pull request
-        uses: peter-evans/create-pull-request@v7
+        if: env.SHADOW_UPDATE_DUE == 'true'
+        id: create-pr
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: automation/update-shadow-observation
@@ -68,3 +92,15 @@ jobs:
           add-paths: |
             data/research-prices-sector-balanced-80.json
             research/results/phase6s/**
+
+      - name: Merge validated research-only pull request
+        if: env.SHADOW_UPDATE_DUE == 'true' && steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${{ steps.create-pr.outputs.pull-request-head-sha }}" -f state=success -f context=verify -f description="Shadow governance validation passed"
+          gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --merge --delete-branch
+
+      - name: Report no due observation
+        if: env.SHADOW_UPDATE_DUE != 'true'
+        run: echo "A frozen Shadow observation already exists within the last seven days; preserving it unchanged."

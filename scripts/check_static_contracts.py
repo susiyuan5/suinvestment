@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 HTML = ROOT / "index.html"
-JS_FILES = tuple(path.name for path in sorted(ROOT.glob("*.js")))
+JS_FILES = tuple(sorted([*ROOT.glob("*.js"), *(ROOT / "scripts").glob("*.mjs")]))
 REQUIRED_IDS = {
     "cards",
     "dataQualityPanel",
@@ -26,6 +26,10 @@ REQUIRED_IDS = {
     "decisionSummary",
     "decisionAction",
     "healthHistoryMetrics",
+}
+REQUIRED_PRE_APP_SCRIPTS = {
+    "market-data.js", "market-analysis.js", "signal-engine.js", "portfolio-policy.js",
+    "backtest-engine.js", "dca-policy.js", "settings-storage.js",
 }
 
 
@@ -44,11 +48,20 @@ def main() -> int:
         problems.append(f"duplicate ids: {', '.join(duplicates)}")
     if missing:
         problems.append(f"missing required ids: {', '.join(missing)}")
+    scripts = [value.split("?", 1)[0] for value in re.findall(r'<script[^>]+src=["\']([^"\']+)', source)]
+    if "app.js" not in scripts:
+        problems.append("index.html must load app.js")
+    else:
+        app_index = scripts.index("app.js")
+        missing_modules = sorted(REQUIRED_PRE_APP_SCRIPTS - set(scripts[:app_index]))
+        if missing_modules:
+            problems.append(f"required modules must load before app.js: {', '.join(missing_modules)}")
 
-    for file_name in JS_FILES:
-        completed = subprocess.run(["node", "--check", file_name], cwd=ROOT, text=True, capture_output=True)
+    for file_path in JS_FILES:
+        relative = file_path.relative_to(ROOT)
+        completed = subprocess.run(["node", "--check", str(relative)], cwd=ROOT, text=True, capture_output=True)
         if completed.returncode:
-            problems.append(f"{file_name} syntax failed: {completed.stderr.strip()}")
+            problems.append(f"{relative} syntax failed: {completed.stderr.strip()}")
 
     if problems:
         print("Static contract check failed:", file=sys.stderr)

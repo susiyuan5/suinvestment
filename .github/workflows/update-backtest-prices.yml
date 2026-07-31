@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  statuses: write
 
 concurrency:
   group: update-historical-backtest-prices
@@ -19,17 +20,17 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Install Python dependencies
         run: |
@@ -40,7 +41,10 @@ jobs:
           python -m pip install "pandas>=2,<3"
 
       - name: Refresh historical backtest prices
-        run: python scripts/update_backtest_prices.py --refresh-all
+        run: |
+          python scripts/update_backtest_prices.py --refresh-all
+          python scripts/update_backtest_daily_prices.py
+          python dca_l2_backtest_v2.py
 
       - name: Validate historical snapshot
         run: |
@@ -76,20 +80,33 @@ jobs:
               for symbol, values in summary.items():
                   handle.write(f"{symbol}_ROW_COUNT={values['count']}\n")
                   handle.write(f"{symbol}_LATEST_DATE={values['latest']}\n")
+          adjusted = json.loads(Path("data/v2/backtest-adjusted-daily.json").read_text(encoding="utf-8"))
+          if adjusted.get("version") != "adjusted-daily-v2" or adjusted.get("research_only") is not True:
+              raise SystemExit("adjusted daily v2 schema metadata is invalid")
+          for symbol in ("QQQ", "SPY"):
+              rows = adjusted.get("symbols", {}).get(symbol, [])
+              if len(rows) < 260 or any(not all(field in row for field in ("adjusted_open", "adjusted_high", "adjusted_low", "adjusted_close")) for row in rows):
+                  raise SystemExit(f"{symbol} adjusted OHLC coverage is invalid")
+          v2 = json.loads(Path("results/dca_l2/v2/summary.json").read_text(encoding="utf-8"))
+          if not v2.get("validity", {}).get("valid") or v2["validity"].get("executed_trade_count", 0) <= 0:
+              raise SystemExit("DCA-L2 v2 result is invalid or has no executed trades")
           PY
           cat snapshot-summary.env >> "$GITHUB_ENV"
 
       - name: Compile historical refresh script
-        run: python -m py_compile scripts/update_backtest_prices.py
+        run: python -m py_compile scripts/update_backtest_prices.py scripts/update_backtest_daily_prices.py dca_l2_backtest_v2.py
 
       - name: Run Python tests
         run: python -m unittest discover -s tests
 
-      - name: Check dashboard JavaScript syntax
-        run: node --check app.js
+      - name: Run Node tests and dashboard contracts
+        run: |
+          node --test tests/*.test.js
+          python scripts/check_static_contracts.py
 
       - name: Create or update refresh pull request
-        uses: peter-evans/create-pull-request@v7
+        id: create-pr
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Refresh historical backtest prices"
@@ -104,6 +121,21 @@ jobs:
             - QQQ latest date: ${{ env.QQQ_LATEST_DATE }}
             - SPY row count: ${{ env.SPY_ROW_COUNT }}
             - SPY latest date: ${{ env.SPY_LATEST_DATE }}
-            - Python tests and dashboard syntax checks: passed
+            - Adjusted OHLC v2 and non-zero causal DCA-L2 report: valid
+            - Python, Node and dashboard contract checks: passed
           add-paths: |
             data/backtest-prices.json
+            data/v2/backtest-adjusted-daily.json
+            results/dca_l2/v2/**
+
+      - name: Merge validated data-only pull request
+        if: steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${{ steps.create-pr.outputs.pull-request-head-sha }}" -f state=success -f context=verify -f description="Historical and v2 validation passed"
+          gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --merge --delete-branch
+
+      - name: Report no data changes
+        if: steps.create-pr.outputs.pull-request-number == ''
+        run: echo "No validated historical or v2 research data changes to publish."

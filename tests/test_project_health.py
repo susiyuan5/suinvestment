@@ -8,7 +8,7 @@ from scripts.build_project_health import build_health, build_history, generate
 
 
 NOW = datetime(2026, 7, 13, tzinfo=timezone.utc)
-SUCCESS = {name: {"status": "completed", "conclusion": "success"} for name in ("market_update", "historical_update", "quality_checks")}
+SUCCESS = {name: {"status": "completed", "conclusion": "success"} for name in ("market_update", "historical_update", "quality_checks", "pages_smoke", "shadow_update")}
 
 
 def write_json(root: Path, relative: str, payload: dict):
@@ -33,6 +33,7 @@ class ProjectHealthTests(unittest.TestCase):
             self.assertFalse(payload["shadow"]["live_promotion_eligible"])
             self.assertEqual(payload["watchlist"]["status"], "ready")
             self.assertIn("operational_metrics", payload)
+            self.assertIsNone(payload["operational_metrics"]["page_js_error_count"])
 
     def test_stale_snapshot_blocks_health(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -48,6 +49,37 @@ class ProjectHealthTests(unittest.TestCase):
             workflows["quality_checks"] = {"status": "completed", "conclusion": "failure"}
             payload = build_health(root, now=NOW, workflows=workflows)
             self.assertEqual(payload["status"], "warning")
+            self.assertGreater(payload["operational_metrics"]["workflow_failure_rate"], 0)
+
+    def test_failed_pages_smoke_degrades_watchlist_probe(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture_root(root)
+            workflows = dict(SUCCESS)
+            workflows["pages_smoke"] = {"status": "completed", "conclusion": "failure"}
+            payload = build_health(root, now=NOW, workflows=workflows)
+            self.assertEqual(payload["status"], "warning")
+            self.assertEqual(payload["watchlist"]["status"], "degraded")
+            self.assertEqual(payload["watchlist"]["synthetic_probe_status"], "degraded")
+
+    def test_pending_data_pr_is_visible(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture_root(root)
+            pending = {"historical_prices": {"number": 6, "url": "https://example.test/6"}}
+            payload = build_health(root, now=NOW, workflows=SUCCESS, pending_updates=pending)
+            self.assertEqual(payload["status"], "warning")
+            self.assertIn("pending_historical_prices_pr", payload["issues"])
+
+    def test_invalid_v2_research_pipeline_warns_without_live_promotion(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture_root(root)
+            write_json(root, "results/dca_l2/v2/summary.json", {"research_only": True, "validity": {"valid": False}})
+            payload = build_health(root, now=NOW, workflows=SUCCESS)
+            self.assertEqual(payload["status"], "warning")
+            self.assertFalse(payload["research_pipeline"]["dca_l2_v2_valid"])
+            self.assertFalse(payload["shadow"]["live_promotion_eligible"])
 
     def test_generation_failure_preserves_last_valid_report(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -30,6 +30,9 @@ class DcaL2BacktestV2Tests(unittest.TestCase):
         self.assertIn("2026-01-05", trade_lines[1])
         self.assertIn("2026-01-07", trade_lines[1])
         self.assertTrue(result["research_only"])
+        self.assertTrue(result["validity"]["valid"])
+        self.assertEqual(len(result["provenance"]["input_hash"]), 64)
+        self.assertEqual(len(result["provenance"]["code_hash"]), 64)
 
     def test_missing_adjusted_open_is_recorded_and_never_replaced_by_close(self):
         dates = ["2026-01-05", "2026-01-06"]
@@ -38,6 +41,7 @@ class DcaL2BacktestV2Tests(unittest.TestCase):
         result = run_backtest(prices, output)
         self.assertTrue(any(item["kind"] == "skipped_no_adjusted_open_after_tuesday" for item in result["data_issues"]))
         self.assertEqual(0, result["strategies"]["dca_l2_v2"]["total_investment"])
+        self.assertFalse(result["validity"]["valid"])
 
     def test_external_deposits_are_equal_and_friction_is_applied(self):
         dates = ["2026-01-05", "2026-01-06", "2026-01-13"]
@@ -48,6 +52,15 @@ class DcaL2BacktestV2Tests(unittest.TestCase):
         self.assertEqual(summaries["budget_matched_fixed_dca"]["external_deposits"], summaries["dca_l2_v2"]["external_deposits"])
         self.assertGreater(summaries["budget_matched_fixed_dca"]["total_friction_cost"], 0)
         self.assertEqual("dca-l2-v2", result["config_version"])
+
+    def test_monthly_policy_budgets_reset_and_return_excludes_idle_cash(self):
+        dates = ["2026-01-05", "2026-01-06", "2026-02-02", "2026-02-03", "2026-03-02", "2026-03-03"]
+        rows = {symbol: [{"date": value, "adjusted_close": 100, "adjusted_open": 100} for value in dates] for symbol in SYMBOLS}
+        prices, output = self.write_prices(rows)
+        result = run_backtest(prices, output)
+        summary = result["strategies"]["dca_l2_v2"]
+        self.assertGreater(summary["total_investment"], 400)
+        self.assertAlmostEqual(summary["total_return"], summary["final_value"] - summary["external_deposits"], places=2)
 
 
 if __name__ == "__main__":

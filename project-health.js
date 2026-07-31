@@ -16,6 +16,10 @@
     return String(value);
   }
 
+  function hasNumericValue(value) {
+    return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+  }
+
   function renderHistory(history) {
     const entries = history && Array.isArray(history.entries) ? history.entries : [];
     if (historyWindow) historyWindow.textContent = "Last " + String((history && history.retention_days) || 90) + " days";
@@ -43,7 +47,7 @@
       label.textContent = item[0];
       value.textContent = formatValue(item[1], latest[item[1]]);
       card.append(label, value);
-      if (previous && Number.isFinite(Number(latest[item[1]])) && Number.isFinite(Number(previous[item[1]]))) {
+      if (previous && hasNumericValue(latest[item[1]]) && hasNumericValue(previous[item[1]])) {
         const delta = document.createElement("small");
         const change = Number(latest[item[1]]) - Number(previous[item[1]]);
         delta.textContent = (change > 0 ? "+" : "") + formatValue(item[1], change) + " vs previous";
@@ -63,7 +67,10 @@
     status.dataset.status = value;
     const issueCount = Array.isArray(payload.issues) ? payload.issues.length : 0;
     detail.textContent = issueCount ? issueCount + " operational issue(s); see report." : "Operational data and workflows are healthy. Manual decision only.";
-    if (watchlist) watchlist.textContent = payload.watchlist && payload.watchlist.status === "ready" ? "Fallback ready" : "Degraded";
+    if (watchlist) {
+      const watchlistStatus = payload.watchlist && payload.watchlist.status;
+      watchlist.textContent = watchlistStatus === "ready" ? "Ready" : watchlistStatus === "degraded" ? "Degraded" : "Unknown";
+    }
     renderHistory(history);
     window.__SUINVESTMENT_HEALTH__ = payload;
     window.dispatchEvent(new CustomEvent("project-health:loaded", { detail: { report: payload, history: history } }));

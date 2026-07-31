@@ -6,7 +6,7 @@ This is a data-maintenance process only. It does not change algorithm logic, liv
 
 ## What Gets Refreshed
 
-Run `scripts/update_backtest_prices.py` to update `data/backtest-prices.json`.
+Run `scripts/update_backtest_prices.py` to update the backward-compatible weekly `data/backtest-prices.json`. Run `scripts/update_backtest_daily_prices.py` to update the isolated v2 adjusted daily OHLC input at `data/v2/backtest-adjusted-daily.json`.
 
 The snapshot contains weekly closes for:
 
@@ -54,9 +54,12 @@ Run these commands from the repository root:
 
 ```powershell
 python scripts\update_backtest_prices.py
-python -m py_compile scripts\update_backtest_prices.py
+python scripts\update_backtest_daily_prices.py
+python dca_l2_backtest_v2.py
+python -m py_compile scripts\update_backtest_prices.py scripts\update_backtest_daily_prices.py dca_l2_backtest_v2.py
 python -m unittest discover -s tests
-node --check app.js
+node --test tests/*.test.js
+python scripts\check_static_contracts.py
 ```
 
 The default script behavior preserves existing symbol history when it already has at least 50 weekly rows, and fetches missing or short histories. Use `--refresh-all` only when intentionally refreshing every symbol:
@@ -119,21 +122,22 @@ The automated workflow:
 2. Sets up Python.
 3. Sets up Node.
 4. Installs Python dependencies from `requirements.txt`.
-5. Runs `python scripts/update_backtest_prices.py --refresh-all`.
-6. Validates `data/backtest-prices.json`.
-7. Compiles `scripts/update_backtest_prices.py`.
+5. Refreshes weekly closes and the versioned adjusted daily OHLC input.
+6. Runs the causal DCA-L2 v2 report and requires non-zero scheduled events, executed trades, and `validity.valid=true`.
+7. Validates both price schemas and compiles all refresh/backtest scripts.
 8. Runs `python -m unittest discover -s tests`.
-9. Runs `node --check app.js`.
-10. Uses `peter-evans/create-pull-request@v7` to create or update the refresh pull request only if `data/backtest-prices.json` changed and every validation step passed.
+9. Runs all Node tests and static dashboard contracts.
+10. Uses `peter-evans/create-pull-request@v8` to create a data-only PR, marks its generated commit verified, and merges it only after every validation step passes.
 
 The workflow needs these repository permissions:
 
 - `contents: write`
 - `pull-requests: write`
+- `statuses: write`
 
 In repository **Settings → Actions → General**, enable **Allow GitHub Actions to create and approve pull requests**. The YAML permissions alone cannot override that repository-level setting.
 
-PR-based updates are safer than direct pushes to `main` because the refreshed snapshot can be reviewed before merge. This matters because Market Regime can affect live recommendation outputs through real data inputs.
+PR-based updates preserve an auditable commit boundary. The workflow automatically merges only its own data/research artifacts after the complete validation suite succeeds; failures and no-change runs preserve the last valid snapshot.
 
 ## Automated Validation Checks
 

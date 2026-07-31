@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const requiredModules = ["MarketData", "SignalEngine", "PortfolioPolicy", "BacktestEngine", "DcaPolicy"];
+  const requiredModules = ["MarketData", "MarketAnalysis", "SignalEngine", "PortfolioPolicy", "BacktestEngine", "DcaPolicy", "SettingsStorage"];
   const missingModules = requiredModules.filter(function (name) { return !globalThis[name]; });
   if (missingModules.length) {
     const warning = document.getElementById("dataQualityWarning");
@@ -29,7 +29,6 @@
   };
 
   const STORAGE_KEYS = {
-    apiKey: "su-investment-pro:finnhub-key",
     cache: "su-investment-pro:market-cache",
     overrides: "su-investment-pro:manual-overrides",
     portfolio: "su-investment-pro:portfolio",
@@ -959,17 +958,11 @@ amountBreakdown: "金额分解",
   // This dashboard runs on the user's private device, so keep the Finnhub key
   // across browser restarts. Migrate an active session key once for a seamless
   // transition from the previous session-only behavior.
-  const storedApiKey = localStorage.getItem(STORAGE_KEYS.apiKey)
-    || sessionStorage.getItem(STORAGE_KEYS.apiKey)
-    || "";
+  const storedApiKey = SettingsStorage.loadApiKey(localStorage, sessionStorage);
   apiKeyInput.value = storedApiKey;
-  if (storedApiKey) localStorage.setItem(STORAGE_KEYS.apiKey, storedApiKey);
-  sessionStorage.removeItem(STORAGE_KEYS.apiKey);
 
   apiKeyInput.addEventListener("input", function () {
-    const value = apiKeyInput.value.trim();
-    if (value) localStorage.setItem(STORAGE_KEYS.apiKey, value);
-    else localStorage.removeItem(STORAGE_KEYS.apiKey);
+    SettingsStorage.saveApiKey(apiKeyInput.value, localStorage, sessionStorage);
   });
 
   openSettingsBtn.addEventListener("click", openSettings);
@@ -1232,7 +1225,7 @@ amountBreakdown: "金额分解",
   }
 
   async function searchFinnhubSymbols(query, signal) {
-    var apiKey = localStorage.getItem(STORAGE_KEYS.apiKey);
+    var apiKey = SettingsStorage.getApiKey(localStorage);
     if (!apiKey) return null;
     try {
       var url = "https://finnhub.io/api/v1/search?q=" + encodeURIComponent(query) + "&token=" + apiKey;
@@ -2279,113 +2272,25 @@ amountBreakdown: "金额分解",
   }
 
   function analyzeTickerTrend(closes, decisionChange) {
-    if (!Array.isArray(closes) || closes.length < 21) {
-      return {
-        status: "mixed",
-        label: t("trendMixed"),
-        return_4w: null,
-        return_12w: null,
-        ma20_trend: null,
-        severe: false,
-        healthy_pullback: false
-      };
-    }
-
-    const latest = closes[closes.length - 1];
-    const return4 = percentChangeFromCloses(closes, 4);
-    const return12 = percentChangeFromCloses(closes, 12);
-    const ma20 = movingAverage(closes, 20, 0);
-    const priorMa20 = movingAverage(closes, 20, 4);
-    const ma20Trend = isFiniteNumber(ma20) && isFiniteNumber(priorMa20) && priorMa20 > 0
-      ? ((ma20 - priorMa20) / priorMa20) * 100
-      : null;
-    const strongDowntrend = (
-      (isFiniteNumber(return4) && return4 <= -8 && isFiniteNumber(return12) && return12 <= -12) ||
-      (isFiniteNumber(ma20) && latest < ma20 && isFiniteNumber(ma20Trend) && ma20Trend < 0 && isFiniteNumber(return12) && return12 < 0)
-    );
-    const severe = isFiniteNumber(return12) && return12 <= -25;
-    const healthyPullback = (
-      isFiniteNumber(decisionChange) &&
-      decisionChange < 0 &&
-      isFiniteNumber(return12) &&
-      return12 > 5 &&
-      isFiniteNumber(ma20) &&
-      latest >= ma20 * 0.95 &&
-      (!isFiniteNumber(ma20Trend) || ma20Trend >= 0)
-    );
-
-    if (strongDowntrend) {
-      return {
-        status: "strong_downtrend",
-        label: t("trendStrongDowntrend"),
-        return_4w: round2(return4),
-        return_12w: round2(return12),
-        ma20_trend: isFiniteNumber(ma20Trend) ? round2(ma20Trend) : null,
-        severe,
-        healthy_pullback: false
-      };
-    }
-
-    if (healthyPullback) {
-      return {
-        status: "healthy_pullback",
-        label: t("trendHealthyPullback"),
-        return_4w: round2(return4),
-        return_12w: round2(return12),
-        ma20_trend: isFiniteNumber(ma20Trend) ? round2(ma20Trend) : null,
-        severe: false,
-        healthy_pullback: true
-      };
-    }
-
-    return {
-      status: "mixed",
-      label: t("trendMixed"),
-      return_4w: isFiniteNumber(return4) ? round2(return4) : null,
-      return_12w: isFiniteNumber(return12) ? round2(return12) : null,
-      ma20_trend: isFiniteNumber(ma20Trend) ? round2(ma20Trend) : null,
-      severe: false,
-      healthy_pullback: false
-    };
+    const trend = MarketAnalysis.tickerTrend(closes, decisionChange);
+    const labelKey = trend.status === "strong_downtrend" ? "trendStrongDowntrend" : trend.status === "healthy_pullback" ? "trendHealthyPullback" : "trendMixed";
+    return { ...trend, label: t(labelKey) };
   }
 
   function calculateWeeklyVolatility(closes, periods) {
-    if (!Array.isArray(closes) || closes.length < 3) return null;
-    const start = Math.max(1, closes.length - periods);
-    const returns = [];
-    for (let index = start; index < closes.length; index += 1) {
-      const previous = closes[index - 1];
-      const current = closes[index];
-      if (previous > 0 && current > 0) returns.push((current - previous) / previous);
-    }
-    if (returns.length < 2) return null;
-    const average = returns.reduce(function (sum, value) { return sum + value; }, 0) / returns.length;
-    const variance = returns.reduce(function (sum, value) {
-      return sum + Math.pow(value - average, 2);
-    }, 0) / (returns.length - 1);
-    return Math.sqrt(variance);
+    return MarketAnalysis.weeklyVolatility(closes, periods);
   }
 
   function calculateRecentDrawdown(closes, lookback) {
-    if (!Array.isArray(closes) || !closes.length) return null;
-    const window = closes.slice(Math.max(0, closes.length - lookback));
-    const high = Math.max.apply(null, window);
-    const latest = closes[closes.length - 1];
-    return high > 0 ? ((high - latest) / high) * 100 : null;
+    return MarketAnalysis.recentDrawdown(closes, lookback);
   }
 
   function movingAverage(closes, length, offset) {
-    if (!Array.isArray(closes) || closes.length < length + offset) return null;
-    const end = closes.length - offset;
-    const slice = closes.slice(end - length, end);
-    return slice.reduce(function (sum, value) { return sum + value; }, 0) / slice.length;
+    return MarketAnalysis.movingAverage(closes, length, offset);
   }
 
   function percentChangeFromCloses(closes, periods) {
-    if (!Array.isArray(closes) || closes.length <= periods) return null;
-    const current = closes[closes.length - 1];
-    const previous = closes[closes.length - 1 - periods];
-    return previous > 0 ? ((current - previous) / previous) * 100 : null;
+    return MarketAnalysis.percentChange(closes, periods);
   }
 
   function getMarketRegimeMultiplierCap(type) {
@@ -2396,41 +2301,20 @@ amountBreakdown: "金额分解",
   }
 
   function calculateMarketRegimeFromPrices(rows, proxy) {
-    const validRows = Array.isArray(rows) ? rows.reduce(function (items, row) {
-      const close = Number(row.close);
-      if (row.date && Number.isFinite(close) && close > 0) {
-        items.push({ date: row.date, close });
-      }
-      return items;
-    }, []) : [];
-    const closes = validRows.map(function (row) {
-      return row.close;
-    });
-    if (closes.length < 50) return getNeutralMarketRegime(proxy);
-
-    const latest = closes[closes.length - 1];
-    const ma20 = movingAverage(closes, 20, 0);
-    const ma50 = movingAverage(closes, 50, 0);
-    const drawdown = calculateRecentDrawdown(closes, 52);
-    let type = "Neutral";
-
-    if (isFiniteNumber(drawdown) && drawdown > 20) type = "Bear";
-    else if (isFiniteNumber(ma50) && latest < ma50) type = "Bear";
-    else if (isFiniteNumber(ma20) && isFiniteNumber(ma50) && latest > ma20 && ma20 > ma50) type = "Bull";
-    else if (isFiniteNumber(ma20) && latest < ma20) type = "Correction";
-
-    const regimeMeta = createHistoricalIndicatorMeta(validRows, "Historical weekly prices / " + (proxy || "Market"));
+    const analysis = MarketAnalysis.marketRegime(rows);
+    if (!analysis) return getNeutralMarketRegime(proxy);
+    const regimeMeta = createHistoricalIndicatorMeta(analysis.rows, "Historical weekly prices / " + (proxy || "Market"));
     return {
-      type,
-      label: displayMarketRegime(type),
+      type: analysis.type,
+      label: displayMarketRegime(analysis.type),
       proxy: proxy || "QQQ",
-      row_count: validRows.length,
-      latest_date: validRows[validRows.length - 1].date,
-      latest_price: round2(latest),
-      ma20: round2(ma20),
-      ma50: round2(ma50),
-      drawdown: isFiniteNumber(drawdown) ? round2(drawdown) : null,
-      max_multiplier: getMarketRegimeMultiplierCap(type),
+      row_count: analysis.rows.length,
+      latest_date: analysis.rows[analysis.rows.length - 1].date,
+      latest_price: analysis.latest,
+      ma20: analysis.ma20,
+      ma50: analysis.ma50,
+      drawdown: analysis.drawdown,
+      max_multiplier: getMarketRegimeMultiplierCap(analysis.type),
       field_meta: {
         marketRegime: regimeMeta
       }
