@@ -31,9 +31,29 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Run deployed smoke test
-        run: node scripts/e2e-smoke.mjs
+        run: |
+          for attempt in 1 2 3; do
+            if node scripts/e2e-smoke.mjs; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Published assets may still be propagating; retrying smoke test in 15 seconds (attempt $attempt/3)."
+              sleep 15
+            fi
+          done
+          exit 1
       - name: Run accessibility and mobile audit
-        run: node scripts/a11y-mobile-audit.mjs
+        run: |
+          for attempt in 1 2 3; do
+            if node scripts/a11y-mobile-audit.mjs; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Published assets may still be propagating; retrying accessibility audit in 15 seconds (attempt $attempt/3)."
+              sleep 15
+            fi
+          done
+          exit 1
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v7
