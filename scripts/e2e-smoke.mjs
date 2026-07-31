@@ -19,6 +19,13 @@ async function main() {
   await fs.mkdir("output/playwright", { recursive: true });
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  await context.route("https://finnhub.io/api/v1/**", async (route) => {
+    const requestUrl = new URL(route.request().url());
+    const payload = requestUrl.pathname.endsWith("/quote")
+      ? { c: 100, pc: 99 }
+      : { s: "ok", c: [90, 92, 94, 96, 98, 100] };
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
+  });
   const page = await context.newPage();
   const consoleErrors = [];
   const pageErrors = [];
@@ -69,7 +76,8 @@ async function main() {
   assert.deepEqual(consoleErrors, [], `core modules emitted console errors: ${consoleErrors.join(" | ")}`);
   assert.deepEqual(pageErrors, [], `homepage emitted page errors: ${pageErrors.join(" | ")}`);
 
-  const failedPage = await context.newPage();
+  const failedContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const failedPage = await failedContext.newPage();
   await failedPage.route("**/data/market-data.json*", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
@@ -77,10 +85,19 @@ async function main() {
   }));
   await failedPage.route("**/query1.finance.yahoo.com/**", (route) => route.abort());
   await failedPage.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  await failedPage.waitForFunction(() => Array.isArray(window.__SUINVESTMENT_SIGNALS__) && window.__SUINVESTMENT_SIGNALS__.length > 0, null, { timeout: 15000 });
+  await failedPage.waitForFunction(() => {
+    const refresh = document.querySelector("#refreshBtn");
+    return refresh?.getAttribute("aria-busy") === "false"
+      && Array.isArray(window.__SUINVESTMENT_SIGNALS__)
+      && window.__SUINVESTMENT_SIGNALS__.length > 0;
+  }, null, { timeout: 15000 });
   const failedSignals = await failedPage.evaluate(() => window.__SUINVESTMENT_SIGNALS__.map((signal) => ({ action: signal.suggested_action, amount: signal.suggested_buy_amount })));
-  assert.ok(failedSignals.every((signal) => signal.amount === 0 && !["BUY", "STRONG_BUY", "NORMAL_BUY"].includes(signal.action)), "failed data must not generate enhanced buy recommendations");
+  assert.ok(
+    failedSignals.every((signal) => signal.amount === 0 && !["BUY", "STRONG_BUY", "NORMAL_BUY"].includes(signal.action)),
+    `failed data must not generate enhanced buy recommendations: ${JSON.stringify(failedSignals)}`
+  );
   await failedPage.close();
+  await failedContext.close();
 
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const mobile = await mobileContext.newPage();
@@ -99,5 +116,8 @@ async function main() {
 
 main().catch((error) => {
   console.error(error.stack || error.message);
-  process.exitCode = 1;
+  // A failed assertion can leave Chromium handles open and make CI wait for
+  // the job timeout. Exit immediately after reporting the actionable error;
+  // the runner owns and cleans up the child browser process.
+  process.exit(1);
 });

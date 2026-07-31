@@ -1099,6 +1099,7 @@ amountBreakdown: "金额分解",
     state.loading = true;
     state.pendingRefresh = false;
     refreshBtn.disabled = true;
+    refreshBtn.setAttribute("aria-busy", "true");
     refreshBtn.textContent = t("refreshing");
     lastUpdatedEl.textContent = t("refreshingMarketData");
     copyStatusEl.textContent = "";
@@ -1135,6 +1136,7 @@ amountBreakdown: "金额分解",
 
     state.loading = false;
     refreshBtn.disabled = false;
+    refreshBtn.setAttribute("aria-busy", "false");
     refreshBtn.textContent = t("refreshPrices");
 
     if (state.pendingRefresh) {

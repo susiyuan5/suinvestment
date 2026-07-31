@@ -3454,14 +3454,31 @@ input::placeholder {
   .inline-holdings-heading {
     align-items: stretch;
     flex-direction: column;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .inline-holdings-heading > div,
+  .inline-holdings-heading h2,
+  .inline-holdings-heading .eyebrow {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .inline-holdings-mode {
-    width: fit-content;
+    width: auto;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .inline-holdings-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
   }
 
   .inline-holding-row {
