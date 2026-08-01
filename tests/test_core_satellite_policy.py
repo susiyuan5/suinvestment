@@ -2,10 +2,18 @@ import json
 import unittest
 from pathlib import Path
 
-from core_satellite_policy import load_preset, plan_core_satellite, validate_preset
+from core_satellite_policy import allocation_metrics, load_preset, plan_core_satellite, validate_allocations, validate_preset
 
 
 class CoreSatellitePolicyTests(unittest.TestCase):
+    def test_allocation_constraints(self):
+        valid = {"SPY": .60, "NVDA": .10, "AAPL": .10, "ASML": .08, "KO": .07, "BYDDY": .05}
+        self.assertTrue(validate_allocations(valid)["valid"])
+        self.assertFalse(validate_allocations({**valid, "SPY": .54, "NVDA": .11})["valid"])
+        self.assertFalse(validate_allocations({**valid, "NVDA": .13, "SPY": .57})["valid"])
+        self.assertFalse(validate_allocations({**valid, "KO": float("nan")})["valid"])
+        self.assertEqual(allocation_metrics(valid)["allocated"], 100)
+
     def test_shared_golden_fixtures(self):
         fixtures = json.loads((Path(__file__).parent / "fixtures" / "core_satellite_cases.json").read_text(encoding="utf-8"))
         preset = load_preset()

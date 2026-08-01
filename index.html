@@ -66,7 +66,6 @@
         <p class="decision-summary-note">健康仅表示数据和工作流正常，不代表策略有效或允许交易。研究和回测结果仅供辅助复核。</p>
         <section id="weeklyDecisionPlan" class="weekly-decision-plan" aria-labelledby="weeklyDecisionPlanTitle">
           <div class="weekly-decision-heading"><h3 id="weeklyDecisionPlanTitle">本周资金计划</h3><strong id="weeklyDecisionTotal">CAD 0.00</strong></div>
-          <p id="weeklyDecisionPresetNotice" class="weekly-decision-preset-notice" hidden>当前尚未应用 60% 大盘＋40% 个股预设。</p>
           <p id="weeklyDecisionSafety" class="weekly-decision-safety">等待数据或计算安全检查。</p>
           <div id="weeklyDecisionRows" class="weekly-decision-rows" aria-live="polite"></div>
         </section>
@@ -295,7 +294,7 @@
       <section id="coreSatelliteSummary" class="panel core-satellite-summary" aria-labelledby="coreSatelliteTitle">
         <div class="section-heading compact">
           <div><p class="eyebrow">核心 / 卫星</p><h2 id="coreSatelliteTitle">SPY 60% 核心 + 个股 40% 卫星</h2></div>
-          <div class="core-satellite-actions"><button id="applyCoreSatellitePresetBtn" class="secondary-button" type="button">应用 60/40 预设</button><button id="restorePortfolioBackupBtn" class="secondary-button" type="button">恢复组合备份</button></div>
+          <div class="core-satellite-actions"><button id="saveCustomAllocationBtn" class="secondary-button" type="button">保存自定义比例</button><button id="restoreDefaultAllocationBtn" class="secondary-button" type="button">恢复默认 60/40</button><button id="undoAllocationBtn" class="secondary-button" type="button">撤销本次修改</button></div>
         </div>
         <div class="core-satellite-grid" aria-live="polite">
           <span>预设版本</span><strong id="coreSatellitePresetVersion">加载中</strong>
@@ -307,6 +306,15 @@
           <span>保留现金</span><strong id="cashRetainedPlan">CAD 0.00</strong>
           <span id="coreSatelliteStatus">需要人工复核</span><strong id="coreSatelliteRebalanceNotice">QQQ 仅作为科技风险指标；不会自动下单。</strong>
         </div>
+      </section>
+
+      <section id="coreSatelliteAllocationEditor" class="panel allocation-editor" aria-labelledby="allocationEditorTitle">
+        <div class="section-heading compact"><div><p class="eyebrow">组合设置</p><h2 id="allocationEditorTitle">目标比例设置</h2></div><span id="allocationEditorStatus" aria-live="polite"></span></div>
+        <div id="allocationEditorRows" class="allocation-editor-rows"></div>
+        <div class="allocation-editor-metrics" aria-live="polite">
+          <span>已分配 <strong id="allocationEditorAllocated">0.00%</strong></span><span>剩余 <strong id="allocationEditorRemaining">100.00%</strong></span><span>超出 <strong id="allocationEditorOverage">0.00%</strong></span><span>大盘仓 <strong id="allocationEditorCore">0.00%</strong></span><span>个股仓 <strong id="allocationEditorSatellite">0.00%</strong></span><span>科技个股 <strong id="allocationEditorTechnology">0.00%</strong></span>
+        </div>
+        <p id="allocationEditorErrors" class="form-error" aria-live="polite"></p>
       </section>
 
       <main class="dashboard-layout">

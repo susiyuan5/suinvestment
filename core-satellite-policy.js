@@ -28,6 +28,30 @@
   function normalizedPreset(preset) { return validatePreset(preset) ? clone(preset) : null; }
   function loadPreset(url) { return fetch(url).then(function (response) { if (!response.ok) throw new Error("preset fetch failed"); return response.json(); }).then(function (value) { var result = normalizedPreset(value); if (!result) throw new Error("invalid core-satellite preset"); return result; }); }
   function rowsForPreset(preset) { var p = normalizedPreset(preset) || clone(PRESET); return [p.core].concat(p.satellites).map(function (row) { return Object.assign({}, row, { allocation: row.target_allocation, preset_version: p.version }); }); }
+  function allocationMetrics(allocations) {
+    var values = allocations || {}, symbols = ["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"];
+    var allocated = symbols.reduce(function (sum, symbol) { var n = finite(values[symbol]); return sum + (n === null ? 0 : n); }, 0);
+    var tech = ["NVDA", "AAPL", "ASML"].reduce(function (sum, symbol) { var n = finite(values[symbol]); return sum + (n === null ? 0 : n); }, 0);
+    var core = finite(values.SPY) || 0;
+    return { allocated: allocated * 100, remaining: Math.max(0, 100 - allocated * 100), overage: Math.max(0, allocated * 100 - 100), core: core * 100, satellite: (allocated - core) * 100, technology: tech * 100 };
+  }
+  function validateAllocations(allocations) {
+    var values = allocations || {}, symbols = ["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"], errors = [];
+    symbols.forEach(function (symbol) { var raw = values[symbol]; if (raw === "" || raw === null || raw === undefined || finite(raw) === null || finite(raw) < 0) errors.push(symbol + "比例必须是非负数字"); });
+    var metrics = allocationMetrics(values);
+    if (Math.abs(metrics.allocated - 100) > 1e-7) errors.push("六项比例合计必须严格等于 100%");
+    if (metrics.core < 55 || metrics.core > 80) errors.push("SPY 比例必须在 55% 至 80% 之间");
+    if (metrics.satellite < 20 || metrics.satellite > 45) errors.push("个股合计比例必须在 20% 至 45% 之间");
+    ["NVDA", "AAPL", "ASML", "KO", "BYDDY"].forEach(function (symbol) { if ((finite(values[symbol]) || 0) > 0.12) errors.push(symbol + "单股比例不得高于 12%"); });
+    if (metrics.technology > 35) errors.push("科技个股合计比例不得高于 35%");
+    return { valid: errors.length === 0, errors: errors, metrics: metrics };
+  }
+  function presetFromAllocations(allocations, basePreset) {
+    var p = normalizedPreset(basePreset) || clone(PRESET), result = clone(p), values = allocations || {};
+    result.core.target_allocation = Number(values.SPY);
+    result.satellites.forEach(function (row) { row.target_allocation = Number(values[row.symbol]); });
+    return validatePreset(result) ? result : null;
+  }
   function reason(row, code) { row.reasonCodes = row.reasonCodes || []; if (row.reasonCodes.indexOf(code) < 0) row.reasonCodes.push(code); }
   function plan(input) {
     var p = normalizedPreset(input && input.preset) || clone(PRESET), budget = input || {}, baseBudget = money(budget.baseBudget == null ? budget.base_budget : budget.baseBudget), crashBudget = money(budget.crashFundRemaining == null ? budget.crash_fund_remaining : budget.crashFundRemaining), spy = p.core.symbol;
@@ -37,7 +61,7 @@
     var spyUsable = spyDataValid && budget.safetyBlocked !== true;
     var rows = [], normalRemaining = baseBudget, redirect = 0;
     var spyBase = money(baseBudget * p.core.target_allocation);
-    rows.push({ symbol: spy, bucket: "core", originalBaseAmount: spyBase, dcaAdjustedAmount: spyBase, crashFundEnhancement: 0, riskReduction: 0, redirectedToSpy: 0, cashRetained: 0, finalAmount: spyUsable ? spyBase : 0, reasonCodes: spyUsable ? [] : ["SPY_DATA_OR_SAFETY_BLOCK"], factorChain: ["base:60%"] });
+    rows.push({ symbol: spy, bucket: "core", originalBaseAmount: spyBase, dcaAdjustedAmount: spyBase, crashFundEnhancement: 0, riskReduction: 0, redirectedToSpy: 0, cashRetained: 0, finalAmount: spyUsable ? spyBase : 0, reasonCodes: spyUsable ? [] : ["SPY_DATA_OR_SAFETY_BLOCK"], factorChain: ["base:" + (p.core.target_allocation * 100) + "%"] });
     normalRemaining = money(Math.max(0, normalRemaining - spyBase));
     p.satellites.forEach(function (asset) {
       var original = money(baseBudget * asset.target_allocation), adjusted = money(satelliteDecisions[asset.symbol] && satelliteDecisions[asset.symbol].finalAmount);
@@ -58,7 +82,7 @@
     if (spyUsable) { rows[0].crashFundEnhancement = enhancement; rows[0].finalAmount = money(rows[0].finalAmount + enhancement); } else { enhancement = 0; }
     var total = money(rows.reduce(function (s, row) { return s + row.finalAmount; }, 0)), source = money(baseBudget + crashBudget), cash = money(Math.max(0, source - total));
     if (Math.abs(total + cash - source) > EPSILON) throw new Error("core-satellite plan violates conservation");
-    return { version: p.version, items: rows, spyBase: spyBase, spyRedirected: redirected, crashFundUsed: enhancement, cashRetained: money(cash), totalPlanned: total, conservation: { source: source, allocated: total, cash: cash, balanced: true }, summary: { coreTargetPct: p.core.target_allocation * 100, satelliteTargetPct: 40, satelliteActualPct: satelliteActual, technologyActualPct: techActual, spyActualPct: spyActual, qqqGeneratesBuyAmount: false } };
+    return { version: p.version, items: rows, spyBase: spyBase, spyRedirected: redirected, crashFundUsed: enhancement, cashRetained: money(cash), totalPlanned: total, conservation: { source: source, allocated: total, cash: cash, balanced: true }, summary: { coreTargetPct: p.core.target_allocation * 100, satelliteTargetPct: (1 - p.core.target_allocation) * 100, satelliteActualPct: satelliteActual, technologyActualPct: techActual, spyActualPct: spyActual, qqqGeneratesBuyAmount: false } };
   }
-  return Object.freeze({ PRESET: PRESET, validatePreset: validatePreset, normalizedPreset: normalizedPreset, loadPreset: loadPreset, rowsForPreset: rowsForPreset, plan: plan, money: money });
+  return Object.freeze({ PRESET: PRESET, validatePreset: validatePreset, normalizedPreset: normalizedPreset, loadPreset: loadPreset, rowsForPreset: rowsForPreset, allocationMetrics: allocationMetrics, validateAllocations: validateAllocations, presetFromAllocations: presetFromAllocations, plan: plan, money: money });
 }));

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 PRESET_PATH = Path(__file__).with_name("data") / "core-satellite-v1.json"
+CORE_SYMBOLS = ("SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY")
 
 
 def money(value: Any) -> float:
@@ -35,6 +36,32 @@ def validate_preset(preset: dict[str, Any]) -> bool:
     return math.isfinite(total) and abs(total - 1.0) <= 1e-9 and all(float(row.get("target_allocation", 1)) <= 0.1 and row.get("bucket") == "satellite" for row in satellites)
 
 
+def allocation_metrics(allocations: dict[str, Any]) -> dict[str, float]:
+    values = {symbol: float(allocations.get(symbol, 0) or 0) for symbol in CORE_SYMBOLS}
+    allocated = sum(values.values()) * 100
+    return {"allocated": allocated, "remaining": max(0.0, 100 - allocated), "overage": max(0.0, allocated - 100), "core": values["SPY"] * 100, "satellite": (sum(values.values()) - values["SPY"]) * 100, "technology": sum(values[symbol] for symbol in ("NVDA", "AAPL", "ASML")) * 100}
+
+
+def validate_allocations(allocations: dict[str, Any]) -> dict[str, Any]:
+    errors: list[str] = []
+    for symbol in CORE_SYMBOLS:
+        value = allocations.get(symbol)
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            number = float("nan")
+        if not math.isfinite(number) or number < 0:
+            errors.append(f"{symbol}比例必须是非负数字")
+    metrics = allocation_metrics(allocations)
+    if abs(metrics["allocated"] - 100) > 1e-7: errors.append("六项比例合计必须严格等于 100%")
+    if not 55 <= metrics["core"] <= 80: errors.append("SPY 比例必须在 55% 至 80% 之间")
+    if not 20 <= metrics["satellite"] <= 45: errors.append("个股合计比例必须在 20% 至 45% 之间")
+    for symbol in CORE_SYMBOLS[1:]:
+        if float(allocations.get(symbol) or 0) > 0.12: errors.append(f"{symbol}单股比例不得高于 12%")
+    if metrics["technology"] > 35: errors.append("科技个股合计比例不得高于 35%")
+    return {"valid": not errors, "errors": errors, "metrics": metrics}
+
+
 def plan_core_satellite(*, base_budget: float, crash_fund_remaining: float, actual_allocations: dict[str, float] | None = None, satellite_decisions: dict[str, dict[str, Any]] | None = None, blocked_symbols: list[str] | None = None, spy_data_valid: bool = True, safety_blocked: bool = False, spy_crash_enhancement: float = 0.0, preset: dict[str, Any] | None = None) -> dict[str, Any]:
     preset = preset or load_preset()
     if not validate_preset(preset):
@@ -50,7 +77,7 @@ def plan_core_satellite(*, base_budget: float, crash_fund_remaining: float, actu
     crash = money(crash_fund_remaining)
     spy_usable = spy_data_valid and not safety_blocked
     spy_base = money(base * preset["core"]["target_allocation"])
-    rows = [{"symbol": "SPY", "bucket": "core", "originalBaseAmount": spy_base, "dcaAdjustedAmount": spy_base, "crashFundEnhancement": 0.0, "riskReduction": 0.0, "redirectedToSpy": 0.0, "cashRetained": 0.0, "finalAmount": spy_base if spy_usable else 0.0, "reasonCodes": [] if spy_usable else ["SPY_DATA_OR_SAFETY_BLOCK"], "factorChain": ["base:60%"]}]
+    rows = [{"symbol": "SPY", "bucket": "core", "originalBaseAmount": spy_base, "dcaAdjustedAmount": spy_base, "crashFundEnhancement": 0.0, "riskReduction": 0.0, "redirectedToSpy": 0.0, "cashRetained": 0.0, "finalAmount": spy_base if spy_usable else 0.0, "reasonCodes": [] if spy_usable else ["SPY_DATA_OR_SAFETY_BLOCK"], "factorChain": [f"base:{preset['core']['target_allocation'] * 100}%"]}]
     redirect = 0.0
     for asset in preset["satellites"]:
         symbol = asset["symbol"]
@@ -86,4 +113,4 @@ def plan_core_satellite(*, base_budget: float, crash_fund_remaining: float, actu
     source = money(base + crash)
     cash = money(max(0.0, source - total))
     assert abs(total + cash - source) <= 0.005
-    return {"version": preset["version"], "items": rows, "spyBase": spy_base, "spyRedirected": redirected, "crashFundUsed": enhancement, "cashRetained": cash, "totalPlanned": total, "conservation": {"source": source, "allocated": total, "cash": cash, "balanced": True}, "summary": {"coreTargetPct": 60, "satelliteTargetPct": 40, "satelliteActualPct": satellite_actual, "technologyActualPct": tech_actual, "spyActualPct": spy_actual, "qqqGeneratesBuyAmount": False}}
+    return {"version": preset["version"], "items": rows, "spyBase": spy_base, "spyRedirected": redirected, "crashFundUsed": enhancement, "cashRetained": cash, "totalPlanned": total, "conservation": {"source": source, "allocated": total, "cash": cash, "balanced": True}, "summary": {"coreTargetPct": preset["core"]["target_allocation"] * 100, "satelliteTargetPct": (1 - preset["core"]["target_allocation"]) * 100, "satelliteActualPct": satellite_actual, "technologyActualPct": tech_actual, "spyActualPct": spy_actual, "qqqGeneratesBuyAmount": False}}

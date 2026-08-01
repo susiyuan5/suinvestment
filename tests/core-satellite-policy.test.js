@@ -28,3 +28,15 @@ test("planner conservation includes retained cash exactly once", () => {
   assert.equal(allocated, result.conservation.source);
   assert.equal(result.items.some((row) => row.symbol === "QQQ"), false);
 });
+test("allocation editor validates default, custom, concentration, and non-finite values", () => {
+  const valid = { SPY: 0.60, NVDA: 0.10, AAPL: 0.10, ASML: 0.08, KO: 0.07, BYDDY: 0.05 };
+  assert.equal(policy.validateAllocations(valid).valid, true);
+  assert.equal(policy.validateAllocations({ ...valid, SPY: 0.54, NVDA: 0.11 }).valid, false);
+  assert.equal(policy.validateAllocations({ ...valid, NVDA: 0.13, SPY: 0.57 }).valid, false);
+  assert.equal(policy.validateAllocations({ ...valid, NVDA: 0.12, AAPL: 0.12, ASML: 0.12, SPY: 0.59 }).valid, false);
+  assert.equal(policy.validateAllocations({ ...valid, KO: NaN }).valid, false);
+  const custom = { SPY: 0.70, NVDA: 0.06, AAPL: 0.06, ASML: 0.04, KO: 0.08, BYDDY: 0.06 };
+  const preset = policy.presetFromAllocations(custom, policy.PRESET);
+  assert.equal(preset.core.target_allocation, 0.70);
+  assert.equal(policy.plan({ preset, baseBudget: 100, crashFundRemaining: 0 }).spyBase, 70);
+});
