@@ -6,7 +6,8 @@ test("homepage uses simplified Chinese and has no language switcher", () => {
   const html = fs.readFileSync("index.html", "utf8");
   assert.match(html, /<html lang="zh-CN">/);
   assert.doesNotMatch(html, /id="languageToggle"/);
-  for (const id of ["weeklyDecisionPlan", "weeklyDecisionTotal", "weeklyDecisionRows", "weeklyDecisionSafety", "coreSatelliteSummary"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.doesNotMatch(html, /当前尚未应用 60% 大盘/);
+  for (const id of ["weeklyDecisionPlan", "weeklyDecisionTotal", "weeklyDecisionRows", "weeklyDecisionSafety", "coreSatelliteSummary", "allocationEditorRows", "saveCustomAllocationBtn", "restoreDefaultAllocationBtn", "undoAllocationBtn"]) assert.match(html, new RegExp(`id="${id}"`));
 });
 
 test("weekly decision order contract contains SPY and all five satellites", () => {

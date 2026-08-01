@@ -4533,3 +4533,14 @@ h2 {
     background: #0f1823 !important;
   }
 }
+ .allocation-editor-rows { display: grid; gap: 8px; }
+ .allocation-editor-row { display: grid; grid-template-columns: 70px minmax(120px, 1fr) 110px minmax(120px, 1fr); gap: 10px; align-items: center; }
+ .allocation-editor-row input { width: 100%; min-width: 0; }
+ .allocation-editor-metrics { display: grid; grid-template-columns: repeat(6, minmax(90px, 1fr)); gap: 8px; margin-top: 14px; }
+ .allocation-editor-metrics span { color: var(--muted, #9aa8b8); }
+ .allocation-editor-metrics strong { display: block; color: var(--text, #eef4fa); }
+ .form-error { min-height: 1.4em; color: #ffb4a8; }
+ @media (max-width: 720px) {
+   .allocation-editor-row { grid-template-columns: 1fr 1fr; }
+   .allocation-editor-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+ }
