@@ -36,7 +36,7 @@
         <div class="decision-summary-heading">
           <div>
             <p class="eyebrow">本周</p>
-            <h2 id="decision-summary-title">本周定投决策</h2>
+            <h2 id="decision-summary-title">本周资金与定投决策</h2>
           </div>
           <span id="decisionSummaryStatus" class="decision-summary-status" data-state="loading">加载中</span>
         </div>
@@ -65,9 +65,15 @@
         </div>
         <p class="decision-summary-note">健康仅表示数据和工作流正常，不代表策略有效或允许交易。研究和回测结果仅供辅助复核。</p>
         <section id="weeklyDecisionPlan" class="weekly-decision-plan" aria-labelledby="weeklyDecisionPlanTitle">
-          <div class="weekly-decision-heading"><h3 id="weeklyDecisionPlanTitle">本周资金计划</h3><strong id="weeklyDecisionTotal">CAD 0.00</strong></div>
+          <div class="weekly-decision-heading"><h3 id="weeklyDecisionPlanTitle">本周资金概览与人工计划</h3><strong id="weeklyDecisionTotal">CAD 0.00</strong></div>
+          <div id="weeklyDecisionOverview" class="weekly-decision-overview" aria-live="polite">
+            <span>本周基础预算<strong id="weeklyBaseBudget">CAD 0.00</strong></span><span>已批准下跌备用金<strong id="weeklyCrashFund">CAD 0.00</strong></span><span>本周可用资金总额<strong id="weeklyAvailableFunds">CAD 0.00</strong></span><span>本周计划买入总额<strong id="weeklyPlannedTotal">CAD 0.00</strong></span><span>本周保留现金<strong id="weeklyRetainedCash">CAD 0.00</strong></span><span>资金守恒状态<strong id="weeklyConservationStatus">等待计算</strong></span>
+          </div>
+          <div id="weeklyDecisionAllocationSummary" class="weekly-decision-allocation-summary" aria-live="polite"><span>大盘仓合计<strong id="weeklyCoreTotal">CAD 0.00</strong></span><span>个股仓合计<strong id="weeklySatelliteTotal">CAD 0.00</strong></span><span>科技个股合计<strong id="weeklyTechnologyTotal">CAD 0.00</strong></span><span>转入 SPY<strong id="weeklySpyRedirect">CAD 0.00</strong></span><span>风控保留现金<strong id="weeklyRiskCash">CAD 0.00</strong></span></div>
           <p id="weeklyDecisionSafety" class="weekly-decision-safety">等待数据或计算安全检查。</p>
           <div id="weeklyDecisionRows" class="weekly-decision-rows" aria-live="polite"></div>
+          <div id="weeklyDecisionExplanation" class="weekly-decision-explanation" aria-live="polite"><strong>本周决策解释</strong><p id="weeklyDecisionReason">等待规划结果。</p><p id="weeklyDecisionRiskReasons">等待数据质量和安全门禁状态。</p><p id="weeklyDecisionQqqStatus">QQQ：科技风险指标，不参与本周买入。</p></div>
+          <div class="weekly-decision-actions"><button id="adjustAllocationBtn" class="secondary-button" type="button">调整目标比例</button><button id="restoreDefaultDecisionBtn" class="secondary-button" type="button">恢复默认 60/40</button><button id="refreshBtn" class="primary-button" type="button">刷新市场数据</button><button id="copyBtn" class="secondary-button" type="button">复制本周人工计划</button></div>
         </section>
       </section>
 
@@ -294,7 +300,7 @@
       <section id="coreSatelliteSummary" class="panel core-satellite-summary" aria-labelledby="coreSatelliteTitle">
         <div class="section-heading compact">
           <div><p class="eyebrow">核心 / 卫星</p><h2 id="coreSatelliteTitle">SPY 60% 核心 + 个股 40% 卫星</h2></div>
-          <div class="core-satellite-actions"><button id="saveCustomAllocationBtn" class="secondary-button" type="button">保存自定义比例</button><button id="restoreDefaultAllocationBtn" class="secondary-button" type="button">恢复默认 60/40</button><button id="undoAllocationBtn" class="secondary-button" type="button">撤销本次修改</button></div>
+          <div class="core-satellite-actions"><span class="core-satellite-actions-note">同一份本周规划结果</span></div>
         </div>
         <div class="core-satellite-grid" aria-live="polite">
           <span>预设版本</span><strong id="coreSatellitePresetVersion">加载中</strong>
@@ -315,6 +321,7 @@
           <span>已分配 <strong id="allocationEditorAllocated">0.00%</strong></span><span>剩余 <strong id="allocationEditorRemaining">100.00%</strong></span><span>超出 <strong id="allocationEditorOverage">0.00%</strong></span><span>大盘仓 <strong id="allocationEditorCore">0.00%</strong></span><span>个股仓 <strong id="allocationEditorSatellite">0.00%</strong></span><span>科技个股 <strong id="allocationEditorTechnology">0.00%</strong></span>
         </div>
         <p id="allocationEditorErrors" class="form-error" aria-live="polite"></p>
+        <div class="allocation-editor-actions"><button id="saveCustomAllocationBtn" class="secondary-button" type="button">保存自定义比例</button><button id="restoreDefaultAllocationBtn" class="secondary-button" type="button">恢复默认 60/40</button><button id="undoAllocationBtn" class="secondary-button" type="button">撤销本次修改</button></div>
       </section>
 
       <main class="dashboard-layout">
@@ -328,7 +335,7 @@
             <div class="section-heading compact">
               <div>
               <p class="eyebrow">信号</p>
-                <h2 id="holdings-title">本周定投决策</h2>
+                <h2 id="holdings-title">个股信号与持仓</h2>
               </div>
               <p class="section-supporting-copy">逐项核对后再作人工决定</p>
             </div>
@@ -392,7 +399,6 @@
                 <p class="eyebrow">复制人工计划</p>
                 <h2 id="order-title">人工计划</h2>
               </div>
-              <button id="copyBtn" class="secondary-button" type="button">复制</button>
             </div>
             <div id="orderRows" class="order-rows" aria-live="polite"></div>
             <details id="dcaPolicyPreview" class="dca-preview-panel">
@@ -595,7 +601,6 @@
         </label>
         <p id="apiKeyStorageNote" class="status-line">密钥会永久保存在此浏览器；清空输入框即可删除。</p>
 
-        <button id="refreshBtn" class="primary-button modal-refresh" type="button">刷新价格</button>
 
         <div class="modal-note">
           <strong>数据源优先级</strong>

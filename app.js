@@ -579,14 +579,14 @@ amountBreakdown: "Amount Breakdown",
       availableCashPlaceholder: "CAD 可用资金",
       copyOrderList: "复制操作清单",
       manualTradePlan: "人工计划",
-      copy: "复制",
+      copy: "复制本周人工计划",
       liveMarketDataEyebrow: "市场数据",
       priceSettings: "价格设置",
       closePriceSettings: "关闭价格设置",
       finnhubApiKey: "Finnhub API Key",
       apiKeyPlaceholder: "输入实时价格 API Key",
       apiKeyStorageNote: "密钥将永久保存在此浏览器中；清空输入框即可删除。",
-      refreshPrices: "刷新价格",
+      refreshPrices: "刷新市场数据",
       sourcePriority: "数据源优先级",
       sourcePriorityLine: "Finnhub → Yahoo 备用 → 缓存数据 → 手动输入",
       signalScore: "信号分",
@@ -977,6 +977,22 @@ amountBreakdown: "金额分解",
   const weeklyDecisionTotalEl = document.getElementById("weeklyDecisionTotal");
   const weeklyDecisionRowsEl = document.getElementById("weeklyDecisionRows");
   const weeklyDecisionSafetyEl = document.getElementById("weeklyDecisionSafety");
+  const weeklyBaseBudgetEl = document.getElementById("weeklyBaseBudget");
+  const weeklyCrashFundEl = document.getElementById("weeklyCrashFund");
+  const weeklyAvailableFundsEl = document.getElementById("weeklyAvailableFunds");
+  const weeklyPlannedTotalEl = document.getElementById("weeklyPlannedTotal");
+  const weeklyRetainedCashEl = document.getElementById("weeklyRetainedCash");
+  const weeklyConservationStatusEl = document.getElementById("weeklyConservationStatus");
+  const weeklyCoreTotalEl = document.getElementById("weeklyCoreTotal");
+  const weeklySatelliteTotalEl = document.getElementById("weeklySatelliteTotal");
+  const weeklyTechnologyTotalEl = document.getElementById("weeklyTechnologyTotal");
+  const weeklySpyRedirectEl = document.getElementById("weeklySpyRedirect");
+  const weeklyRiskCashEl = document.getElementById("weeklyRiskCash");
+  const weeklyDecisionReasonEl = document.getElementById("weeklyDecisionReason");
+  const weeklyDecisionRiskReasonsEl = document.getElementById("weeklyDecisionRiskReasons");
+  const weeklyDecisionQqqStatusEl = document.getElementById("weeklyDecisionQqqStatus");
+  const adjustAllocationBtn = document.getElementById("adjustAllocationBtn");
+  const restoreDefaultDecisionBtn = document.getElementById("restoreDefaultDecisionBtn");
   const inlineHoldingsStatsEl = document.getElementById("inlineHoldingsStats");
   const inlineHoldingsRowsEl = document.getElementById("inlineHoldingsRows");
   const dataQualityPanelEl = document.getElementById("dataQualityPanel");
@@ -1077,6 +1093,8 @@ amountBreakdown: "金额分解",
   if (saveCustomAllocationBtn) saveCustomAllocationBtn.addEventListener("click", saveCustomAllocations);
   if (restoreDefaultAllocationBtn) restoreDefaultAllocationBtn.addEventListener("click", restoreDefaultAllocations);
   if (undoAllocationBtn) undoAllocationBtn.addEventListener("click", undoAllocationChange);
+  if (adjustAllocationBtn) adjustAllocationBtn.addEventListener("click", function () { const editor = document.getElementById("coreSatelliteAllocationEditor"); if (editor) { editor.scrollIntoView({ behavior: "smooth", block: "start" }); const first = editor.querySelector("input"); if (first) first.focus(); } });
+  if (restoreDefaultDecisionBtn) restoreDefaultDecisionBtn.addEventListener("click", restoreDefaultAllocations);
 
   // This dashboard runs on the user's private device, so keep the Finnhub key
   // across browser restarts. Migrate an active session key once for a seamless
@@ -5880,6 +5898,11 @@ function equalizeAllocations() {
     if (decisionActionEl) decisionActionEl.textContent = action;
     if (decisionReasonEl) decisionReasonEl.textContent = reason;
     renderWeeklyDecisionPlan(state.coreSatellitePlan, portfolioRisk);
+    if (decisionSummaryStatusEl && state.coreSatellitePlan) {
+      const planSafe = state.coreSatellitePlan.safe === true;
+      decisionSummaryStatusEl.textContent = planSafe ? (state.coreSatelliteState && state.coreSatelliteState.allocation_mode === "manual" ? "本周计划已按自定义比例计算。" : "本周资金与定投决策已完成，请人工核对后执行。") : "数据或计算未通过安全检查，请人工复核。";
+      decisionSummaryStatusEl.dataset.state = planSafe ? "ready" : "blocked";
+    }
   }
 
   function coreSatelliteReason(row) {
@@ -5903,8 +5926,28 @@ function equalizeAllocations() {
     const bySymbol = rows.reduce(function (map, row) { map[row.symbol] = row; return map; }, {});
     const safe = Boolean(plan && plan.safe === true && expected.every(function (symbol) { return bySymbol[symbol]; }));
     weeklyDecisionTotalEl.textContent = formatCurrency(plan && plan.conservation ? plan.conservation.source : 0);
+    const source = plan && plan.conservation ? Number(plan.conservation.source || 0) : 0;
+    const coreRows = rows.filter(function (row) { return row.bucket === "core"; });
+    const satelliteRows = rows.filter(function (row) { return row.bucket === "satellite"; });
+    const techSymbols = ["NVDA", "AAPL", "ASML"];
+    const techTotal = satelliteRows.filter(function (row) { return techSymbols.indexOf(row.symbol) >= 0; }).reduce(function (sum, row) { return sum + Number(row.finalAmount || 0); }, 0);
+    if (weeklyBaseBudgetEl) weeklyBaseBudgetEl.textContent = formatCurrency(state.deployment.weeklyDeployment);
+    if (weeklyCrashFundEl) weeklyCrashFundEl.textContent = formatCurrency(Math.max(0, source - state.deployment.weeklyDeployment));
+    if (weeklyAvailableFundsEl) weeklyAvailableFundsEl.textContent = formatCurrency(source);
+    if (weeklyPlannedTotalEl) weeklyPlannedTotalEl.textContent = formatCurrency(plan && plan.totalPlanned || 0);
+    if (weeklyRetainedCashEl) weeklyRetainedCashEl.textContent = formatCurrency(plan && plan.cashRetained || 0);
+    if (weeklyConservationStatusEl) weeklyConservationStatusEl.textContent = plan && plan.conservation && plan.conservation.balanced ? "已守恒" : "未通过";
+    if (weeklyCoreTotalEl) weeklyCoreTotalEl.textContent = formatCurrency(coreRows.reduce(function (sum, row) { return sum + Number(row.finalAmount || 0); }, 0));
+    if (weeklySatelliteTotalEl) weeklySatelliteTotalEl.textContent = formatCurrency(satelliteRows.reduce(function (sum, row) { return sum + Number(row.finalAmount || 0); }, 0));
+    if (weeklyTechnologyTotalEl) weeklyTechnologyTotalEl.textContent = formatCurrency(techTotal);
+    if (weeklySpyRedirectEl) weeklySpyRedirectEl.textContent = formatCurrency(plan && plan.spyRedirected || 0);
+    if (weeklyRiskCashEl) weeklyRiskCashEl.textContent = formatCurrency(plan && plan.cashRetained || 0);
     weeklyDecisionSafetyEl.textContent = safe ? "仅供人工决策；不连接券商，不自动下单、不自动卖出或再平衡。" : "数据或计算未通过安全检查，请人工复核";
     weeklyDecisionSafetyEl.dataset.state = safe ? "ready" : "blocked";
+    if (copyBtn) copyBtn.disabled = !safe;
+    if (weeklyDecisionReasonEl) weeklyDecisionReasonEl.textContent = safe ? "基础预算先按当前目标比例分配，DCA-L2 信号和组合风控只会调整或阻止新增买入。" : "安全门禁未通过，因此不输出可执行买入金额，资金保留为现金。";
+    if (weeklyDecisionRiskReasonsEl) weeklyDecisionRiskReasonsEl.textContent = safe ? "请核对数据质量、个股集中度、科技集中度、预算和可用现金；偏离目标超过 5 个百分点时仅提示人工再平衡。" : "请检查数据新鲜度、组合完整性、规划器和预算守恒状态。";
+    if (weeklyDecisionQqqStatusEl) weeklyDecisionQqqStatusEl.textContent = "QQQ：科技风险指标，不参与本周买入。";
     expected.forEach(function (symbol) {
       const row = bySymbol[symbol] || { symbol: symbol, originalBaseAmount: 0, dcaAdjustedAmount: 0, riskReduction: 0, finalAmount: 0, reasonCodes: ["安全检查未通过"] };
       const position = positions[symbol] || {};
@@ -5914,11 +5957,13 @@ function equalizeAllocations() {
       const base = Number(row.originalBaseAmount || 0);
       const signalAdjustment = Number(row.dcaAdjustedAmount || 0) - base + Number(row.crashFundEnhancement || 0);
       const riskAdjustment = Number(row.riskReduction || 0);
-      card.innerHTML = "<strong></strong><span></span><span></span><span></span><span></span><span></span><span></span><p></p>";
-      const values = [symbol, "目标 " + (targetBySymbol[symbol] || 0).toFixed(2) + "% / 当前 " + current.toFixed(2) + "%", "基础 " + formatCurrency(base), "信号调整 " + formatCurrency(signalAdjustment), "风控调整 " + formatCurrency(riskAdjustment), "最终人工计划 " + formatCurrency(row.finalAmount), coreSatelliteReason(row)];
+      card.innerHTML = "<strong></strong><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><p></p>";
+      const redirected = Number(row.redirectedToSpy || 0);
+      const status = Number(row.finalAmount || 0) > 0 ? "可供人工核对" : "已阻止或保留现金";
+      const values = [symbol, "目标 " + (targetBySymbol[symbol] || 0).toFixed(2) + "% / 当前 " + current.toFixed(2) + "%", "基础 " + formatCurrency(base), "信号调整 " + formatCurrency(signalAdjustment), "风控调整 " + formatCurrency(riskAdjustment), "重定向 " + formatCurrency(redirected), "最终人工计划 " + formatCurrency(row.finalAmount), status, coreSatelliteReason(row)];
       card.querySelectorAll("span").forEach(function (element, index) { element.textContent = values[index + 1]; });
       card.querySelector("strong").textContent = values[0];
-      card.querySelector("p").textContent = values[6];
+      card.querySelector("p").textContent = values[8];
       weeklyDecisionRowsEl.appendChild(card);
     });
     const cash = document.createElement("article");
@@ -6298,6 +6343,8 @@ function equalizeAllocations() {
 
   function arrangeDashboardSections() {
     const shell = document.querySelector(".app-shell");
+    const decision = document.getElementById("decisionSummary");
+    const dataQuality = document.getElementById("dataQualityPanel");
     const dashboard = document.querySelector(".dashboard-layout");
     const deployment = document.querySelector(".deployment-overview");
     const watchlist = document.getElementById("watchlist");
@@ -6307,6 +6354,9 @@ function equalizeAllocations() {
 
     if (dashboard && deployment && dashboard.nextElementSibling !== deployment) {
       dashboard.insertAdjacentElement("afterend", deployment);
+    }
+    if (dataQuality && decision && dataQuality.nextElementSibling !== decision) {
+      dataQuality.insertAdjacentElement("afterend", decision);
     }
     if (sidebar && orderPanel && riskPanel && sidebar.firstElementChild !== orderPanel) {
       sidebar.insertBefore(orderPanel, riskPanel);

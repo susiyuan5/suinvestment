@@ -189,6 +189,8 @@ h3 {
 
 .decision-summary-heading {
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -200,13 +202,15 @@ h3 {
 }
 
 .decision-summary-status {
+  min-width: 0;
   padding: 4px 8px;
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 800;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .decision-summary-status[data-state="ready"] {
@@ -228,6 +232,7 @@ h3 {
 
 .decision-summary-item {
   min-width: 0;
+  overflow-wrap: anywhere;
   padding: 10px;
   border: 1px solid rgba(116, 143, 173, 0.26);
   border-radius: 7px;
@@ -4540,7 +4545,16 @@ h2 {
  .allocation-editor-metrics span { color: var(--muted, #9aa8b8); }
  .allocation-editor-metrics strong { display: block; color: var(--text, #eef4fa); }
  .form-error { min-height: 1.4em; color: #ffb4a8; }
+ .weekly-decision-overview, .weekly-decision-allocation-summary { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+ .weekly-decision-allocation-summary { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+ .weekly-decision-overview span, .weekly-decision-allocation-summary span { color: var(--muted, #9aa8b8); }
+ .weekly-decision-overview strong, .weekly-decision-allocation-summary strong { display: block; color: var(--text, #eef4fa); margin-top: 4px; }
+ .weekly-decision-explanation { margin-top: 16px; padding: 14px; border: 1px solid var(--line, #243346); border-radius: 12px; }
+ .weekly-decision-explanation p { margin: 6px 0 0; }
+ .weekly-decision-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+ .allocation-editor-actions { display: flex; flex-wrap: wrap; gap: 8px; }
  @media (max-width: 720px) {
    .allocation-editor-row { grid-template-columns: 1fr 1fr; }
    .allocation-editor-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+   .weekly-decision-overview, .weekly-decision-allocation-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
  }

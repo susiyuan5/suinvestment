@@ -7,7 +7,16 @@ test("homepage uses simplified Chinese and has no language switcher", () => {
   assert.match(html, /<html lang="zh-CN">/);
   assert.doesNotMatch(html, /id="languageToggle"/);
   assert.doesNotMatch(html, /当前尚未应用 60% 大盘/);
+  assert.equal((html.match(/本周资金与定投决策/g) || []).length, 1);
+  assert.doesNotMatch(html, /本周资金计划/);
   for (const id of ["weeklyDecisionPlan", "weeklyDecisionTotal", "weeklyDecisionRows", "weeklyDecisionSafety", "coreSatelliteSummary", "allocationEditorRows", "saveCustomAllocationBtn", "restoreDefaultAllocationBtn", "undoAllocationBtn"]) assert.match(html, new RegExp(`id="${id}"`));
+});
+
+test("weekly decision is the single visible planning surface", () => {
+  const html = fs.readFileSync("index.html", "utf8");
+  for (const id of ["weeklyDecisionOverview", "weeklyDecisionAllocationSummary", "weeklyDecisionExplanation", "weeklyDecisionQqqStatus", "weeklyBaseBudget", "weeklyCrashFund", "weeklyConservationStatus"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.equal((html.match(/id="refreshBtn"/g) || []).length, 1);
+  assert.equal((html.match(/id="copyBtn"/g) || []).length, 1);
 });
 
 test("weekly decision order contract contains SPY and all five satellites", () => {
