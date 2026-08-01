@@ -4,11 +4,14 @@ const fs = require("node:fs");
 
 test("homepage uses simplified Chinese and has no language switcher", () => {
   const html = fs.readFileSync("index.html", "utf8");
+  const app = fs.readFileSync("app.js", "utf8");
   assert.match(html, /<html lang="zh-CN">/);
   assert.doesNotMatch(html, /id="languageToggle"/);
   assert.doesNotMatch(html, /当前尚未应用 60% 大盘/);
   assert.equal((html.match(/本周资金与定投决策/g) || []).length, 1);
   assert.doesNotMatch(html, /本周资金计划/);
+  assert.match(html, /<h2 id="holdings-title">个股信号与持仓<\/h2>/);
+  assert.doesNotMatch(app, /thisTuesday:\s*"本周定投决策"/);
   for (const id of ["weeklyDecisionPlan", "weeklyDecisionTotal", "weeklyDecisionRows", "weeklyDecisionSafety", "coreSatelliteSummary", "allocationEditorRows", "saveCustomAllocationBtn", "restoreDefaultAllocationBtn", "undoAllocationBtn"]) assert.match(html, new RegExp(`id="${id}"`));
 });
 

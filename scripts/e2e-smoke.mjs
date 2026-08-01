@@ -35,6 +35,10 @@ async function main() {
   await waitForDashboard(page);
   assert.equal((await page.title()).length > 0, true, "homepage title should be present");
   assert.equal(await page.locator("#decisionSummary").isVisible(), true, "decision summary should be visible");
+  assert.equal((await page.locator("#decision-summary-title").textContent()).trim(), "本周资金与定投决策", "weekly funding and DCA must use one merged heading");
+  assert.equal((await page.locator("#holdings-title").textContent()).trim(), "个股信号与持仓", "stock signals must not recreate a second weekly decision heading");
+  assert.equal(await page.getByText("本周定投决策", { exact: true }).count(), 0, "legacy standalone weekly decision heading must be absent");
+  assert.equal(await page.getByText("本周资金计划", { exact: true }).count(), 0, "legacy standalone weekly funding heading must be absent");
   assert.equal(await page.locator("#projectHealthStatus").textContent().then((value) => Boolean(value.trim())), true, "health report should render");
 
   const healthResponse = await context.request.get(new URL("results/health/project-health.json", baseUrl).toString());
