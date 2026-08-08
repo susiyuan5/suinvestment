@@ -29,6 +29,10 @@ REQUIRED_IDS = {
     "displayCurrencySelect",
     "displayCurrencyNote",
     "displayCurrencyStatus",
+    "ideaEnginePanel",
+    "ideaEngineStatus",
+    "ideaEngineMaturity",
+    "ideaEngineRows",
 }
 REQUIRED_PRE_APP_SCRIPTS = {
     "market-data.js", "market-analysis.js", "signal-engine.js", "portfolio-policy.js",

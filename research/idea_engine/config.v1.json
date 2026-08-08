@@ -1,0 +1,38 @@
+{
+  "schema_version": "idea-engine-v1",
+  "universe": {
+    "name": "us-listed-technology",
+    "only_long": true,
+    "min_market_cap_usd": 2000000000,
+    "min_average_dollar_volume_20d_usd": 20000000,
+    "allow_adr": true,
+    "exclude_otc": true,
+    "benchmark": "QQQ"
+  },
+  "cadence": "weekly",
+  "dimensions": {
+    "financial_quality": 0.25,
+    "valuation": 0.20,
+    "demand_catalyst": 0.20,
+    "expectations_confirmation": 0.15,
+    "industry_cycle": 0.10,
+    "risk_liquidity_health": 0.10
+  },
+  "limits": {
+    "method_max_points": 25,
+    "juglar_max_points": 10,
+    "conflict_threshold": 30,
+    "a_min_score": 70,
+    "a_leave_one_out_floor": 65,
+    "a_min_positive_dimensions": 3,
+    "a_min_evidence_chains": 2
+  },
+  "freshness": {"max_core_age_days": 45},
+  "shadow": {
+    "min_observations": 8,
+    "min_calendar_weeks": 8,
+    "min_complete_matured": 4,
+    "horizons_weeks": [1, 4, 12]
+  },
+  "research_only": true
+}
