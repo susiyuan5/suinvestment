@@ -8,7 +8,7 @@ from scripts.build_project_health import build_health, build_history, generate
 
 
 NOW = datetime(2026, 7, 13, tzinfo=timezone.utc)
-SUCCESS = {name: {"status": "completed", "conclusion": "success"} for name in ("market_update", "historical_update", "quality_checks", "pages_smoke", "shadow_update")}
+SUCCESS = {name: {"status": "completed", "conclusion": "success"} for name in ("market_update", "historical_update", "quality_checks", "pages_smoke", "shadow_update", "idea_engine_update")}
 
 
 def write_json(root: Path, relative: str, payload: dict):

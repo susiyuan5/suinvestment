@@ -29,17 +29,25 @@
     var button = doc.createElement("button"); button.type = "button"; button.className = "secondary-button"; button.textContent = "手动加入盯盘"; button.addEventListener("click", function () { var input = doc.getElementById("watchlistSymbolInput"); if (input) { input.value = candidate.ticker; input.focus(); } }); body.appendChild(button);
     detail.appendChild(body); card.appendChild(detail); return card;
   }
-  function render(payload, elements, doc) {
+  function render(payload, elements, doc, governance) {
     var safe = safePayload(payload); elements.rows.innerHTML = "";
-    if (!safe || safe.status === "blocked") { elements.status.textContent = "潜力股研究暂不可用，请人工复核；不影响本周定投。"; elements.maturity.textContent = "Shadow 状态：未成熟，不能进入实时决策。"; return; }
-    elements.status.textContent = "当前仅生成研究候选，不产生买入金额。";
-    elements.maturity.textContent = "Shadow 状态：" + (safe.manual_review_only ? "仅供人工复核" : "等待治理门禁");
+    var mature = governance && governance.status === "mature" && governance.manual_review_eligible === true;
+    if (!safe || safe.status === "blocked") {
+      elements.status.textContent = "潜力股数据源尚未就绪，保留最后有效结果；不影响本周定投。";
+      elements.maturity.textContent = "Shadow 状态：尚未满足人工复核门槛，不会自动进入定投决策。";
+      return;
+    }
+    elements.status.textContent = "已加载 " + safe.candidates.length + " 个研究候选；不生成买入金额。";
+    elements.maturity.textContent = "Shadow 状态：" + (mature ? "已成熟，仅可人工复核" : "继续观察，不会自动进入定投决策");
     safe.candidates.forEach(function (candidate) { elements.rows.appendChild(createCard(candidate, doc)); });
   }
   function init(doc, fetcher) {
     var elements = { status: doc.getElementById("ideaEngineStatus"), maturity: doc.getElementById("ideaEngineMaturity"), rows: doc.getElementById("ideaEngineRows") };
     if (!elements.status || !elements.maturity || !elements.rows) return;
-    fetcher("research/results/v2/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("idea engine unavailable"); return response.json(); }).then(function (payload) { render(payload, elements, doc); }).catch(function () { render(null, elements, doc); });
+    Promise.all([
+      fetcher("research/results/v2/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("idea engine unavailable"); return response.json(); }),
+      fetcher("research/results/v2/idea-engine/shadow/governance-report.json", { cache: "no-cache" }).then(function (response) { return response.ok ? response.json() : null; }).catch(function () { return null; })
+    ]).then(function (values) { render(values[0], elements, doc, values[1]); }).catch(function () { render(null, elements, doc, null); });
   }
   if (typeof document !== "undefined" && typeof fetch === "function") init(document, fetch);
   return { safePayload: safePayload, gradeLabel: label, render: render, init: init };

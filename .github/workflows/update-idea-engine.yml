@@ -9,43 +9,70 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: update-idea-engine-shadow
+  cancel-in-progress: true
+
 jobs:
   shadow:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OCTAGON_API_KEY: ${{ secrets.OCTAGON_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - name: Validate manifest and run safe Shadow freeze
-        env:
-          PYTHONPATH: .
+
+      - name: Install Octagon runtime
+        run: python -m pip install -r requirements-octagon.txt
+
+      - name: Validate pinned provider manifest
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          path = Path("research/idea_engine/providers/provider_manifest.json")
-          payload = json.loads(path.read_text(encoding="utf-8"))
+
+          payload = json.loads(Path("research/idea_engine/providers/provider_manifest.json").read_text(encoding="utf-8"))
           assert payload["manifest_version"] == "1"
-          assert all(item.get("code_executed") is False for item in payload["providers"])
+          assert all(item.get("commit_sha") for item in payload["providers"])
           print("provider_manifest_valid=true")
           PY
-          python -m research.idea_engine.run_idea_engine --output research/results/v2/idea-engine
-      - name: Run contract tests
-        run: python -m unittest discover -s tests
-      - name: Create draft research PR when changed
+
+      - name: Generate schema-validated research candidates
+        if: env.OCTAGON_API_KEY != ''
         env:
-          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: .
+        run: python -m research.idea_engine.run_idea_engine --output research/results/v2/idea-engine
+
+      - name: Report missing provider credential
+        if: env.OCTAGON_API_KEY == ''
+        run: echo "OCTAGON_API_KEY is not configured; preserving the last valid Idea Engine result unchanged."
+
+      - name: Run complete quality checks
         run: |
-          if git diff --quiet -- research/results/v2/idea-engine; then
-            echo "无变更"
-            exit 0
-          fi
-          branch="automation/idea-engine-shadow-${GITHUB_RUN_ID}"
-          git switch -c "$branch"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add research/results/v2/idea-engine
-          git commit -m "Update Idea Engine Shadow results"
-          git push --set-upstream origin "$branch"
-          gh pr create --draft --base main --head "$branch" --title "Update Idea Engine Shadow results" --body "仅更新 Shadow 研究结果；不影响本周定投，不自动交易。"
+          python -m pip install "pandas>=2,<3"
+          python -m unittest discover -s tests
+          node --test tests/*.test.js
+          python scripts/check_static_contracts.py
+
+      - name: Create draft research pull request
+        if: env.OCTAGON_API_KEY != ''
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/update-idea-engine-shadow
+          delete-branch: true
+          commit-message: "Update Idea Engine Shadow results"
+          title: "Update Idea Engine Shadow results"
+          draft: true
+          body: |
+            仅更新潜力股 Shadow 研究结果。
+
+            - 不影响本周定投
+            - 不连接券商
+            - 不自动交易
+            - 候选结果仅可人工复核
+          add-paths: |
+            research/results/v2/idea-engine/**

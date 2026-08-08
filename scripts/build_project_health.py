@@ -19,6 +19,7 @@ WORKFLOWS = {
     "quality_checks": "quality.yml",
     "pages_smoke": "pages-smoke.yml",
     "shadow_update": "update-shadow-observation.yml",
+    "idea_engine_update": "update-idea-engine.yml",
 }
 HISTORY_RETENTION_DAYS = 90
 HISTORY_FILENAME = "project-health-history.json"
@@ -70,6 +71,7 @@ def pending_automation_prs(repository: str | None, token: str | None) -> dict:
     targets = {
         "historical_prices": "automation/update-backtest-prices",
         "shadow_observation": "automation/update-shadow-observation",
+        "idea_engine": "automation/update-idea-engine-shadow",
     }
     if not repository or not token:
         return {key: None for key in targets}
@@ -155,6 +157,11 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
     idea_provider = load(root / "research" / "results" / "v2" / "idea-engine" / "provider-status.json", {})
     idea_shadow = load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "governance-report.json", {})
     idea_candidates = idea_latest.get("candidates", []) if isinstance(idea_latest, dict) else []
+    idea_outcomes = load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "outcomes.json", {}).get("outcomes", [])
+    idea_complete_mature = sum(
+        all(row.get("horizons", {}).get(str(horizon), {}).get("status") == "matured" for horizon in (1, 4, 12))
+        for row in idea_outcomes
+    )
     complete_mature = sum(
         all(row.get("outcomes", {}).get(str(horizon), {}).get("status") == "matured" for horizon in (1, 4, 12))
         for row in outcomes.get("outcomes", [])
@@ -227,11 +234,16 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
             "provider_status": idea_provider.get("providers", {}) if isinstance(idea_provider, dict) else {},
             "data_freshness": idea_latest.get("as_of") if isinstance(idea_latest, dict) else None,
             "candidate_counts": {status: sum(1 for row in idea_candidates if row.get("status") == status) for status in ("A", "B", "C", "blocked")},
-            "single_source_dependency_count": sum("单源依赖" in str(row.get("conflicts", [])) for row in idea_candidates),
+            "single_source_dependency_count": sum(
+                "single_provider_score_dependency" in row.get("data_quality", {}).get("gates_failed", [])
+                or "单源依赖" in str(row.get("conflicts", []))
+                for row in idea_candidates
+            ),
             "shadow_observation_count": len(load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "observations.json", {}).get("observations", [])),
-            "shadow_mature_count": len(load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "outcomes.json", {}).get("outcomes", [])),
-            "human_review_gate": True,
-            "status": "blocked" if idea_provider.get("status") != "ready" or idea_shadow.get("live_promotion_eligible") else "shadow_only",
+            "shadow_mature_count": idea_complete_mature,
+            "human_review_gate": bool(idea_shadow.get("manual_review_eligible", False)),
+            "live_promotion_eligible": False,
+            "status": "blocked" if idea_provider.get("status") != "ready" else "manual_review_only" if idea_shadow.get("manual_review_eligible") else "shadow_only",
             "scope_note": "Idea Engine 只影响潜力股研究，不影响 DCA 或人工计划。",
         },
         "operational_metrics": {

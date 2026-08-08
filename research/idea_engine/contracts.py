@@ -36,6 +36,11 @@ def validate_evidence(item: dict[str, Any]) -> None:
         raise ValueError(f"evidence missing fields: {','.join(missing)}")
     for key in ("published_at", "retrieved_at", "as_of"):
         validate_as_of(str(item[key]))
+    published = datetime.fromisoformat(str(item["published_at"]).replace("Z", "+00:00")).astimezone(timezone.utc)
+    retrieved = datetime.fromisoformat(str(item["retrieved_at"]).replace("Z", "+00:00")).astimezone(timezone.utc)
+    as_of = datetime.fromisoformat(str(item["as_of"]).replace("Z", "+00:00")).astimezone(timezone.utc)
+    if published > as_of or retrieved > as_of:
+        raise ValueError("evidence newer than as_of is forbidden")
     if not item["lineage_id"] or not item["content_hash"] or not isinstance(item["missing_fields"], list):
         raise ValueError("invalid evidence lineage or missing_fields")
     if not _number(item["confidence"]) or not 0 <= float(item["confidence"]) <= 1:
