@@ -24,6 +24,16 @@ test("weekly decision is the single visible planning surface", () => {
   assert.equal((html.match(/id="copyBtn"/g) || []).length, 1);
 });
 
+test("desktop hierarchy follows the static DOM order", () => {
+  const html = fs.readFileSync("index.html", "utf8");
+  const ordered = ["id=\"decisionSummary\"", "class=\"overview-panel\"", "class=\"dashboard-layout\"", "class=\"inline-holdings-panel\"", "id=\"coreSatelliteAllocationEditor\"", "deployment-overview", "id=\"watchlist\"", "research-panel", "id=\"dataQualityPanel\""];
+  let previous = -1;
+  ordered.forEach((marker) => { const index = html.indexOf(marker); assert.ok(index > previous, `${marker} is out of order`); previous = index; });
+  assert.match(html, /id="coreSatelliteSummary" class="visually-hidden"/);
+  assert.match(html, /<details id="coreSatelliteAllocationEditor"/);
+  assert.equal((html.match(/恢复默认 60\/40/g) || []).length, 1);
+});
+
 test("weekly decision order contract contains SPY and all five satellites", () => {
   const source = fs.readFileSync("app.js", "utf8");
   assert.match(source, /const expected = \["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"\]/);
