@@ -26,6 +26,9 @@ REQUIRED_IDS = {
     "decisionSummary",
     "decisionAction",
     "healthHistoryMetrics",
+    "displayCurrencySelect",
+    "displayCurrencyNote",
+    "displayCurrencyStatus",
 }
 REQUIRED_PRE_APP_SCRIPTS = {
     "market-data.js", "market-analysis.js", "signal-engine.js", "portfolio-policy.js",

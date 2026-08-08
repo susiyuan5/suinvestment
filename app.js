@@ -165,6 +165,9 @@
       crashFund: "Crash Fund",
       weeklyDeployment: "Weekly Deployment",
       deploymentSettings: "Deployment Settings",
+      displayCurrency: "Display currency",
+      currencyUnitNote: "Changes the amount unit only; no exchange-rate conversion is performed. Enter budgets and holdings in the selected currency.",
+      currencySaved: "Amount unit changed to {currency}.",
       save: "Save",
       resetDefaults: "Reset",
       deploymentSaved: "Deployment settings saved.",
@@ -519,6 +522,9 @@ amountBreakdown: "Amount Breakdown",
       crashFund: "下跌备用金",
       weeklyDeployment: "每周投入",
       deploymentSettings: "投入设置",
+      displayCurrency: "显示货币",
+      currencyUnitNote: "只切换金额单位，不进行汇率换算；请按所选货币填写预算和持仓金额。",
+      currencySaved: "金额单位已切换为 {currency}。",
       save: "保存",
       resetDefaults: "恢复默认",
       deploymentSaved: "投入设置已保存。",
@@ -908,7 +914,8 @@ amountBreakdown: "金额分解",
      dcaL2ConfigReady: false,
      dcaL2ConfigError: "",
      dcaBudgetReport: null,
-    language: normalizeLanguage(localStorage.getItem(STORAGE_KEYS.language))
+    language: normalizeLanguage(localStorage.getItem(STORAGE_KEYS.language)),
+    displayCurrency: SettingsStorage.loadDisplayCurrency(localStorage)
   };
 
   const cardsEl = document.getElementById("cards");
@@ -1013,6 +1020,8 @@ amountBreakdown: "金额分解",
   const deploymentStatusEl = document.getElementById("deploymentStatus");
   const saveDeploymentBtn = document.getElementById("saveDeploymentBtn");
   const resetDeploymentBtn = document.getElementById("resetDeploymentBtn");
+  const displayCurrencySelect = document.getElementById("displayCurrencySelect");
+  const displayCurrencyStatusEl = document.getElementById("displayCurrencyStatus");
   const deploymentInputs = {
     monthlyBudget: document.getElementById("monthlyBudgetInput"),
     normalPool: document.getElementById("normalPoolInput"),
@@ -1101,10 +1110,27 @@ amountBreakdown: "金额分解",
   // transition from the previous session-only behavior.
   const storedApiKey = SettingsStorage.loadApiKey(localStorage, sessionStorage);
   apiKeyInput.value = storedApiKey;
+  if (displayCurrencySelect) displayCurrencySelect.value = state.displayCurrency;
 
   apiKeyInput.addEventListener("input", function () {
     SettingsStorage.saveApiKey(apiKeyInput.value, localStorage, sessionStorage);
   });
+
+  if (displayCurrencySelect) {
+    displayCurrencySelect.addEventListener("change", function () {
+      state.displayCurrency = SettingsStorage.saveDisplayCurrency(displayCurrencySelect.value, localStorage);
+      displayCurrencySelect.value = state.displayCurrency;
+      if (displayCurrencyStatusEl) displayCurrencyStatusEl.textContent = t("currencySaved", { currency: state.displayCurrency });
+      updateCurrencyPlaceholders();
+      renderDeploymentSettings();
+      renderPortfolioRiskInputs();
+      renderBacktestSettings();
+      renderSkeleton();
+      render();
+      renderAlgorithmTestPanel();
+      if (state.backtestResult) renderBacktestResult(state.backtestResult);
+    });
+  }
 
   openSettingsBtn.addEventListener("click", openSettings);
   closeSettingsBtn.addEventListener("click", closeSettings);
@@ -1297,7 +1323,7 @@ amountBreakdown: "金额分解",
 
   function openSettings() {
     settingsModal.classList.remove("hidden");
-    apiKeyInput.focus();
+    (displayCurrencySelect || apiKeyInput).focus();
   }
 
   function closeSettings() {
@@ -3390,7 +3416,7 @@ allocWrapper.appendChild(editBtn);
       card.querySelector(".signal-strength").textContent = t("loading");
       card.querySelector(".risk-level").textContent = t("loading");
       card.querySelector(".multiplier").textContent = "1x";
-      card.querySelector(".buy-amount").textContent = "CAD " + round2(state.deployment.weeklyDeployment * stock.allocation).toFixed(2);
+      card.querySelector(".buy-amount").textContent = formatCurrency(round2(state.deployment.weeklyDeployment * stock.allocation));
       card.querySelector(".price").textContent = t("priceLoading");
       card.querySelector(".decision-reason").textContent = t("waitingForMarketData");
       card.querySelector(".decision-warning").textContent = t("none");
@@ -4365,7 +4391,7 @@ allocWrapper.appendChild(editBtn);
     var fields = [
       { key: "startDate", label: t("startDate"), type: "date" },
       { key: "endDate", label: t("endDate"), type: "date" },
-      { key: "weeklyContribution", label: t("weeklyContribution"), type: "number", placeholder: "(CAD 69.23)" },
+      { key: "weeklyContribution", label: t("weeklyContribution"), type: "number", placeholder: "(" + state.displayCurrency + " 69.23)" },
       { key: "initialCapital", label: t("initialCapital"), type: "number", placeholder: "(0)" },
       { key: "transactionCostPct", label: t("transactionCost"), type: "number", placeholder: "(0)" },
       { key: "slippagePct", label: t("slippageCost"), type: "number", placeholder: "(0)" }
@@ -4817,7 +4843,7 @@ function equalizeAllocations() {
         orderLines.push(row.symbol + "：基础 " + formatCurrency(row.originalBaseAmount) + "；信号调整 " + formatCurrency(row.dcaAdjustedAmount - row.originalBaseAmount + row.crashFundEnhancement) + "；风控调整 " + formatCurrency(row.riskReduction) + "；最终人工计划 " + formatCurrency(row.finalAmount) + "；" + coreSatelliteReason(row));
       });
       orderLines.push("保留现金：" + formatCurrency(state.coreSatellitePlan.cashRetained));
-      orderLines.push("QQQ 仅作为科技风险指标，买入金额为 CAD 0.00。");
+      orderLines.push("QQQ 仅作为科技风险指标，买入金额为 " + formatCurrency(0) + "。");
     } else {
       entries.forEach(function (entry) { orderLines.push(formatManualTradePlanEntry(entry.signal, entry)); });
     }
@@ -4937,9 +4963,9 @@ function equalizeAllocations() {
     if (coreTargetAllocationEl) coreTargetAllocationEl.textContent = (summary.coreTargetPct || 60) + "% / " + (summary.spyActualPct || 0).toFixed(2) + "%";
     if (satelliteTargetAllocationEl) satelliteTargetAllocationEl.textContent = (summary.satelliteTargetPct || 40) + "% / " + (summary.satelliteActualPct || 0).toFixed(2) + "%";
     if (techSatelliteAllocationEl) techSatelliteAllocationEl.textContent = (summary.technologyActualPct || 0).toFixed(2) + "%";
-    if (spyBasePlanEl) spyBasePlanEl.textContent = "CAD " + plan.spyBase.toFixed(2) + " / CAD " + plan.spyRedirected.toFixed(2);
-    if (satellitePlanTotalEl) satellitePlanTotalEl.textContent = "CAD " + plan.items.filter(function (row) { return row.bucket === "satellite"; }).reduce(function (sum, row) { return sum + row.finalAmount; }, 0).toFixed(2);
-    if (cashRetainedPlanEl) cashRetainedPlanEl.textContent = "CAD " + plan.cashRetained.toFixed(2);
+    if (spyBasePlanEl) spyBasePlanEl.textContent = formatCurrency(plan.spyBase) + " / " + formatCurrency(plan.spyRedirected);
+    if (satellitePlanTotalEl) satellitePlanTotalEl.textContent = formatCurrency(plan.items.filter(function (row) { return row.bucket === "satellite"; }).reduce(function (sum, row) { return sum + row.finalAmount; }, 0));
+    if (cashRetainedPlanEl) cashRetainedPlanEl.textContent = formatCurrency(plan.cashRetained);
     if (coreSatelliteStatusEl) coreSatelliteStatusEl.textContent = state.coreSatellitePresetReady ? "仅供人工规划" : "需要人工复核";
     if (coreSatelliteRebalanceNoticeEl) coreSatelliteRebalanceNoticeEl.textContent = plan.summary.spyActualPct >= 65 || plan.summary.satelliteActualPct >= 45 ? "偏离目标超过 5 个百分点，请人工考虑再平衡；不会自动卖出。" : "QQQ 仅作为科技风险指标；不会自动下单。";
   }
@@ -5293,11 +5319,11 @@ function equalizeAllocations() {
     const used = getDcaL2CrashFundUsed(ledger);
     const balance = round2(Math.max(0, ledger.initial - used));
     const requiredWeeks = Number(state.dcaL2Config.recovery.requiredDistinctPlanWeeks || state.dcaL2Config.recovery.requiredDistinctTradingDays || 2);
-    dcaLedgerSummaryEl.textContent = "Month " + ledger.month + " · Crash Fund confirmed use CAD " + used.toFixed(2) + " · Remaining CAD " + balance.toFixed(2) + " · Recovery plan weeks " + ledger.recoveryConfirmations + "/" + requiredWeeks;
+    dcaLedgerSummaryEl.textContent = "Month " + ledger.month + " · Crash Fund confirmed use " + formatCurrency(used) + " · Remaining " + formatCurrency(balance) + " · Recovery plan weeks " + ledger.recoveryConfirmations + "/" + requiredWeeks;
     if (dcaBudgetSummaryEl) {
       const report = state.dcaBudgetReport;
       dcaBudgetSummaryEl.textContent = report
-        ? "Base: used CAD " + report.normalPoolUsed.toFixed(2) + " + planned " + report.plannedNormal.toFixed(2) + " / remaining " + report.normalPoolRemaining.toFixed(2) + " · Extra shares Normal Pool · Crash: used CAD " + report.crashFundUsed.toFixed(2) + " + planned " + report.plannedCrash.toFixed(2) + " / remaining " + report.crashFundRemaining.toFixed(2) + " · Unallocated CAD " + report.unallocatedCash.toFixed(2) + (state.dcaL2ConfigReady ? "" : " · MANUAL REVIEW: config unavailable")
+        ? "Base: used " + formatCurrency(report.normalPoolUsed) + " + planned " + formatCurrency(report.plannedNormal) + " / remaining " + formatCurrency(report.normalPoolRemaining) + " · Extra shares Normal Pool · Crash: used " + formatCurrency(report.crashFundUsed) + " + planned " + formatCurrency(report.plannedCrash) + " / remaining " + formatCurrency(report.crashFundRemaining) + " · Unallocated " + formatCurrency(report.unallocatedCash) + (state.dcaL2ConfigReady ? "" : " · MANUAL REVIEW: config unavailable")
         : "Monthly Base / Extra / Crash budget report unavailable; manual review required.";
     }
     dcaLedgerEntriesEl.innerHTML = "";
@@ -5309,7 +5335,7 @@ function equalizeAllocations() {
       const row = document.createElement("div");
       row.className = "dca-ledger-entry";
       const text = document.createElement("span");
-      text.textContent = entry.date + " · " + (entry.type || "crash") + (entry.symbol ? " · " + entry.symbol : "") + " · CAD " + Number(entry.amount).toFixed(2) + (entry.note ? " · " + entry.note : "");
+      text.textContent = entry.date + " · " + (entry.type || "crash") + (entry.symbol ? " · " + entry.symbol : "") + " · " + formatCurrency(Number(entry.amount)) + (entry.note ? " · " + entry.note : "");
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "secondary-button";
@@ -5353,7 +5379,7 @@ function equalizeAllocations() {
     card.querySelector(".action-badge").className = "action-badge " + labelResult.cls;
     card.querySelector(".risk-level").textContent = displayRiskLevel(signal.risk_level);
     card.querySelector(".multiplier").textContent = formatMultiplier(signal.multiplier);
-    card.querySelector(".buy-amount").textContent = "CAD " + signal.suggested_buy_amount.toFixed(2);
+    card.querySelector(".buy-amount").textContent = formatCurrency(signal.suggested_buy_amount);
     const priceText = isFiniteNumber(signal.latest_price) ? formatPrice(signal.latest_price) : "--";
     card.querySelector(".price").textContent = isFiniteNumber(signal.latest_price) ? priceText : "--";
     setChangeMetric(card.querySelector(".daily-change"), signal.daily_change);
@@ -5533,10 +5559,10 @@ function equalizeAllocations() {
     const policy = entry && entry.dcaPolicy;
     const l2 = policy && policy.l2;
     const breakdown = l2
-      ? "DCA-L2: Base CAD " + policy.baseAmount.toFixed(2) + " + Extra CAD " + policy.extraAmount.toFixed(2) + " + Crash Fund CAD " + policy.crashFundAmount.toFixed(2) + " = Final CAD " + finalAmount.toFixed(2) + " [" + policy.status + "]"
-      : "DCA: Base CAD " + baseAmount.toFixed(2) + " x " + (policy ? policy.multiplier.toFixed(2) : "1.00") + " = Final CAD " + finalAmount.toFixed(2) + " [" + (policy ? policy.status : "fallback") + "]";
+      ? "DCA-L2: Base " + formatCurrency(policy.baseAmount) + " + Extra " + formatCurrency(policy.extraAmount) + " + Crash Fund " + formatCurrency(policy.crashFundAmount) + " = Final " + formatCurrency(finalAmount) + " [" + policy.status + "]"
+      : "DCA: Base " + formatCurrency(baseAmount) + " x " + (policy ? policy.multiplier.toFixed(2) : "1.00") + " = Final " + formatCurrency(finalAmount) + " [" + (policy ? policy.status : "fallback") + "]";
     return [
-      signal.symbol + " - " + displayAction(signal.suggested_action) + " - CAD " + finalAmount.toFixed(2) + " - " + t("scoreLabel") + " " + signal.signal_score + " - " + t("riskLabel") + " " + displayRiskLevel(signal.risk_level),
+      signal.symbol + " - " + displayAction(signal.suggested_action) + " - " + formatCurrency(finalAmount) + " - " + t("scoreLabel") + " " + signal.signal_score + " - " + t("riskLabel") + " " + displayRiskLevel(signal.risk_level),
       breakdown,
       l2 ? "Reason codes: " + (policy.reasonCodes || []).join(", ") : "",
       t("reasonLabel") + ": " + signal.reason,
@@ -5781,7 +5807,7 @@ function equalizeAllocations() {
   }
 
   function parseDeploymentNumber(value) {
-    const text = String(value || "").trim().replace(/CAD/ig, "").replace(/,/g, "");
+    const text = String(value || "").trim().replace(/CAD|USD/ig, "").replace(/,/g, "");
     if (!/^\d*(?:\.\d*)?$/.test(text) || text === "" || text === ".") {
       return { valid: false, value: 0 };
     }
@@ -6248,9 +6274,9 @@ function equalizeAllocations() {
     const metrics = document.createElement("div");
     metrics.className = "risk-metrics-grid";
     [
-      [t("availableCash"), portfolioRisk.available_cash_provided ? "CAD " + portfolioRisk.available_cash.toFixed(2) : t("notProvided")],
-      [t("totalPortfolioValue"), "CAD " + portfolioRisk.total_portfolio_value.toFixed(2)],
-      [t("plannedBuyTotal"), "CAD " + portfolioRisk.total_planned_buy_amount.toFixed(2)],
+      [t("availableCash"), portfolioRisk.available_cash_provided ? formatCurrency(portfolioRisk.available_cash) : t("notProvided")],
+      [t("totalPortfolioValue"), formatCurrency(portfolioRisk.total_portfolio_value)],
+      [t("plannedBuyTotal"), formatCurrency(portfolioRisk.total_planned_buy_amount)],
       [t("plannedCashUsage"), portfolioRisk.available_cash_provided && isFiniteNumber(portfolioRisk.planned_cash_usage_percentage) ? portfolioRisk.planned_cash_usage_percentage.toFixed(2) + "%" : t("notProvided")],
       [t("largestPosition"), (portfolioRisk.largest_position.symbol || "无") + " " + portfolioRisk.largest_position.current_allocation.toFixed(2) + "%"],
       [t("overallRisk"), displayRiskLevel(portfolioRisk.portfolio_risk_level)]
@@ -6280,7 +6306,7 @@ function equalizeAllocations() {
   }
 
   function readPositiveNumber(value) {
-    const normalized = String(value || "").replace(/[$,%CADcad\s]/g, "");
+    const normalized = String(value || "").replace(/[$,%\s]/g, "").replace(/CAD|USD/ig, "");
     const number = Number(normalized);
     return Number.isFinite(number) && number > 0 ? round2(number) : 0;
   }
@@ -6434,6 +6460,8 @@ function equalizeAllocations() {
     setDeploymentInputLabel("normalPool", t("normalPool"));
     setDeploymentInputLabel("crashFund", t("crashFund"));
     setDeploymentInputLabel("weeklyDeployment", t("weeklyDeployment"));
+    setText("label[for='displayCurrencySelect'] span", t("displayCurrency"));
+    setText("#displayCurrencyNote", t("currencyUnitNote"));
     setText("#panicBanner span", t("panicTitle"));
     setText("#panicBanner strong", t("panicBody"));
     setText(".signals-panel .eyebrow", t("allocations"));
@@ -6470,7 +6498,7 @@ function equalizeAllocations() {
     setText("#portfolio-risk-title", t("portfolioRisk"));
     setText("#savePortfolioRiskBtn", t("savePortfolio"));
     setText("label[for='availableCashInput'] span", t("availableCash"));
-    setPlaceholder("#availableCashInput", t("availableCashPlaceholder"));
+    updateCurrencyPlaceholders();
     setDetailLabels(".holdings-details", t("editHoldings"), t("hideDetails"));
     setDetailLabels(".order-copy-details", t("copyTextDetails"), t("hideDetails"));
     setText(".order-panel .eyebrow", t("copyOrderList"));
@@ -6498,6 +6526,15 @@ function equalizeAllocations() {
   function setPlaceholder(selector, value) {
     const element = document.querySelector(selector);
     if (element) element.placeholder = value;
+  }
+
+  function updateCurrencyPlaceholders() {
+    const code = state.displayCurrency;
+    setPlaceholder("#availableCashInput", code + " 可用资金");
+    setPlaceholder("#dcaLedgerAmount", code + " 已确认使用金额");
+    const weeklyBacktestInput = document.getElementById("bt_weeklyContribution");
+    if (weeklyBacktestInput) weeklyBacktestInput.placeholder = "(" + code + " 69.23)";
+    if (displayCurrencySelect) displayCurrencySelect.value = code;
   }
 
   function setAria(selector, value) {
@@ -6714,14 +6751,14 @@ function equalizeAllocations() {
   }
 
   function formatCurrency(value) {
-    return "CAD " + Number(value).toFixed(2);
+    return state.displayCurrency + " " + Number(value).toFixed(2);
   }
 
   function formatCompactCurrency(value) {
     if (!Number.isFinite(value)) return "N/A";
-    if (value >= 10000) return "CAD " + (value / 1000).toFixed(0) + "k";
-    if (value >= 1000) return "CAD " + (value / 1000).toFixed(1) + "k";
-    return "CAD " + value.toFixed(0);
+    if (value >= 10000) return state.displayCurrency + " " + (value / 1000).toFixed(0) + "k";
+    if (value >= 1000) return state.displayCurrency + " " + (value / 1000).toFixed(1) + "k";
+    return state.displayCurrency + " " + value.toFixed(0);
   }
 
   function formatDateTime(timestamp) {

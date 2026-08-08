@@ -12,6 +12,8 @@ test("homepage uses simplified Chinese and has no language switcher", () => {
   assert.doesNotMatch(html, /本周资金计划/);
   assert.match(html, /<h2 id="holdings-title">个股信号与持仓<\/h2>/);
   assert.doesNotMatch(app, /thisTuesday:\s*"本周定投决策"/);
+  assert.match(html, /id="displayCurrencySelect"/);
+  assert.match(html, /只切换金额单位，不进行汇率换算/);
   for (const id of ["weeklyDecisionPlan", "weeklyDecisionTotal", "weeklyDecisionRows", "weeklyDecisionSafety", "coreSatelliteSummary", "allocationEditorRows", "saveCustomAllocationBtn", "restoreDefaultAllocationBtn", "undoAllocationBtn"]) assert.match(html, new RegExp(`id="${id}"`));
 });
 
