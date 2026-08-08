@@ -7,6 +7,9 @@
   "use strict";
 
   const API_KEY = "su-investment-pro:finnhub-key";
+  const DISPLAY_CURRENCY_KEY = "su-investment-pro:display-currency";
+  const DEFAULT_DISPLAY_CURRENCY = "CAD";
+  const SUPPORTED_DISPLAY_CURRENCIES = Object.freeze(["CAD", "USD"]);
 
   function read(storage, key) {
     try { return storage && storage.getItem(key) || ""; } catch (_) { return ""; }
@@ -42,5 +45,31 @@
     return read(persistentStorage, API_KEY);
   }
 
-  return Object.freeze({ API_KEY, loadApiKey, saveApiKey, getApiKey });
+  function normalizeDisplayCurrency(value) {
+    const normalized = String(value || "").trim().toUpperCase();
+    return SUPPORTED_DISPLAY_CURRENCIES.includes(normalized) ? normalized : DEFAULT_DISPLAY_CURRENCY;
+  }
+
+  function loadDisplayCurrency(persistentStorage) {
+    return normalizeDisplayCurrency(read(persistentStorage, DISPLAY_CURRENCY_KEY));
+  }
+
+  function saveDisplayCurrency(value, persistentStorage) {
+    const normalized = normalizeDisplayCurrency(value);
+    write(persistentStorage, DISPLAY_CURRENCY_KEY, normalized);
+    return normalized;
+  }
+
+  return Object.freeze({
+    API_KEY,
+    DISPLAY_CURRENCY_KEY,
+    DEFAULT_DISPLAY_CURRENCY,
+    SUPPORTED_DISPLAY_CURRENCIES,
+    loadApiKey,
+    saveApiKey,
+    getApiKey,
+    normalizeDisplayCurrency,
+    loadDisplayCurrency,
+    saveDisplayCurrency
+  });
 });

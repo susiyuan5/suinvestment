@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#080d14">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://finnhub.io https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>量化定投决策台</title>
-    <link rel="stylesheet" href="style.css?v=professional-layout-3">
+    <link rel="stylesheet" href="style.css?v=currency-preference-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-2">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
     <link rel="stylesheet" href="watchlist.css?v=accessibility-3">
@@ -574,6 +574,17 @@
               <button id="resetDeploymentBtn" class="secondary-button" type="button">恢复默认</button>
             </div>
           </div>
+          <div class="currency-setting">
+            <label for="displayCurrencySelect">
+              <span>显示货币</span>
+              <select id="displayCurrencySelect" aria-describedby="displayCurrencyNote displayCurrencyStatus">
+                <option value="CAD">加元（CAD）</option>
+                <option value="USD">美元（USD）</option>
+              </select>
+            </label>
+            <p id="displayCurrencyNote" class="status-line">只切换金额单位，不进行汇率换算；请按所选货币填写预算和持仓金额。</p>
+            <p id="displayCurrencyStatus" class="status-line" role="status" aria-live="polite"></p>
+          </div>
           <div class="deployment-input-grid">
             <label for="monthlyBudgetInput">
               <span>月度预算</span>
@@ -700,8 +711,8 @@
     <script src="portfolio-policy.js?v=contracts-1"></script>
     <script src="core-satellite-policy.js?v=core-satellite-v1"></script>
     <script src="backtest-engine.js?v=contracts-1"></script>
-    <script src="settings-storage.js?v=persistent-key-1"></script>
-    <script src="app.js?v=project-hardening-4"></script>
+    <script src="settings-storage.js?v=currency-preference-1"></script>
+    <script src="app.js?v=currency-preference-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>

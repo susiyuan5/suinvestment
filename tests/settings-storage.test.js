@@ -25,3 +25,17 @@ test("clearing the Finnhub field forgets the persistent key", function () {
   assert.equal(storage.saveApiKey("", persistent, session), "");
   assert.equal(storage.getApiKey(persistent), "");
 });
+
+test("display currency defaults to CAD and persists a supported selection", function () {
+  const persistent = memoryStorage();
+  assert.equal(storage.loadDisplayCurrency(persistent), "CAD");
+  assert.equal(storage.saveDisplayCurrency("usd", persistent), "USD");
+  assert.equal(storage.loadDisplayCurrency(persistent), "USD");
+  assert.equal(persistent.getItem(storage.DISPLAY_CURRENCY_KEY), "USD");
+});
+
+test("unsupported display currency safely falls back to CAD", function () {
+  const persistent = memoryStorage({ [storage.DISPLAY_CURRENCY_KEY]: "EUR" });
+  assert.equal(storage.loadDisplayCurrency(persistent), "CAD");
+  assert.equal(storage.saveDisplayCurrency("GBP", persistent), "CAD");
+});

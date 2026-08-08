@@ -700,6 +700,46 @@ input::placeholder {
   background: var(--panel-2);
 }
 
+.currency-setting {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0b111a;
+}
+
+.currency-setting label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.8fr);
+  align-items: center;
+  gap: 12px;
+  color: var(--soft);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.currency-setting select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 36px 0 12px;
+  border: 1px solid #344358;
+  border-radius: 8px;
+  color: var(--text);
+  background-color: #101a28;
+  cursor: pointer;
+}
+
+.currency-setting .status-line {
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .currency-setting label {
+    grid-template-columns: 1fr;
+  }
+}
+
 .modal-subheading {
   display: grid;
   gap: 10px;

@@ -1,7 +1,11 @@
 (function () {
   "use strict";
 
-  const STORAGE = { portfolio: "su-investment-pro:portfolio", portfolioRisk: "su-investment-pro:portfolio-risk" };
+  const STORAGE = {
+    portfolio: "su-investment-pro:portfolio",
+    portfolioRisk: "su-investment-pro:portfolio-risk",
+    displayCurrency: "su-investment-pro:display-currency"
+  };
   const DEFAULT_PORTFOLIO = [
     { symbol: "BYDDY", allocation: 0.30 }, { symbol: "MSFT", allocation: 0.22 }, { symbol: "NVDA", allocation: 0.18 },
     { symbol: "AAPL", allocation: 0.15 }, { symbol: "ASML", allocation: 0.10 }, { symbol: "KO", allocation: 0.05 }
@@ -14,7 +18,8 @@
 
   function number(value) { const parsed = Number(value); return Number.isFinite(parsed) && parsed > 0 ? parsed : 0; }
   function readJson(key, fallback) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }
-  function formatCurrency(value) { return new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 2 }).format(value || 0); }
+  function displayCurrency() { try { return localStorage.getItem(STORAGE.displayCurrency) === "USD" ? "USD" : "CAD"; } catch (_) { return "CAD"; } }
+  function formatCurrency(value) { return displayCurrency() + " " + Number(value || 0).toFixed(2); }
   function formatNumber(value) { return new Intl.NumberFormat("en-CA", { maximumFractionDigits: 4 }).format(value || 0); }
   function escapeHtml(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
   function savedPortfolio() { const source = readJson(STORAGE.portfolio, DEFAULT_PORTFOLIO); return Array.isArray(source) && source.length ? source : DEFAULT_PORTFOLIO; }
