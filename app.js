@@ -525,8 +525,8 @@ amountBreakdown: "Amount Breakdown",
       displayCurrency: "显示货币",
       currencyUnitNote: "只切换金额单位，不进行汇率换算；请按所选货币填写预算和持仓金额。",
       currencySaved: "金额单位已切换为 {currency}。",
-      save: "保存",
-      resetDefaults: "恢复默认",
+      save: "保存投入设置",
+      resetDefaults: "恢复默认投入",
       deploymentSaved: "投入设置已保存。",
       deploymentReset: "已恢复默认投入设置。",
       invalidDeploymentInput: "请输入有效的非负数字。",
@@ -587,12 +587,12 @@ amountBreakdown: "Amount Breakdown",
       manualTradePlan: "人工计划",
       copy: "复制本周人工计划",
       liveMarketDataEyebrow: "市场数据",
-      priceSettings: "价格设置",
-      closePriceSettings: "关闭价格设置",
-      finnhubApiKey: "Finnhub API Key",
-      apiKeyPlaceholder: "输入实时价格 API Key",
+      priceSettings: "设置",
+      closePriceSettings: "关闭设置",
+      finnhubApiKey: "Finnhub API 密钥",
+      apiKeyPlaceholder: "输入 Finnhub API 密钥",
       apiKeyStorageNote: "密钥将永久保存在此浏览器中；清空输入框即可删除。",
-      refreshPrices: "刷新市场数据",
+      refreshPrices: "刷新并重新检查",
       sourcePriority: "数据源优先级",
       sourcePriorityLine: "Finnhub → Yahoo 备用 → 缓存数据 → 手动输入",
       signalScore: "信号分",
@@ -623,7 +623,7 @@ amountBreakdown: "Amount Breakdown",
       priceUnavailable: "价格不可用",
       allocation: "配置",
       totalAllocation: "总配置",
-      none: "无",
+      none: "暂无持仓",
       notProvided: "未填写",
       totalPortfolioValue: "组合总值",
       plannedBuyTotal: "计划买入总额",
@@ -811,14 +811,14 @@ amountBreakdown: "金额分解",
       researchTesting: "研究与测试",
       dataQualityEyebrow: "数据质量",
       dataQualitySummary: "数据质量摘要",
-      freshRows: "Fresh / 新鲜",
-      staleRows: "Stale / 过期",
-      manualOverrideRows: "Manual Override / 手动覆盖",
-      legacyOverrideRows: "Legacy Override / 旧覆盖",
-      fallbackRows: "Fallback / 备用数据",
-      cacheRows: "Cache / 缓存",
-      marketRegimeData: "Market Regime / 市场状态",
-      weeklyRows: "rows / 周",
+      freshRows: "新鲜数据",
+      staleRows: "过期数据",
+      manualOverrideRows: "手动覆盖",
+      legacyOverrideRows: "旧版覆盖",
+      fallbackRows: "备用数据",
+      cacheRows: "缓存",
+      marketRegimeData: "市场状态",
+      weeklyRows: "周",
       dataQualityWaiting: "等待市场数据。",
       dataQualityAllClear: "数据来源组合新鲜；未发现过期行、旧覆盖或中性市场备用状态。",
       dataQualityStaleWarning: "存在过期数据。",
@@ -969,6 +969,7 @@ amountBreakdown: "金额分解",
   const allocationEditorTechnologyEl = document.getElementById("allocationEditorTechnology");
   const allocationEditorErrorsEl = document.getElementById("allocationEditorErrors");
   const allocationEditorStatusEl = document.getElementById("allocationEditorStatus");
+  const allocationEditorSummaryTextEl = document.getElementById("allocationEditorSummaryText");
   const overviewWeeklyDeploymentEl = document.getElementById("overviewWeeklyDeployment");
   const overviewPlannedBuyTotalEl = document.getElementById("overviewPlannedBuyTotal");
   const overviewOverallRiskEl = document.getElementById("overviewOverallRisk");
@@ -999,7 +1000,6 @@ amountBreakdown: "金额分解",
   const weeklyDecisionRiskReasonsEl = document.getElementById("weeklyDecisionRiskReasons");
   const weeklyDecisionQqqStatusEl = document.getElementById("weeklyDecisionQqqStatus");
   const adjustAllocationBtn = document.getElementById("adjustAllocationBtn");
-  const restoreDefaultDecisionBtn = document.getElementById("restoreDefaultDecisionBtn");
   const inlineHoldingsStatsEl = document.getElementById("inlineHoldingsStats");
   const inlineHoldingsRowsEl = document.getElementById("inlineHoldingsRows");
   const dataQualityPanelEl = document.getElementById("dataQualityPanel");
@@ -1029,8 +1029,6 @@ amountBreakdown: "金额分解",
     weeklyDeployment: document.getElementById("weeklyDeploymentInput")
   };
 
-  arrangeDashboardSections();
-
   window.addEventListener("project-health:loaded", function (event) {
     state.healthReport = event.detail && event.detail.report ? event.detail.report : event.detail || null;
     state.healthHistory = event.detail && event.detail.history ? event.detail.history : null;
@@ -1056,6 +1054,10 @@ amountBreakdown: "金额分解",
   function renderAllocationEditor() {
     if (!allocationEditorRowsEl) return;
     const draft = state.allocationDraft || coreSatelliteAllocations(state.portfolio);
+    if (allocationEditorSummaryTextEl) {
+      const mode = state.coreSatelliteState && state.coreSatelliteState.allocation_mode === "manual" ? "自定义" : "默认 60/40";
+      allocationEditorSummaryTextEl.textContent = mode + " · 大盘 " + ((Number(draft.SPY || 0)) * 100).toFixed(2) + "% · 个股 " + ((1 - Number(draft.SPY || 0)) * 100).toFixed(2) + "% · 科技个股 " + ((Number(draft.NVDA || 0) + Number(draft.AAPL || 0) + Number(draft.ASML || 0)) * 100).toFixed(2) + "% · 调整比例";
+    }
     if (!state.allocationDraft) state.allocationDraft = Object.assign({}, draft);
     allocationEditorRowsEl.innerHTML = "";
     CORE_SATELLITE_SYMBOLS.forEach(function (symbol) {
@@ -1103,7 +1105,6 @@ amountBreakdown: "金额分解",
   if (restoreDefaultAllocationBtn) restoreDefaultAllocationBtn.addEventListener("click", restoreDefaultAllocations);
   if (undoAllocationBtn) undoAllocationBtn.addEventListener("click", undoAllocationChange);
   if (adjustAllocationBtn) adjustAllocationBtn.addEventListener("click", function () { const editor = document.getElementById("coreSatelliteAllocationEditor"); if (editor) { editor.scrollIntoView({ behavior: "smooth", block: "start" }); const first = editor.querySelector("input"); if (first) first.focus(); } });
-  if (restoreDefaultDecisionBtn) restoreDefaultDecisionBtn.addEventListener("click", restoreDefaultAllocations);
 
   // This dashboard runs on the user's private device, so keep the Finnhub key
   // across browser restarts. Migrate an active session key once for a seamless
@@ -5863,7 +5864,9 @@ function equalizeAllocations() {
     }
     if (overviewPlannedBuyTotalEl) overviewPlannedBuyTotalEl.textContent = formatCurrency(portfolioRisk.total_planned_buy_amount);
     if (overviewOverallRiskEl) {
-      overviewOverallRiskEl.textContent = displayRiskLevel(portfolioRisk.portfolio_risk_level);
+      const blockedByData = state.coreSatellitePlan && state.coreSatellitePlan.safe === false;
+      const riskReason = blockedByData ? "行情数据缺失或已过期" : (portfolioRisk.risk_warnings && portfolioRisk.risk_warnings.length ? "持仓集中度超限" : "组合风险门禁");
+      overviewOverallRiskEl.textContent = blockedByData ? "极高：" + riskReason : displayRiskLevel(portfolioRisk.portfolio_risk_level) + "：" + riskReason;
       overviewOverallRiskEl.className = "risk-" + String(portfolioRisk.portfolio_risk_level || "").toLowerCase();
     }
     if (overviewAvailableCashEl) {
@@ -5926,8 +5929,13 @@ function equalizeAllocations() {
     renderWeeklyDecisionPlan(state.coreSatellitePlan, portfolioRisk);
     if (decisionSummaryStatusEl && state.coreSatellitePlan) {
       const planSafe = state.coreSatellitePlan.safe === true;
-      decisionSummaryStatusEl.textContent = planSafe ? (state.coreSatelliteState && state.coreSatelliteState.allocation_mode === "manual" ? "本周计划已按自定义比例计算。" : "本周资金与定投决策已完成，请人工核对后执行。") : "数据或计算未通过安全检查，请人工复核。";
+      decisionSummaryStatusEl.textContent = planSafe ? (state.coreSatelliteState && state.coreSatelliteState.allocation_mode === "manual" ? "本周计划已按自定义比例计算。" : "本周资金与定投决策已完成，请人工核对后执行。") : "暂停买入";
       decisionSummaryStatusEl.dataset.state = planSafe ? "ready" : "blocked";
+      if (!planSafe) {
+        if (decisionActionEl) decisionActionEl.textContent = "暂停买入";
+        if (decisionReasonEl) decisionReasonEl.textContent = "行情数据不可用或已过期；本周资金全部保留为现金。";
+        if (decisionReviewStateEl) decisionReviewStateEl.textContent = "需人工复核";
+      }
     }
   }
 
@@ -5968,7 +5976,7 @@ function equalizeAllocations() {
     if (weeklyTechnologyTotalEl) weeklyTechnologyTotalEl.textContent = formatCurrency(techTotal);
     if (weeklySpyRedirectEl) weeklySpyRedirectEl.textContent = formatCurrency(plan && plan.spyRedirected || 0);
     if (weeklyRiskCashEl) weeklyRiskCashEl.textContent = formatCurrency(plan && plan.cashRetained || 0);
-    weeklyDecisionSafetyEl.textContent = safe ? "仅供人工决策；不连接券商，不自动下单、不自动卖出或再平衡。" : "数据或计算未通过安全检查，请人工复核";
+    weeklyDecisionSafetyEl.textContent = safe ? "本周资金与定投决策已完成，请人工核对后执行；仅供人工决策，不连接券商，不自动交易。" : "暂停买入：数据或计算未通过安全检查；本周资金全部保留为现金。请刷新并重新检查。";
     weeklyDecisionSafetyEl.dataset.state = safe ? "ready" : "blocked";
     if (copyBtn) copyBtn.disabled = !safe;
     if (weeklyDecisionReasonEl) weeklyDecisionReasonEl.textContent = safe ? "基础预算先按当前目标比例分配，DCA-L2 信号和组合风控只会调整或阻止新增买入。" : "安全门禁未通过，因此不输出可执行买入金额，资金保留为现金。";
@@ -5983,13 +5991,18 @@ function equalizeAllocations() {
       const base = Number(row.originalBaseAmount || 0);
       const signalAdjustment = Number(row.dcaAdjustedAmount || 0) - base + Number(row.crashFundEnhancement || 0);
       const riskAdjustment = Number(row.riskReduction || 0);
-      card.innerHTML = "<strong></strong><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><p></p>";
       const redirected = Number(row.redirectedToSpy || 0);
       const status = Number(row.finalAmount || 0) > 0 ? "可供人工核对" : "已阻止或保留现金";
-      const values = [symbol, "目标 " + (targetBySymbol[symbol] || 0).toFixed(2) + "% / 当前 " + current.toFixed(2) + "%", "基础 " + formatCurrency(base), "信号调整 " + formatCurrency(signalAdjustment), "风控调整 " + formatCurrency(riskAdjustment), "重定向 " + formatCurrency(redirected), "最终人工计划 " + formatCurrency(row.finalAmount), status, coreSatelliteReason(row)];
-      card.querySelectorAll("span").forEach(function (element, index) { element.textContent = values[index + 1]; });
-      card.querySelector("strong").textContent = values[0];
-      card.querySelector("p").textContent = values[8];
+      card.innerHTML = "<strong></strong><span class=\"weekly-decision-target\"></span><span class=\"weekly-decision-final\"></span><span class=\"weekly-decision-status\"></span><details><summary>查看详情</summary><div class=\"weekly-decision-detail\"><span></span><span></span><span></span><span></span><p></p></div></details>";
+      card.querySelector("strong").textContent = symbol;
+      card.querySelector(".weekly-decision-target").textContent = "目标 " + (targetBySymbol[symbol] || 0).toFixed(2) + "% / 当前 " + current.toFixed(2) + "%";
+      card.querySelector(".weekly-decision-final").textContent = "最终人工计划 " + formatCurrency(row.finalAmount);
+      card.querySelector(".weekly-decision-status").textContent = status;
+      card.querySelectorAll(".weekly-decision-detail span")[0].textContent = "基础金额 " + formatCurrency(base);
+      card.querySelectorAll(".weekly-decision-detail span")[1].textContent = "信号调整 " + formatCurrency(signalAdjustment);
+      card.querySelectorAll(".weekly-decision-detail span")[2].textContent = "风控调整 " + formatCurrency(riskAdjustment);
+      card.querySelectorAll(".weekly-decision-detail span")[3].textContent = "SPY 重定向 " + formatCurrency(redirected);
+      card.querySelector(".weekly-decision-detail p").textContent = coreSatelliteReason(row) + "；安全门禁状态：" + (safe ? "已通过" : "未通过");
       weeklyDecisionRowsEl.appendChild(card);
     });
     const cash = document.createElement("article");
@@ -6365,33 +6378,6 @@ function equalizeAllocations() {
 
   function normalizeLanguage(value) {
     return "zh";
-  }
-
-  function arrangeDashboardSections() {
-    const shell = document.querySelector(".app-shell");
-    const decision = document.getElementById("decisionSummary");
-    const dataQuality = document.getElementById("dataQualityPanel");
-    const dashboard = document.querySelector(".dashboard-layout");
-    const deployment = document.querySelector(".deployment-overview");
-    const watchlist = document.getElementById("watchlist");
-    const sidebar = document.querySelector(".dashboard-sidebar");
-    const orderPanel = document.querySelector(".order-panel");
-    const riskPanel = document.querySelector(".portfolio-risk-panel");
-
-    if (dashboard && deployment && dashboard.nextElementSibling !== deployment) {
-      dashboard.insertAdjacentElement("afterend", deployment);
-    }
-    if (dataQuality && decision && dataQuality.nextElementSibling !== decision) {
-      dataQuality.insertAdjacentElement("afterend", decision);
-    }
-    if (sidebar && orderPanel && riskPanel && sidebar.firstElementChild !== orderPanel) {
-      sidebar.insertBefore(orderPanel, riskPanel);
-    }
-    if (shell && watchlist) {
-      const anchor = deployment || dashboard || settingsModal;
-      if (anchor && anchor.nextElementSibling !== watchlist) anchor.insertAdjacentElement("afterend", watchlist);
-      else if (!anchor && shell.lastElementChild !== watchlist) shell.appendChild(watchlist);
-    }
   }
 
   function toggleLanguage() {
