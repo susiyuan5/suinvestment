@@ -5,7 +5,7 @@ from research.idea_engine.shadow import false_positive, maturity, relative_retur
 
 class IdeaEngineShadowTests(unittest.TestCase):
     def test_maturity_boundaries(self):
-        observations = [{"as_of": f"2026-07-{day:02d}"} for day in range(1, 9)]
+        observations = [{"as_of": f"2026-{month:02d}-{day:02d}"} for month, day in ((5, 25), (6, 1), (6, 8), (6, 15), (6, 22), (6, 29), (7, 6), (7, 13))]
         outcomes = [{"horizons": {str(week): {"status": "matured"} for week in (1, 4, 12)}} for _ in range(4)]
         self.assertEqual(maturity(observations, outcomes)["status"], "mature")
 

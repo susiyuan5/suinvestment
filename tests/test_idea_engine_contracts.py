@@ -20,6 +20,11 @@ class IdeaEngineContractsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_as_of((datetime.now(timezone.utc) + timedelta(days=1)).isoformat())
 
+    def test_evidence_newer_than_as_of_rejected(self):
+        common = dict(source="SEC", url="https://example.test", published_at="2026-08-02T00:00:00+00:00", retrieved_at="2026-08-01T00:00:00+00:00", as_of="2026-08-01T00:00:00+00:00", lineage_id="future-filing", freshness="fresh", first_party=True, supports=["quality"], missing_fields=[])
+        with self.assertRaises(ValueError):
+            make_evidence(**common, content="future", confidence=.5)
+
 
 if __name__ == "__main__":
     unittest.main()
