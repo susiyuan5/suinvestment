@@ -67,8 +67,10 @@
     status.dataset.status = value;
     const issueCount = Array.isArray(payload.issues) ? payload.issues.length : 0;
     const core = payload.core_satellite || {};
+    const idea = payload.idea_engine || {};
     const coreNote = core.preset_version ? " 核心/卫星 " + core.preset_version + "；SPY " + (core.spy_data_status || "未知") + "；QQQ " + (core.qqq_risk_signal_status || "未知") + "。" : "";
-    detail.textContent = issueCount ? issueCount + " 个运行问题，请查看报告。" + coreNote : "数据和工作流正常，仅供人工决策。" + coreNote;
+    const ideaNote = idea.status ? " 潜力股研究：" + (idea.status === "shadow_only" ? "仅限 Shadow 人工复核" : "已阻断") + "。" : "";
+    detail.textContent = issueCount ? issueCount + " 个运行问题，请查看报告。" + coreNote + ideaNote : "数据和工作流正常，仅供人工决策。" + coreNote + ideaNote;
     if (watchlist) {
       const watchlistStatus = payload.watchlist && payload.watchlist.status;
       watchlist.textContent = watchlistStatus === "ready" ? "正常" : watchlistStatus === "degraded" ? "已降级" : "未知";

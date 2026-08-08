@@ -1,12 +1,16 @@
 # Project Health
 
-- Status: **HEALTHY**
-- Generated: `2026-08-08T14:18:03.078628+00:00`
+- Status: **WARNING**
+- Generated: `2026-08-08T00:00:00+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
-- `none`
+- `workflow_historical_update_unknown`
+- `workflow_market_update_unknown`
+- `workflow_pages_smoke_unknown`
+- `workflow_quality_checks_unknown`
+- `workflow_shadow_update_unknown`
 
 ## Historical Coverage
 
@@ -15,11 +19,11 @@
 
 ## Workflows
 
-- market_update: `completed` / `success`
-- historical_update: `completed` / `success`
-- quality_checks: `completed` / `success`
-- pages_smoke: `completed` / `success`
-- shadow_update: `completed` / `success`
+- market_update: `unknown` / `unknown`
+- historical_update: `unknown` / `unknown`
+- quality_checks: `unknown` / `unknown`
+- pages_smoke: `unknown` / `unknown`
+- shadow_update: `unknown` / `unknown`
 
 ## Pending Automated Updates
 
@@ -28,7 +32,7 @@
 
 ## Watchlist
 
-- Static fallback status: `ready`
+- Static fallback status: `unknown`
 - Runtime primary: `Yahoo Finance chart API`
 - Same-origin fallback: `data/backtest-prices.json`
 

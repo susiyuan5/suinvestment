@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="stock-search.css?v=order-row-2">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
     <link rel="stylesheet" href="watchlist.css?v=accessibility-3">
+    <link rel="stylesheet" href="idea-engine.css?v=idea-engine-v1">
   </head>
   <body>
     <div class="app-shell">
@@ -291,6 +292,16 @@
         <p class="watchlist-disclaimer">行情仅供盯盘和辅助决策；交易前请以券商报价为准。</p>
       </details>
 
+      <details id="ideaEnginePanel" class="panel idea-engine-panel" aria-labelledby="ideaEngineTitle">
+        <summary class="tool-summary"><span><span class="eyebrow">研究候选</span><strong id="ideaEngineTitle">潜力股研究</strong></span><span>展开研究</span></summary>
+        <div class="idea-engine-heading">
+          <p id="ideaEngineStatus" class="idea-engine-status" role="status">正在加载研究候选。</p>
+          <p class="fine-print">仅用于候选研究，不代表买入建议，不参与本周定投计算。</p>
+        </div>
+        <div id="ideaEngineMaturity" class="idea-engine-maturity">Shadow 状态：等待数据。</div>
+        <div id="ideaEngineRows" class="idea-engine-rows" aria-live="polite"></div>
+      </details>
+
 <section class="panel research-panel" aria-labelledby="research-title">
         <div class="section-heading compact">
           <div>
@@ -570,6 +581,7 @@
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>
+    <script src="idea-engine.js?v=idea-engine-v1"></script>
     <script src="project-health.js?v=health-2"></script>
   </body>
 </html>

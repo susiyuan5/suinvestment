@@ -151,6 +151,10 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
     core_validity = core_summary.get("validity", {}) if isinstance(core_summary, dict) else {}
     core_preset = load(root / "data" / "core-satellite-v1.json", {})
     core_strategy = (core_summary.get("strategies", {}).get("core_satellite_v1", {}) if isinstance(core_summary, dict) else {})
+    idea_latest = load(root / "research" / "results" / "v2" / "idea-engine" / "latest-candidates.json", {})
+    idea_provider = load(root / "research" / "results" / "v2" / "idea-engine" / "provider-status.json", {})
+    idea_shadow = load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "governance-report.json", {})
+    idea_candidates = idea_latest.get("candidates", []) if isinstance(idea_latest, dict) else []
     complete_mature = sum(
         all(row.get("outcomes", {}).get(str(horizon), {}).get("status") == "matured" for horizon in (1, 4, 12))
         for row in outcomes.get("outcomes", [])
@@ -216,6 +220,19 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
             "recent_backtest_valid": core_validity.get("valid") if core_summary else None,
             "fund_redirection_anomaly_count": sum(1 for row in (core_summary.get("data_issues", []) if isinstance(core_summary, dict) else []) if "redirect" in str(row).lower()),
             "healthy_scope_note": "Healthy is operational workflow status only; it does not mean the strategy is effective or trading is approved.",
+        },
+        "idea_engine": {
+            "schema_version": "idea-engine-v1",
+            "last_successful_run": idea_latest.get("generated_at") if isinstance(idea_latest, dict) else None,
+            "provider_status": idea_provider.get("providers", {}) if isinstance(idea_provider, dict) else {},
+            "data_freshness": idea_latest.get("as_of") if isinstance(idea_latest, dict) else None,
+            "candidate_counts": {status: sum(1 for row in idea_candidates if row.get("status") == status) for status in ("A", "B", "C", "blocked")},
+            "single_source_dependency_count": sum("单源依赖" in str(row.get("conflicts", [])) for row in idea_candidates),
+            "shadow_observation_count": len(load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "observations.json", {}).get("observations", [])),
+            "shadow_mature_count": len(load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "outcomes.json", {}).get("outcomes", [])),
+            "human_review_gate": True,
+            "status": "blocked" if idea_provider.get("status") != "ready" or idea_shadow.get("live_promotion_eligible") else "shadow_only",
+            "scope_note": "Idea Engine 只影响潜力股研究，不影响 DCA 或人工计划。",
         },
         "operational_metrics": {
             "data_delay_count": sum(1 for lag in [market_lag] + [row["lag_days"] for row in historical_rows.values()] if lag is None or lag > 0),
