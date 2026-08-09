@@ -1,21 +1,17 @@
 {
   "version": "project-health-v1",
-  "generated_at": "2026-08-08T00:00:00+00:00",
+  "generated_at": "2026-08-09T14:19:39.512794+00:00",
   "status": "warning",
   "status_scope": "Operational data and workflow health only; not strategy validation or trading approval.",
   "manual_decision_only": true,
   "broker_connected": false,
   "automatic_trading": false,
   "issues": [
-    "workflow_historical_update_unknown",
-    "workflow_market_update_unknown",
-    "workflow_pages_smoke_unknown",
-    "workflow_quality_checks_unknown",
-    "workflow_shadow_update_unknown"
+    "workflow_idea_engine_update_pending"
   ],
   "market_snapshot": {
     "generated_at": "2026-08-07T23:06:12.761572Z",
-    "lag_days": 1,
+    "lag_days": 2,
     "fresh_symbols": 8,
     "stale_symbols": 0
   },
@@ -25,19 +21,19 @@
       "QQQ": {
         "row_count": 271,
         "latest_date": "2026-08-07",
-        "lag_days": 1
+        "lag_days": 2
       },
       "SPY": {
         "row_count": 271,
         "latest_date": "2026-08-07",
-        "lag_days": 1
+        "lag_days": 2
       }
     }
   },
   "watchlist": {
-    "status": "unknown",
+    "status": "ready",
     "static_fallback_status": "ready",
-    "synthetic_probe_status": "unknown",
+    "synthetic_probe_status": "ready",
     "runtime_primary": "Yahoo Finance chart API",
     "same_origin_fallback": "data/backtest-prices.json",
     "fallback_symbol_rows": {
@@ -50,29 +46,46 @@
   },
   "workflows": {
     "market_update": {
-      "status": "unknown",
-      "conclusion": "unknown"
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-08-07T23:06:30Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31226034561"
     },
     "historical_update": {
-      "status": "unknown",
-      "conclusion": "unknown"
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-08-08T12:54:10Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31258272827"
     },
     "quality_checks": {
-      "status": "unknown",
-      "conclusion": "unknown"
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-08-08T15:23:53Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31264338642"
     },
     "pages_smoke": {
-      "status": "unknown",
-      "conclusion": "unknown"
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-08-08T15:25:07Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31264376337"
     },
     "shadow_update": {
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-08-01T14:40:20Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/30704251596"
+    },
+    "idea_engine_update": {
       "status": "unknown",
-      "conclusion": "unknown"
+      "conclusion": "pending",
+      "updated_at": null,
+      "url": null
     }
   },
   "pending_updates": {
     "historical_prices": null,
-    "shadow_observation": null
+    "shadow_observation": null,
+    "idea_engine": null
   },
   "shadow": {
     "archived_observation_count": 3,
@@ -117,15 +130,16 @@
     "single_source_dependency_count": 0,
     "shadow_observation_count": 0,
     "shadow_mature_count": 0,
-    "human_review_gate": true,
+    "human_review_gate": false,
+    "live_promotion_eligible": false,
     "status": "blocked",
     "scope_note": "Idea Engine \u53ea\u5f71\u54cd\u6f5c\u529b\u80a1\u7814\u7a76\uff0c\u4e0d\u5f71\u54cd DCA \u6216\u4eba\u5de5\u8ba1\u5212\u3002"
   },
   "operational_metrics": {
     "data_delay_count": 3,
     "workflow_failure_rate": 0.0,
-    "workflow_unknown_count": 5,
-    "watchlist_degradation_ratio": null,
+    "workflow_unknown_count": 1,
+    "watchlist_degradation_ratio": 0,
     "shadow_missing_rate": 0.0,
     "page_js_error_count": null,
     "data_source_response_ms": null
