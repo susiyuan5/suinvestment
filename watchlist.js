@@ -2,6 +2,11 @@
   "use strict";
 
   const KEY = "su-investment-pro:watchlist";
+  const normalizeSymbol = (rawSymbol) => String(rawSymbol || "").trim().toUpperCase().replace(/[^A-Z.\-]/g, "");
+  if (typeof document === "undefined") {
+    if (typeof module === "object" && module.exports) module.exports = { normalizeSymbol };
+    return;
+  }
   const NAMES = { AAPL: "Apple Inc.", MSFT: "Microsoft Corporation", NVDA: "NVIDIA Corporation", TSLA: "Tesla, Inc.", AMZN: "Amazon.com, Inc.", GOOGL: "Alphabet Inc.", META: "Meta Platforms, Inc.", AMD: "Advanced Micro Devices, Inc.", QQQ: "Invesco QQQ Trust", SPY: "SPDR S&P 500 ETF Trust" };
   const state = {
     symbols: loadSymbols(), active: "AAPL", period: "1y", quotes: {}, series: {}, timer: null,
@@ -343,9 +348,25 @@ function showChartTooltip(event) {
     await refreshAll();
     await loadActive();
   }
+  async function addSymbol(rawSymbol) {
+    const symbol = normalizeSymbol(rawSymbol);
+    if (!symbol) return { ok: false, code: "invalid", message: "请输入有效的美股代码。" };
+    if (state.symbols.includes(symbol)) return { ok: false, code: "duplicate", message: "该股票已在盯盘列表中。" };
+    if (state.symbols.length >= 8) return { ok: false, code: "limit", message: "最多可添加 8 只股票。" };
+    state.symbols.push(symbol);
+    state.active = symbol;
+    save();
+    els.input.value = "";
+    renderCards();
+    renderTicker();
+    els.status.textContent = "已加入盯盘，正在加载行情…";
+    loadActive().catch(() => {});
+    return { ok: true, code: "added", symbol, message: "已加入盯盘。" };
+  }
+  window.SuinvestmentWatchlist = { addSymbol };
   els.cards.addEventListener("click", (event) => { const move = event.target.closest("[data-move]"); if (move) { moveSymbol(move.dataset.target, move.dataset.move); return; } const remove = event.target.closest("[data-remove]"); if (remove) { const symbol = remove.dataset.remove; if (state.symbols.length === 1) return; state.symbols = state.symbols.filter((item) => item !== symbol); if (state.active === symbol) state.active = state.symbols[0]; save(); renderCards(); renderTicker(); loadActive(); return; } const card = event.target.closest("[data-symbol]"); if (card) selectSymbol(card.dataset.symbol); });
   els.ticker.addEventListener("click", (event) => { const ticker = event.target.closest("[data-symbol]"); if (ticker) selectSymbol(ticker.dataset.symbol); });
-  els.form.addEventListener("submit", async (event) => { event.preventDefault(); const symbol = els.input.value.trim().toUpperCase().replace(/[^A-Z.\-]/g, ""); if (!symbol) { els.status.textContent = "请输入美股代码。"; return; } if (state.symbols.includes(symbol)) { els.status.textContent = "该股票已在自选列表中。"; return; } if (state.symbols.length >= 8) { els.status.textContent = "最多可添加 8 只股票。"; return; } state.symbols.push(symbol); state.active = symbol; save(); els.input.value = ""; els.status.textContent = "已添加，正在加载行情…"; renderCards(); await loadActive(); });
+  els.form.addEventListener("submit", async (event) => { event.preventDefault(); const result = await addSymbol(els.input.value); els.status.textContent = result.message; });
   els.periods.addEventListener("click", (event) => { const button = event.target.closest("[data-period]"); if (!button) return; state.period = button.dataset.period; els.periods.querySelectorAll("button").forEach((item) => { const active = item === button; item.classList.toggle("active", active); item.setAttribute("aria-pressed", String(active)); }); loadActive(); });
   els.refresh.addEventListener("click", refreshDashboard);
   function schedule() { clearInterval(state.timer); if (els.auto.checked) state.timer = setInterval(refreshDashboard, Number(els.rate.value) * 1000); }

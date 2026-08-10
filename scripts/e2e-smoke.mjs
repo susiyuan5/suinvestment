@@ -64,6 +64,31 @@ async function main() {
   await page.waitForFunction((symbol) => document.querySelector("#watchlistActiveSymbol")?.textContent === symbol, symbols[1]);
   assert.ok((await page.locator("#watchlistChartSummary").textContent()).trim().length > 0, "canvas chart should have accessible alternative text");
 
+  const decisionBeforeIdea = await page.locator("#decisionSummary").textContent();
+  const ideaPanel = page.locator("#ideaEnginePanel");
+  await ideaPanel.locator(":scope > summary").click();
+  const ideaCard = ideaPanel.locator(".idea-engine-card").first();
+  if (await ideaCard.count()) {
+    assert.match(await ideaCard.textContent(), /综合分 \d+\.\d/);
+    assert.match(await ideaCard.textContent(), /稳健分 \d+\.\d/);
+    assert.doesNotMatch(await ideaCard.textContent(), /剔除单源最低/);
+    await ideaCard.locator("details").first().locator(":scope > summary").click();
+    const sourceLink = ideaCard.locator("a[target='_blank']").first();
+    if (await sourceLink.count()) assert.equal(await sourceLink.getAttribute("rel"), "noopener noreferrer");
+    const addButton = ideaCard.getByRole("button", { name: "手动加入盯盘" });
+    await addButton.click();
+    const ideaActionStatus = ideaCard.getByRole("status");
+    await ideaActionStatus.waitFor({ state: "attached" });
+    await page.waitForFunction((element) => element.textContent.trim().length > 0, await ideaActionStatus.elementHandle());
+    assert.match(await ideaActionStatus.textContent(), /已加入盯盘/, "idea card should report a successful Watchlist add");
+    const addedSymbol = await ideaCard.locator("h3").textContent();
+    const storedSymbols = await page.evaluate(() => JSON.parse(localStorage.getItem("su-investment-pro:watchlist") || "[]"));
+    assert.equal(storedSymbols.filter((symbol) => symbol === addedSymbol.trim()).length, 1, "idea card should add exactly one watchlist entry");
+    await addButton.click();
+    await page.waitForFunction((element) => element.textContent.includes("已在盯盘列表"), await ideaActionStatus.elementHandle());
+    assert.equal(await page.locator("#decisionSummary").textContent(), decisionBeforeIdea, "idea card interaction must not change weekly decision output");
+  }
+
   const runtimeEvidence = {
     generated_at: new Date().toISOString(),
     base_url: baseUrl,
