@@ -1,38 +1,36 @@
 # Project Health
 
 - Status: **WARNING**
-- Generated: `2026-08-08T00:00:00+00:00`
+- Generated: `2026-08-09T14:19:39.512794+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
-- `workflow_historical_update_unknown`
-- `workflow_market_update_unknown`
-- `workflow_pages_smoke_unknown`
-- `workflow_quality_checks_unknown`
-- `workflow_shadow_update_unknown`
+- `workflow_idea_engine_update_pending`
 
 ## Historical Coverage
 
-- QQQ: 271 rows; latest `2026-08-07`; lag `1` days
-- SPY: 271 rows; latest `2026-08-07`; lag `1` days
+- QQQ: 271 rows; latest `2026-08-07`; lag `2` days
+- SPY: 271 rows; latest `2026-08-07`; lag `2` days
 
 ## Workflows
 
-- market_update: `unknown` / `unknown`
-- historical_update: `unknown` / `unknown`
-- quality_checks: `unknown` / `unknown`
-- pages_smoke: `unknown` / `unknown`
-- shadow_update: `unknown` / `unknown`
+- market_update: `completed` / `success`
+- historical_update: `completed` / `success`
+- quality_checks: `completed` / `success`
+- pages_smoke: `completed` / `success`
+- shadow_update: `completed` / `success`
+- idea_engine_update: `unknown` / `pending`
 
 ## Pending Automated Updates
 
 - historical_prices: none
 - shadow_observation: none
+- idea_engine: none
 
 ## Watchlist
 
-- Static fallback status: `unknown`
+- Static fallback status: `ready`
 - Runtime primary: `Yahoo Finance chart API`
 - Same-origin fallback: `data/backtest-prices.json`
 
