@@ -18,15 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      OCTAGON_API_KEY: ${{ secrets.OCTAGON_API_KEY }}
+      SEC_USER_AGENT: SuInvestment susiyuan0807@gmail.com
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-
-      - name: Install Octagon runtime
-        run: python -m pip install -r requirements-octagon.txt
 
       - name: Validate pinned provider manifest
         run: |
@@ -36,19 +33,15 @@ jobs:
 
           payload = json.loads(Path("research/idea_engine/providers/provider_manifest.json").read_text(encoding="utf-8"))
           assert payload["manifest_version"] == "1"
-          assert all(item.get("commit_sha") for item in payload["providers"])
+          assert all(item.get("name") and item.get("allowed_use") for item in payload["providers"])
+          assert any(item.get("name") == "sec-edgar-public-data" and not item.get("api_key_required") for item in payload["providers"])
           print("provider_manifest_valid=true")
           PY
 
-      - name: Generate schema-validated research candidates
-        if: env.OCTAGON_API_KEY != ''
+      - name: Generate candidates from free public data
         env:
           PYTHONPATH: .
-        run: python -m research.idea_engine.run_idea_engine --output research/results/v2/idea-engine
-
-      - name: Report missing provider credential
-        if: env.OCTAGON_API_KEY == ''
-        run: echo "OCTAGON_API_KEY is not configured; preserving the last valid Idea Engine result unchanged."
+        run: python -m research.idea_engine.run_idea_engine --provider free --output research/results/v2/idea-engine
 
       - name: Run complete quality checks
         run: |
@@ -58,7 +51,6 @@ jobs:
           python scripts/check_static_contracts.py
 
       - name: Create draft research pull request
-        if: env.OCTAGON_API_KEY != ''
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -74,5 +66,6 @@ jobs:
             - 不连接券商
             - 不自动交易
             - 候选结果仅可人工复核
+            - 数据源为免费 SEC EDGAR 与公开价格数据，无需付费 API Key
           add-paths: |
             research/results/v2/idea-engine/**

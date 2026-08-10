@@ -1,6 +1,6 @@
 {
   "version": "project-health-v1",
-  "generated_at": "2026-08-09T14:19:39.512794+00:00",
+  "generated_at": "2026-08-10T12:49:21.354656+00:00",
   "status": "warning",
   "status_scope": "Operational data and workflow health only; not strategy validation or trading approval.",
   "manual_decision_only": true,
@@ -11,7 +11,7 @@
   ],
   "market_snapshot": {
     "generated_at": "2026-08-07T23:06:12.761572Z",
-    "lag_days": 2,
+    "lag_days": 3,
     "fresh_symbols": 8,
     "stale_symbols": 0
   },
@@ -21,12 +21,12 @@
       "QQQ": {
         "row_count": 271,
         "latest_date": "2026-08-07",
-        "lag_days": 2
+        "lag_days": 3
       },
       "SPY": {
         "row_count": 271,
         "latest_date": "2026-08-07",
-        "lag_days": 2
+        "lag_days": 3
       }
     }
   },
@@ -66,8 +66,8 @@
     "pages_smoke": {
       "status": "completed",
       "conclusion": "success",
-      "updated_at": "2026-08-08T15:25:07Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31264376337"
+      "updated_at": "2026-08-09T14:21:29Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31318196323"
     },
     "shadow_update": {
       "status": "completed",
@@ -113,26 +113,31 @@
   },
   "idea_engine": {
     "schema_version": "idea-engine-v1",
-    "last_successful_run": "2026-08-08T14:49:30.891484+00:00",
+    "last_successful_run": "2026-08-10T12:45:50.880896+00:00",
+    "active_provider": "free_public_data",
+    "paid_api_key_required": false,
     "provider_status": {
-      "anthropic": "recall_only_not_configured",
-      "serenity": "not_configured",
-      "juglar": "not_configured",
-      "octagon": "manual_schema_validated_json_only"
+      "anthropic": "reference_method_applied",
+      "serenity": "reference_method_applied",
+      "juglar": "reference_method_applied",
+      "sec_edgar": "public_api_no_key",
+      "yahoo_chart": "public_chart_no_key",
+      "octagon": "optional_paid_api_disabled"
     },
-    "data_freshness": "2026-08-08T14:49:30.891484+00:00",
+    "data_freshness": "2026-08-10T12:45:50.880896+00:00",
     "candidate_counts": {
       "A": 0,
-      "B": 0,
+      "B": 10,
       "C": 0,
       "blocked": 0
     },
     "single_source_dependency_count": 0,
-    "shadow_observation_count": 0,
+    "free_source_scope_limited_count": 10,
+    "shadow_observation_count": 1,
     "shadow_mature_count": 0,
     "human_review_gate": false,
     "live_promotion_eligible": false,
-    "status": "blocked",
+    "status": "shadow_only",
     "scope_note": "Idea Engine \u53ea\u5f71\u54cd\u6f5c\u529b\u80a1\u7814\u7a76\uff0c\u4e0d\u5f71\u54cd DCA \u6216\u4eba\u5de5\u8ba1\u5212\u3002"
   },
   "operational_metrics": {

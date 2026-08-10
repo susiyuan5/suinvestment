@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -52,9 +51,12 @@ def technology_symbols() -> list[str]:
     return list(dict.fromkeys(categories.get("core_technology", []) + categories.get("semiconductors", [])))
 
 
-def _provider_payload(as_of: str, provider_fetcher: Callable | None = None) -> dict:
+def _provider_payload(as_of: str, provider_fetcher: Callable | None = None, *, provider_name: str = "free") -> dict:
     if provider_fetcher is None:
-        from .providers.octagon_data import fetch_research_payload
+        if provider_name == "octagon":
+            from .providers.octagon_data import fetch_research_payload
+        else:
+            from .providers.free_public_data import fetch_research_payload
         provider_fetcher = fetch_research_payload
     return provider_fetcher(technology_symbols(), as_of=as_of)
 
@@ -145,18 +147,20 @@ def _markdown(result: dict, governance: dict) -> str:
     return "\n".join(lines)
 
 
-def run(input_path: Path | None, output_dir: Path, as_of: str | None = None, *, provider_fetcher: Callable | None = None) -> dict:
+def run(
+    input_path: Path | None,
+    output_dir: Path,
+    as_of: str | None = None,
+    *,
+    provider_fetcher: Callable | None = None,
+    provider_name: str = "free",
+) -> dict:
     config = load(ROOT / "research" / "idea_engine" / "config.v1.json", {})
-    existing = load(output_dir / "latest-candidates.json", None)
     frozen_at = as_of or datetime.now(timezone.utc).isoformat()
     if input_path is not None:
         payload = load(input_path, {})
-    elif provider_fetcher is not None or os.environ.get("OCTAGON_API_KEY"):
-        payload = _provider_payload(frozen_at, provider_fetcher)
-    elif isinstance(existing, dict) and existing.get("schema_version") == SCHEMA_VERSION:
-        return existing
     else:
-        return {"schema_version": SCHEMA_VERSION, "research_only": True, "status": "blocked", "candidates": []}
+        payload = _provider_payload(frozen_at, provider_fetcher, provider_name=provider_name)
 
     candidates = []
     rejected = []
@@ -170,22 +174,33 @@ def run(input_path: Path | None, output_dir: Path, as_of: str | None = None, *, 
     for candidate in candidates:
         validate_candidate(candidate)
 
+    ranked_candidates = sorted(candidates, key=lambda item: (-item["composite_score"], item["ticker"]))
+    max_candidates = int(config.get("output", {}).get("max_candidates", 10))
     result = {
         "schema_version": SCHEMA_VERSION, "generated_at": frozen_at, "as_of": frozen_at,
         "research_only": True, "universe": config["universe"], "input_hash": input_hash(payload),
-        "candidates": sorted(candidates, key=lambda item: (-item["composite_score"], item["ticker"])),
+        "candidates": ranked_candidates[:max_candidates],
         "status": "ready" if candidates else "blocked", "manual_review_only": True,
+        "screened_candidate_count": len(ranked_candidates),
+        "displayed_candidate_limit": max_candidates,
+        "active_provider": str(payload.get("provider", "manual_import")),
+        "source_scope": "free_public_data" if payload.get("provider") == "free_public_data" else "optional_or_manual",
     }
     output_dir.mkdir(parents=True, exist_ok=True)
     atomic_json(output_dir / "latest-candidates.json", result)
     atomic_json(output_dir / "rejected-candidates.json", {"schema_version": SCHEMA_VERSION, "as_of": frozen_at, "research_only": True, "items": rejected})
     provider = str(payload.get("provider", "manual_import"))
     atomic_json(output_dir / "provider-status.json", {
-        "schema_version": SCHEMA_VERSION, "as_of": frozen_at, "research_only": True, "status": "ready",
+        "schema_version": SCHEMA_VERSION, "as_of": frozen_at, "research_only": True,
+        "status": "ready" if payload.get("universe_rows") else "blocked",
+        "active_provider": provider,
+        "failure_count": len(payload.get("failures", [])),
         "providers": {
             "anthropic": "reference_method_applied", "serenity": "reference_method_applied",
             "juglar": "reference_method_applied",
-            "octagon": "openai_compatible_api" if provider == "octagon" else "manual_schema_validated_json",
+            "sec_edgar": "public_api_no_key" if provider == "free_public_data" else "not_active",
+            "yahoo_chart": "public_chart_no_key" if provider == "free_public_data" else "not_active",
+            "octagon": "optional_paid_api_active" if provider == "octagon" else "optional_paid_api_disabled",
         },
     })
     governance = _write_shadow(output_dir, result, config)
@@ -198,8 +213,9 @@ def main() -> None:
     parser.add_argument("--input", type=Path)
     parser.add_argument("--output", type=Path, default=RESULTS)
     parser.add_argument("--as-of", default="")
+    parser.add_argument("--provider", choices=("free", "octagon"), default="free")
     args = parser.parse_args()
-    result = run(args.input, args.output, args.as_of or None)
+    result = run(args.input, args.output, args.as_of or None, provider_name=args.provider)
     print(f"idea_engine_status={result['status']}")
 
 
