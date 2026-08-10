@@ -263,6 +263,16 @@ Outputs:
 
 Safety statement: the default active research universe remains 38 symbols; the live dashboard, Manual Trade Plan, and default strategy remain unchanged; PyPortfolioOpt remains deferred; all Phase 6J-6O outputs are research-only, shadow-only, or disabled-by-default.
 
+## Idea Engine 免费数据链
+
+潜力股研究的默认提供器使用 SEC EDGAR `submissions` / `companyfacts` 与公开价格图表数据，不需要付费 API Key：
+
+```powershell
+python -m research.idea_engine.run_idea_engine --provider free
+```
+
+免费链只生成最多 10 个 Shadow 研究候选。由于不含分析师一致预期、完整电话会和新闻事件语义，所有候选都会带有 `free_source_scope_limited` 门禁，不能成为 A 级，也不会进入本周定投。Octagon 适配器仅作为默认关闭的可选付费兼容层保留，自动工作流不安装或调用它。
+
 ## Phase 6S-6T Shadow Observation
 
 Phase 6S records a research-only observation snapshot for the 12 monitored symbols:

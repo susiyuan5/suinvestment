@@ -231,12 +231,18 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
         "idea_engine": {
             "schema_version": "idea-engine-v1",
             "last_successful_run": idea_latest.get("generated_at") if isinstance(idea_latest, dict) else None,
+            "active_provider": idea_provider.get("active_provider") if isinstance(idea_provider, dict) else None,
+            "paid_api_key_required": False,
             "provider_status": idea_provider.get("providers", {}) if isinstance(idea_provider, dict) else {},
             "data_freshness": idea_latest.get("as_of") if isinstance(idea_latest, dict) else None,
             "candidate_counts": {status: sum(1 for row in idea_candidates if row.get("status") == status) for status in ("A", "B", "C", "blocked")},
             "single_source_dependency_count": sum(
                 "single_provider_score_dependency" in row.get("data_quality", {}).get("gates_failed", [])
                 or "单源依赖" in str(row.get("conflicts", []))
+                for row in idea_candidates
+            ),
+            "free_source_scope_limited_count": sum(
+                "free_source_scope_limited" in row.get("data_quality", {}).get("gates_failed", [])
                 for row in idea_candidates
             ),
             "shadow_observation_count": len(load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "observations.json", {}).get("observations", [])),

@@ -5,6 +5,7 @@
   "use strict";
 
   var gradeLabels = { A: "深入研究", B: "继续观察", C: "筛选信号", blocked: "阻断", rejected: "拒绝" };
+  var dimensionLabels = { financial_quality: "财务质量", valuation: "估值", demand_catalyst: "需求与催化", expectations_confirmation: "预期确认", industry_cycle: "行业周期", risk_liquidity_health: "风险与流动性" };
   function safePayload(payload) {
     if (!payload || payload.research_only !== true || payload.schema_version !== "idea-engine-v1" || !Array.isArray(payload.candidates)) return null;
     return payload;
@@ -21,7 +22,7 @@
     var score = doc.createElement("p"); score.className = "idea-engine-score"; score.textContent = "综合分 " + text(candidate.composite_score, "0") + "；剔除单源最低 " + text(candidate.leave_one_out_floor, "0"); card.appendChild(score);
     var dimensions = doc.createElement("div"); dimensions.className = "idea-engine-dimensions";
     var values = candidate.dimensions || candidate.family_scores || {};
-    Object.keys(values).slice(0, 6).forEach(function (key) { var row = doc.createElement("span"); row.textContent = key + "：" + text(values[key]); dimensions.appendChild(row); });
+    Object.keys(values).slice(0, 6).forEach(function (key) { var row = doc.createElement("span"); row.textContent = (dimensionLabels[key] || key) + "：" + text(values[key]); dimensions.appendChild(row); });
     card.appendChild(dimensions);
     var detail = doc.createElement("details"); var summary = doc.createElement("summary"); summary.textContent = "查看研究详情"; detail.appendChild(summary);
     var body = doc.createElement("div"); body.className = "idea-engine-detail";
@@ -33,11 +34,11 @@
     var safe = safePayload(payload); elements.rows.innerHTML = "";
     var mature = governance && governance.status === "mature" && governance.manual_review_eligible === true;
     if (!safe || safe.status === "blocked") {
-      elements.status.textContent = "潜力股数据源尚未就绪，保留最后有效结果；不影响本周定投。";
+      elements.status.textContent = "免费公开数据覆盖不足或校验未通过，保留最后有效结果；不影响本周定投。";
       elements.maturity.textContent = "Shadow 状态：尚未满足人工复核门槛，不会自动进入定投决策。";
       return;
     }
-    elements.status.textContent = "已加载 " + safe.candidates.length + " 个研究候选；不生成买入金额。";
+    elements.status.textContent = (safe.active_provider === "free_public_data" ? "已使用 SEC EDGAR 与公开价格数据加载 " : "已加载 ") + safe.candidates.length + " 个研究候选；不生成买入金额。";
     elements.maturity.textContent = "Shadow 状态：" + (mature ? "已成熟，仅可人工复核" : "继续观察，不会自动进入定投决策");
     safe.candidates.forEach(function (candidate) { elements.rows.appendChild(createCard(candidate, doc)); });
   }

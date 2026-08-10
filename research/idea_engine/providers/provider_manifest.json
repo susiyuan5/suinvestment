@@ -1,7 +1,28 @@
 {
   "manifest_version": "1",
-  "audit_status": "reference_only; no third-party code or prompt copied",
+  "audit_status": "free public data active; reference methods only; no third-party code or prompt copied",
   "providers": [
+    {
+      "name": "sec-edgar-public-data",
+      "documentation_url": "https://www.sec.gov/search-filings/edgar-application-programming-interfaces",
+      "endpoints": [
+        "https://www.sec.gov/files/company_tickers.json",
+        "https://data.sec.gov/submissions/CIK##########.json",
+        "https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json"
+      ],
+      "allowed_use": "active first-party filing and XBRL evidence provider",
+      "api_key_required": false,
+      "code_executed": true,
+      "data_updated_at": "real time subject to SEC dissemination; fetched weekly"
+    },
+    {
+      "name": "yahoo-chart-public-data",
+      "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
+      "allowed_use": "active price, volume, trend and risk confirmation only",
+      "api_key_required": false,
+      "code_executed": true,
+      "data_updated_at": "latest available market session; fetched weekly"
+    },
     {
       "name": "anthropic-idea-generation",
       "repository_url": "https://github.com/anthropics/financial-services",
@@ -45,12 +66,13 @@
       "commit_sha": "51e938c4d086f658de8bdcf734e864d34637167e",
       "license": "MIT",
       "component_version": "main at 51e938c",
-      "allowed_use": "OpenAI-compatible API evidence provider plus schema-validated manual import",
+      "allowed_use": "disabled optional paid enhancement plus schema-validated manual import",
       "api_key_required": true,
       "base_url": "https://api.octagonai.co/v1",
       "model": "octagon-agent-market-intelligence-agent",
       "code_executed": false,
-      "data_updated_at": "2026-08-08 audit; OpenAI-compatible chat completions confirmed"
+      "default_enabled": false,
+      "data_updated_at": "2026-08-08 audit; not required by the default workflow"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "schema_version": "idea-engine-v1",
-  "generated_at": "2026-08-08T14:49:30.891484+00:00",
-  "as_of": "2026-08-08T14:49:30.891484+00:00",
+  "generated_at": "2026-08-10T12:45:50.880896+00:00",
+  "as_of": "2026-08-10T12:45:50.880896+00:00",
   "research_only": true,
   "universe": {
     "name": "us-listed-technology",
@@ -12,8 +12,1179 @@
     "exclude_otc": true,
     "benchmark": "QQQ"
   },
-  "input_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
-  "candidates": [],
-  "status": "blocked",
-  "manual_review_only": true
+  "input_hash": "e1929da59f9fcb28de16a2249af59a829231f1e3b0403fcbf83d14e9c5f5f462",
+  "candidates": [
+    {
+      "schema_version": "idea-engine-v1",
+      "ticker": "TSM",
+      "as_of": "2026-08-10T12:45:50.880896+00:00",
+      "research_only": true,
+      "universe": "us-listed-technology",
+      "method_versions": {
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      },
+      "evidence": [
+        {
+          "source": "SEC EDGAR 6-K",
+          "url": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000471/tsm-revenue20260810.htm",
+          "published_at": "2026-08-10T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "8edf7aa797c0fc7015162dbf28d0f69abd407e4c8b6dad9e2b5027ea28722d38",
+          "lineage_id": "sec:1046179:0001046179-26-000471",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.9,
+          "missing_fields": []
+        },
+        {
+          "source": "SEC EDGAR companyfacts",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001046179.json",
+          "published_at": "2026-08-10T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "ae39f862620a38edac27e221c762236b616ead14b978963f633429acfebf7413",
+          "lineage_id": "sec-companyfacts:1046179:2026-08-10",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.85,
+          "missing_fields": []
+        },
+        {
+          "source": "Yahoo Finance chart",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/TSM?period1=1751805950&period2=1786452350&interval=1d&events=history",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "f9bf504c56169aaaaacf49e426dcefc4293c8b34311f585cdc9e129e8b83b2f8",
+          "lineage_id": "yahoo-chart:TSM:2026-08-07",
+          "freshness": "fresh",
+          "first_party": false,
+          "supports": [
+            "expectations_confirmation",
+            "risk_liquidity_health"
+          ],
+          "confidence": 0.75,
+          "missing_fields": [
+            "analyst_consensus",
+            "earnings_transcript",
+            "news_catalyst"
+          ]
+        }
+      ],
+      "family_scores": {
+        "financial_quality": 85.289665,
+        "valuation": 80.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 76.128717,
+        "industry_cycle": 79.926095,
+        "risk_liquidity_health": 59.113668
+      },
+      "composite_score": 82.6457,
+      "leave_one_out_floor": 61.323284,
+      "status": "B",
+      "conflicts": [],
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-08-10",
+        "latest_price": "2026-08-07",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "no_consensus_estimates"
+        ],
+        "positive_dimensions": [
+          "financial_quality",
+          "valuation",
+          "demand_catalyst",
+          "expectations_confirmation",
+          "industry_cycle"
+        ]
+      }
+    },
+    {
+      "schema_version": "idea-engine-v1",
+      "ticker": "LRCX",
+      "as_of": "2026-08-10T12:45:50.880896+00:00",
+      "research_only": true,
+      "universe": "us-listed-technology",
+      "method_versions": {
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      },
+      "evidence": [
+        {
+          "source": "SEC EDGAR 10-K",
+          "url": "https://www.sec.gov/Archives/edgar/data/707549/000070754926000037/lrcx-20260628.htm",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "39d6c02232a9e4f723e13292096752fc27f1daff6d9e3698b87e5690e4d00e37",
+          "lineage_id": "sec:707549:0000707549-26-000037",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.9,
+          "missing_fields": []
+        },
+        {
+          "source": "SEC EDGAR companyfacts",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000707549.json",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "c43bfed548fb64527bf3972601dd9eea58e51da02bf10fc5e299e44f288dbbfb",
+          "lineage_id": "sec-companyfacts:707549:2026-08-07",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.85,
+          "missing_fields": []
+        },
+        {
+          "source": "Yahoo Finance chart",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/LRCX?period1=1751805950&period2=1786452350&interval=1d&events=history",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "f7812adf09e4ebc7a3ca1d39c4b812b43bf21cac023e3a68a81e544044d81a9f",
+          "lineage_id": "yahoo-chart:LRCX:2026-08-07",
+          "freshness": "fresh",
+          "first_party": false,
+          "supports": [
+            "expectations_confirmation",
+            "risk_liquidity_health"
+          ],
+          "confidence": 0.75,
+          "missing_fields": [
+            "analyst_consensus",
+            "earnings_transcript",
+            "news_catalyst"
+          ]
+        }
+      ],
+      "family_scores": {
+        "financial_quality": 82.478009,
+        "valuation": 35.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 100.0,
+        "industry_cycle": 74.205766,
+        "risk_liquidity_health": 33.694962
+      },
+      "composite_score": 73.409575,
+      "leave_one_out_floor": 52.790073,
+      "status": "B",
+      "conflicts": [],
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-08-07",
+        "latest_price": "2026-08-07",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "no_consensus_estimates"
+        ],
+        "positive_dimensions": [
+          "financial_quality",
+          "demand_catalyst",
+          "expectations_confirmation",
+          "industry_cycle"
+        ]
+      }
+    },
+    {
+      "schema_version": "idea-engine-v1",
+      "ticker": "MU",
+      "as_of": "2026-08-10T12:45:50.880896+00:00",
+      "research_only": true,
+      "universe": "us-listed-technology",
+      "method_versions": {
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      },
+      "evidence": [
+        {
+          "source": "SEC EDGAR 10-Q",
+          "url": "https://www.sec.gov/Archives/edgar/data/723125/000072312526000015/mu-20260528.htm",
+          "published_at": "2026-06-25T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "3c41ff0547cdc184f29e7414c1df745e939a05c96f2b833044a2e17566716e98",
+          "lineage_id": "sec:723125:0000723125-26-000015",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.9,
+          "missing_fields": []
+        },
+        {
+          "source": "SEC EDGAR companyfacts",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000723125.json",
+          "published_at": "2026-06-25T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "a903f8548883546fbf13e3a6d4630b4b2ffd2140a5ee630d7eb4b074415d4d89",
+          "lineage_id": "sec-companyfacts:723125:2026-06-25",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.85,
+          "missing_fields": []
+        },
+        {
+          "source": "Yahoo Finance chart",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/MU?period1=1751805950&period2=1786452350&interval=1d&events=history",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "ca772341f59da110380c149bfe8fe84af7ffdc20fbe6eda78bebf987e166d2d6",
+          "lineage_id": "yahoo-chart:MU:2026-08-07",
+          "freshness": "fresh",
+          "first_party": false,
+          "supports": [
+            "expectations_confirmation",
+            "risk_liquidity_health"
+          ],
+          "confidence": 0.75,
+          "missing_fields": [
+            "analyst_consensus",
+            "earnings_transcript",
+            "news_catalyst"
+          ]
+        }
+      ],
+      "family_scores": {
+        "financial_quality": 87.520878,
+        "valuation": 20.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 100.0,
+        "industry_cycle": 87.38612,
+        "risk_liquidity_health": 19.492296
+      },
+      "composite_score": 71.568061,
+      "leave_one_out_floor": 49.687842,
+      "status": "B",
+      "conflicts": [],
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-06-25",
+        "latest_price": "2026-08-07",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "no_consensus_estimates"
+        ],
+        "positive_dimensions": [
+          "financial_quality",
+          "demand_catalyst",
+          "expectations_confirmation",
+          "industry_cycle"
+        ]
+      }
+    },
+    {
+      "schema_version": "idea-engine-v1",
+      "ticker": "AMD",
+      "as_of": "2026-08-10T12:45:50.880896+00:00",
+      "research_only": true,
+      "universe": "us-listed-technology",
+      "method_versions": {
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      },
+      "evidence": [
+        {
+          "source": "SEC EDGAR 10-Q",
+          "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000123/amd-20260627.htm",
+          "published_at": "2026-08-05T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "8afc78df619bdaa2e72d9ebda901c93fbe016ff7d525db9239d4df2592ea9726",
+          "lineage_id": "sec:2488:0000002488-26-000123",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.9,
+          "missing_fields": []
+        },
+        {
+          "source": "SEC EDGAR companyfacts",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000002488.json",
+          "published_at": "2026-08-05T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "705bf1deb49a7566203ec1e164663525c6db588d4689e6e9199f4e80b4c3e274",
+          "lineage_id": "sec-companyfacts:2488:2026-08-05",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.85,
+          "missing_fields": []
+        },
+        {
+          "source": "Yahoo Finance chart",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AMD?period1=1751805950&period2=1786452350&interval=1d&events=history",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "59c7edbbf541e24935f4f9c2b9181370ed976e5a09a221f0993f459e63c29866",
+          "lineage_id": "yahoo-chart:AMD:2026-08-07",
+          "freshness": "fresh",
+          "first_party": false,
+          "supports": [
+            "expectations_confirmation",
+            "risk_liquidity_health"
+          ],
+          "confidence": 0.75,
+          "missing_fields": [
+            "analyst_consensus",
+            "earnings_transcript",
+            "news_catalyst"
+          ]
+        }
+      ],
+      "family_scores": {
+        "financial_quality": 81.958507,
+        "valuation": 20.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 100.0,
+        "industry_cycle": 82.893082,
+        "risk_liquidity_health": 30.948784
+      },
+      "composite_score": 70.873813,
+      "leave_one_out_floor": 50.384187,
+      "status": "B",
+      "conflicts": [],
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-08-05",
+        "latest_price": "2026-08-07",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "no_consensus_estimates"
+        ],
+        "positive_dimensions": [
+          "financial_quality",
+          "demand_catalyst",
+          "expectations_confirmation",
+          "industry_cycle"
+        ]
+      }
+    },
+    {
+      "schema_version": "idea-engine-v1",
+      "ticker": "TXN",
+      "as_of": "2026-08-10T12:45:50.880896+00:00",
+      "research_only": true,
+      "universe": "us-listed-technology",
+      "method_versions": {
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      },
+      "evidence": [
+        {
+          "source": "SEC EDGAR 10-Q",
+          "url": "https://www.sec.gov/Archives/edgar/data/97476/000009747626000152/txn-20260630.htm",
+          "published_at": "2026-07-24T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "900efac47044b92d85d9d31d04beaa055f5bbb16d1417a0e29fa7868ffd36504",
+          "lineage_id": "sec:97476:0000097476-26-000152",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.9,
+          "missing_fields": []
+        },
+        {
+          "source": "SEC EDGAR companyfacts",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000097476.json",
+          "published_at": "2026-07-24T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "47bf752587107d9c780f6018a44328fd7291f776b94c8f2c45a5e89ddd0dd01d",
+          "lineage_id": "sec-companyfacts:97476:2026-07-24",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.85,
+          "missing_fields": []
+        },
+        {
+          "source": "Yahoo Finance chart",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/TXN?period1=1751805950&period2=1786452350&interval=1d&events=history",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "c4aed35da3acfaff0d006b19c0a584bfdc686d672473b7c458c6d5f37542a7fc",
+          "lineage_id": "yahoo-chart:TXN:2026-08-07",
+          "freshness": "fresh",
+          "first_party": false,
+          "supports": [
+            "expectations_confirmation",
+            "risk_liquidity_health"
+          ],
+          "confidence": 0.75,
+          "missing_fields": [
+            "analyst_consensus",
+            "earnings_transcript",
+            "news_catalyst"
+          ]
+        }
+      ],
+      "family_scores": {
+        "financial_quality": 81.44641,
+        "valuation": 35.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 65.447681,
+        "industry_cycle": 70.376994,
+        "risk_liquidity_health": 54.924535
+      },
+      "composite_score": 69.708908,
+      "leave_one_out_floor": 49.347305,
+      "status": "B",
+      "conflicts": [],
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-07-24",
+        "latest_price": "2026-08-07",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "no_consensus_estimates"
+        ],
+        "positive_dimensions": [
+          "financial_quality",
+          "demand_catalyst",
+          "expectations_confirmation",
+          "industry_cycle"
+        ]
+      }
+    },
+    {
+      "schema_version": "idea-engine-v1",
+      "ticker": "ASML",
+      "as_of": "2026-08-10T12:45:50.880896+00:00",
+      "research_only": true,
+      "universe": "us-listed-technology",
+      "method_versions": {
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      },
+      "evidence": [
+        {
+          "source": "SEC EDGAR 6-K",
+          "url": "https://www.sec.gov/Archives/edgar/data/937966/000162828026048235/form6-kquarterlyfilings.htm",
+          "published_at": "2026-07-15T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "677474ecbb98107bec6338eab8e1dbb70187b2d876ce51d0f16a8ad2e90541be",
+          "lineage_id": "sec:937966:0001628280-26-048235",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.9,
+          "missing_fields": []
+        },
+        {
+          "source": "SEC EDGAR companyfacts",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000937966.json",
+          "published_at": "2026-07-15T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "ac7dc1d1be7b0f443df4645e215f8792de82ddba04f994971a7876fd2e79036f",
+          "lineage_id": "sec-companyfacts:937966:2026-07-15",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.85,
+          "missing_fields": []
+        },
+        {
+          "source": "Yahoo Finance chart",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/ASML?period1=1751805950&period2=1786452350&interval=1d&events=history",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "304a210b9c02f29daa105f76cc5724e9ef800fd3ddd2492664f61933bf392190",
+          "lineage_id": "yahoo-chart:ASML:2026-08-07",
+          "freshness": "fresh",
+          "first_party": false,
+          "supports": [
+            "expectations_confirmation",
+            "risk_liquidity_health"
+          ],
+          "confidence": 0.75,
+          "missing_fields": [
+            "analyst_consensus",
+            "earnings_transcript",
+            "news_catalyst"
+          ]
+        }
+      ],
+      "family_scores": {
+        "financial_quality": 75.548818,
+        "valuation": 20.0,
+        "demand_catalyst": 99.438044,
+        "expectations_confirmation": 100.0,
+        "industry_cycle": 60.329258,
+        "risk_liquidity_health": 54.253533
+      },
+      "composite_score": 69.233092,
+      "leave_one_out_floor": 49.345484,
+      "status": "B",
+      "conflicts": [],
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-07-15",
+        "latest_price": "2026-08-07",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "no_consensus_estimates"
+        ],
+        "positive_dimensions": [
+          "financial_quality",
+          "demand_catalyst",
+          "expectations_confirmation",
+          "industry_cycle"
+        ]
+      }
+    },
+    {
+      "schema_version": "idea-engine-v1",
+      "ticker": "AMAT",
+      "as_of": "2026-08-10T12:45:50.880896+00:00",
+      "research_only": true,
+      "universe": "us-listed-technology",
+      "method_versions": {
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      },
+      "evidence": [
+        {
+          "source": "SEC EDGAR 10-Q",
+          "url": "https://www.sec.gov/Archives/edgar/data/6951/000162828026037227/amat-20260426.htm",
+          "published_at": "2026-05-21T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "23f52a7c444f5b3e9cba0ca64f419fc798c0b090c4d6e3b62d2a18c5b110045e",
+          "lineage_id": "sec:6951:0001628280-26-037227",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.9,
+          "missing_fields": []
+        },
+        {
+          "source": "SEC EDGAR companyfacts",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000006951.json",
+          "published_at": "2026-05-21T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "f094b03881d59a9fde236fbcb331d526295223716dc0f996b0f75b65144e513f",
+          "lineage_id": "sec-companyfacts:6951:2026-05-21",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.85,
+          "missing_fields": []
+        },
+        {
+          "source": "Yahoo Finance chart",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AMAT?period1=1751805950&period2=1786452350&interval=1d&events=history",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "78496dd44cd9e80da495efc9fac0dfc823aa1ba3f7c82f547d7602b7692d3e19",
+          "lineage_id": "yahoo-chart:AMAT:2026-08-07",
+          "freshness": "fresh",
+          "first_party": false,
+          "supports": [
+            "expectations_confirmation",
+            "risk_liquidity_health"
+          ],
+          "confidence": 0.75,
+          "missing_fields": [
+            "analyst_consensus",
+            "earnings_transcript",
+            "news_catalyst"
+          ]
+        }
+      ],
+      "family_scores": {
+        "financial_quality": 77.034983,
+        "valuation": 20.0,
+        "demand_catalyst": 84.891123,
+        "expectations_confirmation": 100.0,
+        "industry_cycle": 70.610747,
+        "risk_liquidity_health": 37.363691
+      },
+      "composite_score": 66.034414,
+      "leave_one_out_floor": 46.775668,
+      "status": "B",
+      "conflicts": [],
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-05-21",
+        "latest_price": "2026-08-07",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "no_consensus_estimates"
+        ],
+        "positive_dimensions": [
+          "financial_quality",
+          "demand_catalyst",
+          "expectations_confirmation",
+          "industry_cycle"
+        ]
+      }
+    },
+    {
+      "schema_version": "idea-engine-v1",
+      "ticker": "AMZN",
+      "as_of": "2026-08-10T12:45:50.880896+00:00",
+      "research_only": true,
+      "universe": "us-listed-technology",
+      "method_versions": {
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "not-applicable"
+      },
+      "evidence": [
+        {
+          "source": "SEC EDGAR 10-Q",
+          "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000026/amzn-20260630.htm",
+          "published_at": "2026-07-31T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "e89e19fe676c12d6b256a8f16a2f157ef95a7cdfdebdbca383a2f4dee361fdab",
+          "lineage_id": "sec:1018724:0001018724-26-000026",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst"
+          ],
+          "confidence": 0.9,
+          "missing_fields": []
+        },
+        {
+          "source": "SEC EDGAR companyfacts",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001018724.json",
+          "published_at": "2026-07-31T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "9382fc2e57f98505fc11f6a75f38a6536943089c8c92db75881f90bd3ad9b558",
+          "lineage_id": "sec-companyfacts:1018724:2026-07-31",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst"
+          ],
+          "confidence": 0.85,
+          "missing_fields": []
+        },
+        {
+          "source": "Yahoo Finance chart",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AMZN?period1=1751805950&period2=1786452350&interval=1d&events=history",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "f8a9de7d5dafee027f39fde07264ea88e07a24144e48f3fd4be8fa7903dd70ef",
+          "lineage_id": "yahoo-chart:AMZN:2026-08-07",
+          "freshness": "fresh",
+          "first_party": false,
+          "supports": [
+            "expectations_confirmation",
+            "risk_liquidity_health"
+          ],
+          "confidence": 0.75,
+          "missing_fields": [
+            "analyst_consensus",
+            "earnings_transcript",
+            "news_catalyst"
+          ]
+        }
+      ],
+      "family_scores": {
+        "financial_quality": 76.591523,
+        "valuation": 65.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 45.487189,
+        "risk_liquidity_health": 64.372677
+      },
+      "composite_score": 65.408227,
+      "leave_one_out_floor": 45.408227,
+      "status": "B",
+      "conflicts": [],
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-07-31",
+        "latest_price": "2026-08-07",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_dimension",
+          "no_consensus_estimates"
+        ],
+        "positive_dimensions": [
+          "financial_quality",
+          "valuation",
+          "demand_catalyst",
+          "risk_liquidity_health"
+        ]
+      }
+    },
+    {
+      "schema_version": "idea-engine-v1",
+      "ticker": "AVGO",
+      "as_of": "2026-08-10T12:45:50.880896+00:00",
+      "research_only": true,
+      "universe": "us-listed-technology",
+      "method_versions": {
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      },
+      "evidence": [
+        {
+          "source": "SEC EDGAR 10-Q",
+          "url": "https://www.sec.gov/Archives/edgar/data/1730168/000173016826000054/avgo-20260503.htm",
+          "published_at": "2026-06-09T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "a2ff168fced703d8c696d87271031b3f6ccd85a4ac831aba0f5c2c1732d52000",
+          "lineage_id": "sec:1730168:0001730168-26-000054",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.9,
+          "missing_fields": []
+        },
+        {
+          "source": "SEC EDGAR companyfacts",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001730168.json",
+          "published_at": "2026-06-09T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "2de7e729b4d115514c216ee495874af50d0ee356850bd160f753330a1d2f899f",
+          "lineage_id": "sec-companyfacts:1730168:2026-06-09",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst",
+            "industry_cycle"
+          ],
+          "confidence": 0.85,
+          "missing_fields": []
+        },
+        {
+          "source": "Yahoo Finance chart",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AVGO?period1=1751805950&period2=1786452350&interval=1d&events=history",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "6d3767ff8e7d6f4ce1e3457dabe4cecd574e0016def8f142937e169b9b136f85",
+          "lineage_id": "yahoo-chart:AVGO:2026-08-07",
+          "freshness": "fresh",
+          "first_party": false,
+          "supports": [
+            "expectations_confirmation",
+            "risk_liquidity_health"
+          ],
+          "confidence": 0.75,
+          "missing_fields": [
+            "analyst_consensus",
+            "earnings_transcript",
+            "news_catalyst"
+          ]
+        }
+      ],
+      "family_scores": {
+        "financial_quality": 82.289236,
+        "valuation": 20.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 58.486432,
+        "industry_cycle": 64.210767,
+        "risk_liquidity_health": 50.933477
+      },
+      "composite_score": 64.859698,
+      "leave_one_out_floor": 44.287389,
+      "status": "B",
+      "conflicts": [],
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-06-09",
+        "latest_price": "2026-08-07",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "no_consensus_estimates"
+        ],
+        "positive_dimensions": [
+          "financial_quality",
+          "demand_catalyst",
+          "industry_cycle"
+        ]
+      }
+    },
+    {
+      "schema_version": "idea-engine-v1",
+      "ticker": "GOOGL",
+      "as_of": "2026-08-10T12:45:50.880896+00:00",
+      "research_only": true,
+      "universe": "us-listed-technology",
+      "method_versions": {
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "not-applicable"
+      },
+      "evidence": [
+        {
+          "source": "SEC EDGAR 10-Q",
+          "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000071/goog-20260630.htm",
+          "published_at": "2026-07-23T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "41ffa5c18faaf7bd4b6f9780c66ef84a3759041d66b6b4da023581e7bb4a81af",
+          "lineage_id": "sec:1652044:0001652044-26-000071",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst"
+          ],
+          "confidence": 0.9,
+          "missing_fields": []
+        },
+        {
+          "source": "SEC EDGAR companyfacts",
+          "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001652044.json",
+          "published_at": "2026-07-23T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "afa55f23d41bdc4fdc52f43463f7b0b4180745b2d5fbaa33b0a2f4feec8f5671",
+          "lineage_id": "sec-companyfacts:1652044:2026-07-23",
+          "freshness": "fresh",
+          "first_party": true,
+          "supports": [
+            "financial_quality",
+            "valuation",
+            "demand_catalyst"
+          ],
+          "confidence": 0.85,
+          "missing_fields": []
+        },
+        {
+          "source": "Yahoo Finance chart",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/GOOGL?period1=1751805950&period2=1786452350&interval=1d&events=history",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "retrieved_at": "2026-08-10T12:45:50.880896+00:00",
+          "as_of": "2026-08-10T12:45:50.880896+00:00",
+          "content_hash": "eb397d2c87d0949c959276a1cd640e5635553b7fdec1e8bc41e706236c7a9646",
+          "lineage_id": "yahoo-chart:GOOGL:2026-08-07",
+          "freshness": "fresh",
+          "first_party": false,
+          "supports": [
+            "expectations_confirmation",
+            "risk_liquidity_health"
+          ],
+          "confidence": 0.75,
+          "missing_fields": [
+            "analyst_consensus",
+            "earnings_transcript",
+            "news_catalyst"
+          ]
+        }
+      ],
+      "family_scores": {
+        "financial_quality": 79.912355,
+        "valuation": 50.0,
+        "demand_catalyst": 94.708654,
+        "expectations_confirmation": 60.771081,
+        "risk_liquidity_health": 66.075779
+      },
+      "composite_score": 64.64306,
+      "leave_one_out_floor": 44.664971,
+      "status": "B",
+      "conflicts": [],
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-07-23",
+        "latest_price": "2026-08-07",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_dimension",
+          "no_consensus_estimates"
+        ],
+        "positive_dimensions": [
+          "financial_quality",
+          "demand_catalyst",
+          "expectations_confirmation",
+          "risk_liquidity_health"
+        ]
+      }
+    }
+  ],
+  "status": "ready",
+  "manual_review_only": true,
+  "screened_candidate_count": 19,
+  "displayed_candidate_limit": 10,
+  "active_provider": "free_public_data",
+  "source_scope": "free_public_data"
 }
