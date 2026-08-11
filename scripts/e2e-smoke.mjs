@@ -26,6 +26,17 @@ async function main() {
       : { s: "ok", c: [90, 92, 94, 96, 98, 100] };
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
   });
+  await context.route("https://query1.finance.yahoo.com/**", async (route) => {
+    const requestUrl = new URL(route.request().url());
+    if (requestUrl.pathname.includes("/v1/finance/search")) {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ quotes: [] }) });
+      return;
+    }
+    const now = Math.floor(Date.now() / 1000);
+    const timestamps = Array.from({ length: 20 }, (_, index) => now - (19 - index) * 86400);
+    const closes = timestamps.map((_, index) => 90 + index * 0.5);
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ chart: { result: [{ meta: { chartPreviousClose: 99, regularMarketPrice: 100 }, timestamp: timestamps, indicators: { quote: [{ open: closes.map((value) => value - 0.2), high: closes.map((value) => value + 0.4), low: closes.map((value) => value - 0.5), close: closes, volume: closes.map(() => 1000000) }], adjclose: [{ adjclose: closes }] } }] } }) });
+  });
   const page = await context.newPage();
   const consoleErrors = [];
   const pageErrors = [];

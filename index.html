@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
     <link rel="stylesheet" href="watchlist.css?v=accessibility-3">
     <link rel="stylesheet" href="idea-engine.css?v=idea-engine-v1">
+    <link rel="stylesheet" href="wealthsimple-execution.css?v=wealthsimple-v1">
   </head>
   <body>
     <div class="app-shell">
@@ -77,6 +78,30 @@
           <div id="weeklyDecisionExplanation" class="weekly-decision-explanation" aria-live="polite"><strong>本周决策解释</strong><p id="weeklyDecisionReason">等待规划结果。</p><p id="weeklyDecisionRiskReasons">等待数据质量和安全门禁状态。</p><p id="weeklyDecisionQqqStatus">QQQ：科技风险指标，不参与本周买入。</p></div>
         </section>
       </section>
+
+      <details id="wealthsimpleChecklistPanel" class="panel wealthsimple-panel">
+        <summary class="section-heading compact"><span><span class="eyebrow">Wealthsimple</span><strong>人工核对清单</strong></span><span id="wealthsimpleChecklistStatus">等待计划</span></summary>
+        <p class="wealthsimple-safety-note">仅供人工核对，不连接券商，不自动下单。数量和金额必须在 Wealthsimple 中人工确认。</p>
+        <p id="wealthsimpleChecklistWarning" class="data-quality-warning" role="status" aria-live="polite">核对信息不完整，请在 Wealthsimple 人工确认。</p>
+        <div id="wealthsimpleChecklistRows" class="wealthsimple-checklist-rows" aria-live="polite"></div>
+        <details id="wealthsimpleAccountsPanel"><summary>账户可用资金（不会混用账户或币种）</summary><div id="wealthsimpleAccounts" class="wealthsimple-accounts"></div><button id="wealthsimpleSaveAccountsBtn" class="secondary-button" type="button">保存账户信息</button></details>
+      </details>
+
+      <details id="wealthsimpleReconciliationPanel" class="panel wealthsimple-panel">
+        <summary class="section-heading compact"><span><span class="eyebrow">Wealthsimple</span><strong>人工成交对账</strong></span><span>本地记录</span></summary>
+        <p>计划与实际成交分开保存。只有用户输入实际成交数据并再次确认后，才会更新本地持仓。</p>
+        <form id="wealthsimpleTradeForm" class="wealthsimple-trade-form">
+          <label>成交日期时间<input id="wealthsimpleTradeDateTime" type="datetime-local"></label><label>账户 ID<input id="wealthsimpleTradeAccountId" type="text"></label><label>代码<input id="wealthsimpleTradeSymbol" type="text"></label><label>订单 ID<input id="wealthsimpleTradeOrderId" type="text"></label><label>实际股数<input id="wealthsimpleActualShares" type="number" min="0" step="any"></label><label>实际价格<input id="wealthsimpleActualPrice" type="number" min="0" step="any"></label><label>币种<select id="wealthsimpleTradeCurrency"><option>CAD</option><option>USD</option></select></label><label>状态<select id="wealthsimpleTradeStatus"><option value="FILLED">已成交</option><option value="PARTIAL">部分成交</option><option value="CANCELLED">已取消</option></select></label><label class="wide">备注<input id="wealthsimpleTradeNote" type="text"></label>
+          <button id="wealthsimpleSaveTradeBtn" class="secondary-button" type="submit">保存成交记录</button>
+        </form>
+        <div class="wealthsimple-reconciliation-actions"><button id="wealthsimpleExportBtn" class="secondary-button" type="button">导出对账 JSON</button><label class="secondary-button">导入对账 JSON<input id="wealthsimpleImportInput" type="file" accept="application/json" hidden></label></div>
+        <p id="wealthsimpleReconciliationStatus" role="status" aria-live="polite"></p><div id="wealthsimpleReconciliationRows"></div>
+      </details>
+
+      <details id="wealthsimpleStressPanel" class="panel wealthsimple-panel">
+        <summary class="section-heading compact"><span><span class="eyebrow">风险辅助</span><strong>压力情景估算</strong></span><span>研究用途</span></summary>
+        <p>仅为情景估算，不代表预测；不会自动卖出或改变定投计划。</p><div id="wealthsimpleStressRows"></div>
+      </details>
 
       <div id="coreSatelliteSummary" class="visually-hidden" aria-hidden="true">
         <span id="coreSatellitePresetVersion"></span><span id="coreTargetAllocation"></span><span id="satelliteTargetAllocation"></span><span id="techSatelliteAllocation"></span><span id="spyBasePlan"></span><span id="satellitePlanTotal"></span><span id="cashRetainedPlan"></span><span id="coreSatelliteStatus"></span><span id="coreSatelliteRebalanceNotice"></span>
@@ -441,6 +466,17 @@
           <p id="displayCurrencyNote" class="status-line">只切换金额单位，不进行汇率换算；请按所选货币填写预算和持仓金额。</p><p id="displayCurrencyStatus" class="status-line" role="status" aria-live="polite"></p>
         </section>
 
+        <section class="currency-setting settings-section" aria-labelledby="wealthsimple-currency-title">
+          <h3 id="wealthsimple-currency-title" class="settings-subheading">Wealthsimple 计划与账户币种</h3>
+          <label for="planningCurrencySelect"><span>计划币种</span><select id="planningCurrencySelect"><option value="CAD">CAD</option><option value="USD">USD</option></select></label>
+          <label for="accountCurrencySelect"><span>账户币种</span><select id="accountCurrencySelect"><option value="CAD">CAD</option><option value="USD">USD</option></select></label>
+          <label for="wealthsimpleTierSelect"><span>账户等级</span><select id="wealthsimpleTierSelect"><option>Core</option><option>Premium</option><option>Generation</option></select></label>
+          <label for="wealthsimpleFxRate"><span>CAD/USD 汇率</span><input id="wealthsimpleFxRate" type="number" min="0" step="any"></label>
+          <label for="wealthsimpleFxAsOf"><span>汇率时间</span><input id="wealthsimpleFxAsOf" type="datetime-local"></label>
+          <label for="wealthsimpleFxMaxAge"><span>汇率最长有效天数</span><input id="wealthsimpleFxMaxAge" type="number" min="0" step="1"></label>
+          <button id="saveWealthsimpleCurrencyBtn" class="secondary-button" type="button">保存币种设置</button><p id="wealthsimpleCurrencyStatus" class="status-line" role="status" aria-live="polite"></p>
+        </section>
+
         <section class="deployment-form settings-section" aria-labelledby="deployment-settings-title">
           <div class="modal-subheading">
             <h3 id="deployment-settings-title">投入设置</h3>
@@ -577,11 +613,18 @@
     <script src="core-satellite-policy.js?v=core-satellite-v1"></script>
     <script src="backtest-engine.js?v=contracts-1"></script>
     <script src="settings-storage.js?v=currency-preference-1"></script>
+    <script src="wealthsimple-currency.js?v=wealthsimple-v1"></script>
+    <script src="wealthsimple-rules.js?v=wealthsimple-v1"></script>
+    <script src="wealthsimple-order-adapter.js?v=wealthsimple-v1"></script>
+    <script src="wealthsimple-reconciliation.js?v=wealthsimple-v1"></script>
+    <script src="etf-lookthrough.js?v=wealthsimple-v1"></script>
+    <script src="portfolio-stress-test.js?v=wealthsimple-v1"></script>
     <script src="app.js?v=currency-preference-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>
     <script src="idea-engine.js?v=idea-engine-v1"></script>
     <script src="project-health.js?v=health-2"></script>
+    <script src="wealthsimple-execution.js?v=wealthsimple-v1"></script>
   </body>
 </html>

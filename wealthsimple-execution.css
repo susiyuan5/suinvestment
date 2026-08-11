@@ -1,0 +1,14 @@
+.wealthsimple-panel { margin-top: 24px; }
+.wealthsimple-panel > summary { cursor: pointer; display: flex; justify-content: space-between; gap: 16px; }
+.wealthsimple-safety-note, .wealthsimple-panel p { color: var(--muted-text, #aab6c5); }
+.wealthsimple-checklist-rows, .wealthsimple-accounts { display: grid; gap: 8px; margin-top: 12px; }
+.wealthsimple-checklist-row { display: grid; grid-template-columns: minmax(70px, .7fr) repeat(5, 1fr); gap: 8px; padding: 12px; border: 1px solid var(--border, #2b3949); border-radius: 8px; align-items: center; }
+.wealthsimple-checklist-row small { grid-column: 1 / -1; color: var(--warning, #e3b341); }
+.wealthsimple-row-status { color: var(--warning, #e3b341); }
+.wealthsimple-account-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.wealthsimple-account-row label, .wealthsimple-trade-form label { display: grid; gap: 4px; }
+.wealthsimple-panel input, .wealthsimple-panel select, .wealthsimple-panel button { min-height: 44px; }
+.wealthsimple-trade-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.wealthsimple-trade-form .wide { grid-column: span 2; }
+.wealthsimple-reconciliation-actions { display: flex; gap: 8px; margin-top: 12px; }
+@media (max-width: 800px) { .wealthsimple-checklist-row, .wealthsimple-account-row, .wealthsimple-trade-form { grid-template-columns: 1fr; } .wealthsimple-trade-form .wide { grid-column: auto; } }
