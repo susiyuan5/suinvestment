@@ -38,9 +38,9 @@ test("desktop hierarchy follows the static DOM order", () => {
   assert.match(html, /大盘 40% 意味着个股合计 60%/);
 });
 
-test("weekly decision order contract contains SPY and all five satellites", () => {
+test("weekly decision order contract contains SPY and four satellites", () => {
   const source = fs.readFileSync("app.js", "utf8");
-  assert.match(source, /const expected = \["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"\]/);
+  assert.match(source, /const expected = \["SPY", "NVDA", "AAPL", "ASML", "KO"\]/);
   assert.match(source, /QQQ 仅作为科技风险指标/);
   assert.match(source, /数据或计算未通过安全检查，请人工复核/);
 });

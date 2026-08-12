@@ -1,0 +1,18 @@
+{
+  "version": "core-satellite-v4",
+  "research_only": true,
+  "qqq_signal_only": true,
+  "core": {"symbol": "SPY", "target_allocation": 0.40, "asset_type": "index_etf", "bucket": "core", "signal_role": "market_core"},
+  "satellites": [
+    {"symbol": "NVDA", "target_allocation": 0.15, "asset_type": "stock", "bucket": "satellite", "sector": "technology", "signal_role": "satellite_dca_l2"},
+    {"symbol": "AAPL", "target_allocation": 0.15, "asset_type": "stock", "bucket": "satellite", "sector": "technology", "signal_role": "satellite_dca_l2"},
+    {"symbol": "ASML", "target_allocation": 0.15, "asset_type": "stock", "bucket": "satellite", "sector": "technology", "signal_role": "satellite_dca_l2"},
+    {"symbol": "KO", "target_allocation": 0.15, "asset_type": "stock", "bucket": "satellite", "sector": "consumer_staples", "signal_role": "satellite_dca_l2"}
+  ],
+  "limits": {"spy_min_target_pct": 40, "spy_max_target_pct": 80, "satellite_min_target_pct": 20, "satellite_max_target_pct": 60, "single_stock_max_target_pct": 15, "single_stock_block_pct": 18, "satellite_enhancement_block_pct": 60, "technology_max_target_pct": 45, "technology_enhancement_block_pct": 40, "spy_max_current_pct": 70, "spy_enhancement_max_multiple": 1.25},
+  "shortcuts": {
+    "40": {"SPY": 0.40, "NVDA": 0.15, "AAPL": 0.15, "ASML": 0.15, "KO": 0.15},
+    "50": {"SPY": 0.50, "NVDA": 0.125, "AAPL": 0.125, "ASML": 0.125, "KO": 0.125},
+    "60": {"SPY": 0.60, "NVDA": 0.10, "AAPL": 0.10, "ASML": 0.10, "KO": 0.10}
+  }
+}

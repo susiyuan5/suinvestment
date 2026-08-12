@@ -17,7 +17,7 @@ test("FX fee is estimated only with fresh FX data", () => {
   assert.equal(result.requiresCurrencyConversion, true);
 });
 test("OTC uses limit orders and never creates a fractional suggestion", () => {
-  const result = policy.execute({ symbol: "BYDDY", marketType: "OTC", price: 10, suggestedAmount: 20, tradingCurrency: "USD", accountCurrency: "USD", accountType: "NON_REGISTERED", fractionalSupported: false, quoteTimestamp: "2026-08-11T12:00:00Z" }, { now: Date.parse("2026-08-12T12:00:00Z") });
+  const result = policy.execute({ symbol: "OTC_SECURITY", marketType: "OTC", price: 10, suggestedAmount: 20, tradingCurrency: "USD", accountCurrency: "USD", accountType: "NON_REGISTERED", fractionalSupported: false, quoteTimestamp: "2026-08-11T12:00:00Z" }, { now: Date.parse("2026-08-12T12:00:00Z") });
   assert.equal(result.requiredOrderType, "LIMIT");
   assert.equal(result.requiresFractionalOrder, false);
 });

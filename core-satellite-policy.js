@@ -1,20 +1,19 @@
 (function (root, factory) { if (typeof module === "object" && module.exports) module.exports = factory(); else root.CoreSatellitePolicy = factory(); }(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
   var EPSILON = 0.005, ALLOCATION_EPSILON = 1e-9;
-  var SYMBOLS = ["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"];
+  var SYMBOLS = ["SPY", "NVDA", "AAPL", "ASML", "KO"];
   var SATELLITE_SYMBOLS = SYMBOLS.slice(1), TECH_SYMBOLS = ["NVDA", "AAPL", "ASML"];
-  var PRESET = { version: "core-satellite-v3", research_only: true, qqq_signal_only: true,
+  var PRESET = { version: "core-satellite-v4", research_only: true, qqq_signal_only: true,
     core: { symbol: "SPY", target_allocation: .40, asset_type: "index_etf", bucket: "core", signal_role: "market_core" },
     satellites: [
-      { symbol: "NVDA", target_allocation: .14, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
-      { symbol: "AAPL", target_allocation: .14, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
-      { symbol: "ASML", target_allocation: .12, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
-      { symbol: "KO", target_allocation: .10, asset_type: "stock", bucket: "satellite", sector: "consumer_staples", signal_role: "satellite_dca_l2" },
-      { symbol: "BYDDY", target_allocation: .10, asset_type: "stock", bucket: "satellite", sector: "consumer_discretionary", signal_role: "satellite_dca_l2" }
-    ], limits: { spy_min_target_pct: 40, spy_max_target_pct: 80, satellite_min_target_pct: 20, satellite_max_target_pct: 60, single_stock_max_target_pct: 15, single_stock_block_pct: 18, satellite_enhancement_block_pct: 60, technology_max_target_pct: 40, technology_enhancement_block_pct: 40, spy_max_current_pct: 70, spy_enhancement_max_multiple: 1.25 },
-    shortcuts: { "40": { SPY: .40, NVDA: .14, AAPL: .14, ASML: .12, KO: .10, BYDDY: .10 }, "50": { SPY: .50, NVDA: .10, AAPL: .10, ASML: .10, KO: .10, BYDDY: .10 }, "60": { SPY: .60, NVDA: .08, AAPL: .08, ASML: .08, KO: .08, BYDDY: .08 } } };
+      { symbol: "NVDA", target_allocation: .15, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
+      { symbol: "AAPL", target_allocation: .15, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
+      { symbol: "ASML", target_allocation: .15, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
+      { symbol: "KO", target_allocation: .15, asset_type: "stock", bucket: "satellite", sector: "consumer_staples", signal_role: "satellite_dca_l2" }
+    ], limits: { spy_min_target_pct: 40, spy_max_target_pct: 80, satellite_min_target_pct: 20, satellite_max_target_pct: 60, single_stock_max_target_pct: 15, single_stock_block_pct: 18, satellite_enhancement_block_pct: 60, technology_max_target_pct: 45, technology_enhancement_block_pct: 40, spy_max_current_pct: 70, spy_enhancement_max_multiple: 1.25 },
+    shortcuts: { "40": { SPY: .40, NVDA: .15, AAPL: .15, ASML: .15, KO: .15 }, "50": { SPY: .50, NVDA: .125, AAPL: .125, ASML: .125, KO: .125 }, "60": { SPY: .60, NVDA: .10, AAPL: .10, ASML: .10, KO: .10 } } };
   if (typeof module === "object" && module.exports && typeof require === "function") {
-    try { PRESET = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "data", "core-satellite-v3.json"), "utf8")); } catch (error) { /* browser-compatible fallback remains available */ }
+    try { PRESET = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "data", "core-satellite-v4.json"), "utf8")); } catch (error) { /* browser-compatible fallback remains available */ }
   }
   function finite(value) { var n = Number(value); return Number.isFinite(n) ? n : null; }
   function money(value) { var n = finite(value); return n === null ? 0 : Math.round((Math.max(0, n) + 1e-10) * 100) / 100; }
@@ -22,7 +21,7 @@
   function pct(value) { var n = finite(value); return n === null ? null : Math.round((n * 100 + 1e-9) * 100) / 100; }
   function ratioFromPct(value) { return Math.round((Number(value) + 1e-9) * 100) / 10000; }
   function validatePreset(preset) {
-    if (!preset || preset.version !== "core-satellite-v3" || !preset.core || !Array.isArray(preset.satellites) || preset.core.symbol !== "SPY" || preset.satellites.length !== 5) return false;
+    if (!preset || preset.version !== "core-satellite-v4" || !preset.core || !Array.isArray(preset.satellites) || preset.core.symbol !== "SPY" || preset.satellites.length !== 4) return false;
     var total = Number(preset.core.target_allocation) + preset.satellites.reduce(function (sum, row) { return sum + Number(row.target_allocation); }, 0);
     return Number.isFinite(total) && Math.abs(total - 1) <= ALLOCATION_EPSILON && preset.satellites.every(function (row) { var value = Number(row.target_allocation); return Number.isFinite(value) && value >= 0 && value <= .15 + ALLOCATION_EPSILON && row.bucket === "satellite"; });
   }
@@ -33,13 +32,13 @@
     var values = allocations || {}, rounded = {};
     SYMBOLS.forEach(function (symbol) { rounded[symbol] = pct(values[symbol]) === null ? 0 : pct(values[symbol]); });
     var allocated = SYMBOLS.reduce(function (sum, symbol) { return sum + rounded[symbol]; }, 0), tech = TECH_SYMBOLS.reduce(function (sum, symbol) { return sum + rounded[symbol]; }, 0);
-    return { allocated: allocated, remaining: Math.max(0, 100 - allocated), overage: Math.max(0, allocated - 100), core: rounded.SPY, satellite: allocated - rounded.SPY, technology: tech, NVDA: rounded.NVDA, AAPL: rounded.AAPL, ASML: rounded.ASML, KO: rounded.KO, BYDDY: rounded.BYDDY };
+    return { allocated: allocated, remaining: Math.max(0, 100 - allocated), overage: Math.max(0, allocated - 100), core: rounded.SPY, satellite: allocated - rounded.SPY, technology: tech, NVDA: rounded.NVDA, AAPL: rounded.AAPL, ASML: rounded.ASML, KO: rounded.KO };
   }
   function validateAllocations(allocations) {
     var values = allocations || {}, errors = [];
     SYMBOLS.forEach(function (symbol) { var raw = values[symbol], n = finite(raw); if (raw === "" || raw === null || raw === undefined || n === null || n < 0) errors.push(symbol + " 目标比例必须是非负数字"); });
     var metrics = allocationMetrics(values), limits = PRESET.limits;
-    if (Math.abs(metrics.allocated - 100) > ALLOCATION_EPSILON) errors.push("六项比例合计必须严格等于 100.00%");
+    if (Math.abs(metrics.allocated - 100) > ALLOCATION_EPSILON) errors.push("五项比例合计必须严格等于 100.00%");
     if (metrics.core < limits.spy_min_target_pct - ALLOCATION_EPSILON || metrics.core > limits.spy_max_target_pct + ALLOCATION_EPSILON) errors.push("SPY 目标比例必须在 40.00% 至 80.00% 之间");
     if (metrics.satellite < limits.satellite_min_target_pct - ALLOCATION_EPSILON || metrics.satellite > limits.satellite_max_target_pct + ALLOCATION_EPSILON) errors.push("个股合计比例必须在 20.00% 至 60.00% 之间");
     SATELLITE_SYMBOLS.forEach(function (symbol) { if (metrics[symbol] > limits.single_stock_max_target_pct + ALLOCATION_EPSILON) errors.push(symbol + " 目标为 " + metrics[symbol].toFixed(2) + "%，超过单股上限 " + limits.single_stock_max_target_pct.toFixed(2) + "%"); });
@@ -47,7 +46,7 @@
     return { valid: errors.length === 0, errors: errors, metrics: metrics };
   }
   function allocationsForCore(corePercent) { var core = finite(corePercent); if (core === null || core < 40 || core > 80) return null; var shortcut = PRESET.shortcuts[String(core)]; if (shortcut) return clone(shortcut); return averageSatelliteAllocations(core); }
-  function averageSatelliteAllocations(corePercent) { var core = finite(corePercent); if (core === null || core < 40 || core > 80) return null; var result = { SPY: ratioFromPct(core), NVDA: 0, AAPL: 0, ASML: 0, KO: 0, BYDDY: 0 }, each = ratioFromPct((100 - core) / 5); SATELLITE_SYMBOLS.forEach(function (symbol) { result[symbol] = each; }); return result; }
+  function averageSatelliteAllocations(corePercent) { var core = finite(corePercent); if (core === null || core < 40 || core > 80) return null; var result = { SPY: ratioFromPct(core), NVDA: 0, AAPL: 0, ASML: 0, KO: 0 }, each = ratioFromPct((100 - core) / 4); SATELLITE_SYMBOLS.forEach(function (symbol) { result[symbol] = each; }); return result; }
   function recommendedAllocations() { return clone(PRESET.shortcuts["40"]); }
   function presetFromAllocations(allocations, basePreset) { var p = normalizedPreset(basePreset) || clone(PRESET), result = clone(p), values = allocations || {}; result.core.target_allocation = ratioFromPct(pct(values.SPY) || 0); result.satellites.forEach(function (row) { row.target_allocation = ratioFromPct(pct(values[row.symbol]) || 0); }); return validatePreset(result) ? result : null; }
   function reason(row, code) { row.reasonCodes = row.reasonCodes || []; if (row.reasonCodes.indexOf(code) < 0) row.reasonCodes.push(code); }

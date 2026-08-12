@@ -151,7 +151,7 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
         issues.append("v2_research_pipeline_invalid")
     core_summary = load(root / "results" / "dca_l2" / "v2" / "core-satellite-v1" / "summary.json", {})
     core_validity = core_summary.get("validity", {}) if isinstance(core_summary, dict) else {}
-    core_preset = load(root / "data" / "core-satellite-v3.json", {})
+    core_preset = load(root / "data" / "core-satellite-v4.json", {})
     core_strategy = (core_summary.get("strategies", {}).get("core_satellite_v1", {}) if isinstance(core_summary, dict) else {})
     idea_latest = load(root / "research" / "results" / "v2" / "idea-engine" / "latest-candidates.json", {})
     idea_provider = load(root / "research" / "results" / "v2" / "idea-engine" / "provider-status.json", {})
