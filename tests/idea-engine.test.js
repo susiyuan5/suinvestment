@@ -26,6 +26,13 @@ test("only safe HTTPS evidence links are exposed", () => {
   assert.deepEqual(links, [{ source: "SEC", url: "https://www.sec.gov/a" }]);
 });
 
+test("candidate detail links use a safe ticker URL", () => {
+  assert.equal(engine.normalizeTicker(" tsm "), "TSM");
+  assert.equal(engine.normalizeTicker("bad ticker"), "");
+  assert.equal(engine.detailHref("BRK.B"), "stock-detail.html?ticker=BRK.B");
+  assert.equal(engine.detailHref("bad ticker"), "");
+});
+
 test("blocked provider and immature Shadow remain isolated from DCA", () => {
   const elements = { status: { textContent: "" }, maturity: { textContent: "" }, rows: { innerHTML: "" } };
   engine.render({ schema_version: "idea-engine-v1", research_only: true, status: "blocked", candidates: [] }, elements, {});

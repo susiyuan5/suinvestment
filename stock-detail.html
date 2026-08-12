@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#080d14">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <title>股票详情 · 潜力股研究</title>
+    <link rel="stylesheet" href="stock-detail.css?v=stock-detail-v1">
+  </head>
+  <body>
+    <main class="stock-detail-shell">
+      <nav class="stock-detail-nav" aria-label="页面导航">
+        <a href="index.html#ideaEnginePanel">← 返回潜力股研究</a>
+        <span>仅供研究观察 · 不生成买入金额</span>
+      </nav>
+
+      <div id="stockDetailStatus" class="stock-detail-status" role="status" aria-live="polite">正在加载公司与研究资料。</div>
+
+      <section id="stockDetailContent" class="stock-detail-content" hidden>
+        <header class="stock-detail-hero">
+          <div>
+            <p id="stockDetailTicker" class="stock-detail-ticker">--</p>
+            <h1 id="stockDetailCompanyName">正在加载公司名称</h1>
+            <p id="stockDetailListing" class="stock-detail-listing">--</p>
+          </div>
+          <div class="stock-detail-quote" aria-label="最近报价">
+            <strong id="stockDetailPrice">--</strong>
+            <span id="stockDetailChange">--</span>
+            <small id="stockDetailQuoteTime">--</small>
+          </div>
+        </header>
+
+        <section class="stock-detail-card stock-detail-chart-card" aria-labelledby="stockDetailChartTitle">
+          <div class="stock-detail-section-heading">
+            <div>
+              <p class="stock-detail-eyebrow">市场表现</p>
+              <h2 id="stockDetailChartTitle">近一年价格走势</h2>
+            </div>
+            <span id="stockDetailQuoteSource">数据来源待确认</span>
+          </div>
+          <canvas id="stockDetailChart" height="280" aria-describedby="stockDetailChartSummary"></canvas>
+          <p id="stockDetailChartSummary" class="stock-detail-muted">正在加载价格走势。</p>
+        </section>
+
+        <div class="stock-detail-grid">
+          <section class="stock-detail-card" aria-labelledby="stockDetailCompanyTitle">
+            <div class="stock-detail-section-heading">
+              <div>
+                <p class="stock-detail-eyebrow">公司资料</p>
+                <h2 id="stockDetailCompanyTitle">公司与证券信息</h2>
+              </div>
+            </div>
+            <dl id="stockDetailCompanyFacts" class="stock-detail-facts"></dl>
+          </section>
+
+          <section class="stock-detail-card" aria-labelledby="stockDetailResearchTitle">
+            <div class="stock-detail-section-heading">
+              <div>
+                <p class="stock-detail-eyebrow">潜力股研究</p>
+                <h2 id="stockDetailResearchTitle">综合判断</h2>
+              </div>
+              <span id="stockDetailGrade" class="stock-detail-grade">--</span>
+            </div>
+            <div class="stock-detail-score-row">
+              <div><span>综合分</span><strong id="stockDetailScore">--</strong></div>
+              <div><span>稳健分</span><strong id="stockDetailRobustScore">--</strong></div>
+            </div>
+            <div id="stockDetailDimensions" class="stock-detail-dimensions"></div>
+            <p id="stockDetailLimitations" class="stock-detail-warning"></p>
+          </section>
+        </div>
+
+        <div class="stock-detail-grid">
+          <section class="stock-detail-card" aria-labelledby="stockDetailReasonsTitle">
+            <p class="stock-detail-eyebrow">为什么值得继续研究</p>
+            <h2 id="stockDetailReasonsTitle">核心依据</h2>
+            <ul id="stockDetailReasons" class="stock-detail-list"></ul>
+          </section>
+          <section class="stock-detail-card" aria-labelledby="stockDetailRisksTitle">
+            <p class="stock-detail-eyebrow">什么会推翻判断</p>
+            <h2 id="stockDetailRisksTitle">主要风险</h2>
+            <ul id="stockDetailRisks" class="stock-detail-list"></ul>
+          </section>
+        </div>
+
+        <section class="stock-detail-card" aria-labelledby="stockDetailEvidenceTitle">
+          <div class="stock-detail-section-heading">
+            <div>
+              <p class="stock-detail-eyebrow">证据链</p>
+              <h2 id="stockDetailEvidenceTitle">来源与更新时间</h2>
+            </div>
+          </div>
+          <div id="stockDetailEvidence" class="stock-detail-evidence"></div>
+        </section>
+
+        <section class="stock-detail-actions" aria-label="人工操作">
+          <button id="stockDetailAddWatchlist" type="button">手动加入盯盘</button>
+          <a href="index.html#ideaEnginePanel">返回候选列表</a>
+          <span id="stockDetailActionStatus" role="status" aria-live="polite"></span>
+        </section>
+      </section>
+    </main>
+    <script src="idea-engine.js?v=idea-engine-v2"></script>
+    <script src="stock-detail.js?v=stock-detail-v1"></script>
+  </body>
+</html>

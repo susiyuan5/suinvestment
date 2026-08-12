@@ -47,9 +47,11 @@ async function main() {
       return;
     }
     const now = Math.floor(Date.now() / 1000);
+    const requestedSymbol = decodeURIComponent(requestUrl.pathname.split("/").pop() || "TEST").toUpperCase();
     const timestamps = Array.from({ length: 20 }, (_, index) => now - (19 - index) * 86400);
     const closes = timestamps.map((_, index) => 90 + index * 0.5);
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ chart: { result: [{ meta: { chartPreviousClose: 99, regularMarketPrice: 100 }, timestamp: timestamps, indicators: { quote: [{ open: closes.map((value) => value - 0.2), high: closes.map((value) => value + 0.4), low: closes.map((value) => value - 0.5), close: closes, volume: closes.map(() => 1000000) }], adjclose: [{ adjclose: closes }] } }] } }) });
+    const longName = requestedSymbol === "TSM" ? "Taiwan Semiconductor Manufacturing Company Limited" : `${requestedSymbol} Test Company`;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ chart: { result: [{ meta: { symbol: requestedSymbol, longName, fullExchangeName: "NASDAQ", currency: "USD", instrumentType: "EQUITY", chartPreviousClose: 99, regularMarketPrice: 100, regularMarketTime: now }, timestamp: timestamps, indicators: { quote: [{ open: closes.map((value) => value - 0.2), high: closes.map((value) => value + 0.4), low: closes.map((value) => value - 0.5), close: closes, volume: closes.map(() => 1000000) }], adjclose: [{ adjclose: closes }] } }] } }) });
   });
   const page = await context.newPage();
   const consoleErrors = [];
@@ -147,6 +149,20 @@ async function main() {
     assert.match(await ideaCard.textContent(), /综合分 \d+\.\d/);
     assert.match(await ideaCard.textContent(), /稳健分 \d+\.\d/);
     assert.doesNotMatch(await ideaCard.textContent(), /剔除单源最低/);
+    const ideaTicker = (await ideaCard.locator("h3").textContent()).trim();
+    const ideaTitleLink = ideaCard.getByRole("link", { name: `查看 ${ideaTicker} 公司与研究详情` });
+    const detailHref = await ideaTitleLink.getAttribute("href");
+    assert.equal(detailHref, `stock-detail.html?ticker=${ideaTicker}`, "candidate name should link to its company detail page");
+    const detailPage = await context.newPage();
+    await detailPage.goto(new URL(detailHref, baseUrl).toString(), { waitUntil: "domcontentloaded" });
+    await detailPage.locator("#stockDetailContent").waitFor({ state: "visible", timeout: 15000 });
+    assert.equal((await detailPage.locator("#stockDetailTicker").textContent()).trim(), ideaTicker, "detail page should preserve the selected ticker");
+    assert.notEqual((await detailPage.locator("#stockDetailCompanyName").textContent()).trim(), ideaTicker, "detail page should show the company full name when the quote source supplies it");
+    assert.match(await detailPage.locator("#stockDetailPrice").textContent(), /USD \d+\.\d{2}/, "detail page should show the latest quote with currency");
+    assert.match(await detailPage.locator("#stockDetailResearchTitle").textContent(), /综合判断/, "detail page should retain the research view");
+    assert.ok((await detailPage.locator("#stockDetailChartSummary").textContent()).trim().length > 0, "detail chart should have an accessible text summary");
+    await detailPage.screenshot({ path: "output/playwright/stock-detail-desktop.png", fullPage: true });
+    await detailPage.close();
     await ideaCard.locator("details").first().locator(":scope > summary").click();
     const sourceLink = ideaCard.locator("a[target='_blank']").first();
     if (await sourceLink.count()) assert.equal(await sourceLink.getAttribute("rel"), "noopener noreferrer");

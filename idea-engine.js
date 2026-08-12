@@ -39,12 +39,28 @@
     return sections.filter(function (section) { return section.values.length; });
   }
   function safeEvidenceLinks(candidate) { return list(candidate.evidence).filter(function (item) { return item && typeof item.url === "string" && /^https:\/\//i.test(item.url); }).map(function (item) { return { source: text(item.source, "来源"), url: item.url }; }); }
+  function normalizeTicker(value) {
+    var ticker = String(value || "").trim().toUpperCase();
+    return /^[A-Z0-9.-]{1,16}$/.test(ticker) ? ticker : "";
+  }
+  function detailHref(ticker) {
+    var normalized = normalizeTicker(ticker);
+    return normalized ? "stock-detail.html?ticker=" + encodeURIComponent(normalized) : "";
+  }
   function addText(doc, parent, tag, value, className) { var node = doc.createElement(tag); if (className) node.className = className; node.textContent = value; parent.appendChild(node); return node; }
   function createCard(candidate, doc) {
+    var ticker = normalizeTicker(candidate.ticker);
     var card = doc.createElement("article");
     card.className = "idea-engine-card";
+    card.dataset.ideaTicker = ticker;
     var title = doc.createElement("div"); title.className = "idea-engine-card-title";
-    var heading = doc.createElement("h3"); heading.textContent = candidate.ticker;
+    var heading = doc.createElement("h3");
+    var titleLink = doc.createElement("a");
+    titleLink.className = "idea-engine-title-link";
+    titleLink.href = detailHref(ticker);
+    titleLink.textContent = ticker || text(candidate.ticker, "未知股票");
+    titleLink.setAttribute("aria-label", "查看 " + titleLink.textContent + " 公司与研究详情");
+    heading.appendChild(titleLink);
     var grade = doc.createElement("span"); grade.className = "idea-engine-grade"; grade.textContent = label(candidate.status);
     title.append(heading, grade); card.appendChild(title);
     var scores = doc.createElement("div"); scores.className = "idea-engine-scores";
@@ -59,7 +75,8 @@
     var values = candidate.dimensions || candidate.family_scores || {};
     Object.keys(dimensionLabels).forEach(function (key) { if (!Object.prototype.hasOwnProperty.call(values, key) || !Number.isFinite(Number(values[key]))) return; var row = doc.createElement("div"); row.className = "idea-engine-dimension"; var labelNode = addText(doc, row, "span", dimensionLabels[key] + "：" + formatScore(values[key]), "idea-engine-dimension-label"); labelNode.setAttribute("aria-label", dimensionLabels[key] + "评分 " + formatScore(values[key])); var bar = doc.createElement("span"); bar.className = "idea-engine-dimension-bar"; var fill = doc.createElement("span"); fill.className = "idea-engine-dimension-fill"; fill.style.width = Math.max(0, Math.min(100, Number(values[key]))) + "%"; bar.appendChild(fill); row.appendChild(bar); dimensions.appendChild(row); });
     card.appendChild(dimensions);
-    var detail = doc.createElement("details"); var summary = doc.createElement("summary"); summary.textContent = "查看研究详情"; detail.appendChild(summary);
+    var detail = doc.createElement("details");
+    var summary = doc.createElement("summary"); summary.textContent = "查看研究详情"; detail.appendChild(summary);
     var body = doc.createElement("div"); body.className = "idea-engine-detail";
     detailSections(candidate).forEach(function (section) { var block = doc.createElement("section"); block.className = "idea-engine-detail-section"; addText(doc, block, "h4", section.title); var paragraph = addText(doc, block, "p", section.values.join("；")); body.appendChild(block); });
     var links = safeEvidenceLinks(candidate); if (links.length) { var sourceBlock = doc.createElement("section"); sourceBlock.className = "idea-engine-detail-section"; addText(doc, sourceBlock, "h4", "来源链接"); links.forEach(function (item) { var link = doc.createElement("a"); link.href = item.url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = item.source; sourceBlock.appendChild(link); }); body.appendChild(sourceBlock); }
@@ -82,11 +99,13 @@
   function init(doc, fetcher) {
     var elements = { status: doc.getElementById("ideaEngineStatus"), maturity: doc.getElementById("ideaEngineMaturity"), rows: doc.getElementById("ideaEngineRows") };
     if (!elements.status || !elements.maturity || !elements.rows) return;
+    var panel = doc.getElementById("ideaEnginePanel");
+    if (panel && root.location && root.location.hash === "#ideaEnginePanel") panel.open = true;
     Promise.all([
       fetcher("research/results/v2/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("idea engine unavailable"); return response.json(); }),
       fetcher("research/results/v2/idea-engine/shadow/governance-report.json", { cache: "no-cache" }).then(function (response) { return response.ok ? response.json() : null; }).catch(function () { return null; })
     ]).then(function (values) { render(values[0], elements, doc, values[1]); }).catch(function () { render(null, elements, doc, null); });
   }
   if (typeof document !== "undefined" && typeof fetch === "function") init(document, fetch);
-  return { safePayload: safePayload, gradeLabel: label, formatScore: formatScore, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, render: render, init: init };
+  return { safePayload: safePayload, gradeLabel: label, formatScore: formatScore, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, normalizeTicker: normalizeTicker, detailHref: detailHref, render: render, init: init };
 });

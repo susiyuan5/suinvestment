@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 HTML = ROOT / "index.html"
+DETAIL_HTML = ROOT / "stock-detail.html"
 JS_FILES = tuple(sorted([*ROOT.glob("*.js"), *(ROOT / "scripts").glob("*.mjs")]))
 REQUIRED_IDS = {
     "cards",
@@ -38,6 +39,11 @@ REQUIRED_PRE_APP_SCRIPTS = {
     "market-data.js", "market-analysis.js", "signal-engine.js", "portfolio-policy.js",
     "backtest-engine.js", "dca-policy.js", "settings-storage.js",
 }
+DETAIL_REQUIRED_IDS = {
+    "stockDetailStatus", "stockDetailContent", "stockDetailTicker", "stockDetailCompanyName",
+    "stockDetailPrice", "stockDetailChart", "stockDetailChartSummary", "stockDetailCompanyFacts",
+    "stockDetailResearchTitle", "stockDetailEvidence", "stockDetailAddWatchlist",
+}
 
 
 def main() -> int:
@@ -55,6 +61,20 @@ def main() -> int:
         problems.append(f"duplicate ids: {', '.join(duplicates)}")
     if missing:
         problems.append(f"missing required ids: {', '.join(missing)}")
+
+    detail_source = DETAIL_HTML.read_text(encoding="utf-8") if DETAIL_HTML.exists() else ""
+    detail_identifiers = re.findall(r'\bid=["\']([^"\']+)', detail_source)
+    detail_duplicates = sorted(identifier for identifier, count in Counter(detail_identifiers).items() if count > 1)
+    detail_missing = sorted(DETAIL_REQUIRED_IDS - set(detail_identifiers))
+    if detail_source.lower().count("<!doctype html>") != 1:
+        problems.append("stock-detail.html must contain exactly one HTML doctype")
+    if detail_duplicates:
+        problems.append(f"stock-detail.html duplicate ids: {', '.join(detail_duplicates)}")
+    if detail_missing:
+        problems.append(f"stock-detail.html missing required ids: {', '.join(detail_missing)}")
+    detail_scripts = [value.split("?", 1)[0] for value in re.findall(r'<script[^>]+src=["\']([^"\']+)', detail_source)]
+    if detail_scripts[-2:] != ["idea-engine.js", "stock-detail.js"]:
+        problems.append("stock-detail.html must load idea-engine.js before stock-detail.js")
     scripts = [value.split("?", 1)[0] for value in re.findall(r'<script[^>]+src=["\']([^"\']+)', source)]
     if "app.js" not in scripts:
         problems.append("index.html must load app.js")
@@ -75,7 +95,7 @@ def main() -> int:
         print("\n".join(f"- {problem}" for problem in problems), file=sys.stderr)
         return 1
 
-    print(f"Static contracts passed: {len(identifiers)} unique ids; {len(JS_FILES)} JavaScript files checked.")
+    print(f"Static contracts passed: {len(identifiers) + len(detail_identifiers)} unique ids across both pages; {len(JS_FILES)} JavaScript files checked.")
     return 0
 
 
