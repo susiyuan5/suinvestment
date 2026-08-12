@@ -1120,6 +1120,7 @@ amountBreakdown: "金额分解",
   if (displayCurrencySelect) {
     displayCurrencySelect.addEventListener("change", function () {
       state.displayCurrency = SettingsStorage.saveDisplayCurrency(displayCurrencySelect.value, localStorage);
+      if (window.WealthsimpleCurrency) window.WealthsimpleCurrency.save(Object.assign({}, window.WealthsimpleCurrency.load(localStorage), { displayCurrency: state.displayCurrency }), localStorage);
       displayCurrencySelect.value = state.displayCurrency;
       if (displayCurrencyStatusEl) displayCurrencyStatusEl.textContent = t("currencySaved", { currency: state.displayCurrency });
       updateCurrencyPlaceholders();
@@ -4853,6 +4854,12 @@ function equalizeAllocations() {
       return entry.signal;
     });
     window.__SUINVESTMENT_PORTFOLIO_RISK__ = portfolioRisk;
+    window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__ = {
+      plan: state.coreSatellitePlan || null,
+      signals: window.__SUINVESTMENT_SIGNALS__,
+      generatedAt: new Date().toISOString()
+    };
+    window.dispatchEvent(new CustomEvent("wealthsimple:plan-updated", { detail: window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__ }));
     renderAllocationEditor();
 
     orderLines.push("");
@@ -6737,13 +6744,19 @@ function equalizeAllocations() {
   }
 
   function formatCurrency(value) {
+    if (window.WealthsimpleCurrency) {
+      const settings = window.WealthsimpleCurrency.load(localStorage);
+      const formatted = window.WealthsimpleCurrency.format(value, settings.planningCurrency, settings);
+      return formatted.text;
+    }
     return state.displayCurrency + " " + Number(value).toFixed(2);
   }
 
   function formatCompactCurrency(value) {
     if (!Number.isFinite(value)) return "N/A";
-    if (value >= 10000) return state.displayCurrency + " " + (value / 1000).toFixed(0) + "k";
-    if (value >= 1000) return state.displayCurrency + " " + (value / 1000).toFixed(1) + "k";
+    const currency = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage).planningCurrency : state.displayCurrency;
+    if (value >= 10000) return currency + " " + (value / 1000).toFixed(0) + "k";
+    if (value >= 1000) return currency + " " + (value / 1000).toFixed(1) + "k";
     return state.displayCurrency + " " + value.toFixed(0);
   }
 
