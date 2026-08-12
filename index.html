@@ -291,7 +291,7 @@
           <p class="allocation-risk-note">大盘 40% 意味着个股合计 60%，波动和集中风险更高；这里只调整后续定投资金，不会要求卖出或自动再平衡。</p>
         </section>
         <div id="allocationEditorRows" class="allocation-editor-rows"></div>
-        <div class="allocation-editor-metrics"><label for="singleStockExposureMode">单股比例计算口径</label><select id="singleStockExposureMode"><option value="lookthrough">ETF 穿透口径（推荐）</option><option value="direct_only">仅直接持仓口径</option></select><span id="etfExposureStatus" role="status" aria-live="polite">穿透数据待更新</span></div>
+        <div class="allocation-editor-metrics"><label for="singleStockExposureMode">单股比例计算口径</label><select id="singleStockExposureMode"><option value="direct_only">仅直接持仓口径（推荐）</option><option value="lookthrough">ETF 穿透口径（仅风险提示）</option></select><span id="etfExposureStatus" role="status" aria-live="polite">ETF 重叠仅作风险提示</span></div>
         <div class="allocation-editor-metrics" aria-live="polite">
           <span>已分配 <strong id="allocationEditorAllocated">0.00%</strong></span><span>剩余 <strong id="allocationEditorRemaining">100.00%</strong></span><span>超出 <strong id="allocationEditorOverage">0.00%</strong></span><span>大盘仓 <strong id="allocationEditorCore">0.00%</strong></span><span>个股仓 <strong id="allocationEditorSatellite">0.00%</strong></span><span>科技个股 <strong id="allocationEditorTechnology">0.00%</strong></span>
         </div>
@@ -693,7 +693,7 @@
     <script src="market-analysis.js?v=contracts-1"></script>
     <script src="signal-engine.js?v=contracts-1"></script>
     <script src="portfolio-policy.js?v=contracts-1"></script>
-    <script src="core-satellite-policy.js?v=core-satellite-v3"></script>
+    <script src="core-satellite-policy.js?v=core-satellite-v4"></script>
     <script src="backtest-engine.js?v=contracts-1"></script>
     <script src="settings-storage.js?v=currency-preference-1"></script>
     <script src="wealthsimple-currency.js?v=wealthsimple-v1"></script>

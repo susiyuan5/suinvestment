@@ -25,7 +25,7 @@ test("规则阻止未知 OTC、缺少行情和不可用分数股", () => {
 });
 
 test("适配器在账户或汇率不完整时不计算数量", () => {
-  const result = adapter.buildChecklist({ items: [{ symbol: "BYDDY", finalAmount: 50, price: 10, priceAsOf: "2026-08-11", fractional: true }] }, { settings: validSettings, rules: ruleConfig, accounts: {}, securities: { BYDDY: { currency: "USD", otc: "unknown", fractional: "unknown" } } });
+  const result = adapter.buildChecklist({ items: [{ symbol: "OTC_SECURITY", finalAmount: 50, price: 10, priceAsOf: "2026-08-11", fractional: true }] }, { settings: validSettings, rules: ruleConfig, accounts: {}, securities: { OTC_SECURITY: { currency: "USD", otc: "unknown", fractional: "unknown" } } });
   assert.equal(result.rows[0].quantity, null);
   assert.equal(result.safe, false);
 });

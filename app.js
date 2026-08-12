@@ -19,7 +19,7 @@
     panicMultiplier: 1.3,
     panicSymbols: new Set(["MSFT", "NVDA", "AAPL", "ASML"]),
     defaultStocks: CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET),
-    coreSatellitePresetUrl: "data/core-satellite-v3.json"
+    coreSatellitePresetUrl: "data/core-satellite-v4.json"
   };
 
   const STORAGE_KEYS = {
@@ -63,8 +63,8 @@
 
   const WEEKS_PER_MONTH = 52 / 12;
 
-  const CORE_SATELLITE_SYMBOLS = ["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"];
-  const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.40, NVDA: 0.14, AAPL: 0.14, ASML: 0.12, KO: 0.10, BYDDY: 0.10 };
+  const CORE_SATELLITE_SYMBOLS = ["SPY", "NVDA", "AAPL", "ASML", "KO"];
+  const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.40, NVDA: 0.15, AAPL: 0.15, ASML: 0.15, KO: 0.15 };
   function coreSatelliteAllocations(portfolio) {
     return CORE_SATELLITE_SYMBOLS.reduce(function (map, symbol) {
       const item = (portfolio || []).find(function (row) { return row.symbol === symbol; });
@@ -77,6 +77,20 @@
     const raw = loadJson(STORAGE_KEYS.portfolio, null);
     const stored = loadJson(STORAGE_KEYS.coreSatelliteState, null);
     const hasPortfolio = Array.isArray(raw) && raw.length > 0;
+    const hasLegacyByddy = Array.isArray(raw) && raw.some(function (row) { return row && row.symbol === "BYDDY"; });
+    if (hasLegacyByddy) {
+      const previous = normalizePortfolio(raw, { allowCustom: true });
+      const next = normalizePortfolio(CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET), { allowCustom: true });
+      const nextState = { preset_version: CoreSatellitePolicy.PRESET.version, allocation_mode: "default", migration_completed: true, portfolio_backup: previous, updated_at: new Date().toISOString(), migration_notice: "已将旧组合迁移为 SPY 40%、NVDA/AAPL/ASML/KO 各 15%；仅影响后续人工定投计划。" };
+      nextState.allocation_valid = true;
+      nextState.allocation_errors = [];
+      saveJson(STORAGE_KEYS.coreSatelliteBackup, previous);
+      saveJson(STORAGE_KEYS.portfolio, next);
+      persistCoreSatelliteState(nextState);
+      const cache = loadJson(STORAGE_KEYS.cache, null);
+      if (cache && typeof cache === "object") { delete cache.BYDDY; if (cache.symbols && typeof cache.symbols === "object") delete cache.symbols.BYDDY; saveJson(STORAGE_KEYS.cache, cache); }
+      return { portfolio: next, state: nextState, notice: nextState.migration_notice };
+    }
     if (stored && stored.migration_completed === true && stored.allocation_mode === "manual") {
       const preserved = normalizePortfolio(raw, { allowCustom: true });
       const validation = CoreSatellitePolicy.validateAllocations(coreSatelliteAllocations(preserved));
@@ -92,7 +106,7 @@
     const nextState = { preset_version: CoreSatellitePolicy.PRESET.version, allocation_mode: "default", migration_completed: true, portfolio_backup: previous, migration_notice: "已默认应用 40% 大盘＋60% 个股组合；仅调整人工计划，不会自动卖出或再平衡。", updated_at: new Date().toISOString() };
     nextState.allocation_valid = true;
     nextState.allocation_errors = [];
-    nextState.migration_notice = "已默认应用 v3 推荐比例：SPY 40%，个股 60%；仅调整未来人工计划，不会自动卖出或再平衡。";
+    nextState.migration_notice = "已默认应用 v4 推荐比例：SPY 40%，个股 60%；仅调整未来人工计划，不会自动卖出或再平衡。";
     saveJson(STORAGE_KEYS.coreSatelliteBackup, previous);
     saveJson(STORAGE_KEYS.portfolio, next);
     persistCoreSatelliteState(nextState);
@@ -1306,7 +1320,7 @@ amountBreakdown: "金额分解",
   renderAlgorithmTestPanel();
   renderSkeleton();
   if (singleStockExposureModeEl) {
-    singleStockExposureModeEl.value = localStorage.getItem(STORAGE_KEYS.etfExposureMode) || "lookthrough";
+    singleStockExposureModeEl.value = localStorage.getItem(STORAGE_KEYS.etfExposureMode) || "direct_only";
     singleStockExposureModeEl.addEventListener("change", function () { localStorage.setItem(STORAGE_KEYS.etfExposureMode, singleStockExposureModeEl.value); calculateEtfExposure(); render(); });
   }
   initializeDcaL2Config();
@@ -1328,8 +1342,8 @@ amountBreakdown: "金额分解",
   function calculateEtfExposure() {
     if (!window.EtfLookthrough) return null;
     const direct = CORE_SATELLITE_SYMBOLS.reduce(function (map, symbol) { const position = state.portfolioRiskInput && state.portfolioRiskInput.positions && state.portfolioRiskInput.positions[symbol]; map[symbol] = position ? { allocation: Number(position.current_allocation || 0) } : { allocation: 0 }; return map; }, {});
-    state.etfExposure = window.EtfLookthrough.calculate(direct, state.etfHoldings, Date.now(), 30, singleStockExposureModeEl && singleStockExposureModeEl.value || "lookthrough");
-    if (etfExposureStatusEl) etfExposureStatusEl.textContent = state.etfExposure.status === "ready" ? "ETF 穿透数据已更新" : state.etfExposure.note;
+    state.etfExposure = window.EtfLookthrough.calculate(direct, state.etfHoldings, Date.now(), 30, singleStockExposureModeEl && singleStockExposureModeEl.value || "direct_only");
+    if (etfExposureStatusEl) etfExposureStatusEl.textContent = "SPY内部包含部分个股，穿透比例仅作集中度风险提示，不影响当前直接持仓上限检查。";
     return state.etfExposure;
   }
 
@@ -5038,11 +5052,11 @@ function equalizeAllocations() {
       }
       item.entry.finalManualAmount = round2(item.decision.finalAmount);
     });
-    const exposureMode = singleStockExposureModeEl && singleStockExposureModeEl.value || "lookthrough";
+    const exposureMode = singleStockExposureModeEl && singleStockExposureModeEl.value || "direct_only";
     const directExposure = Object.keys(portfolioRisk.positions || {}).reduce(function (map, symbol) { map[symbol] = { allocation: Number(portfolioRisk.positions[symbol].current_allocation || 0) }; return map; }, {});
     const exposure = window.EtfLookthrough ? window.EtfLookthrough.calculate(directExposure, state.etfHoldings, Date.now(), 30, exposureMode) : { status: "unknown", effectiveExposure: {} };
     state.etfExposure = exposure;
-    const exposureBlocked = exposureMode === "lookthrough" && exposure.status !== "ready" ? ["AAPL", "NVDA"] : ["AAPL", "NVDA"].filter(function (symbol) { return Number(exposure.effectiveExposure && exposure.effectiveExposure[symbol] || 0) >= 15; });
+    const exposureBlocked = [];
     planned.items.forEach(function (item) {
       if (exposureBlocked.indexOf(item.entry.signal.symbol) >= 0) {
         item.decision.finalAmount = 0;
@@ -5057,9 +5071,9 @@ function equalizeAllocations() {
       preset: activePreset || CoreSatellitePolicy.PRESET, baseBudget: state.deployment.weeklyDeployment, crashFundRemaining: balance,
       actualAllocations: Object.keys(portfolioRisk.positions || {}).reduce(function (map, symbol) { map[symbol] = portfolioRisk.positions[symbol].current_allocation; return map; }, {}),
       satelliteDecisions: satelliteDecisions, spyDataValid: Boolean(state.rows.get("SPY") && getDcaL2DataStatus(buildSignalObject({ symbol: "SPY" }, state.rows.get("SPY"))) === "fresh"),
-      safetyBlocked: !state.coreSatellitePresetReady, cashOnlySymbols: exposureBlocked, spyCrashEnhancement: 0
+      safetyBlocked: !state.coreSatellitePresetReady, cashOnlySymbols: [], spyCrashEnhancement: 0
     });
-    const expectedSymbols = ["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"];
+    const expectedSymbols = ["SPY", "NVDA", "AAPL", "ASML", "KO"];
     const complete = state.coreSatellitePresetReady && expectedSymbols.every(function (symbol) { return state.portfolio.some(function (item) { return item.symbol === symbol; }); });
     const fresh = inputs.every(function (item) { return getDcaL2DataStatus(item.entry.signal) === "fresh"; });
     state.coreSatellitePlan.safe = Boolean(activePreset) && complete && fresh && state.coreSatellitePlan.conservation && state.coreSatellitePlan.conservation.balanced === true;
@@ -6080,7 +6094,7 @@ function equalizeAllocations() {
       if (Number(row.finalAmount || 0) <= 0) return;
       var signal = window.__SUINVESTMENT_SIGNALS__ && window.__SUINVESTMENT_SIGNALS__.find(function (item) { return item.symbol === row.symbol; }) || {};
       var settings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : {};
-      var result = window.WealthsimpleExecutionPolicy.execute({ symbol: row.symbol, marketType: row.symbol === "BYDDY" ? "OTC" : "listed", price: signal.latest_price || signal.price, suggestedAmount: row.finalAmount, tradingCurrency: "USD", accountCurrency: account.account_currency || settings.accountCurrency, accountType: account.account_type, fractionalSupported: row.symbol === "BYDDY" ? false : "unknown", minimumFractionalAmount: 1, quoteTimestamp: signal.fetchedAt || signal.asOf, fxRate: settings.fxRate, fxAsOf: settings.fxAsOf, fxFeeRate: settings.fxFeeRate, fxMaxAgeDays: settings.fxMaxAgeDays });
+      var result = window.WealthsimpleExecutionPolicy.execute({ symbol: row.symbol, marketType: "listed", price: signal.latest_price || signal.price, suggestedAmount: row.finalAmount, tradingCurrency: "USD", accountCurrency: account.account_currency || settings.accountCurrency, accountType: account.account_type, fractionalSupported: "unknown", minimumFractionalAmount: 1, quoteTimestamp: signal.fetchedAt || signal.asOf, fxRate: settings.fxRate, fxAsOf: settings.fxAsOf, fxFeeRate: settings.fxFeeRate, fxMaxAgeDays: settings.fxMaxAgeDays });
       summary.executable += Number(result.executableAmount || 0); summary.retained += Number(result.retainedCash || 0); summary.statuses[row.symbol] = result;
       if (result.executableAmount < row.finalAmount) summary.executionCash += Number(result.retainedCash || 0);
     });
@@ -6093,7 +6107,7 @@ function equalizeAllocations() {
     const presetRows = activeCoreSatellitePreset() && CoreSatellitePolicy.rowsForPreset(activeCoreSatellitePreset()) || [];
     const targetBySymbol = presetRows.reduce(function (map, row) { map[row.symbol] = row.target_allocation * 100; return map; }, {});
     const positions = portfolioRisk && portfolioRisk.positions || {};
-    const expected = ["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"];
+    const expected = ["SPY", "NVDA", "AAPL", "ASML", "KO"];
     const rows = plan && Array.isArray(plan.items) ? plan.items : [];
     const bySymbol = rows.reduce(function (map, row) { map[row.symbol] = row; return map; }, {});
     const safe = Boolean(plan && plan.safe === true && expected.every(function (symbol) { return bySymbol[symbol]; }));

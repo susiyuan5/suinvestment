@@ -1,4 +1,4 @@
-"""Pure Core-Satellite v3 budgeting policy shared by dashboard and reports."""
+"""Pure Core-Satellite v4 budgeting policy shared by dashboard and reports."""
 from __future__ import annotations
 
 import json
@@ -6,8 +6,8 @@ import math
 from pathlib import Path
 from typing import Any
 
-PRESET_PATH = Path(__file__).with_name("data") / "core-satellite-v3.json"
-CORE_SYMBOLS = ("SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY")
+PRESET_PATH = Path(__file__).with_name("data") / "core-satellite-v4.json"
+CORE_SYMBOLS = ("SPY", "NVDA", "AAPL", "ASML", "KO")
 SATELLITE_SYMBOLS = CORE_SYMBOLS[1:]
 TECH_SYMBOLS = ("NVDA", "AAPL", "ASML")
 ALLOCATION_EPSILON = 1e-9
@@ -36,16 +36,16 @@ def _ratio_from_pct(value: Any) -> float:
 def load_preset(path: Path = PRESET_PATH) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not validate_preset(payload):
-        raise ValueError("invalid core-satellite-v3 preset")
+        raise ValueError("invalid core-satellite-v4 preset")
     return payload
 
 
 def validate_preset(preset: dict[str, Any]) -> bool:
-    if not isinstance(preset, dict) or preset.get("version") != "core-satellite-v3":
+    if not isinstance(preset, dict) or preset.get("version") != "core-satellite-v4":
         return False
     core = preset.get("core") or {}
     satellites = preset.get("satellites")
-    if core.get("symbol") != "SPY" or not isinstance(satellites, list) or len(satellites) != 5:
+    if core.get("symbol") != "SPY" or not isinstance(satellites, list) or len(satellites) != 4:
         return False
     total = float(core.get("target_allocation", float("nan"))) + sum(float(row.get("target_allocation", float("nan"))) for row in satellites)
     return math.isfinite(total) and abs(total - 1.0) <= ALLOCATION_EPSILON and all(0 <= float(row.get("target_allocation", 1)) <= 0.15 + ALLOCATION_EPSILON and row.get("bucket") == "satellite" for row in satellites)
@@ -69,7 +69,7 @@ def validate_allocations(allocations: dict[str, Any]) -> dict[str, Any]:
             errors.append(f"{symbol} 目标比例必须是非负数字")
     metrics = allocation_metrics(allocations)
     limits = load_preset()["limits"]
-    if abs(metrics["allocated"] - 100) > ALLOCATION_EPSILON: errors.append("六项比例合计必须严格等于 100.00%")
+    if abs(metrics["allocated"] - 100) > ALLOCATION_EPSILON: errors.append("五项比例合计必须严格等于 100.00%")
     if not limits["spy_min_target_pct"] - ALLOCATION_EPSILON <= metrics["core"] <= limits["spy_max_target_pct"] + ALLOCATION_EPSILON: errors.append("SPY 目标比例必须在 40.00% 至 80.00% 之间")
     if not limits["satellite_min_target_pct"] - ALLOCATION_EPSILON <= metrics["satellite"] <= limits["satellite_max_target_pct"] + ALLOCATION_EPSILON: errors.append("个股合计比例必须在 20.00% 至 60.00% 之间")
     for symbol in SATELLITE_SYMBOLS:
@@ -94,7 +94,7 @@ def average_satellite_allocations(core_percent: Any) -> dict[str, float] | None:
     try: core = float(core_percent)
     except (TypeError, ValueError): return None
     if not math.isfinite(core) or not 40 <= core <= 80: return None
-    each = _ratio_from_pct((100 - core) / 5)
+    each = _ratio_from_pct((100 - core) / 4)
     return {"SPY": _ratio_from_pct(core), **{symbol: each for symbol in SATELLITE_SYMBOLS}}
 
 

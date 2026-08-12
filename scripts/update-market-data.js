@@ -1,7 +1,7 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
 
-const symbols = ["BYDDY", "MSFT", "NVDA", "AAPL", "ASML", "KO", "QQQ"];
+const symbols = ["MSFT", "NVDA", "AAPL", "ASML", "KO", "QQQ", "SPY"];
 const outFile = path.join(process.cwd(), "data", "market-data.json");
 const requestTimeoutMs = 12000;
 const retryDelayMs = 900;

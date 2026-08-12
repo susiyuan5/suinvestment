@@ -15,7 +15,7 @@
     if (!amount) { result.executionStatus = "本周不可执行"; result.reasonCodes.push("ZERO_SUGGESTION"); return result; }
     if (price === null || price <= 0) { result.executionStatus = "数据过期"; result.reasonCodes.push("INVALID_PRICE"); return result; }
     if (!dateValid(value.quoteTimestamp, config.now, config.maxQuoteAgeDays || 1)) { result.executionStatus = "数据过期"; result.reasonCodes.push("STALE_QUOTE"); return result; }
-    var otc = String(value.marketType || "").toUpperCase() === "OTC" || String(value.symbol || "").toUpperCase() === "BYDDY";
+    var otc = String(value.marketType || "").toUpperCase() === "OTC";
     var registered = ["TFSA", "FHSA", "RRSP", "RESP"].indexOf(value.accountType) >= 0;
     if (!value.accountCurrency || !value.tradingCurrency || !value.accountType) { result.reasonCodes.push("ACCOUNT_RULES_UNKNOWN"); return result; }
     if (value.accountCurrency !== value.tradingCurrency) {
@@ -27,7 +27,7 @@
     if (otc) {
       result.requiredOrderType = "LIMIT";
       if (registered) { result.reasonCodes.push("OTC_REGISTERED_ACCOUNT"); result.executionStatus = "账户不支持"; return result; }
-      if (value.fractionalSupported === true || value.fractionalSupported === "unknown") result.warnings.push("BYDDY 不生成碎股执行建议");
+      if (value.fractionalSupported === true || value.fractionalSupported === "unknown") result.warnings.push("OTC 不生成碎股执行建议");
       if (amount < price) { result.reasonCodes.push("OTC_AMOUNT_BELOW_ONE_SHARE"); return result; }
       result.executable = true; result.executableAmount = amount; result.retainedCash = 0; result.executionStatus = "可以执行"; return result;
     }
