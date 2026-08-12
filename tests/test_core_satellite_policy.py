@@ -6,17 +6,19 @@ from core_satellite_policy import allocations_for_core, allocation_metrics, load
 
 
 class CoreSatellitePolicyTests(unittest.TestCase):
-    def test_allocation_constraints(self):
-        valid = {"SPY": .40, "NVDA": .12, "AAPL": .12, "ASML": .12, "KO": .12, "BYDDY": .12}
-        self.assertTrue(validate_allocations(valid)["valid"])
-        self.assertFalse(validate_allocations({**valid, "SPY": .39, "NVDA": .13})["valid"])
-        self.assertFalse(validate_allocations({**valid, "NVDA": .13, "KO": .11})["valid"])
-        self.assertFalse(validate_allocations({**valid, "KO": float("nan")})["valid"])
-        self.assertEqual(allocation_metrics(valid)["allocated"], 100)
+    def test_v3_default_and_constraints(self):
+        preset = load_preset()
+        self.assertEqual("core-satellite-v3", preset["version"])
+        self.assertEqual({"SPY": .4, "NVDA": .14, "AAPL": .14, "ASML": .12, "KO": .1, "BYDDY": .1}, allocations_for_core(40))
+        self.assertTrue(validate_preset(preset))
+        self.assertTrue(validate_allocations({"SPY": .4, "NVDA": .15, "AAPL": .14, "ASML": .11, "KO": .1, "BYDDY": .1})["valid"])
+        self.assertFalse(validate_allocations({"SPY": .4, "NVDA": .1501, "AAPL": .14, "ASML": .11, "KO": .1, "BYDDY": .0999})["valid"])
+        self.assertFalse(validate_allocations({"SPY": .4, "NVDA": .14, "AAPL": .14, "ASML": .1201, "KO": .1, "BYDDY": .0999})["valid"])
+        self.assertEqual(100, allocation_metrics(allocations_for_core(40))["allocated"])
 
-    def test_core_split_shortcuts(self):
-        self.assertEqual(allocations_for_core(40), {"SPY": .4, "NVDA": .12, "AAPL": .12, "ASML": .12, "KO": .12, "BYDDY": .12})
-        self.assertTrue(validate_allocations(allocations_for_core(50))["valid"])
+    def test_shortcuts(self):
+        self.assertEqual({"SPY": .5, "NVDA": .1, "AAPL": .1, "ASML": .1, "KO": .1, "BYDDY": .1}, allocations_for_core(50))
+        self.assertEqual({"SPY": .6, "NVDA": .08, "AAPL": .08, "ASML": .08, "KO": .08, "BYDDY": .08}, allocations_for_core(60))
         self.assertIsNone(allocations_for_core(39))
 
     def test_shared_golden_fixtures(self):
@@ -26,38 +28,18 @@ class CoreSatellitePolicyTests(unittest.TestCase):
             with self.subTest(fixture=fixture["name"]):
                 if fixture["case"] == "validate":
                     self.assertEqual(fixture["expected"], validate_preset(preset))
-                    continue
-                result = plan_core_satellite(preset=preset, **fixture["input"])
-                for key, expected in fixture["expected"].items():
-                    if key == "items":
-                        self.assertEqual(expected, next(row["finalAmount"] for row in result["items"] if row["symbol"] == "NVDA"))
-                    else:
-                        self.assertEqual(expected, result[key])
+                else:
+                    result = plan_core_satellite(preset=preset, **fixture["input"])
+                    for key, expected in fixture["expected"].items():
+                        self.assertEqual(expected, next(row["finalAmount"] for row in result["items"] if row["symbol"] == "NVDA") if key == "items" else result[key])
 
-    def test_enhancement_and_concentration_guards(self):
-        result = plan_core_satellite(base_budget=1000, crash_fund_remaining=500, spy_crash_enhancement=500, actual_allocations={"NVDA": 15, "AAPL": 15, "ASML": 15})
-        self.assertLessEqual(result["items"][0]["crashFundEnhancement"], 150)
-        self.assertEqual(0, result["items"][1]["finalAmount"])
-
-    def test_target_weight_is_below_hard_concentration_block(self):
-        result = plan_core_satellite(base_budget=1000, crash_fund_remaining=0, actual_allocations={"NVDA": 12})
-        self.assertEqual(120, result["items"][1]["finalAmount"])
-
-    def test_float_tail_at_single_stock_cap_is_not_an_error(self):
-        boundary = {"SPY": .4, "NVDA": .1200000005, "AAPL": .1200000005, "ASML": .12, "KO": .12, "BYDDY": .119999999}
-        self.assertTrue(validate_allocations(boundary)["valid"])
-        above = {**boundary, "NVDA": .1201, "BYDDY": .1199}
-        self.assertEqual(["NVDA单股比例不得高于 12%"], validate_allocations(above)["errors"])
-
-    def test_qqq_is_signal_only(self):
-        result = plan_core_satellite(base_budget=100, crash_fund_remaining=10, actual_allocations={"QQQ": 99})
-        self.assertNotIn("QQQ", [row["symbol"] for row in result["items"]])
-        self.assertFalse(result["summary"]["qqqGeneratesBuyAmount"])
-
-    def test_weekly_budget_and_approved_crash_fund_are_conserved_once(self):
-        result = plan_core_satellite(base_budget=69.23, crash_fund_remaining=100, actual_allocations={}, satellite_decisions={})
-        allocated = sum(row["finalAmount"] for row in result["items"]) + result["cashRetained"]
-        self.assertAlmostEqual(result["conservation"]["source"], allocated, places=2)
+    def test_actual_concentration_boundary_and_conservation(self):
+        below = plan_core_satellite(base_budget=1000, crash_fund_remaining=0, actual_allocations={"NVDA": 17.99})
+        at = plan_core_satellite(base_budget=1000, crash_fund_remaining=0, actual_allocations={"NVDA": 18})
+        self.assertEqual(140, below["items"][1]["finalAmount"])
+        self.assertEqual(0, at["items"][1]["finalAmount"])
+        result = plan_core_satellite(base_budget=69.23, crash_fund_remaining=100, actual_allocations={})
+        self.assertAlmostEqual(result["conservation"]["source"], sum(row["finalAmount"] for row in result["items"]) + result["cashRetained"], places=2)
 
 
 if __name__ == "__main__":

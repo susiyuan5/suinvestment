@@ -116,8 +116,8 @@ async function main() {
   await page.locator("#adjustAllocationBtn").click();
   assert.equal(await page.locator("#settingsModal").isVisible(), true, "allocation entry should open settings center");
   assert.equal(await page.locator("#settings-allocation").isVisible(), true, "allocation entry should select allocation category");
-  assert.equal(await page.locator("[data-allocation-symbol='SPY']").inputValue(), "40.00", "legacy default allocation should migrate to the 40/60 v2 preset");
-  assert.equal(await page.locator("[data-allocation-symbol='NVDA']").inputValue(), "12.00", "individual-stock bucket should be evenly distributed by default");
+  assert.equal(await page.locator("[data-allocation-symbol='SPY']").inputValue(), "40.00", "legacy default allocation should migrate to the v3 recommended preset");
+  assert.equal(await page.locator("[data-allocation-symbol='NVDA']").inputValue(), "14.00", "v3 recommended allocation should preserve its configured satellite weights");
   assert.equal(await page.locator("[data-core-allocation-preset='40']").getAttribute("aria-pressed"), "true", "40/60 shortcut should reflect the active default");
   await page.screenshot({ path: "output/playwright/allocation-settings-desktop.png" });
   await page.locator("[data-core-allocation-preset='50']").click();
