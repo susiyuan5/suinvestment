@@ -4676,7 +4676,17 @@ h2 {
   }
 }
  .allocation-editor-rows { display: grid; gap: 8px; }
+ .allocation-bucket-control { display: grid; gap: 14px; margin-bottom: 18px; padding: 16px; border: 1px solid var(--line, #243346); border-radius: 10px; background: rgba(13, 23, 36, .72); }
+ .allocation-bucket-control p { margin: 5px 0 0; color: var(--muted, #9aa8b8); }
+ .allocation-preset-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+ .allocation-preset-buttons button { display: grid; gap: 3px; min-height: 62px; text-align: left; }
+ .allocation-preset-buttons button strong { color: var(--text, #eef4fa); font-size: 1rem; }
+ .allocation-preset-buttons button span { color: var(--muted, #9aa8b8); font-size: .72rem; }
+ .allocation-preset-buttons button[aria-pressed="true"] { border-color: var(--accent, #4fc3a1); color: var(--accent, #4fc3a1); background: rgba(79, 195, 161, .11); }
+ .allocation-risk-note { padding-top: 12px; border-top: 1px solid var(--line, #243346); font-size: .78rem; line-height: 1.55; }
  .allocation-editor-row { display: grid; grid-template-columns: 70px minmax(120px, 1fr) 110px minmax(120px, 1fr); gap: 10px; align-items: center; }
+ .allocation-target-field { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px; align-items: center; color: var(--muted, #9aa8b8); }
+ .allocation-target-field small { font-size: .68rem; }
  .allocation-editor-row input { width: 100%; min-width: 0; }
  .allocation-editor-metrics { display: grid; grid-template-columns: repeat(6, minmax(90px, 1fr)); gap: 8px; margin-top: 14px; }
  .allocation-editor-metrics span { color: var(--muted, #9aa8b8); }
@@ -4691,6 +4701,7 @@ h2 {
  .weekly-decision-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
  .allocation-editor-actions { display: flex; flex-wrap: wrap; gap: 8px; }
  @media (max-width: 720px) {
+   .allocation-preset-buttons { grid-template-columns: 1fr; }
    .allocation-editor-row { grid-template-columns: 1fr 1fr; }
    .allocation-editor-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
    .weekly-decision-overview, .weekly-decision-allocation-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -7,7 +7,7 @@ test("homepage uses simplified Chinese and has no language switcher", () => {
   const app = fs.readFileSync("app.js", "utf8");
   assert.match(html, /<html lang="zh-CN">/);
   assert.doesNotMatch(html, /id="languageToggle"/);
-  assert.doesNotMatch(html, /当前尚未应用 60% 大盘/);
+  assert.doesNotMatch(html, /当前尚未应用 40% 大盘/);
   assert.equal((html.match(/本周资金与定投决策/g) || []).length, 1);
   assert.doesNotMatch(html, /本周资金计划/);
   assert.match(html, /<h2 id="holdings-title">个股信号与持仓<\/h2>/);
@@ -33,7 +33,9 @@ test("desktop hierarchy follows the static DOM order", () => {
   ordered.forEach((marker) => { const index = html.indexOf(marker); assert.ok(index > previous, `${marker} is out of order`); previous = index; });
   assert.match(html, /id="coreSatelliteSummary" class="visually-hidden"/);
   assert.match(html, /<details id="coreSatelliteAllocationEditor"/);
-  assert.equal((html.match(/恢复默认 60\/40/g) || []).length, 1);
+  assert.equal((html.match(/恢复默认 40\/60/g) || []).length, 1);
+  assert.match(html, /data-core-allocation-preset="40"/);
+  assert.match(html, /大盘 40% 意味着个股合计 60%/);
 });
 
 test("weekly decision order contract contains SPY and all five satellites", () => {

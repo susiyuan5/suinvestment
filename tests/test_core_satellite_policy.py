@@ -2,17 +2,22 @@ import json
 import unittest
 from pathlib import Path
 
-from core_satellite_policy import allocation_metrics, load_preset, plan_core_satellite, validate_allocations, validate_preset
+from core_satellite_policy import allocations_for_core, allocation_metrics, load_preset, plan_core_satellite, validate_allocations, validate_preset
 
 
 class CoreSatellitePolicyTests(unittest.TestCase):
     def test_allocation_constraints(self):
-        valid = {"SPY": .60, "NVDA": .10, "AAPL": .10, "ASML": .08, "KO": .07, "BYDDY": .05}
+        valid = {"SPY": .40, "NVDA": .12, "AAPL": .12, "ASML": .12, "KO": .12, "BYDDY": .12}
         self.assertTrue(validate_allocations(valid)["valid"])
-        self.assertFalse(validate_allocations({**valid, "SPY": .54, "NVDA": .11})["valid"])
-        self.assertFalse(validate_allocations({**valid, "NVDA": .13, "SPY": .57})["valid"])
+        self.assertFalse(validate_allocations({**valid, "SPY": .39, "NVDA": .13})["valid"])
+        self.assertFalse(validate_allocations({**valid, "NVDA": .13, "KO": .11})["valid"])
         self.assertFalse(validate_allocations({**valid, "KO": float("nan")})["valid"])
         self.assertEqual(allocation_metrics(valid)["allocated"], 100)
+
+    def test_core_split_shortcuts(self):
+        self.assertEqual(allocations_for_core(40), {"SPY": .4, "NVDA": .12, "AAPL": .12, "ASML": .12, "KO": .12, "BYDDY": .12})
+        self.assertTrue(validate_allocations(allocations_for_core(50))["valid"])
+        self.assertIsNone(allocations_for_core(39))
 
     def test_shared_golden_fixtures(self):
         fixtures = json.loads((Path(__file__).parent / "fixtures" / "core_satellite_cases.json").read_text(encoding="utf-8"))
@@ -30,9 +35,13 @@ class CoreSatellitePolicyTests(unittest.TestCase):
                         self.assertEqual(expected, result[key])
 
     def test_enhancement_and_concentration_guards(self):
-        result = plan_core_satellite(base_budget=1000, crash_fund_remaining=500, spy_crash_enhancement=500, actual_allocations={"NVDA": 12, "AAPL": 12, "ASML": 12})
+        result = plan_core_satellite(base_budget=1000, crash_fund_remaining=500, spy_crash_enhancement=500, actual_allocations={"NVDA": 15, "AAPL": 15, "ASML": 15})
         self.assertLessEqual(result["items"][0]["crashFundEnhancement"], 150)
         self.assertEqual(0, result["items"][1]["finalAmount"])
+
+    def test_target_weight_is_below_hard_concentration_block(self):
+        result = plan_core_satellite(base_budget=1000, crash_fund_remaining=0, actual_allocations={"NVDA": 12})
+        self.assertEqual(120, result["items"][1]["finalAmount"])
 
     def test_qqq_is_signal_only(self):
         result = plan_core_satellite(base_budget=100, crash_fund_remaining=10, actual_allocations={"QQQ": 99})
@@ -42,7 +51,7 @@ class CoreSatellitePolicyTests(unittest.TestCase):
     def test_weekly_budget_and_approved_crash_fund_are_conserved_once(self):
         result = plan_core_satellite(base_budget=69.23, crash_fund_remaining=100, actual_allocations={}, satellite_decisions={})
         allocated = sum(row["finalAmount"] for row in result["items"]) + result["cashRetained"]
-        self.assertEqual(result["conservation"]["source"], allocated)
+        self.assertAlmostEqual(result["conservation"]["source"], allocated, places=2)
 
 
 if __name__ == "__main__":

@@ -105,9 +105,28 @@ async function main() {
   assert.equal(await page.evaluate(() => localStorage.getItem("su-investment-pro:finnhub-key")), null, "clearing the Finnhub key should remove persistent storage");
   await page.locator("#closeSettingsBtn").click();
 
+  await page.evaluate(() => {
+    localStorage.setItem("su-investment-pro:core-satellite-state", JSON.stringify({ preset_version: "core-satellite-v1", allocation_mode: "default", migration_completed: true }));
+    localStorage.setItem("su-investment-pro:portfolio", JSON.stringify([
+      { symbol: "SPY", allocation: 0.60 }, { symbol: "NVDA", allocation: 0.10 }, { symbol: "AAPL", allocation: 0.10 },
+      { symbol: "ASML", allocation: 0.08 }, { symbol: "KO", allocation: 0.07 }, { symbol: "BYDDY", allocation: 0.05 }
+    ]));
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
   await page.locator("#adjustAllocationBtn").click();
   assert.equal(await page.locator("#settingsModal").isVisible(), true, "allocation entry should open settings center");
   assert.equal(await page.locator("#settings-allocation").isVisible(), true, "allocation entry should select allocation category");
+  assert.equal(await page.locator("[data-allocation-symbol='SPY']").inputValue(), "40.00", "legacy default allocation should migrate to the 40/60 v2 preset");
+  assert.equal(await page.locator("[data-allocation-symbol='NVDA']").inputValue(), "12.00", "individual-stock bucket should be evenly distributed by default");
+  assert.equal(await page.locator("[data-core-allocation-preset='40']").getAttribute("aria-pressed"), "true", "40/60 shortcut should reflect the active default");
+  await page.screenshot({ path: "output/playwright/allocation-settings-desktop.png" });
+  await page.locator("[data-core-allocation-preset='50']").click();
+  assert.equal(await page.locator("[data-allocation-symbol='SPY']").inputValue(), "50.00", "quick split should update the core allocation");
+  assert.equal(await page.locator("[data-allocation-symbol='NVDA']").inputValue(), "10.00", "quick split should redistribute the stock bucket evenly");
+  await page.locator("[data-allocation-symbol='NVDA']").fill("9.50");
+  assert.equal(await page.locator("[data-allocation-symbol='NVDA']").inputValue(), "9.50", "manual target editing should preserve the active input");
+  assert.equal(await page.evaluate(() => document.activeElement?.dataset.allocationSymbol), "NVDA", "manual target editing should not lose keyboard focus");
+  page.once("dialog", (dialog) => dialog.accept());
   await page.locator("#cancelSettingsBtn").click();
 
   const watchlist = page.locator("#watchlist");

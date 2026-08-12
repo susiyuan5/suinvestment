@@ -5,25 +5,25 @@
   "use strict";
   var EPSILON = 0.005;
   var PRESET = {
-    version: "core-satellite-v1", research_only: true, qqq_signal_only: true,
-    core: { symbol: "SPY", target_allocation: 0.6, asset_type: "index_etf", bucket: "core", signal_role: "market_core" },
+    version: "core-satellite-v2", research_only: true, qqq_signal_only: true,
+    core: { symbol: "SPY", target_allocation: 0.4, asset_type: "index_etf", bucket: "core", signal_role: "market_core" },
     satellites: [
-      { symbol: "NVDA", target_allocation: 0.1, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
-      { symbol: "AAPL", target_allocation: 0.1, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
-      { symbol: "ASML", target_allocation: 0.08, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
-      { symbol: "KO", target_allocation: 0.07, asset_type: "stock", bucket: "satellite", sector: "consumer_staples", signal_role: "satellite_dca_l2" },
-      { symbol: "BYDDY", target_allocation: 0.05, asset_type: "stock", bucket: "satellite", sector: "consumer_discretionary", signal_role: "satellite_dca_l2" }
-    ], limits: { spy_max_current_pct: 70, satellite_enhancement_block_pct: 45, single_stock_block_pct: 12, technology_enhancement_block_pct: 35, spy_enhancement_max_multiple: 1.25 }
+      { symbol: "NVDA", target_allocation: 0.12, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
+      { symbol: "AAPL", target_allocation: 0.12, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
+      { symbol: "ASML", target_allocation: 0.12, asset_type: "stock", bucket: "satellite", sector: "technology", signal_role: "satellite_dca_l2" },
+      { symbol: "KO", target_allocation: 0.12, asset_type: "stock", bucket: "satellite", sector: "consumer_staples", signal_role: "satellite_dca_l2" },
+      { symbol: "BYDDY", target_allocation: 0.12, asset_type: "stock", bucket: "satellite", sector: "consumer_discretionary", signal_role: "satellite_dca_l2" }
+    ], limits: { spy_max_current_pct: 70, satellite_enhancement_block_pct: 60, single_stock_block_pct: 15, technology_enhancement_block_pct: 40, spy_enhancement_max_multiple: 1.25 }
   };
   function finite(value) { var n = Number(value); return Number.isFinite(n) ? n : null; }
   function money(value) { var n = finite(value); return n === null ? 0 : Math.round((Math.max(0, n) + 1e-10) * 100) / 100; }
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
   function validatePreset(preset) {
-    if (!preset || preset.version !== "core-satellite-v1" || !preset.core || !Array.isArray(preset.satellites)) return false;
+    if (!preset || preset.version !== "core-satellite-v2" || !preset.core || !Array.isArray(preset.satellites)) return false;
     var total = Number(preset.core.target_allocation) + preset.satellites.reduce(function (sum, row) { return sum + Number(row.target_allocation); }, 0);
     if (!Number.isFinite(total) || Math.abs(total - 1) > 1e-9) return false;
     if (preset.core.symbol !== "SPY" || preset.satellites.length !== 5) return false;
-    return preset.satellites.every(function (row) { return Number(row.target_allocation) <= 0.1 && row.bucket === "satellite"; });
+    return preset.satellites.every(function (row) { var value = Number(row.target_allocation); return Number.isFinite(value) && value >= 0 && value <= 0.12 && row.bucket === "satellite"; });
   }
   function normalizedPreset(preset) { return validatePreset(preset) ? clone(preset) : null; }
   function loadPreset(url) { return fetch(url).then(function (response) { if (!response.ok) throw new Error("preset fetch failed"); return response.json(); }).then(function (value) { var result = normalizedPreset(value); if (!result) throw new Error("invalid core-satellite preset"); return result; }); }
@@ -40,11 +40,19 @@
     symbols.forEach(function (symbol) { var raw = values[symbol]; if (raw === "" || raw === null || raw === undefined || finite(raw) === null || finite(raw) < 0) errors.push(symbol + "比例必须是非负数字"); });
     var metrics = allocationMetrics(values);
     if (Math.abs(metrics.allocated - 100) > 1e-7) errors.push("六项比例合计必须严格等于 100%");
-    if (metrics.core < 55 || metrics.core > 80) errors.push("SPY 比例必须在 55% 至 80% 之间");
-    if (metrics.satellite < 20 || metrics.satellite > 45) errors.push("个股合计比例必须在 20% 至 45% 之间");
+    if (metrics.core < 40 || metrics.core > 80) errors.push("SPY 比例必须在 40% 至 80% 之间");
+    if (metrics.satellite < 20 || metrics.satellite > 60) errors.push("个股合计比例必须在 20% 至 60% 之间");
     ["NVDA", "AAPL", "ASML", "KO", "BYDDY"].forEach(function (symbol) { if ((finite(values[symbol]) || 0) > 0.12) errors.push(symbol + "单股比例不得高于 12%"); });
-    if (metrics.technology > 35) errors.push("科技个股合计比例不得高于 35%");
+    if (metrics.technology > 40) errors.push("科技个股合计比例不得高于 40%");
     return { valid: errors.length === 0, errors: errors, metrics: metrics };
+  }
+  function allocationsForCore(corePercent) {
+    var core = finite(corePercent);
+    if (core === null || core < 40 || core > 80) return null;
+    var coreRatio = core / 100, satelliteRatio = (1 - coreRatio) / PRESET.satellites.length;
+    var result = { SPY: coreRatio };
+    PRESET.satellites.forEach(function (row) { result[row.symbol] = satelliteRatio; });
+    return result;
   }
   function presetFromAllocations(allocations, basePreset) {
     var p = normalizedPreset(basePreset) || clone(PRESET), result = clone(p), values = allocations || {};
@@ -84,5 +92,5 @@
     if (Math.abs(total + cash - source) > EPSILON) throw new Error("core-satellite plan violates conservation");
     return { version: p.version, items: rows, spyBase: spyBase, spyRedirected: redirected, crashFundUsed: enhancement, cashRetained: money(cash), totalPlanned: total, conservation: { source: source, allocated: total, cash: cash, balanced: true }, summary: { coreTargetPct: p.core.target_allocation * 100, satelliteTargetPct: (1 - p.core.target_allocation) * 100, satelliteActualPct: satelliteActual, technologyActualPct: techActual, spyActualPct: spyActual, qqqGeneratesBuyAmount: false } };
   }
-  return Object.freeze({ PRESET: PRESET, validatePreset: validatePreset, normalizedPreset: normalizedPreset, loadPreset: loadPreset, rowsForPreset: rowsForPreset, allocationMetrics: allocationMetrics, validateAllocations: validateAllocations, presetFromAllocations: presetFromAllocations, plan: plan, money: money });
+  return Object.freeze({ PRESET: PRESET, validatePreset: validatePreset, normalizedPreset: normalizedPreset, loadPreset: loadPreset, rowsForPreset: rowsForPreset, allocationMetrics: allocationMetrics, validateAllocations: validateAllocations, allocationsForCore: allocationsForCore, presetFromAllocations: presetFromAllocations, plan: plan, money: money });
 }));
