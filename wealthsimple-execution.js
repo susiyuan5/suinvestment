@@ -51,8 +51,8 @@
     if (!root.WealthsimpleOrderAdapter || !root.WealthsimpleCurrency || !rules || !context.plan) { status.textContent = "模块或计划不可用"; warning.textContent = "数据或计算未通过安全检查，请人工复核。"; return; }
     var current = settings();
     var signals = {}; (context.signals || []).forEach(function (item) { signals[item.symbol] = item; });
-    var items = (context.plan.items || []).map(function (item) { var signal = signals[item.symbol] || {}; return Object.assign({}, item, { accountId: item.accountId || defaultAccountId(), price: signal.price, priceAsOf: signal.fetchedAt ? new Date(signal.fetchedAt).toISOString() : null, fractional: item.symbol === "SPY" || item.fractional === true }); });
-    var result = root.WealthsimpleOrderAdapter.buildChecklist({ items: items }, { settings: current, rules: rules, accounts: accounts(), securities: { BYDDY: { currency: "USD", otc: "unknown", fractional: "unknown" } } });
+    var items = (context.plan.items || []).map(function (item) { var signal = signals[item.symbol] || {}; return Object.assign({}, item, { accountId: item.accountId || defaultAccountId(), price: signal.latest_price || signal.price, priceAsOf: signal.fetchedAt ? new Date(signal.fetchedAt).toISOString() : null, fractional: item.symbol === "SPY" || item.fractional === true }); });
+    var result = root.WealthsimpleOrderAdapter.buildChecklist({ items: items }, { settings: current, rules: rules, accounts: accounts(), securities: { BYDDY: { currency: "USD", otc: true, fractional: false }, SPY: { currency: "USD", otc: false, fractional: "unknown" }, NVDA: { currency: "USD", otc: false, fractional: "unknown" }, AAPL: { currency: "USD", otc: false, fractional: "unknown" }, ASML: { currency: "USD", otc: false, fractional: "unknown" }, KO: { currency: "USD", otc: false, fractional: "unknown" } } });
     status.textContent = result.safe ? "已生成，仍需人工核对" : "核对信息不完整";
     warning.textContent = result.safe ? "数量为估算值，不是订单；请在 Wealthsimple 人工确认价格、币种、账户和可交易金额。" : "汇率、行情、账户、证券资格或资金信息不完整，禁止生成可执行核对清单。";
     result.rows.forEach(function (item) {

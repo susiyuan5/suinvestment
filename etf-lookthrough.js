@@ -5,6 +5,17 @@
   if (root) root.EtfLookthrough = api;
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
-  function calculate(direct, etfData, now, maxAgeDays) { var data = etfData || {}, at = data.as_of && Date.parse(data.as_of), fresh = data.status === "ready" && Number.isFinite(at) && ((now || Date.now()) - at) / 86400000 <= (maxAgeDays || 30); var directTech = Object.keys(direct || {}).reduce(function (sum, symbol) { return sum + (direct[symbol] && direct[symbol].sector === "technology" ? Number(direct[symbol].allocation || 0) : 0); }, 0); if (!fresh) return { status: "unknown", directTechnologyPct: directTech, etfTechnologyPct: null, issuerExposure: {}, asOf: data.as_of || null, note: "ETF 穿透数据过期或缺失" }; var issuer = {}, etfTech = 0; Object.keys(data.holdings || {}).forEach(function (symbol) { var row = data.holdings[symbol] || {}; var allocation = Number(row.allocation || 0); if (row.sector === "technology") etfTech += allocation; issuer[symbol] = (issuer[symbol] || 0) + allocation; }); Object.keys(direct || {}).forEach(function (symbol) { issuer[symbol] = (issuer[symbol] || 0) + Number(direct[symbol].allocation || 0); }); return { status: "ready", directTechnologyPct: directTech, etfTechnologyPct: etfTech, issuerExposure: issuer, asOf: data.as_of, note: "仅用于风险提示，不自动卖出或再平衡" }; }
+  function finite(value) { var number = Number(value); return Number.isFinite(number) ? number : null; }
+  function fresh(data, now, maxAgeDays) { var asOf = Date.parse(data && data.asOf || data && data.as_of || ""), current = now || Date.now(); return Boolean(data && Number.isFinite(asOf) && asOf <= current && (current - asOf) / 86400000 <= (maxAgeDays || 30) && data.schemaVersion); }
+  function calculate(direct, etfData, now, maxAgeDays, mode) {
+    var directValues = direct || {}, data = etfData || {}, rows = Array.isArray(data.holdings) ? data.holdings : [], useLookthrough = mode !== "direct_only";
+    var directExposure = {}, indirectExposure = {}, effectiveExposure = {};
+    Object.keys(directValues).forEach(function (symbol) { directExposure[symbol] = finite(directValues[symbol].allocation) || finite(directValues[symbol]) || 0; });
+    var ready = fresh(data, now, maxAgeDays);
+    if (useLookthrough && !ready) return { status: "unknown", mode: "lookthrough", directExposure: directExposure, indirectExposure: {}, effectiveExposure: directExposure, note: "穿透数据待更新", asOf: data.asOf || data.as_of || null };
+    Object.keys(directExposure).forEach(function (symbol) { effectiveExposure[symbol] = directExposure[symbol]; });
+    if (useLookthrough) rows.forEach(function (row) { var etfAllocation = directExposure[row.etfTicker] || 0, weight = finite(row.weight); if (etfAllocation && weight !== null && weight >= 0) { indirectExposure[row.componentTicker] = (indirectExposure[row.componentTicker] || 0) + etfAllocation * weight; effectiveExposure[row.componentTicker] = (effectiveExposure[row.componentTicker] || 0) + etfAllocation * weight; } });
+    return { status: useLookthrough ? "ready" : "direct_only", mode: useLookthrough ? "lookthrough" : "direct_only", directExposure: directExposure, indirectExposure: indirectExposure, effectiveExposure: effectiveExposure, note: useLookthrough ? "ETF 穿透口径已计入间接持仓" : "仅直接持仓口径，ETF 重叠未计入", asOf: data.asOf || data.as_of || null };
+  }
   return Object.freeze({ calculate: calculate });
 });

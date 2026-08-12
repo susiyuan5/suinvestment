@@ -72,6 +72,7 @@
           <div class="weekly-decision-actions"><button id="adjustAllocationBtn" class="secondary-button" type="button">调整目标比例</button><button id="refreshBtn" class="primary-button" type="button">刷新并重新检查</button><button id="copyBtn" class="secondary-button" type="button">复制本周人工计划</button></div>
           <div id="weeklyDecisionOverview" class="weekly-decision-overview" aria-live="polite">
             <span>本周基础预算<strong id="weeklyBaseBudget">CAD 0.00</strong></span><span>已批准下跌备用金<strong id="weeklyCrashFund">CAD 0.00</strong></span><span>本周可用资金总额<strong id="weeklyAvailableFunds">CAD 0.00</strong></span><span>本周计划买入总额<strong id="weeklyPlannedTotal">CAD 0.00</strong></span><span>本周保留现金<strong id="weeklyRetainedCash">CAD 0.00</strong></span><span>资金守恒状态<strong id="weeklyConservationStatus">等待计算</strong></span>
+            <span>可执行买入<strong id="weeklyExecutableTotal">CAD 0.00</strong></span><span>碎股/账户限制保留现金<strong id="weeklyExecutionCash">CAD 0.00</strong></span><span>单股上限保留现金<strong id="weeklyExposureCash">CAD 0.00</strong></span><span>风险规则保留现金<strong id="weeklyRiskRuleCash">CAD 0.00</strong></span>
           </div>
           <div id="weeklyDecisionAllocationSummary" class="weekly-decision-allocation-summary" aria-live="polite"><span>大盘仓合计<strong id="weeklyCoreTotal">CAD 0.00</strong></span><span>个股仓合计<strong id="weeklySatelliteTotal">CAD 0.00</strong></span><span>科技个股合计<strong id="weeklyTechnologyTotal">CAD 0.00</strong></span><span>转入 SPY<strong id="weeklySpyRedirect">CAD 0.00</strong></span><span>风控保留现金<strong id="weeklyRiskCash">CAD 0.00</strong></span></div>
           <p id="weeklyDecisionSafety" class="weekly-decision-safety">等待数据或计算安全检查。</p>
@@ -290,6 +291,7 @@
           <p class="allocation-risk-note">大盘 40% 意味着个股合计 60%，波动和集中风险更高；这里只调整后续定投资金，不会要求卖出或自动再平衡。</p>
         </section>
         <div id="allocationEditorRows" class="allocation-editor-rows"></div>
+        <div class="allocation-editor-metrics"><label for="singleStockExposureMode">单股比例计算口径</label><select id="singleStockExposureMode"><option value="lookthrough">ETF 穿透口径（推荐）</option><option value="direct_only">仅直接持仓口径</option></select><span id="etfExposureStatus" role="status" aria-live="polite">穿透数据待更新</span></div>
         <div class="allocation-editor-metrics" aria-live="polite">
           <span>已分配 <strong id="allocationEditorAllocated">0.00%</strong></span><span>剩余 <strong id="allocationEditorRemaining">100.00%</strong></span><span>超出 <strong id="allocationEditorOverage">0.00%</strong></span><span>大盘仓 <strong id="allocationEditorCore">0.00%</strong></span><span>个股仓 <strong id="allocationEditorSatellite">0.00%</strong></span><span>科技个股 <strong id="allocationEditorTechnology">0.00%</strong></span>
         </div>
@@ -697,9 +699,10 @@
     <script src="wealthsimple-currency.js?v=wealthsimple-v1"></script>
     <script src="fx-rate-service.js?v=live-fx-v1"></script>
     <script src="wealthsimple-rules.js?v=wealthsimple-v1"></script>
+    <script src="wealthsimple-execution-policy.js?v=wealthsimple-execution-v1"></script>
     <script src="wealthsimple-order-adapter.js?v=wealthsimple-v1"></script>
     <script src="wealthsimple-reconciliation.js?v=wealthsimple-v1"></script>
-    <script src="etf-lookthrough.js?v=wealthsimple-v1"></script>
+    <script src="etf-lookthrough.js?v=wealthsimple-v2"></script>
     <script src="portfolio-stress-test.js?v=wealthsimple-v1"></script>
     <script src="app.js?v=currency-preference-1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>

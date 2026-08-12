@@ -102,10 +102,11 @@ def recommended_allocations() -> dict[str, float]:
     return load_preset()["shortcuts"]["40"].copy()
 
 
-def plan_core_satellite(*, base_budget: float, crash_fund_remaining: float, actual_allocations: dict[str, float] | None = None, satellite_decisions: dict[str, dict[str, Any]] | None = None, blocked_symbols: list[str] | None = None, spy_data_valid: bool = True, safety_blocked: bool = False, spy_crash_enhancement: float = 0.0, preset: dict[str, Any] | None = None) -> dict[str, Any]:
+def plan_core_satellite(*, base_budget: float, crash_fund_remaining: float, actual_allocations: dict[str, float] | None = None, satellite_decisions: dict[str, dict[str, Any]] | None = None, blocked_symbols: list[str] | None = None, cash_only_symbols: list[str] | None = None, spy_data_valid: bool = True, safety_blocked: bool = False, spy_crash_enhancement: float = 0.0, preset: dict[str, Any] | None = None) -> dict[str, Any]:
     preset = preset or load_preset()
     if not validate_preset(preset): raise ValueError("invalid preset")
     actual, decisions, blocked_symbols = actual_allocations or {}, satellite_decisions or {}, blocked_symbols or []
+    cash_only_symbols = cash_only_symbols or []
     limits = preset["limits"]
     spy_actual = float(actual.get("SPY") or 0)
     satellite_actual = sum(float(actual.get(row["symbol"]) or 0) for row in preset["satellites"])
@@ -125,7 +126,7 @@ def plan_core_satellite(*, base_budget: float, crash_fund_remaining: float, actu
         if hard_block:
             row["riskReduction"], row["finalAmount"] = row["finalAmount"], 0.0
             row["reasonCodes"].append("SATELLITE_RISK_BLOCKED")
-            redirect += original
+            if symbol not in cash_only_symbols: redirect += original
         rows.append(row)
     satellite_total = sum(row["finalAmount"] for row in rows[1:])
     satellite_cap = money(max(0.0, base - rows[0]["finalAmount"]))

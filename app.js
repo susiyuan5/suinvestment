@@ -34,6 +34,7 @@
     ,coreSatelliteBackup: "su-investment-pro:core-satellite-backup"
     ,coreSatelliteState: "su-investment-pro:core-satellite-state"
     ,coreSatelliteUndo: "su-investment-pro:core-satellite-undo"
+    ,etfExposureMode: "su-investment-pro:etf-exposure-mode"
   };
 
   const DEFAULT_DEPLOYMENT = {
@@ -920,7 +921,9 @@ amountBreakdown: "金额分解",
      dcaL2Config: DcaPolicy.SAFE_L2_CONFIG,
      dcaL2ConfigReady: false,
      dcaL2ConfigError: "",
-     dcaBudgetReport: null,
+    dcaBudgetReport: null,
+    etfHoldings: null,
+    etfExposure: null,
     language: normalizeLanguage(localStorage.getItem(STORAGE_KEYS.language)),
     displayCurrency: SettingsStorage.loadDisplayCurrency(localStorage)
   };
@@ -977,6 +980,8 @@ amountBreakdown: "金额分解",
   const allocationEditorErrorsEl = document.getElementById("allocationEditorErrors");
   const allocationEditorStatusEl = document.getElementById("allocationEditorStatus");
   const allocationEditorSummaryTextEl = document.getElementById("allocationEditorSummaryText");
+  const singleStockExposureModeEl = document.getElementById("singleStockExposureMode");
+  const etfExposureStatusEl = document.getElementById("etfExposureStatus");
   const overviewWeeklyDeploymentEl = document.getElementById("overviewWeeklyDeployment");
   const overviewPlannedBuyTotalEl = document.getElementById("overviewPlannedBuyTotal");
   const overviewOverallRiskEl = document.getElementById("overviewOverallRisk");
@@ -1003,6 +1008,10 @@ amountBreakdown: "金额分解",
   const weeklyTechnologyTotalEl = document.getElementById("weeklyTechnologyTotal");
   const weeklySpyRedirectEl = document.getElementById("weeklySpyRedirect");
   const weeklyRiskCashEl = document.getElementById("weeklyRiskCash");
+  const weeklyExecutableTotalEl = document.getElementById("weeklyExecutableTotal");
+  const weeklyExecutionCashEl = document.getElementById("weeklyExecutionCash");
+  const weeklyExposureCashEl = document.getElementById("weeklyExposureCash");
+  const weeklyRiskRuleCashEl = document.getElementById("weeklyRiskRuleCash");
   const weeklyDecisionReasonEl = document.getElementById("weeklyDecisionReason");
   const weeklyDecisionRiskReasonsEl = document.getElementById("weeklyDecisionRiskReasons");
   const weeklyDecisionQqqStatusEl = document.getElementById("weeklyDecisionQqqStatus");
@@ -1296,7 +1305,33 @@ amountBreakdown: "金额分解",
   renderAlgorithmTestPresets();
   renderAlgorithmTestPanel();
   renderSkeleton();
+  if (singleStockExposureModeEl) {
+    singleStockExposureModeEl.value = localStorage.getItem(STORAGE_KEYS.etfExposureMode) || "lookthrough";
+    singleStockExposureModeEl.addEventListener("change", function () { localStorage.setItem(STORAGE_KEYS.etfExposureMode, singleStockExposureModeEl.value); calculateEtfExposure(); render(); });
+  }
   initializeDcaL2Config();
+  initializeEtfHoldings();
+
+  async function initializeEtfHoldings() {
+    try {
+      const payload = await fetchJson("data/etf-holdings.json?v=" + Date.now());
+      state.etfHoldings = payload;
+      calculateEtfExposure();
+      render();
+    } catch (error) {
+      state.etfHoldings = null;
+      calculateEtfExposure();
+      if (etfExposureStatusEl) etfExposureStatusEl.textContent = "穿透数据待更新";
+    }
+  }
+
+  function calculateEtfExposure() {
+    if (!window.EtfLookthrough) return null;
+    const direct = CORE_SATELLITE_SYMBOLS.reduce(function (map, symbol) { const position = state.portfolioRiskInput && state.portfolioRiskInput.positions && state.portfolioRiskInput.positions[symbol]; map[symbol] = position ? { allocation: Number(position.current_allocation || 0) } : { allocation: 0 }; return map; }, {});
+    state.etfExposure = window.EtfLookthrough.calculate(direct, state.etfHoldings, Date.now(), 30, singleStockExposureModeEl && singleStockExposureModeEl.value || "lookthrough");
+    if (etfExposureStatusEl) etfExposureStatusEl.textContent = state.etfExposure.status === "ready" ? "ETF 穿透数据已更新" : state.etfExposure.note;
+    return state.etfExposure;
+  }
 
   async function initializeDcaL2Config() {
     try {
@@ -2924,6 +2959,8 @@ amountBreakdown: "金额分解",
     const rl = signal.risk_level || "Low";
     const wc = isFiniteNumber(signal.weekly_change) ? signal.weekly_change : 0;
 
+    if (m >= 0.90 && m < 1.00) return { label: "低于基准投入", cls: "action-light-reduce" };
+
     // Hard stops
     if (m < 0.40) return { label: "暂停买入", cls: "action-pause-buy" };
     if (sc < 20 && wc < 0) return { label: "暂停买入", cls: "action-pause-buy" };
@@ -3004,6 +3041,7 @@ amountBreakdown: "金额分解",
 
     // Build reason text
     var reasons = [];
+    if (m >= 0.90 && m < 1.00) reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，低于基准投入，本周小幅减少投入。");
     if (m >= 1.60) reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，较高的买入倍数表明市场下跌较大，策略建议加仓。");
     else if (m >= 1.20) reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，高于正常买入水平。");
     else if (m >= 1.00) reasons.push("当前买入倍数为 " + m.toFixed(2) + "x，接近正常买入水平。");
@@ -4993,7 +5031,24 @@ function equalizeAllocations() {
     });
     planned.items.forEach(function (item) {
       item.entry.dcaPolicy = item.decision;
+      const multiplierAction = getActionLabelFromMultiplier(item.entry.signal);
+      if (multiplierAction.cls === "action-pause-buy" || item.entry.signal.suggested_action === "HOLD" || item.entry.signal.suggested_action === "DO_NOT_BUY") {
+        item.decision.finalAmount = 0;
+        item.decision.reasonCodes = Array.from(new Set((item.decision.reasonCodes || []).concat(["ACTION_REQUIRES_ZERO_AMOUNT"])));
+      }
       item.entry.finalManualAmount = round2(item.decision.finalAmount);
+    });
+    const exposureMode = singleStockExposureModeEl && singleStockExposureModeEl.value || "lookthrough";
+    const directExposure = Object.keys(portfolioRisk.positions || {}).reduce(function (map, symbol) { map[symbol] = { allocation: Number(portfolioRisk.positions[symbol].current_allocation || 0) }; return map; }, {});
+    const exposure = window.EtfLookthrough ? window.EtfLookthrough.calculate(directExposure, state.etfHoldings, Date.now(), 30, exposureMode) : { status: "unknown", effectiveExposure: {} };
+    state.etfExposure = exposure;
+    const exposureBlocked = exposureMode === "lookthrough" && exposure.status !== "ready" ? ["AAPL", "NVDA"] : ["AAPL", "NVDA"].filter(function (symbol) { return Number(exposure.effectiveExposure && exposure.effectiveExposure[symbol] || 0) >= 15; });
+    planned.items.forEach(function (item) {
+      if (exposureBlocked.indexOf(item.entry.signal.symbol) >= 0) {
+        item.decision.finalAmount = 0;
+        item.decision.reasonCodes = Array.from(new Set((item.decision.reasonCodes || []).concat([exposure.status === "ready" ? "ETF_LOOKTHROUGH_LIMIT" : "ETF_LOOKTHROUGH_DATA_PENDING"])));
+        item.entry.finalManualAmount = 0;
+      }
     });
     const satelliteDecisions = {};
     planned.items.forEach(function (item) { satelliteDecisions[item.entry.signal.symbol] = { finalAmount: item.decision.finalAmount, crashFundAmount: item.decision.crashFundAmount }; });
@@ -5002,7 +5057,7 @@ function equalizeAllocations() {
       preset: activePreset || CoreSatellitePolicy.PRESET, baseBudget: state.deployment.weeklyDeployment, crashFundRemaining: balance,
       actualAllocations: Object.keys(portfolioRisk.positions || {}).reduce(function (map, symbol) { map[symbol] = portfolioRisk.positions[symbol].current_allocation; return map; }, {}),
       satelliteDecisions: satelliteDecisions, spyDataValid: Boolean(state.rows.get("SPY") && getDcaL2DataStatus(buildSignalObject({ symbol: "SPY" }, state.rows.get("SPY"))) === "fresh"),
-      safetyBlocked: !state.coreSatellitePresetReady, spyCrashEnhancement: 0
+      safetyBlocked: !state.coreSatellitePresetReady, cashOnlySymbols: exposureBlocked, spyCrashEnhancement: 0
     });
     const expectedSymbols = ["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"];
     const complete = state.coreSatellitePresetReady && expectedSymbols.every(function (symbol) { return state.portfolio.some(function (item) { return item.symbol === symbol; }); });
@@ -6005,12 +6060,31 @@ function equalizeAllocations() {
 
   function coreSatelliteReason(row) {
     const codes = row && Array.isArray(row.reasonCodes) ? row.reasonCodes : [];
+    if (codes.indexOf("ETF_LOOKTHROUGH_LIMIT") >= 0) return "穿透后超过单股上限，请人工调整；金额保留为现金，不转入 SPY";
+    if (codes.indexOf("ETF_LOOKTHROUGH_DATA_PENDING") >= 0) return "穿透数据待更新，暂不生成该标的新增金额，金额保留为现金";
     if (codes.indexOf("安全检查未通过") >= 0 || codes.indexOf("SPY_DATA_OR_SAFETY_BLOCK") >= 0) return "数据或计算未通过安全检查，请人工复核";
     if (codes.indexOf("SATELLITE_RISK_BLOCKED") >= 0) return "个股风控门禁阻止买入，资金保留或转入 SPY";
     if (codes.indexOf("SATELLITE_BASE_REDIRECTED_TO_SPY") >= 0) return "个股基础金额已转入 SPY";
     if (codes.indexOf("NORMAL_POOL_BUDGET_APPLIED") >= 0) return "已按常规资金池上限削减";
     if (row.symbol === "SPY") return "核心基础定投，不根据短期涨跌择时";
     return "按 DCA-L2 信号调整后供人工复核";
+  }
+
+  function executionSummaryForPlan(plan) {
+    var summary = { executable: 0, retained: 0, executionCash: 0, statuses: {} };
+    if (!plan || !Array.isArray(plan.items) || !window.WealthsimpleExecutionPolicy) return summary;
+    var saved = loadJson("su-investment-pro:wealthsimple-accounts-v1", {}), accounts = {};
+    (saved.accounts || []).forEach(function (account) { accounts[account.id || account.account_id] = account; });
+    var account = accounts[saved.defaultId] || (saved.accounts || [])[0] || {};
+    plan.items.forEach(function (row) {
+      if (Number(row.finalAmount || 0) <= 0) return;
+      var signal = window.__SUINVESTMENT_SIGNALS__ && window.__SUINVESTMENT_SIGNALS__.find(function (item) { return item.symbol === row.symbol; }) || {};
+      var settings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : {};
+      var result = window.WealthsimpleExecutionPolicy.execute({ symbol: row.symbol, marketType: row.symbol === "BYDDY" ? "OTC" : "listed", price: signal.latest_price || signal.price, suggestedAmount: row.finalAmount, tradingCurrency: "USD", accountCurrency: account.account_currency || settings.accountCurrency, accountType: account.account_type, fractionalSupported: row.symbol === "BYDDY" ? false : "unknown", minimumFractionalAmount: 1, quoteTimestamp: signal.fetchedAt || signal.asOf, fxRate: settings.fxRate, fxAsOf: settings.fxAsOf, fxFeeRate: settings.fxFeeRate, fxMaxAgeDays: settings.fxMaxAgeDays });
+      summary.executable += Number(result.executableAmount || 0); summary.retained += Number(result.retainedCash || 0); summary.statuses[row.symbol] = result;
+      if (result.executableAmount < row.finalAmount) summary.executionCash += Number(result.retainedCash || 0);
+    });
+    return summary;
   }
 
   function renderWeeklyDecisionPlan(plan, portfolioRisk) {
@@ -6023,6 +6097,7 @@ function equalizeAllocations() {
     const rows = plan && Array.isArray(plan.items) ? plan.items : [];
     const bySymbol = rows.reduce(function (map, row) { map[row.symbol] = row; return map; }, {});
     const safe = Boolean(plan && plan.safe === true && expected.every(function (symbol) { return bySymbol[symbol]; }));
+    const executionSummary = executionSummaryForPlan(plan);
     weeklyDecisionTotalEl.textContent = formatCurrency(plan && plan.conservation ? plan.conservation.source : 0);
     const source = plan && plan.conservation ? Number(plan.conservation.source || 0) : 0;
     const coreRows = rows.filter(function (row) { return row.bucket === "core"; });
@@ -6034,6 +6109,10 @@ function equalizeAllocations() {
     if (weeklyAvailableFundsEl) weeklyAvailableFundsEl.textContent = formatCurrency(source);
     if (weeklyPlannedTotalEl) weeklyPlannedTotalEl.textContent = formatCurrency(plan && plan.totalPlanned || 0);
     if (weeklyRetainedCashEl) weeklyRetainedCashEl.textContent = formatCurrency(plan && plan.cashRetained || 0);
+    if (weeklyExecutableTotalEl) weeklyExecutableTotalEl.textContent = formatCurrency(executionSummary.executable);
+    if (weeklyExecutionCashEl) weeklyExecutionCashEl.textContent = formatCurrency(executionSummary.executionCash);
+    if (weeklyExposureCashEl) weeklyExposureCashEl.textContent = formatCurrency(rows.filter(function (row) { return (row.reasonCodes || []).indexOf("ETF_LOOKTHROUGH_LIMIT") >= 0 || (row.reasonCodes || []).indexOf("ETF_LOOKTHROUGH_DATA_PENDING") >= 0; }).reduce(function (sum, row) { return sum + Number(row.originalBaseAmount || 0); }, 0));
+    if (weeklyRiskRuleCashEl) weeklyRiskRuleCashEl.textContent = formatCurrency(plan && plan.cashRetained || 0);
     if (weeklyConservationStatusEl) weeklyConservationStatusEl.textContent = plan && plan.conservation && plan.conservation.balanced ? "已守恒" : "未通过";
     if (weeklyCoreTotalEl) weeklyCoreTotalEl.textContent = formatCurrency(coreRows.reduce(function (sum, row) { return sum + Number(row.finalAmount || 0); }, 0));
     if (weeklySatelliteTotalEl) weeklySatelliteTotalEl.textContent = formatCurrency(satelliteRows.reduce(function (sum, row) { return sum + Number(row.finalAmount || 0); }, 0));
