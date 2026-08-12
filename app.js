@@ -19,7 +19,7 @@
     panicMultiplier: 1.3,
     panicSymbols: new Set(["MSFT", "NVDA", "AAPL", "ASML"]),
     defaultStocks: CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET),
-    coreSatellitePresetUrl: "data/core-satellite-v2.json"
+    coreSatellitePresetUrl: "data/core-satellite-v3.json"
   };
 
   const STORAGE_KEYS = {
@@ -63,7 +63,7 @@
   const WEEKS_PER_MONTH = 52 / 12;
 
   const CORE_SATELLITE_SYMBOLS = ["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"];
-  const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.40, NVDA: 0.12, AAPL: 0.12, ASML: 0.12, KO: 0.12, BYDDY: 0.12 };
+  const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.40, NVDA: 0.14, AAPL: 0.14, ASML: 0.12, KO: 0.10, BYDDY: 0.10 };
   function coreSatelliteAllocations(portfolio) {
     return CORE_SATELLITE_SYMBOLS.reduce(function (map, symbol) {
       const item = (portfolio || []).find(function (row) { return row.symbol === symbol; });
@@ -77,7 +77,11 @@
     const stored = loadJson(STORAGE_KEYS.coreSatelliteState, null);
     const hasPortfolio = Array.isArray(raw) && raw.length > 0;
     if (stored && stored.migration_completed === true && stored.allocation_mode === "manual") {
-      return { portfolio: normalizePortfolio(raw, { allowCustom: true }), state: stored, notice: "" };
+      const preserved = normalizePortfolio(raw, { allowCustom: true });
+      const validation = CoreSatellitePolicy.validateAllocations(coreSatelliteAllocations(preserved));
+      const nextState = Object.assign({}, stored, { preset_version: CoreSatellitePolicy.PRESET.version, migration_completed: true, allocation_valid: validation.valid, allocation_errors: validation.errors, updated_at: new Date().toISOString() });
+      if (stored.preset_version !== nextState.preset_version || stored.allocation_valid !== validation.valid) persistCoreSatelliteState(nextState);
+      return { portfolio: preserved, state: nextState, notice: validation.valid ? "" : validation.errors.join("；") };
     }
     if (stored && stored.migration_completed === true && stored.preset_version === CoreSatellitePolicy.PRESET.version) {
       return { portfolio: normalizePortfolio(raw || CONFIG.defaultStocks, { allowCustom: true }), state: stored, notice: stored.migration_notice || "" };
@@ -85,6 +89,9 @@
     const previous = hasPortfolio ? normalizePortfolio(raw, { allowCustom: true }) : [];
     const next = normalizePortfolio(CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET), { allowCustom: true });
     const nextState = { preset_version: CoreSatellitePolicy.PRESET.version, allocation_mode: "default", migration_completed: true, portfolio_backup: previous, migration_notice: "已默认应用 40% 大盘＋60% 个股组合；仅调整人工计划，不会自动卖出或再平衡。", updated_at: new Date().toISOString() };
+    nextState.allocation_valid = true;
+    nextState.allocation_errors = [];
+    nextState.migration_notice = "已默认应用 v3 推荐比例：SPY 40%，个股 60%；仅调整未来人工计划，不会自动卖出或再平衡。";
     saveJson(STORAGE_KEYS.coreSatelliteBackup, previous);
     saveJson(STORAGE_KEYS.portfolio, next);
     persistCoreSatelliteState(nextState);
@@ -1053,7 +1060,8 @@ amountBreakdown: "金额分解",
 
   function activeCoreSatellitePreset() {
     const allocations = coreSatelliteAllocations(state.portfolio);
-    return CoreSatellitePolicy.presetFromAllocations(allocations, state.coreSatellitePreset) || state.coreSatellitePreset;
+    const validation = CoreSatellitePolicy.validateAllocations(allocations);
+    return validation.valid ? CoreSatellitePolicy.presetFromAllocations(allocations, state.coreSatellitePreset) : null;
   }
   function updateAllocationDraftMetrics() {
     const draft = state.allocationDraft || coreSatelliteAllocations(state.portfolio);
@@ -1148,6 +1156,16 @@ amountBreakdown: "金额分解",
       state.allocationDraft = next;
       renderAllocationEditor();
       window.dispatchEvent(new CustomEvent("allocation-editor:changed", { detail: { allocation: next, mode: Number(button.dataset.coreAllocationPreset) === 40 ? "default" : "manual" } }));
+    });
+  });
+  document.querySelectorAll("[data-allocation-preset]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      const current = state.allocationDraft || coreSatelliteAllocations(state.portfolio);
+      const next = button.dataset.allocationPreset === "recommended" ? CoreSatellitePolicy.recommendedAllocations() : CoreSatellitePolicy.averageSatelliteAllocations(Number(current.SPY || 0.4) * 100);
+      if (!next) return;
+      state.allocationDraft = next;
+      renderAllocationEditor();
+      window.dispatchEvent(new CustomEvent("allocation-editor:changed", { detail: { allocation: next, mode: button.dataset.allocationPreset === "recommended" ? "default" : "manual" } }));
     });
   });
   if (saveCustomAllocationBtn) saveCustomAllocationBtn.addEventListener("click", saveCustomAllocations);
@@ -4979,8 +4997,9 @@ function equalizeAllocations() {
     });
     const satelliteDecisions = {};
     planned.items.forEach(function (item) { satelliteDecisions[item.entry.signal.symbol] = { finalAmount: item.decision.finalAmount, crashFundAmount: item.decision.crashFundAmount }; });
+    const activePreset = activeCoreSatellitePreset();
     state.coreSatellitePlan = CoreSatellitePolicy.plan({
-      preset: activeCoreSatellitePreset(), baseBudget: state.deployment.weeklyDeployment, crashFundRemaining: balance,
+      preset: activePreset || CoreSatellitePolicy.PRESET, baseBudget: state.deployment.weeklyDeployment, crashFundRemaining: balance,
       actualAllocations: Object.keys(portfolioRisk.positions || {}).reduce(function (map, symbol) { map[symbol] = portfolioRisk.positions[symbol].current_allocation; return map; }, {}),
       satelliteDecisions: satelliteDecisions, spyDataValid: Boolean(state.rows.get("SPY") && getDcaL2DataStatus(buildSignalObject({ symbol: "SPY" }, state.rows.get("SPY"))) === "fresh"),
       safetyBlocked: !state.coreSatellitePresetReady, spyCrashEnhancement: 0
@@ -4988,7 +5007,7 @@ function equalizeAllocations() {
     const expectedSymbols = ["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"];
     const complete = state.coreSatellitePresetReady && expectedSymbols.every(function (symbol) { return state.portfolio.some(function (item) { return item.symbol === symbol; }); });
     const fresh = inputs.every(function (item) { return getDcaL2DataStatus(item.entry.signal) === "fresh"; });
-    state.coreSatellitePlan.safe = complete && fresh && state.coreSatellitePlan.conservation && state.coreSatellitePlan.conservation.balanced === true;
+    state.coreSatellitePlan.safe = Boolean(activePreset) && complete && fresh && state.coreSatellitePlan.conservation && state.coreSatellitePlan.conservation.balanced === true;
     if (!state.coreSatellitePlan.safe) {
       state.coreSatellitePlan.items.forEach(function (item) { item.finalAmount = 0; item.crashFundEnhancement = 0; item.redirectedToSpy = 0; item.cashRetained = 0; item.reasonCodes = Array.from(new Set((item.reasonCodes || []).concat(["安全检查未通过"]))); });
       state.coreSatellitePlan.spyRedirected = 0;
