@@ -1,0 +1,25 @@
+.settings-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); min-height: 0; overflow: hidden; }
+.settings-nav { display: grid; align-content: start; gap: 6px; padding: 8px 14px 8px 0; border-right: 1px solid var(--line); }
+.settings-nav button { min-height: 44px; padding: 8px 10px; border: 1px solid transparent; border-radius: 7px; color: var(--soft); background: transparent; text-align: left; font-weight: 800; }
+.settings-nav button[aria-selected="true"], .settings-nav button:focus-visible { border-color: #355176; color: var(--text); background: #1b2b40; }
+.settings-content { min-width: 0; max-height: calc(100vh - 180px); overflow: auto; padding-left: 18px; }
+.settings-category { display: grid; gap: 12px; }
+.settings-category[hidden] { display: none; }
+.settings-summary-status, .settings-natural-summary, .settings-impact { margin: 0; color: var(--soft); line-height: 1.5; }
+.settings-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.settings-footer > div { display: flex; gap: 8px; }
+.settings-account-cards { display: grid; gap: 12px; }
+.settings-account-card { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
+.settings-account-card-heading, .settings-account-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.settings-account-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.settings-account-fields label { display: grid; gap: 5px; color: var(--soft); font-weight: 800; }
+.settings-account-actions { justify-content: flex-start; }
+.settings-advanced-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.settings-content input, .settings-content select, .settings-content button { min-height: 44px; }
+.danger-button { border-color: rgba(220, 90, 90, .7); color: #ffd5d5; background: rgba(160, 45, 45, .18); }
+.danger-button:hover, .danger-button:focus-visible { background: rgba(160, 45, 45, .35); }
+.wealthsimple-accounts-legacy { display: none !important; }
+.settings-content #coreSatelliteAllocationEditor { margin: 0; }
+.settings-content #saveCustomAllocationBtn, .settings-content #restoreDefaultAllocationBtn, .settings-content #undoAllocationBtn, .settings-content #saveDeploymentBtn, .settings-content #resetDeploymentBtn, .settings-content #saveWealthsimpleCurrencyBtn { display: none; }
+@media (min-width: 700px) { .modal-card { width: min(1040px, calc(100vw - 48px)); max-height: calc(100vh - 48px); overflow: hidden; padding: 24px; } }
+@media (max-width: 699px) { .settings-layout { display: block; } .settings-nav { display: flex; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 0 0 8px; } .settings-nav button { flex: 0 0 auto; } .settings-content { max-height: calc(100vh - 250px); padding: 14px 0 0; } .settings-account-fields { grid-template-columns: 1fr; } .settings-footer { align-items: stretch; flex-direction: column; } .settings-footer > div { display: grid; grid-template-columns: 1fr 1fr; } }

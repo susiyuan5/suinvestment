@@ -58,13 +58,29 @@ async function main() {
   assert.ok(["healthy", "warning", "blocked"].includes(healthPayload.status), "health report should have a known status");
 
   await page.locator("#openSettingsBtn").click();
+  assert.equal(await page.locator("#settingsModal").isVisible(), true, "settings center should open");
+  assert.equal(await page.locator("[data-settings-tab]").count(), 6, "settings center should expose six categories");
+  assert.ok((await page.locator("#settingsModal .modal-card").boundingBox()).width >= 1000, "desktop settings center should use wide layout");
+  await page.locator("[data-settings-tab='accounts']").click();
+  assert.equal(await page.locator("#settings-accounts").isVisible(), true, "account category should be reachable");
+  await page.locator("[data-settings-tab='data']").click();
   await page.locator("#apiKey").fill("browser-persistence-test-key");
+  await page.locator("#saveSettingsChangesBtn").click();
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.locator("#openSettingsBtn").click();
+  await page.locator("[data-settings-tab='data']").click();
   assert.equal(await page.locator("#apiKey").inputValue(), "browser-persistence-test-key", "Finnhub key should persist across reloads");
   await page.locator("#apiKey").fill("");
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.locator("#deleteApiKeyBtn").click();
+  await page.locator("#saveSettingsChangesBtn").click();
   assert.equal(await page.evaluate(() => localStorage.getItem("su-investment-pro:finnhub-key")), null, "clearing the Finnhub key should remove persistent storage");
   await page.locator("#closeSettingsBtn").click();
+
+  await page.locator("#adjustAllocationBtn").click();
+  assert.equal(await page.locator("#settingsModal").isVisible(), true, "allocation entry should open settings center");
+  assert.equal(await page.locator("#settings-allocation").isVisible(), true, "allocation entry should select allocation category");
+  await page.locator("#cancelSettingsBtn").click();
 
   const watchlist = page.locator("#watchlist");
   await watchlist.locator(":scope > summary").click();

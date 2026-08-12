@@ -14,7 +14,13 @@
     return rulesPromise;
   }
   function planContext() { return root.__SUINVESTMENT_WEALTHSIMPLE_PLAN__ || { plan: null, signals: [] }; }
-  function accounts() { return readJson(ACCOUNT_KEY, {}); }
+  function accounts() {
+    var saved = readJson(ACCOUNT_KEY, {}), output = {};
+    if (saved && Array.isArray(saved.accounts)) saved.accounts.forEach(function (item) { output[item.id] = item; });
+    else Object.keys(saved || {}).forEach(function (key) { output[key] = saved[key]; });
+    if (saved && saved.defaultId && output[saved.defaultId]) output.default = output[saved.defaultId];
+    return output;
+  }
   function renderAccounts() {
     var host = byId("wealthsimpleAccounts"); if (!host) return;
     var saved = accounts(); host.innerHTML = "";
