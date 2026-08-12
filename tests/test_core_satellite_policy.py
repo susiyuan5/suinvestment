@@ -43,6 +43,12 @@ class CoreSatellitePolicyTests(unittest.TestCase):
         result = plan_core_satellite(base_budget=1000, crash_fund_remaining=0, actual_allocations={"NVDA": 12})
         self.assertEqual(120, result["items"][1]["finalAmount"])
 
+    def test_float_tail_at_single_stock_cap_is_not_an_error(self):
+        boundary = {"SPY": .4, "NVDA": .1200000005, "AAPL": .1200000005, "ASML": .12, "KO": .12, "BYDDY": .119999999}
+        self.assertTrue(validate_allocations(boundary)["valid"])
+        above = {**boundary, "NVDA": .1201, "BYDDY": .1199}
+        self.assertEqual(["NVDA单股比例不得高于 12%"], validate_allocations(above)["errors"])
+
     def test_qqq_is_signal_only(self):
         result = plan_core_satellite(base_budget=100, crash_fund_remaining=10, actual_allocations={"QQQ": 99})
         self.assertNotIn("QQQ", [row["symbol"] for row in result["items"]])
