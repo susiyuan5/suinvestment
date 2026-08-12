@@ -19,7 +19,7 @@
     panicMultiplier: 1.3,
     panicSymbols: new Set(["MSFT", "NVDA", "AAPL", "ASML"]),
     defaultStocks: CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET),
-    coreSatellitePresetUrl: "data/core-satellite-v1.json"
+    coreSatellitePresetUrl: "data/core-satellite-v2.json"
   };
 
   const STORAGE_KEYS = {
@@ -63,7 +63,7 @@
   const WEEKS_PER_MONTH = 52 / 12;
 
   const CORE_SATELLITE_SYMBOLS = ["SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY"];
-  const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.60, NVDA: 0.10, AAPL: 0.10, ASML: 0.08, KO: 0.07, BYDDY: 0.05 };
+  const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.40, NVDA: 0.12, AAPL: 0.12, ASML: 0.12, KO: 0.12, BYDDY: 0.12 };
   function coreSatelliteAllocations(portfolio) {
     return CORE_SATELLITE_SYMBOLS.reduce(function (map, symbol) {
       const item = (portfolio || []).find(function (row) { return row.symbol === symbol; });
@@ -79,12 +79,12 @@
     if (stored && stored.migration_completed === true && stored.allocation_mode === "manual") {
       return { portfolio: normalizePortfolio(raw, { allowCustom: true }), state: stored, notice: "" };
     }
-    if (stored && stored.migration_completed === true) {
+    if (stored && stored.migration_completed === true && stored.preset_version === CoreSatellitePolicy.PRESET.version) {
       return { portfolio: normalizePortfolio(raw || CONFIG.defaultStocks, { allowCustom: true }), state: stored, notice: stored.migration_notice || "" };
     }
     const previous = hasPortfolio ? normalizePortfolio(raw, { allowCustom: true }) : [];
     const next = normalizePortfolio(CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET), { allowCustom: true });
-    const nextState = { preset_version: "core-satellite-v1", allocation_mode: "default", migration_completed: true, portfolio_backup: previous, migration_notice: "已默认应用 60% 大盘＋40% 个股组合。", updated_at: new Date().toISOString() };
+    const nextState = { preset_version: CoreSatellitePolicy.PRESET.version, allocation_mode: "default", migration_completed: true, portfolio_backup: previous, migration_notice: "已默认应用 40% 大盘＋60% 个股组合；仅调整人工计划，不会自动卖出或再平衡。", updated_at: new Date().toISOString() };
     saveJson(STORAGE_KEYS.coreSatelliteBackup, previous);
     saveJson(STORAGE_KEYS.portfolio, next);
     persistCoreSatelliteState(nextState);
@@ -1063,27 +1063,40 @@ amountBreakdown: "金额分解",
     if (allocationEditorErrorsEl) allocationEditorErrorsEl.textContent = result.errors.join("；");
     if (saveCustomAllocationBtn) saveCustomAllocationBtn.disabled = !result.valid;
   }
+  function updateAllocationSummary(draft) {
+    if (!allocationEditorSummaryTextEl) return;
+    const isDefault = CORE_SATELLITE_SYMBOLS.every(function (symbol) { return Math.abs(Number(draft[symbol] || 0) - Number(DEFAULT_CORE_ALLOCATIONS[symbol])) < 1e-9; });
+    const mode = isDefault ? "默认 40/60" : "自定义";
+    allocationEditorSummaryTextEl.textContent = mode + " · 大盘 " + ((Number(draft.SPY || 0)) * 100).toFixed(2) + "% · 个股 " + ((1 - Number(draft.SPY || 0)) * 100).toFixed(2) + "% · 科技个股 " + ((Number(draft.NVDA || 0) + Number(draft.AAPL || 0) + Number(draft.ASML || 0)) * 100).toFixed(2) + "% · 调整比例";
+    document.querySelectorAll("[data-core-allocation-preset]").forEach(function (button) {
+      button.setAttribute("aria-pressed", String(Math.abs(Number(button.dataset.coreAllocationPreset) - Number(draft.SPY || 0) * 100) < 0.01));
+    });
+  }
   function renderAllocationEditor() {
     if (!allocationEditorRowsEl) return;
     const draft = state.allocationDraft || coreSatelliteAllocations(state.portfolio);
-    if (allocationEditorSummaryTextEl) {
-      const mode = state.coreSatelliteState && state.coreSatelliteState.allocation_mode === "manual" ? "自定义" : "默认 60/40";
-      allocationEditorSummaryTextEl.textContent = mode + " · 大盘 " + ((Number(draft.SPY || 0)) * 100).toFixed(2) + "% · 个股 " + ((1 - Number(draft.SPY || 0)) * 100).toFixed(2) + "% · 科技个股 " + ((Number(draft.NVDA || 0) + Number(draft.AAPL || 0) + Number(draft.ASML || 0)) * 100).toFixed(2) + "% · 调整比例";
-    }
+    updateAllocationSummary(draft);
     if (!state.allocationDraft) state.allocationDraft = Object.assign({}, draft);
     allocationEditorRowsEl.innerHTML = "";
     CORE_SATELLITE_SYMBOLS.forEach(function (symbol) {
-      const item = state.portfolio.find(function (row) { return row.symbol === symbol; }) || {};
       const actual = window.__SUINVESTMENT_PORTFOLIO_RISK__ && window.__SUINVESTMENT_PORTFOLIO_RISK__.positions && window.__SUINVESTMENT_PORTFOLIO_RISK__.positions[symbol];
+      const actualPct = Number(actual && actual.current_allocation || 0);
+      const targetPct = Number(draft[symbol] || 0) * 100;
       const row = document.createElement("label"); row.className = "allocation-editor-row";
-      row.innerHTML = "<strong>" + symbol + "</strong><span>当前实际 " + Number(actual && actual.current_allocation || 0).toFixed(2) + "%</span><input type=\"number\" min=\"0\" max=\"100\" step=\"0.01\" data-allocation-symbol=\"" + symbol + "\" aria-label=\"" + symbol + " 目标比例\"><span>偏离 " + (Number(draft[symbol] || 0) - Number(actual && actual.current_allocation || 0)).toFixed(2) + "%</span>";
-      const input = row.querySelector("input"); input.value = (Number(draft[symbol] || 0) * 100).toFixed(2); input.addEventListener("input", function () { state.allocationDraft[symbol] = Number(input.value) / 100; renderAllocationEditor(); });
+      row.innerHTML = "<strong>" + symbol + "</strong><span>当前实际 " + actualPct.toFixed(2) + "%</span><span class=\"allocation-target-field\"><small>目标</small><input type=\"number\" min=\"0\" max=\"100\" step=\"0.01\" data-allocation-symbol=\"" + symbol + "\" aria-label=\"" + symbol + " 目标比例\"></span><span data-allocation-drift>偏离 " + (targetPct - actualPct).toFixed(2) + "%</span>";
+      const input = row.querySelector("input"); input.value = targetPct.toFixed(2); input.addEventListener("input", function () {
+        state.allocationDraft[symbol] = Number(input.value) / 100;
+        row.querySelector("[data-allocation-drift]").textContent = "偏离 " + (Number(input.value) - actualPct).toFixed(2) + "%";
+        updateAllocationSummary(state.allocationDraft);
+        updateAllocationDraftMetrics();
+        window.dispatchEvent(new CustomEvent("allocation-editor:changed", { detail: { allocation: Object.assign({}, state.allocationDraft), mode: "manual" } }));
+      });
       allocationEditorRowsEl.appendChild(row);
     });
     updateAllocationDraftMetrics();
   }
   function persistAllocationState(mode, backup) {
-    state.coreSatelliteState = Object.assign({}, state.coreSatelliteState || {}, { preset_version: "core-satellite-v1", allocation_mode: mode, migration_completed: true, portfolio_backup: (backup || state.coreSatelliteState && state.coreSatelliteState.portfolio_backup || []), updated_at: new Date().toISOString(), migration_notice: "" });
+    state.coreSatelliteState = Object.assign({}, state.coreSatelliteState || {}, { preset_version: CoreSatellitePolicy.PRESET.version, allocation_mode: mode, migration_completed: true, portfolio_backup: (backup || state.coreSatelliteState && state.coreSatelliteState.portfolio_backup || []), updated_at: new Date().toISOString(), migration_notice: "" });
     persistCoreSatelliteState(state.coreSatelliteState);
   }
   function saveCustomAllocations() {
@@ -1099,10 +1112,10 @@ amountBreakdown: "金额分解",
     renderPortfolioTotal(); renderPortfolioRiskInputs(); render();
   }
   function restoreDefaultAllocations() {
-    if (!window.confirm("确认恢复默认 60/40 比例？这不会修改真实持仓或生成卖出建议。")) return;
+    if (!window.confirm("确认恢复默认 40/60 比例？这不会修改真实持仓或生成卖出建议。")) return;
     state.allocationUndoBackup = normalizePortfolio(state.portfolio, { allowCustom: true }); saveJson(STORAGE_KEYS.coreSatelliteUndo, state.allocationUndoBackup);
     state.portfolio = normalizePortfolio(CoreSatellitePolicy.rowsForPreset(state.coreSatellitePreset), { allowCustom: true }); saveJson(STORAGE_KEYS.portfolio, state.portfolio); persistAllocationState("default", state.allocationUndoBackup); state.allocationDraft = null;
-    if (allocationEditorStatusEl) allocationEditorStatusEl.textContent = "已恢复默认 60/40 比例并重新计算本周定投决策。";
+    if (allocationEditorStatusEl) allocationEditorStatusEl.textContent = "已恢复默认 40/60 比例并重新计算本周定投决策。";
     renderPortfolioTotal(); renderPortfolioRiskInputs(); render();
   }
   function undoAllocationChange() {
@@ -1125,8 +1138,18 @@ amountBreakdown: "金额分解",
       return true;
     },
     currentAllocation: function () { return coreSatelliteAllocations(state.portfolio); },
+    setAllocationDraft: function (next) { state.allocationDraft = Object.assign({}, next); renderAllocationEditor(); },
     discardAllocationDraft: function () { state.allocationDraft = null; renderAllocationEditor(); }
   };
+  document.querySelectorAll("[data-core-allocation-preset]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      const next = CoreSatellitePolicy.allocationsForCore(Number(button.dataset.coreAllocationPreset));
+      if (!next) return;
+      state.allocationDraft = next;
+      renderAllocationEditor();
+      window.dispatchEvent(new CustomEvent("allocation-editor:changed", { detail: { allocation: next, mode: Number(button.dataset.coreAllocationPreset) === 40 ? "default" : "manual" } }));
+    });
+  });
   if (saveCustomAllocationBtn) saveCustomAllocationBtn.addEventListener("click", saveCustomAllocations);
   if (restoreDefaultAllocationBtn) restoreDefaultAllocationBtn.addEventListener("click", restoreDefaultAllocations);
   if (undoAllocationBtn) undoAllocationBtn.addEventListener("click", undoAllocationChange);
@@ -4983,8 +5006,8 @@ function equalizeAllocations() {
     if (!plan) return;
     const summary = plan.summary || {};
     if (coreSatellitePresetVersionEl) coreSatellitePresetVersionEl.textContent = state.coreSatellitePresetReady ? plan.version : "不可用";
-    if (coreTargetAllocationEl) coreTargetAllocationEl.textContent = (summary.coreTargetPct || 60) + "% / " + (summary.spyActualPct || 0).toFixed(2) + "%";
-    if (satelliteTargetAllocationEl) satelliteTargetAllocationEl.textContent = (summary.satelliteTargetPct || 40) + "% / " + (summary.satelliteActualPct || 0).toFixed(2) + "%";
+    if (coreTargetAllocationEl) coreTargetAllocationEl.textContent = (summary.coreTargetPct == null ? 40 : summary.coreTargetPct) + "% / " + (summary.spyActualPct || 0).toFixed(2) + "%";
+    if (satelliteTargetAllocationEl) satelliteTargetAllocationEl.textContent = (summary.satelliteTargetPct == null ? 60 : summary.satelliteTargetPct) + "% / " + (summary.satelliteActualPct || 0).toFixed(2) + "%";
     if (techSatelliteAllocationEl) techSatelliteAllocationEl.textContent = (summary.technologyActualPct || 0).toFixed(2) + "%";
     if (spyBasePlanEl) spyBasePlanEl.textContent = formatCurrency(plan.spyBase) + " / " + formatCurrency(plan.spyRedirected);
     if (satellitePlanTotalEl) satellitePlanTotalEl.textContent = formatCurrency(plan.items.filter(function (row) { return row.bucket === "satellite"; }).reduce(function (sum, row) { return sum + row.finalAmount; }, 0));

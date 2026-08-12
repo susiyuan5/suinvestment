@@ -113,6 +113,7 @@
       var input = id(field === "monthlyBudget" ? "monthlyBudgetInput" : field === "normalPool" ? "normalPoolInput" : field === "crashFund" ? "crashFundInput" : "weeklyDeploymentInput");
       setValue(input, draft.deployment[field]);
     });
+    if (draft.allocation && root.__SUINVESTMENT_SETTINGS_API__ && root.__SUINVESTMENT_SETTINGS_API__.setAllocationDraft) root.__SUINVESTMENT_SETTINGS_API__.setAllocationDraft(draft.allocation);
     renderAccounts();
     renderSummary();
   }
@@ -405,6 +406,8 @@
     activeCategory = category;
     document.querySelectorAll("[data-settings-tab]").forEach(function (tab) { var selected = tab.dataset.settingsTab === category; tab.setAttribute("aria-selected", String(selected)); tab.tabIndex = selected ? 0 : -1; });
     document.querySelectorAll("[data-settings-panel]").forEach(function (panel) { panel.hidden = panel.dataset.settingsPanel !== category; });
+    var allocationEditor = id("coreSatelliteAllocationEditor");
+    if (allocationEditor && category === "allocation") allocationEditor.open = true;
   }
 
   function keydown(event) {
@@ -450,21 +453,34 @@
     modal.addEventListener("change", function (event) { if (!event.target.closest(".settings-account-card")) markDirty(); });
     modal.addEventListener("click", function (event) { if (event.target === modal) close(false); });
     root.addEventListener("online", function () { if (!modal.classList.contains("hidden")) refreshFx(); });
+    root.addEventListener("allocation-editor:changed", function (event) {
+      if (!draft) return;
+      draft.allocationMode = event.detail && event.detail.mode || "manual";
+      draft.allocation = event.detail && event.detail.allocation || allocationDraft();
+      markDirty();
+    });
     var editor = id("coreSatelliteAllocationEditor"), mount = id("settingsAllocationMount");
     if (editor && mount) {
       mount.appendChild(editor);
       var actions = document.createElement("div");
       actions.className = "allocation-editor-actions settings-allocation-actions";
-      actions.innerHTML = "<button type=\"button\" class=\"secondary-button\" id=\"settingsRestoreDefaultAllocationBtn\">恢复默认 60/40</button><button type=\"button\" class=\"secondary-button\" id=\"settingsUndoAllocationBtn\">撤销本次修改</button>";
+      actions.innerHTML = "<button type=\"button\" class=\"secondary-button\" id=\"settingsRestoreDefaultAllocationBtn\">恢复默认 40/60</button><button type=\"button\" class=\"secondary-button\" id=\"settingsUndoAllocationBtn\">撤销本次修改</button>";
       mount.appendChild(actions);
       actions.querySelector("#settingsRestoreDefaultAllocationBtn").addEventListener("click", function () {
         var presetDefinition = root.CoreSatellitePolicy && root.CoreSatellitePolicy.PRESET, preset = {};
         if (presetDefinition) { preset[presetDefinition.core.symbol] = presetDefinition.core.target_allocation; (presetDefinition.satellites || []).forEach(function (item) { preset[item.symbol] = item.target_allocation; }); }
         draft.allocationMode = "default";
-        document.querySelectorAll("#coreSatelliteAllocationEditor [data-allocation-symbol]").forEach(function (input) { if (preset[input.dataset.allocationSymbol] != null) input.value = Number(preset[input.dataset.allocationSymbol] * 100).toFixed(2); });
+        draft.allocation = preset;
+        if (root.__SUINVESTMENT_SETTINGS_API__ && root.__SUINVESTMENT_SETTINGS_API__.setAllocationDraft) root.__SUINVESTMENT_SETTINGS_API__.setAllocationDraft(preset);
         markDirty();
       });
-      actions.querySelector("#settingsUndoAllocationBtn").addEventListener("click", function () { fillDraft(); id("settingsModalStatus").textContent = "已撤销本次编辑区输入，保存前仍可继续修改。"; markDirty(); });
+      actions.querySelector("#settingsUndoAllocationBtn").addEventListener("click", function () {
+        draft.allocation = clone(baseline.allocation);
+        draft.allocationMode = baseline.allocationMode;
+        if (root.__SUINVESTMENT_SETTINGS_API__ && root.__SUINVESTMENT_SETTINGS_API__.setAllocationDraft) root.__SUINVESTMENT_SETTINGS_API__.setAllocationDraft(draft.allocation);
+        id("settingsModalStatus").textContent = "已撤销本次编辑区输入，保存前仍可继续修改。";
+        markDirty();
+      });
     }
   }
 

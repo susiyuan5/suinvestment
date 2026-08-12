@@ -275,15 +275,24 @@
       </section>
 
       <details id="coreSatelliteAllocationEditor" class="panel allocation-editor" aria-labelledby="allocationEditorTitle">
-        <summary class="allocation-editor-summary"><span><span class="eyebrow">组合设置</span><strong id="allocationEditorTitle">目标比例设置</strong></span><span id="allocationEditorSummaryText">默认 60/40 · 大盘 60% · 个股 40% · 科技个股 28%</span></summary>
+        <summary class="allocation-editor-summary"><span><span class="eyebrow">组合设置</span><strong id="allocationEditorTitle">目标比例设置</strong></span><span id="allocationEditorSummaryText">默认 40/60 · 大盘 40% · 个股 60% · 科技个股 36%</span></summary>
         <div class="allocation-editor-content">
         <div class="section-heading compact"><div><p class="eyebrow">组合设置</p><span class="allocation-editor-heading-label">调整目标比例</span></div><span id="allocationEditorStatus" aria-live="polite"></span></div>
+        <section class="allocation-bucket-control" aria-labelledby="allocationBucketTitle">
+          <div><strong id="allocationBucketTitle">先选择大盘与个股的总比例</strong><p>选择后会将个股仓平均分给 5 只个股；你仍可在下方逐只调整。</p></div>
+          <div class="allocation-preset-buttons" role="group" aria-label="大盘与个股快捷比例">
+            <button type="button" class="secondary-button" data-core-allocation-preset="40" aria-pressed="true"><strong>40 / 60</strong><span>当前默认</span></button>
+            <button type="button" class="secondary-button" data-core-allocation-preset="50" aria-pressed="false"><strong>50 / 50</strong><span>均衡</span></button>
+            <button type="button" class="secondary-button" data-core-allocation-preset="60" aria-pressed="false"><strong>60 / 40</strong><span>偏稳健</span></button>
+          </div>
+          <p class="allocation-risk-note">大盘 40% 意味着个股合计 60%，波动和集中风险更高；这里只调整后续定投资金，不会要求卖出或自动再平衡。</p>
+        </section>
         <div id="allocationEditorRows" class="allocation-editor-rows"></div>
         <div class="allocation-editor-metrics" aria-live="polite">
           <span>已分配 <strong id="allocationEditorAllocated">0.00%</strong></span><span>剩余 <strong id="allocationEditorRemaining">100.00%</strong></span><span>超出 <strong id="allocationEditorOverage">0.00%</strong></span><span>大盘仓 <strong id="allocationEditorCore">0.00%</strong></span><span>个股仓 <strong id="allocationEditorSatellite">0.00%</strong></span><span>科技个股 <strong id="allocationEditorTechnology">0.00%</strong></span>
         </div>
         <p id="allocationEditorErrors" class="form-error" aria-live="polite"></p>
-        <div class="allocation-editor-actions"><button id="saveCustomAllocationBtn" class="secondary-button" type="button">保存自定义比例</button><button id="restoreDefaultAllocationBtn" class="secondary-button" type="button">恢复默认 60/40</button><button id="undoAllocationBtn" class="secondary-button" type="button">撤销本次修改</button></div>
+        <div class="allocation-editor-actions"><button id="saveCustomAllocationBtn" class="secondary-button" type="button">保存自定义比例</button><button id="restoreDefaultAllocationBtn" class="secondary-button" type="button">恢复默认 40/60</button><button id="undoAllocationBtn" class="secondary-button" type="button">撤销本次修改</button></div>
         </div>
       </details>
 
@@ -680,7 +689,7 @@
     <script src="market-analysis.js?v=contracts-1"></script>
     <script src="signal-engine.js?v=contracts-1"></script>
     <script src="portfolio-policy.js?v=contracts-1"></script>
-    <script src="core-satellite-policy.js?v=core-satellite-v1"></script>
+    <script src="core-satellite-policy.js?v=core-satellite-v2"></script>
     <script src="backtest-engine.js?v=contracts-1"></script>
     <script src="settings-storage.js?v=currency-preference-1"></script>
     <script src="wealthsimple-currency.js?v=wealthsimple-v1"></script>
