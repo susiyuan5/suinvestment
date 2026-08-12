@@ -1124,7 +1124,8 @@ amountBreakdown: "金额分解",
       restoreDefaultAllocations();
       return true;
     },
-    currentAllocation: function () { return coreSatelliteAllocations(state.portfolio); }
+    currentAllocation: function () { return coreSatelliteAllocations(state.portfolio); },
+    discardAllocationDraft: function () { state.allocationDraft = null; renderAllocationEditor(); }
   };
   if (saveCustomAllocationBtn) saveCustomAllocationBtn.addEventListener("click", saveCustomAllocations);
   if (restoreDefaultAllocationBtn) restoreDefaultAllocationBtn.addEventListener("click", restoreDefaultAllocations);
@@ -1144,8 +1145,12 @@ amountBreakdown: "金额分解",
   // Display currency changes are staged by settings-center.js and applied once.
   // Legacy contract: SettingsStorage.saveDisplayCurrency(displayCurrencySelect.value, localStorage)
 
-  openSettingsBtn.addEventListener("click", openSettings);
-  closeSettingsBtn.addEventListener("click", closeSettings);
+  // The settings center owns modal lifecycle, draft confirmation and focus
+  // management. Keep the legacy handlers only for pages without that module.
+  if (!document.querySelector("[data-settings-tab]")) {
+    openSettingsBtn.addEventListener("click", openSettings);
+    closeSettingsBtn.addEventListener("click", closeSettings);
+  }
 
   refreshBtn.addEventListener("click", refreshMarketData);
   if (dcaLedgerRecordBtn) dcaLedgerRecordBtn.addEventListener("click", recordDcaL2CrashFundUse);
