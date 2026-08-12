@@ -13,7 +13,9 @@ test("homepage uses simplified Chinese and has no language switcher", () => {
   assert.match(html, /<h2 id="holdings-title">个股信号与持仓<\/h2>/);
   assert.doesNotMatch(app, /thisTuesday:\s*"本周定投决策"/);
   assert.match(html, /id="displayCurrencySelect"/);
-  assert.match(html, /只切换金额单位，不进行汇率换算/);
+  assert.match(html, /显示货币不改变原始预算、持仓和成交币种/);
+  assert.match(html, /当前 USD\/CAD 汇率/);
+  assert.match(html, /fx-rate-service\.js/);
   for (const id of ["weeklyDecisionPlan", "weeklyDecisionTotal", "weeklyDecisionRows", "weeklyDecisionSafety", "coreSatelliteSummary", "allocationEditorRows", "saveCustomAllocationBtn", "restoreDefaultAllocationBtn", "undoAllocationBtn"]) assert.match(html, new RegExp(`id="${id}"`));
 });
 

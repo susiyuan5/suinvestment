@@ -21,15 +21,29 @@ async function main() {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
   await context.route("https://finnhub.io/api/v1/**", async (route) => {
     const requestUrl = new URL(route.request().url());
-    const payload = requestUrl.pathname.endsWith("/quote")
+    const payload = requestUrl.pathname.endsWith("/forex/rates")
+      ? { base: "USD", quote: { CAD: 1.36 } }
+      : requestUrl.pathname.endsWith("/quote")
       ? { c: 100, pc: 99 }
       : { s: "ok", c: [90, 92, 94, 96, 98, 100] };
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
+  });
+  await context.route("https://www.bankofcanada.ca/valet/observations/FXUSDCAD/json**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ observations: [{ d: new Date(Date.now() - 86400000).toISOString().slice(0, 10), FXUSDCAD: { v: "1.3600" } }] })
+    });
   });
   await context.route("https://query1.finance.yahoo.com/**", async (route) => {
     const requestUrl = new URL(route.request().url());
     if (requestUrl.pathname.includes("/v1/finance/search")) {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ quotes: [] }) });
+      return;
+    }
+    if (requestUrl.pathname.includes("/v8/finance/chart/CAD=X")) {
+      const now = Math.floor(Date.now() / 1000);
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ chart: { result: [{ meta: { regularMarketPrice: 1.36, regularMarketTime: now }, timestamp: [now], indicators: { quote: [{ close: [1.36] }] } }] } }) });
       return;
     }
     const now = Math.floor(Date.now() / 1000);
@@ -57,12 +71,26 @@ async function main() {
   const healthPayload = await healthResponse.json();
   assert.ok(["healthy", "warning", "blocked"].includes(healthPayload.status), "health report should have a known status");
 
+  await page.evaluate(() => {
+    localStorage.setItem("su-investment-pro:wealthsimple-accounts-v1", JSON.stringify({
+      version: "wealthsimple-accounts-v2",
+      defaultId: "qa-tfsa",
+      accounts: [
+        { id: "qa-tfsa", account_id: "qa-tfsa", label: "长期投资", account_type: "TFSA", account_currency: "USD", available_to_trade: 1234.56, pending_order_reserve: 123.45, complete: true },
+        { id: "qa-nonreg", account_id: "qa-nonreg", label: "非注册", account_type: "NON_REGISTERED", account_currency: "CAD", available_to_trade: 2345.67, pending_order_reserve: 210, complete: true }
+      ]
+    }));
+  });
   await page.locator("#openSettingsBtn").click();
   assert.equal(await page.locator("#settingsModal").isVisible(), true, "settings center should open");
   assert.equal(await page.locator("[data-settings-tab]").count(), 6, "settings center should expose six categories");
   assert.ok((await page.locator("#settingsModal .modal-card").boundingBox()).width >= 1000, "desktop settings center should use wide layout");
-  await page.locator("[data-settings-tab='accounts']").click();
   assert.equal(await page.locator("#settings-accounts").isVisible(), true, "account category should be reachable");
+  await page.waitForFunction(() => document.querySelector("#settingsFxRate")?.textContent !== "--", null, { timeout: 10000 });
+  assert.equal((await page.locator("#settingsFxSource").textContent()).trim(), "加拿大央行（日均）", "FX should use the reliable public official source when Finnhub is not configured");
+  assert.equal((await page.locator("#settingsFxRate").textContent()).trim(), "1.3600", "USD/CAD rate direction must be explicit");
+  assert.equal(await page.locator("#wealthsimpleSettingsAccountCards .settings-account-card").count(), 2, "only configured local accounts should render as cards");
+  await page.screenshot({ path: "output/playwright/settings-center-desktop.png" });
   await page.locator("[data-settings-tab='data']").click();
   await page.locator("#apiKey").fill("browser-persistence-test-key");
   await page.locator("#saveSettingsChangesBtn").click();

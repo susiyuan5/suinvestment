@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#080d14">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://finnhub.io https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://finnhub.io https://www.bankofcanada.ca https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>量化定投决策台</title>
     <link rel="stylesheet" href="style.css?v=currency-preference-1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-2">
@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="watchlist.css?v=accessibility-3">
     <link rel="stylesheet" href="idea-engine.css?v=idea-engine-v1">
     <link rel="stylesheet" href="wealthsimple-execution.css?v=wealthsimple-v1">
-    <link rel="stylesheet" href="settings-center.css?v=settings-center-v1">
+    <link rel="stylesheet" href="settings-center.css?v=settings-center-v2">
   </head>
   <body>
     <div class="app-shell">
@@ -432,7 +432,7 @@
         </summary>
         <ol class="source-list">
           <li>Finnhub</li>
-          <li>Yahoo Finance 备用</li><li>缓存</li><li>手动覆盖</li>
+          <li>加拿大央行汇率备用</li><li>Yahoo Finance 备用</li><li>缓存</li><li>手动覆盖</li>
         </ol>
         <p class="fine-print">
           买入信号使用最新 1 日和 5 日变化中的较低值；单只股票的手动覆盖始终优先。
@@ -453,52 +453,66 @@
 
     <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="price-settings-title" aria-describedby="settingsModalStatus">
       <div class="modal-card">
-        <div class="modal-heading">
+        <div class="modal-heading settings-heading">
           <div>
-            <p class="eyebrow">设置</p>
             <h2 id="price-settings-title">设置</h2>
+            <p id="settingsModalStatus" class="settings-summary-status" role="status" aria-live="polite">当前设置完整性：正常</p>
           </div>
           <button id="closeSettingsBtn" class="icon-button" type="button" aria-label="关闭设置">×</button>
         </div>
 
         <div class="settings-layout">
-          <nav class="settings-nav" aria-label="设置分类" role="tablist" aria-orientation="vertical">
-            <button type="button" role="tab" aria-selected="true" aria-controls="settings-common" data-settings-tab="common">常用设置</button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="settings-accounts" data-settings-tab="accounts">Wealthsimple 账户</button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="settings-deployment" data-settings-tab="deployment">定投资金</button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="settings-allocation" data-settings-tab="allocation">组合比例</button>
+          <nav class="settings-nav" aria-label="设置分类" role="tablist" aria-orientation="horizontal">
+            <button type="button" role="tab" aria-selected="false" aria-controls="settings-common" data-settings-tab="common">常用</button>
+            <button type="button" role="tab" aria-selected="true" aria-controls="settings-accounts" data-settings-tab="accounts">Wealthsimple</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="settings-deployment" data-settings-tab="deployment">定投</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="settings-allocation" data-settings-tab="allocation">组合</button>
             <button type="button" role="tab" aria-selected="false" aria-controls="settings-data" data-settings-tab="data">数据源</button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="settings-advanced" data-settings-tab="advanced">高级设置</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="settings-advanced" data-settings-tab="advanced">高级</button>
           </nav>
           <div class="settings-content">
-            <p id="settingsModalStatus" class="settings-summary-status" role="status" aria-live="polite">当前设置完整性：正常</p>
-            <section id="settings-common" class="settings-category" role="tabpanel" data-settings-panel="common">
-
-        <section class="currency-setting settings-section" aria-labelledby="display-currency-title">
-          <h3 id="display-currency-title" class="settings-subheading">显示与货币</h3>
-          <label for="displayCurrencySelect"><span>显示货币</span><select id="displayCurrencySelect" aria-describedby="displayCurrencyNote displayCurrencyStatus"><option value="CAD">加元（CAD）</option><option value="USD">美元（USD）</option></select></label>
-          <p id="displayCurrencyNote" class="status-line">只切换金额单位，不进行汇率换算；请按所选货币填写预算和持仓金额。</p><p id="displayCurrencyStatus" class="status-line" role="status" aria-live="polite"></p>
-        </section>
-
-        <section class="currency-setting settings-section" aria-labelledby="wealthsimple-currency-title">
-          <h3 id="wealthsimple-currency-title" class="settings-subheading">Wealthsimple 计划与账户币种</h3>
-          <label for="planningCurrencySelect"><span>计划币种</span><select id="planningCurrencySelect"><option value="CAD">CAD</option><option value="USD">USD</option></select></label>
-          <label for="accountCurrencySelect"><span>账户币种</span><select id="accountCurrencySelect"><option value="CAD">CAD</option><option value="USD">USD</option></select></label>
-          <label for="wealthsimpleTierSelect"><span>账户等级</span><select id="wealthsimpleTierSelect"><option>Core</option><option>Premium</option><option>Generation</option></select></label>
-          <label for="wealthsimpleFxRate"><span>CAD/USD 汇率</span><input id="wealthsimpleFxRate" type="number" min="0" step="any"></label>
-          <label for="wealthsimpleFxAsOf"><span>汇率时间</span><input id="wealthsimpleFxAsOf" type="datetime-local"></label>
-          <label for="wealthsimpleFxMaxAge"><span>汇率最长有效天数</span><input id="wealthsimpleFxMaxAge" type="number" min="0" step="1"></label>
-          <button id="saveWealthsimpleCurrencyBtn" class="secondary-button" type="button">保存币种设置</button><p id="wealthsimpleCurrencyStatus" class="status-line" role="status" aria-live="polite"></p>
-        </section>
-
-        <p id="settingsCommonSummary" class="settings-natural-summary"></p>
+            <section id="settings-common" class="settings-category" role="tabpanel" data-settings-panel="common" hidden>
+              <div class="settings-section-heading">
+                <div><h3 class="settings-subheading">常用设置</h3><p>配置界面显示方式和默认人工核对入口。</p></div>
+              </div>
+              <div class="settings-form-row">
+                <label for="displayCurrencySelect"><span>显示货币</span><small>用于页面金额展示；跨币种时使用有效实时汇率换算。</small></label>
+                <select id="displayCurrencySelect" aria-describedby="displayCurrencyNote displayCurrencyStatus"><option value="CAD">加元（CAD）</option><option value="USD">美元（USD）</option></select>
+              </div>
+              <p id="displayCurrencyNote" class="status-line">显示货币不改变原始预算、持仓和成交币种。</p><p id="displayCurrencyStatus" class="status-line" role="status" aria-live="polite"></p>
+              <div class="settings-summary-card"><strong>当前设置摘要</strong><p id="settingsCommonSummary" class="settings-natural-summary"></p></div>
             </section>
 
-            <section id="settings-accounts" class="settings-category" role="tabpanel" data-settings-panel="accounts" hidden>
-              <h3 class="settings-subheading">Wealthsimple 账户</h3>
-              <p>账户名称仅保存在本地，用于人工核对清单；不保存登录信息、密码或真实账户号码。</p>
+            <section id="settings-accounts" class="settings-category" role="tabpanel" data-settings-panel="accounts">
+              <div class="settings-section-heading">
+                <div><h3 class="settings-subheading">Wealthsimple</h3><p>配置本地人工核对所需的计划币种、账户与可用资金，不连接券商。</p></div>
+              </div>
+              <div class="settings-wealthsimple-summary">
+                <label for="planningCurrencySelect"><span>计划币种</span><select id="planningCurrencySelect"><option value="CAD">CAD</option><option value="USD">USD</option></select></label>
+                <label for="accountCurrencySelect"><span>默认账户币种</span><select id="accountCurrencySelect"><option value="CAD">CAD</option><option value="USD">USD</option></select></label>
+                <label for="wealthsimpleTierSelect"><span>客户等级</span><select id="wealthsimpleTierSelect"><option>Core</option><option>Premium</option><option>Generation</option></select></label>
+              </div>
+
+              <section class="settings-fx-card" aria-labelledby="settingsFxTitle">
+                <div class="settings-fx-main">
+                  <div><span id="settingsFxTitle">当前 USD/CAD 汇率</span><strong id="settingsFxRate">--</strong><small id="settingsFxInverse">1 CAD = -- USD</small></div>
+                  <span id="settingsFxState" class="settings-state-pill" data-state="loading">正在获取</span>
+                </div>
+                <dl class="settings-fx-meta">
+                  <div><dt>数据来源</dt><dd id="settingsFxSource">等待数据</dd></div>
+                  <div><dt>最后更新</dt><dd id="settingsFxUpdatedAt">--</dd></div>
+                  <div><dt>自动刷新</dt><dd>每 60 秒</dd></div>
+                </dl>
+                <button id="refreshFxRateBtn" class="secondary-button settings-fx-refresh" type="button">刷新汇率</button>
+                <p id="settingsFxMessage" class="status-line" role="status" aria-live="polite">汇率只用于换算展示与人工计划核对，不代表 Wealthsimple 最终成交汇率。</p>
+                <details class="settings-fx-policy"><summary>查看汇率策略</summary><div class="settings-fx-policy-content"><label for="wealthsimpleFxMaxAge"><span>缓存最长有效天数</span><input id="wealthsimpleFxMaxAge" type="number" min="0" step="1"></label><p>实时源不可用时保留最后有效值并标记来源；超过有效期后停止跨币种换算。</p></div></details>
+                <input id="wealthsimpleFxRate" type="hidden" aria-label="USD/CAD 汇率兼容值"><input id="wealthsimpleFxAsOf" type="hidden" aria-label="汇率更新时间兼容值">
+                <button id="saveWealthsimpleCurrencyBtn" type="button" hidden>保存币种设置</button><p id="wealthsimpleCurrencyStatus" class="status-line" role="status" aria-live="polite"></p>
+              </section>
+
+              <div class="settings-account-heading"><div><h4>账户与资金</h4><p>只显示你添加的本地账户；不会保存 Wealthsimple 登录信息或真实账户号码。</p></div><button id="addWealthsimpleAccountBtn" class="secondary-button" type="button">添加账户</button></div>
               <div id="wealthsimpleSettingsAccountCards" class="settings-account-cards" aria-live="polite"></div>
-              <button id="addWealthsimpleAccountBtn" class="secondary-button" type="button">添加账户</button>
+              <p id="wealthsimpleAccountsEmpty" class="settings-empty-state" hidden>尚未添加账户。添加一个本地账户后，人工计划才能按账户币种和可交易资金进行核对。</p>
               <p id="wealthsimpleAccountStatus" class="status-line" role="status" aria-live="polite"></p>
             </section>
 
@@ -558,7 +572,7 @@
 
         <div class="modal-note">
           <strong>数据源优先级</strong>
-          <span>Finnhub → Yahoo 备用 → 缓存 → 手动覆盖</span>
+          <span>Finnhub → 加拿大央行 → Yahoo 备用 → 缓存 → 手动覆盖</span>
         </div>
               <p id="dataSourceLastSuccess" class="status-line"></p>
             </section>
@@ -568,7 +582,7 @@
               <p>以下设置用于本地人工核对，不代表交易许可。</p>
               <p>Wealthsimple 规则版本：<strong id="wealthsimpleRulesVersion">wealthsimple-rules-v1</strong></p>
               <p>最近规则核对日期：<strong id="wealthsimpleRulesVerifiedAt">2026-08-11</strong></p>
-              <p>换汇字段说明：显示货币只改变展示；计划货币是预算货币；账户货币是资金所在账户货币。</p>
+              <p>换汇字段说明：显示货币只改变展示；计划货币是预算货币；账户货币是资金所在账户货币。实时源不可用时不会编造汇率。</p>
               <div class="settings-advanced-actions"><button id="exportSettingsBtn" class="secondary-button" type="button">导出本地设置</button><label class="secondary-button">导入本地设置<input id="importSettingsInput" type="file" accept="application/json" hidden></label><button id="resetAdvancedSettingsBtn" class="secondary-button" type="button">恢复本分类默认</button></div>
             </section>
           </div>
@@ -670,6 +684,7 @@
     <script src="backtest-engine.js?v=contracts-1"></script>
     <script src="settings-storage.js?v=currency-preference-1"></script>
     <script src="wealthsimple-currency.js?v=wealthsimple-v1"></script>
+    <script src="fx-rate-service.js?v=live-fx-v1"></script>
     <script src="wealthsimple-rules.js?v=wealthsimple-v1"></script>
     <script src="wealthsimple-order-adapter.js?v=wealthsimple-v1"></script>
     <script src="wealthsimple-reconciliation.js?v=wealthsimple-v1"></script>
@@ -682,6 +697,6 @@
     <script src="idea-engine.js?v=idea-engine-v1"></script>
     <script src="project-health.js?v=health-2"></script>
     <script src="wealthsimple-execution.js?v=wealthsimple-v1"></script>
-    <script src="settings-center.js?v=settings-center-v1"></script>
+    <script src="settings-center.js?v=settings-center-v2"></script>
   </body>
 </html>

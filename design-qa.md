@@ -1,54 +1,39 @@
-**Comparison Target**
+# Settings Center Design QA
 
-- Source visual truth path: `C:\Users\Administrator\AppData\Local\Temp\codex-clipboard-a6ec514c-9938-4b95-8804-e5ea8e531726.png`
-- Implementation screenshot path: `C:\Users\Administrator\Documents\fince\watchlist-chinese-sorted.png`
-- Mobile implementation screenshot path: `C:\Users\Administrator\Documents\fince\watchlist-mobile.png`
-- Combined comparison evidence: `C:\Users\Administrator\Documents\fince\watchlist-chinese-comparison.png`
-- Viewport: desktop 1280 x 720; mobile 390 x 844
-- State: dark theme, AAPL selected, 1Y selected, automatic refresh enabled, local weekly fallback active
+- Reference: `C:\Users\Administrator\.codex\generated_images\019f4b1f-2a93-7e83-8f8f-95c74bb7b6f5\exec-eddf2cd6-102e-48a7-969d-8cbd210e9b52.png`
+- Implementation: `C:\Users\Administrator\Documents\fince\output\playwright\settings-center-desktop.png`
+- Combined comparison: `C:\Users\Administrator\Documents\fince\output\playwright\settings-qa-comparison.png`
+- Viewport: 1440 × 1000 CSS pixels at device scale factor 1
+- Reference source: 1488 × 1058 pixels; normalized to 1000 pixels high for the combined comparison
+- Implementation capture: 1440 × 1000 pixels
 
-**Full-view Comparison Evidence**
+## Full-view comparison
 
-The combined comparison confirms the intended two-column watchlist/chart composition, dark navy hierarchy, blue active controls, green/red market states, large quote typography, refresh controls, and dense card rhythm. The implementation intentionally fits inside the existing dashboard instead of replacing the product shell.
+The implementation preserves the selected visual hierarchy: a dark desktop settings surface, horizontal category tabs with a mint active indicator, a three-column Wealthsimple summary, a prominent current FX strip, two account summary cards, and persistent footer actions. The implementation uses the existing product modal shell and design tokens, so its outside margin, typography scale, and blue primary action differ slightly from the concept artwork while remaining consistent with the live application.
 
-**Focused Region Comparison Evidence**
+## Focused interaction and content checks
 
-The desktop and mobile captures were checked separately for the watchlist rail, quote header, refresh controls, period controls, and chart containers. The 390 px capture has zero document-level horizontal overflow; the watchlist rail scrolls horizontally by design.
+- Wealthsimple is the default selected tab.
+- The USD/CAD direction is explicit and includes the inverse rate to prevent conversion ambiguity.
+- Live, cached, stale, expired, and error states have distinct text and colour treatments.
+- Source, Halifax update time, refresh cadence, and manual refresh are visible.
+- Account cards expose available funds, reserved funds, remaining funds, default-account state, and local editing controls.
+- The footer remains visible while the panel content scrolls.
+- Keyboard tab switching, focus trapping, Escape close, Cancel discard, and Save behaviour are covered by automated checks.
 
-**Findings**
+## Difference triage
 
-- No actionable P0, P1, or P2 visual or interaction mismatches remain.
-- Typography: existing system font stack, hierarchy, weights, truncation and small-label contrast are consistent with the host dashboard and reference density.
-- Spacing/layout: desktop follows the reference rail-plus-main composition; mobile collapses to one column with a contained horizontal ticker rail.
-- Colors/tokens: existing dashboard navy panels are preserved, with reference-aligned blue active states and semantic green/red quote colors.
-- Image/asset quality: the reference contains no reusable product imagery. Price and MACD visuals are rendered from market data rather than placeholder imagery.
-- Copy/content: controls and labels clearly identify US stocks, USD pricing, refresh behavior, periods, data source and the decision-support disclaimer.
+- P0: none.
+- P1: none.
+- P2: none.
+- P3: the concept's decorative account avatars, utility icons, and help link were not reproduced because the existing static product does not ship a matching icon set. Clear text controls are used instead; this does not block the core journey.
 
-**Patches Made During QA**
+## Iteration history
 
-- Contained the auto-refresh checkbox against the host app's global input sizing.
-- Constrained the mobile grid track with `minmax(0, 1fr)` to remove horizontal page overflow.
-- Added mobile-specific sizing for refresh controls and chart canvases.
-- Preserved a local weekly-history fallback when the live Yahoo request is blocked.
-- Localized the complete watchlist surface into Chinese.
-- Added persistent up/down ordering controls to every watchlist card.
-- Corrected fallback period slicing: 1D=2, 5D=6, 3M=14, 1Y=53 and 5Y=all available data points.
-- Split the technical chart into a 65% price panel and 35% MACD panel with a 130px MACD minimum.
-- Added a histogram-centered zero line, thicker positive/negative bars, and 1.8px MACD/signal lines.
-- Added a chart tooltip with date, price, MACD, signal and histogram values.
-- Verified AAPL/MSFT/NVDA/QQQ, all five timeframes, zero horizontal overflow and a 390px mobile viewport.
+1. Initial capture revealed that the settings modal was too narrow and the account cards were visually clipped.
+2. The desktop settings surface was expanded to a near-full-window layout and the modal sizing rule was scoped to `#settingsModal`.
+3. The second capture confirmed the reference hierarchy, complete account summaries, and persistent footer actions at the target viewport.
 
-**Implementation Checklist**
+## Final result
 
-- [x] Watchlist selection, addition, removal and local persistence
-- [x] Manual and scheduled refresh controls
-- [x] 1D, 5D, 3M, 1Y and 5Y periods
-- [x] Price candles and MACD signal/histogram
-- [x] Desktop and mobile responsive states
-- [x] Live-source failure fallback and disclosure
-
-**Follow-up Polish**
-
-- P3: company names for uncommon tickers remain generic until live metadata is available.
-
-final result: passed
+passed
