@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="watchlist.css?v=accessibility-3">
     <link rel="stylesheet" href="idea-engine.css?v=idea-engine-v1">
     <link rel="stylesheet" href="wealthsimple-execution.css?v=wealthsimple-v1">
+    <link rel="stylesheet" href="settings-center.css?v=settings-center-v1">
   </head>
   <body>
     <div class="app-shell">
@@ -84,7 +85,7 @@
         <p class="wealthsimple-safety-note">仅供人工核对，不连接券商，不自动下单。数量和金额必须在 Wealthsimple 中人工确认。</p>
         <p id="wealthsimpleChecklistWarning" class="data-quality-warning" role="status" aria-live="polite">核对信息不完整，请在 Wealthsimple 人工确认。</p>
         <div id="wealthsimpleChecklistRows" class="wealthsimple-checklist-rows" aria-live="polite"></div>
-        <details id="wealthsimpleAccountsPanel"><summary>账户可用资金（不会混用账户或币种）</summary><div id="wealthsimpleAccounts" class="wealthsimple-accounts"></div><button id="wealthsimpleSaveAccountsBtn" class="secondary-button" type="button">保存账户信息</button></details>
+        <details id="wealthsimpleAccountsPanel" class="wealthsimple-accounts-legacy" hidden><summary>账户可用资金（不会混用账户或币种）</summary><div id="wealthsimpleAccounts" class="wealthsimple-accounts"></div><button id="wealthsimpleSaveAccountsBtn" class="secondary-button" type="button">保存账户信息</button></details>
       </details>
 
       <details id="wealthsimpleReconciliationPanel" class="panel wealthsimple-panel">
@@ -450,7 +451,7 @@
       </details>
     </div>
 
-    <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="price-settings-title">
+    <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="price-settings-title" aria-describedby="settingsModalStatus">
       <div class="modal-card">
         <div class="modal-heading">
           <div>
@@ -459,6 +460,19 @@
           </div>
           <button id="closeSettingsBtn" class="icon-button" type="button" aria-label="关闭设置">×</button>
         </div>
+
+        <div class="settings-layout">
+          <nav class="settings-nav" aria-label="设置分类" role="tablist" aria-orientation="vertical">
+            <button type="button" role="tab" aria-selected="true" aria-controls="settings-common" data-settings-tab="common">常用设置</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="settings-accounts" data-settings-tab="accounts">Wealthsimple 账户</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="settings-deployment" data-settings-tab="deployment">定投资金</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="settings-allocation" data-settings-tab="allocation">组合比例</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="settings-data" data-settings-tab="data">数据源</button>
+            <button type="button" role="tab" aria-selected="false" aria-controls="settings-advanced" data-settings-tab="advanced">高级设置</button>
+          </nav>
+          <div class="settings-content">
+            <p id="settingsModalStatus" class="settings-summary-status" role="status" aria-live="polite">当前设置完整性：正常</p>
+            <section id="settings-common" class="settings-category" role="tabpanel" data-settings-panel="common">
 
         <section class="currency-setting settings-section" aria-labelledby="display-currency-title">
           <h3 id="display-currency-title" class="settings-subheading">显示与货币</h3>
@@ -476,6 +490,20 @@
           <label for="wealthsimpleFxMaxAge"><span>汇率最长有效天数</span><input id="wealthsimpleFxMaxAge" type="number" min="0" step="1"></label>
           <button id="saveWealthsimpleCurrencyBtn" class="secondary-button" type="button">保存币种设置</button><p id="wealthsimpleCurrencyStatus" class="status-line" role="status" aria-live="polite"></p>
         </section>
+
+        <p id="settingsCommonSummary" class="settings-natural-summary"></p>
+            </section>
+
+            <section id="settings-accounts" class="settings-category" role="tabpanel" data-settings-panel="accounts" hidden>
+              <h3 class="settings-subheading">Wealthsimple 账户</h3>
+              <p>账户名称仅保存在本地，用于人工核对清单；不保存登录信息、密码或真实账户号码。</p>
+              <div id="wealthsimpleSettingsAccountCards" class="settings-account-cards" aria-live="polite"></div>
+              <button id="addWealthsimpleAccountBtn" class="secondary-button" type="button">添加账户</button>
+              <p id="wealthsimpleAccountStatus" class="status-line" role="status" aria-live="polite"></p>
+            </section>
+
+            <section id="settings-deployment" class="settings-category" role="tabpanel" data-settings-panel="deployment" hidden>
+              <h3 class="settings-subheading">定投资金</h3>
 
         <section class="deployment-form settings-section" aria-labelledby="deployment-settings-title">
           <div class="modal-subheading">
@@ -506,6 +534,18 @@
           <p id="deploymentStatus" class="status-line deployment-status" role="status"></p>
         </section>
 
+              <p id="settingsDeploymentImpact" class="settings-impact" role="status" aria-live="polite"></p>
+            </section>
+
+            <section id="settings-allocation" class="settings-category" role="tabpanel" data-settings-panel="allocation" hidden>
+              <h3 class="settings-subheading">组合比例</h3>
+              <p>只影响未来人工定投目标，不修改真实持仓，不生成卖出建议。</p>
+              <div id="settingsAllocationMount"></div>
+            </section>
+
+            <section id="settings-data" class="settings-category" role="tabpanel" data-settings-panel="data" hidden>
+              <h3 class="settings-subheading">数据源</h3>
+
         <h3 class="settings-subheading">行情数据</h3>
         <label class="api-key-row" for="apiKey">
           <span>Finnhub API 密钥</span>
@@ -514,10 +554,26 @@
         <p id="apiKeyStorageNote" class="status-line">密钥会永久保存在此浏览器；清空输入框即可删除。</p>
 
 
+        <button id="deleteApiKeyBtn" class="danger-button" type="button">删除 Finnhub API 密钥</button>
+
         <div class="modal-note">
           <strong>数据源优先级</strong>
           <span>Finnhub → Yahoo 备用 → 缓存 → 手动覆盖</span>
         </div>
+              <p id="dataSourceLastSuccess" class="status-line"></p>
+            </section>
+
+            <section id="settings-advanced" class="settings-category" role="tabpanel" data-settings-panel="advanced" hidden>
+              <h3 class="settings-subheading">高级设置</h3>
+              <p>以下设置用于本地人工核对，不代表交易许可。</p>
+              <p>Wealthsimple 规则版本：<strong id="wealthsimpleRulesVersion">wealthsimple-rules-v1</strong></p>
+              <p>最近规则核对日期：<strong id="wealthsimpleRulesVerifiedAt">2026-08-11</strong></p>
+              <p>换汇字段说明：显示货币只改变展示；计划货币是预算货币；账户货币是资金所在账户货币。</p>
+              <div class="settings-advanced-actions"><button id="exportSettingsBtn" class="secondary-button" type="button">导出本地设置</button><label class="secondary-button">导入本地设置<input id="importSettingsInput" type="file" accept="application/json" hidden></label><button id="resetAdvancedSettingsBtn" class="secondary-button" type="button">恢复本分类默认</button></div>
+            </section>
+          </div>
+        </div>
+        <div class="settings-footer"><span id="settingsDirtyState" role="status" aria-live="polite">没有未保存的更改</span><div><button id="cancelSettingsBtn" class="secondary-button" type="button">取消</button><button id="saveSettingsChangesBtn" class="primary-button" type="button">保存更改</button></div></div>
       </div>
     </div>
 
@@ -626,5 +682,6 @@
     <script src="idea-engine.js?v=idea-engine-v1"></script>
     <script src="project-health.js?v=health-2"></script>
     <script src="wealthsimple-execution.js?v=wealthsimple-v1"></script>
+    <script src="settings-center.js?v=settings-center-v1"></script>
   </body>
 </html>

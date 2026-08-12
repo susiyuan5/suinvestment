@@ -66,6 +66,8 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   const results = [
     await auditPage(browser, "a11y-desktop", { width: 1440, height: 1000 }),
+    await auditPage(browser, "a11y-desktop-wide", { width: 1920, height: 1080 }),
+    await auditPage(browser, "a11y-desktop-compact", { width: 1024, height: 768 }),
     await auditPage(browser, "a11y-mobile", { width: 390, height: 844 }),
     await auditPage(browser, "a11y-mobile-200-percent", { width: 390, height: 844 }, 2)
   ];

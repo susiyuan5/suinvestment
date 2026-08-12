@@ -10,6 +10,7 @@
   const DISPLAY_CURRENCY_KEY = "su-investment-pro:display-currency";
   const DEFAULT_DISPLAY_CURRENCY = "CAD";
   const SUPPORTED_DISPLAY_CURRENCIES = Object.freeze(["CAD", "USD"]);
+  const SETTINGS_SCHEMA_VERSION = "settings-center-v1";
 
   function read(storage, key) {
     try { return storage && storage.getItem(key) || ""; } catch (_) { return ""; }
@@ -60,6 +61,19 @@
     return normalized;
   }
 
+  function atomicWrite(entries, persistentStorage) {
+    const next = entries && typeof entries === "object" ? entries : {};
+    const previous = {};
+    Object.keys(next).forEach(function (key) { previous[key] = read(persistentStorage, key); });
+    try {
+      Object.keys(next).forEach(function (key) { if (!write(persistentStorage, key, next[key])) throw new Error("storage write failed"); });
+      return { ok: true, version: SETTINGS_SCHEMA_VERSION };
+    } catch (_) {
+      Object.keys(previous).forEach(function (key) { if (previous[key]) write(persistentStorage, key, previous[key]); else remove(persistentStorage, key); });
+      return { ok: false, version: SETTINGS_SCHEMA_VERSION };
+    }
+  }
+
   return Object.freeze({
     API_KEY,
     DISPLAY_CURRENCY_KEY,
@@ -71,5 +85,7 @@
     normalizeDisplayCurrency,
     loadDisplayCurrency,
     saveDisplayCurrency
+    ,SETTINGS_SCHEMA_VERSION
+    ,atomicWrite
   });
 });

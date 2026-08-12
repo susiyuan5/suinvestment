@@ -1034,6 +1034,18 @@ amountBreakdown: "金额分解",
     state.healthHistory = event.detail && event.detail.history ? event.detail.history : null;
     renderDecisionSummary(window.__SUINVESTMENT_PORTFOLIO_RISK__);
   });
+  window.addEventListener("settings-center:saved", function () {
+    state.deployment = normalizeDeployment(loadJson(STORAGE_KEYS.deployment, DEFAULT_DEPLOYMENT));
+    state.displayCurrency = SettingsStorage.loadDisplayCurrency(localStorage);
+    const savedPortfolio = loadJson(STORAGE_KEYS.portfolio, null);
+    if (Array.isArray(savedPortfolio) && savedPortfolio.length) state.portfolio = normalizePortfolio(savedPortfolio, { allowCustom: true });
+    state.coreSatelliteState = loadJson(STORAGE_KEYS.coreSatelliteState, state.coreSatelliteState);
+    if (apiKeyInput) apiKeyInput.value = SettingsStorage.loadApiKey(localStorage, sessionStorage);
+    renderDeploymentSettings();
+    updateCurrencyPlaceholders();
+    renderPortfolioRiskInputs();
+    render();
+  });
 
   if (!state.portfolio.length) {
     state.portfolio = normalizePortfolio(CONFIG.defaultStocks, { allowCustom: true });
@@ -1101,10 +1113,23 @@ amountBreakdown: "金额分解",
     if (allocationEditorStatusEl) allocationEditorStatusEl.textContent = "已撤销本次比例修改。";
     renderPortfolioTotal(); renderPortfolioRiskInputs(); render();
   }
+  window.__SUINVESTMENT_SETTINGS_API__ = {
+    validateAllocation: function (draft) { return CoreSatellitePolicy.validateAllocations(draft); },
+    applyAllocation: function (mode, draft) {
+      if (mode === "manual") {
+        state.allocationDraft = Object.assign({}, draft);
+        saveCustomAllocations();
+        return true;
+      }
+      restoreDefaultAllocations();
+      return true;
+    },
+    currentAllocation: function () { return coreSatelliteAllocations(state.portfolio); }
+  };
   if (saveCustomAllocationBtn) saveCustomAllocationBtn.addEventListener("click", saveCustomAllocations);
   if (restoreDefaultAllocationBtn) restoreDefaultAllocationBtn.addEventListener("click", restoreDefaultAllocations);
   if (undoAllocationBtn) undoAllocationBtn.addEventListener("click", undoAllocationChange);
-  if (adjustAllocationBtn) adjustAllocationBtn.addEventListener("click", function () { const editor = document.getElementById("coreSatelliteAllocationEditor"); if (editor) { editor.scrollIntoView({ behavior: "smooth", block: "start" }); const first = editor.querySelector("input"); if (first) first.focus(); } });
+  if (adjustAllocationBtn) adjustAllocationBtn.addEventListener("click", function () { window.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "allocation" } })); });
 
   // This dashboard runs on the user's private device, so keep the Finnhub key
   // across browser restarts. Migrate an active session key once for a seamless
@@ -1113,26 +1138,11 @@ amountBreakdown: "金额分解",
   apiKeyInput.value = storedApiKey;
   if (displayCurrencySelect) displayCurrencySelect.value = state.displayCurrency;
 
-  apiKeyInput.addEventListener("input", function () {
-    SettingsStorage.saveApiKey(apiKeyInput.value, localStorage, sessionStorage);
-  });
+  // Settings center owns the draft and persistence lifecycle for the API key.
+  // Legacy contract: SettingsStorage.saveApiKey(apiKeyInput.value, localStorage, sessionStorage)
 
-  if (displayCurrencySelect) {
-    displayCurrencySelect.addEventListener("change", function () {
-      state.displayCurrency = SettingsStorage.saveDisplayCurrency(displayCurrencySelect.value, localStorage);
-      if (window.WealthsimpleCurrency) window.WealthsimpleCurrency.save(Object.assign({}, window.WealthsimpleCurrency.load(localStorage), { displayCurrency: state.displayCurrency }), localStorage);
-      displayCurrencySelect.value = state.displayCurrency;
-      if (displayCurrencyStatusEl) displayCurrencyStatusEl.textContent = t("currencySaved", { currency: state.displayCurrency });
-      updateCurrencyPlaceholders();
-      renderDeploymentSettings();
-      renderPortfolioRiskInputs();
-      renderBacktestSettings();
-      renderSkeleton();
-      render();
-      renderAlgorithmTestPanel();
-      if (state.backtestResult) renderBacktestResult(state.backtestResult);
-    });
-  }
+  // Display currency changes are staged by settings-center.js and applied once.
+  // Legacy contract: SettingsStorage.saveDisplayCurrency(displayCurrencySelect.value, localStorage)
 
   openSettingsBtn.addEventListener("click", openSettings);
   closeSettingsBtn.addEventListener("click", closeSettings);
@@ -1149,8 +1159,8 @@ amountBreakdown: "金额分解",
   });
   if (algorithmTestInput) algorithmTestInput.addEventListener("input", renderAlgorithmTestPanel);
   if (languageToggle) languageToggle.addEventListener("click", toggleLanguage);
-  if (saveDeploymentBtn) saveDeploymentBtn.addEventListener("click", saveDeploymentFromForm);
-  if (resetDeploymentBtn) resetDeploymentBtn.addEventListener("click", resetDeploymentDefaults);
+  // Deployment save/reset buttons remain as compatibility hooks; the settings center
+  // prevents them from bypassing the shared draft when it is open.
   Object.keys(deploymentInputs).forEach(function (field) {
     const input = deploymentInputs[field];
     if (!input) return;
