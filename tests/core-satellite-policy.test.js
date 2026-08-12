@@ -55,3 +55,11 @@ test("a stock at its 12 percent target is not treated as over-concentrated", () 
   const result = policy.plan({ baseBudget: 1000, crashFundRemaining: 0, actualAllocations: { NVDA: 12 } });
   assert.equal(result.items.find((row) => row.symbol === "NVDA").finalAmount, 120);
 });
+
+test("floating point tails at the 12 percent boundary do not trigger false errors", () => {
+  const boundary = { SPY: 0.4, NVDA: 0.1200000005, AAPL: 0.1200000005, ASML: 0.12, KO: 0.12, BYDDY: 0.119999999 };
+  assert.equal(policy.validateAllocations(boundary).valid, true);
+  const above = { ...boundary, NVDA: 0.1201, BYDDY: 0.1199 };
+  assert.equal(policy.validateAllocations(above).valid, false);
+  assert.deepEqual(policy.validateAllocations(above).errors, ["NVDA单股比例不得高于 12%"]);
+});

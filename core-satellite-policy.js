@@ -4,6 +4,7 @@
 }(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
   var EPSILON = 0.005;
+  var ALLOCATION_EPSILON = 1e-9;
   var PRESET = {
     version: "core-satellite-v2", research_only: true, qqq_signal_only: true,
     core: { symbol: "SPY", target_allocation: 0.4, asset_type: "index_etf", bucket: "core", signal_role: "market_core" },
@@ -23,7 +24,7 @@
     var total = Number(preset.core.target_allocation) + preset.satellites.reduce(function (sum, row) { return sum + Number(row.target_allocation); }, 0);
     if (!Number.isFinite(total) || Math.abs(total - 1) > 1e-9) return false;
     if (preset.core.symbol !== "SPY" || preset.satellites.length !== 5) return false;
-    return preset.satellites.every(function (row) { var value = Number(row.target_allocation); return Number.isFinite(value) && value >= 0 && value <= 0.12 && row.bucket === "satellite"; });
+    return preset.satellites.every(function (row) { var value = Number(row.target_allocation); return Number.isFinite(value) && value >= 0 && value <= 0.12 + ALLOCATION_EPSILON && row.bucket === "satellite"; });
   }
   function normalizedPreset(preset) { return validatePreset(preset) ? clone(preset) : null; }
   function loadPreset(url) { return fetch(url).then(function (response) { if (!response.ok) throw new Error("preset fetch failed"); return response.json(); }).then(function (value) { var result = normalizedPreset(value); if (!result) throw new Error("invalid core-satellite preset"); return result; }); }
@@ -40,10 +41,10 @@
     symbols.forEach(function (symbol) { var raw = values[symbol]; if (raw === "" || raw === null || raw === undefined || finite(raw) === null || finite(raw) < 0) errors.push(symbol + "比例必须是非负数字"); });
     var metrics = allocationMetrics(values);
     if (Math.abs(metrics.allocated - 100) > 1e-7) errors.push("六项比例合计必须严格等于 100%");
-    if (metrics.core < 40 || metrics.core > 80) errors.push("SPY 比例必须在 40% 至 80% 之间");
-    if (metrics.satellite < 20 || metrics.satellite > 60) errors.push("个股合计比例必须在 20% 至 60% 之间");
-    ["NVDA", "AAPL", "ASML", "KO", "BYDDY"].forEach(function (symbol) { if ((finite(values[symbol]) || 0) > 0.12) errors.push(symbol + "单股比例不得高于 12%"); });
-    if (metrics.technology > 40) errors.push("科技个股合计比例不得高于 40%");
+    if (metrics.core < 40 - ALLOCATION_EPSILON * 100 || metrics.core > 80 + ALLOCATION_EPSILON * 100) errors.push("SPY 比例必须在 40% 至 80% 之间");
+    if (metrics.satellite < 20 - ALLOCATION_EPSILON * 100 || metrics.satellite > 60 + ALLOCATION_EPSILON * 100) errors.push("个股合计比例必须在 20% 至 60% 之间");
+    ["NVDA", "AAPL", "ASML", "KO", "BYDDY"].forEach(function (symbol) { if ((finite(values[symbol]) || 0) > 0.12 + ALLOCATION_EPSILON) errors.push(symbol + "单股比例不得高于 12%"); });
+    if (metrics.technology > 40 + ALLOCATION_EPSILON * 100) errors.push("科技个股合计比例不得高于 40%");
     return { valid: errors.length === 0, errors: errors, metrics: metrics };
   }
   function allocationsForCore(corePercent) {

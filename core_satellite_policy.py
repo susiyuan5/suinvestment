@@ -8,6 +8,7 @@ from typing import Any
 
 PRESET_PATH = Path(__file__).with_name("data") / "core-satellite-v2.json"
 CORE_SYMBOLS = ("SPY", "NVDA", "AAPL", "ASML", "KO", "BYDDY")
+ALLOCATION_EPSILON = 1e-9
 
 
 def money(value: Any) -> float:
@@ -33,7 +34,7 @@ def validate_preset(preset: dict[str, Any]) -> bool:
     if core.get("symbol") != "SPY" or not isinstance(satellites, list) or len(satellites) != 5:
         return False
     total = float(core.get("target_allocation", float("nan"))) + sum(float(row.get("target_allocation", float("nan"))) for row in satellites)
-    return math.isfinite(total) and abs(total - 1.0) <= 1e-9 and all(0 <= float(row.get("target_allocation", 1)) <= 0.12 and row.get("bucket") == "satellite" for row in satellites)
+    return math.isfinite(total) and abs(total - 1.0) <= ALLOCATION_EPSILON and all(0 <= float(row.get("target_allocation", 1)) <= 0.12 + ALLOCATION_EPSILON and row.get("bucket") == "satellite" for row in satellites)
 
 
 def allocation_metrics(allocations: dict[str, Any]) -> dict[str, float]:
@@ -54,11 +55,11 @@ def validate_allocations(allocations: dict[str, Any]) -> dict[str, Any]:
             errors.append(f"{symbol}比例必须是非负数字")
     metrics = allocation_metrics(allocations)
     if abs(metrics["allocated"] - 100) > 1e-7: errors.append("六项比例合计必须严格等于 100%")
-    if not 40 <= metrics["core"] <= 80: errors.append("SPY 比例必须在 40% 至 80% 之间")
-    if not 20 <= metrics["satellite"] <= 60: errors.append("个股合计比例必须在 20% 至 60% 之间")
+    if not 40 - ALLOCATION_EPSILON * 100 <= metrics["core"] <= 80 + ALLOCATION_EPSILON * 100: errors.append("SPY 比例必须在 40% 至 80% 之间")
+    if not 20 - ALLOCATION_EPSILON * 100 <= metrics["satellite"] <= 60 + ALLOCATION_EPSILON * 100: errors.append("个股合计比例必须在 20% 至 60% 之间")
     for symbol in CORE_SYMBOLS[1:]:
-        if float(allocations.get(symbol) or 0) > 0.12: errors.append(f"{symbol}单股比例不得高于 12%")
-    if metrics["technology"] > 40: errors.append("科技个股合计比例不得高于 40%")
+        if float(allocations.get(symbol) or 0) > 0.12 + ALLOCATION_EPSILON: errors.append(f"{symbol}单股比例不得高于 12%")
+    if metrics["technology"] > 40 + ALLOCATION_EPSILON * 100: errors.append("科技个股合计比例不得高于 40%")
     return {"valid": not errors, "errors": errors, "metrics": metrics}
 
 
