@@ -63,9 +63,9 @@ test("live quote timeout aborts instead of blocking the static fallback forever"
   assert.equal(capturedSignal.aborted, true);
 });
 
-test("published same-origin trends cover every current v3 candidate", () => {
+test("published same-origin trends cover every current v3.1 candidate", () => {
   const trends = JSON.parse(fs.readFileSync("data/idea-engine-v3/price-trends.json", "utf8"));
-  const candidates = JSON.parse(fs.readFileSync("research/results/v3/idea-engine/latest-candidates.json", "utf8"));
+  const candidates = JSON.parse(fs.readFileSync("research/results/v3_1/idea-engine/latest-candidates.json", "utf8"));
   assert.equal(trends.schema_version, "idea-price-trends-v1");
   assert.equal(trends.research_only, true);
   for (const candidate of candidates.candidates) {
@@ -79,6 +79,7 @@ test("candidate lookup remains research-only and ticker exact", () => {
   const payload = { research_only: true, candidates: [{ ticker: "TSM" }, { ticker: "MU" }] };
   assert.equal(detail.candidateForTicker(payload, "tsm").ticker, "TSM");
   assert.equal(detail.candidateForTicker({ research_only: false, candidates: [{ ticker: "TSM" }] }, "TSM"), null);
+  assert.equal(detail.candidateForTicker({ schema_version: "idea-engine-v3.1", research_only: true, candidates: [{ ticker: "TSM" }] }, "TSM").ticker, "TSM");
 });
 
 test("manual watchlist add is idempotent", () => {

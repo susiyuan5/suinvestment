@@ -118,6 +118,7 @@ class FreePublicDataProviderTests(unittest.TestCase):
         self.assertNotIn("OCTAGON_API_KEY", workflow)
         self.assertNotIn("requirements-octagon", workflow)
         self.assertIn("--provider free", workflow)
+        self.assertIn("research/results/v3_1/idea-engine", workflow)
 
 
 if __name__ == "__main__":

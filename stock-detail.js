@@ -183,7 +183,7 @@
       var evidence = doc.getElementById("stockDetailEvidence"); evidence.innerHTML = ""; safeEvidence(candidate).forEach(function (item) { var link = doc.createElement("a"); link.href = item.url; link.target = "_blank"; link.rel = "noopener noreferrer"; var source = doc.createElement("strong"); source.textContent = item.source || "来源"; var date = doc.createElement("small"); date.textContent = "发布日期：" + (item.published_at ? new Date(item.published_at).toLocaleDateString("zh-CN") : "暂无"); link.append(source, date); evidence.appendChild(link); });
       if (!evidence.children.length) { var empty = doc.createElement("div"); empty.textContent = "暂无可验证来源。"; evidence.appendChild(empty); }
       var v3Panel = doc.getElementById("stockDetailV3Research");
-      if (v3Panel && candidate.schema_version === "idea-engine-v3") {
+      if (v3Panel && ["idea-engine-v3", "idea-engine-v3.1"].indexOf(candidate.schema_version) >= 0) {
         v3Panel.hidden = false;
         var v3Facts = doc.getElementById("stockDetailV3Facts"); v3Facts.innerHTML = "";
         appendOptionalFact(doc, v3Facts, "研究类型", candidate.research_type);
@@ -197,6 +197,12 @@
         appendOptionalFact(doc, v3Facts, "下一步研究动作", candidate.next_workflow);
         appendOptionalFact(doc, v3Facts, "组合关系", candidate.portfolio_fit_status);
         appendOptionalFact(doc, v3Facts, "研究 as-of", candidate.as_of);
+        if (candidate.schema_version === "idea-engine-v3.1") {
+          appendOptionalFact(doc, v3Facts, "研究周期", "短线 1–4 周；以 4 周相对 QQQ 表现为主要验证目标");
+          appendOptionalFact(doc, v3Facts, "数据完整度", Number(candidate.evidence_coverage_score).toFixed(1) + "%");
+          appendOptionalFact(doc, v3Facts, "证据独立度", Number(candidate.evidence_independence_score).toFixed(1) + "%");
+          appendOptionalFact(doc, v3Facts, "模型校准度", candidate.model_calibration_score === null || candidate.model_calibration_score === undefined ? "尚未验证" : Number(candidate.model_calibration_score).toFixed(1) + "%");
+        }
         var contributions = doc.getElementById("stockDetailV3Contributions"); contributions.innerHTML = "";
         if (candidate.score_contributions) { var contributionTitle = doc.createElement("h3"); contributionTitle.textContent = "评分贡献"; contributions.appendChild(contributionTitle); var contributionText = doc.createElement("p"); contributionText.textContent = Object.keys(candidate.score_contributions).map(function (key) { return key + " " + Number(candidate.score_contributions[key]).toFixed(1); }).join("；"); contributions.appendChild(contributionText); }
         var gates = doc.getElementById("stockDetailV3Gates"); gates.innerHTML = ""; var gateTitle = doc.createElement("h3"); gateTitle.textContent = "数据门禁"; gates.appendChild(gateTitle); var gateText = doc.createElement("p"); gateText.textContent = "已通过：" + (candidate.gates_passed || []).join("、") + "；未通过：" + (candidate.gates_failed || []).join("、"); gates.appendChild(gateText);
@@ -214,7 +220,7 @@
     Promise.allSettled([
       fetchJsonWithTimeout(fetcher, quoteUrl, { cache: "no-cache" }, 4500).then(parseYahooChart),
       fetcher("data/idea-engine-v3/price-trends.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("static trend unavailable"); return response.json(); }).then(function (payload) { return parseStaticTrend(payload, ticker); }),
-      fetcher("research/results/v3/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("v3 research unavailable"); return response.json(); }).catch(function () { return fetcher("research/results/v2/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("research unavailable"); return response.json(); }); }),
+      fetcher("research/results/v3_1/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("v3.1 research unavailable"); return response.json(); }).catch(function () { return fetcher("research/results/v3/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("v3 research unavailable"); return response.json(); }); }).catch(function () { return fetcher("research/results/v2/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("research unavailable"); return response.json(); }); }),
       fetcher("data/research-universe-sector-balanced-80.json", { cache: "no-cache" }).then(function (response) { return response.ok ? response.json() : null; }).catch(function () { return null; })
     ]).then(function (values) {
       var liveQuote = values[0].status === "fulfilled" ? values[0].value : null;

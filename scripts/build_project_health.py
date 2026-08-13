@@ -153,17 +153,18 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
     core_validity = core_summary.get("validity", {}) if isinstance(core_summary, dict) else {}
     core_preset = load(root / "data" / "core-satellite-v4.json", {})
     core_strategy = (core_summary.get("strategies", {}).get("core_satellite_v1", {}) if isinstance(core_summary, dict) else {})
+    v31_idea_root = root / "research" / "results" / "v3_1" / "idea-engine"
     v3_idea_root = root / "research" / "results" / "v3" / "idea-engine"
     v2_idea_root = root / "research" / "results" / "v2" / "idea-engine"
-    idea_root = v3_idea_root if (v3_idea_root / "latest-candidates.json").exists() else v2_idea_root
-    idea_version = "idea-engine-v3" if idea_root == v3_idea_root else "idea-engine-v1"
+    idea_root = next((candidate for candidate in (v31_idea_root, v3_idea_root, v2_idea_root) if (candidate / "latest-candidates.json").exists()), v2_idea_root)
+    idea_version = "idea-engine-v3.1" if idea_root == v31_idea_root else "idea-engine-v3" if idea_root == v3_idea_root else "idea-engine-v1"
     idea_latest = load(idea_root / "latest-candidates.json", {})
     idea_provider = load(idea_root / "provider-status.json", {})
     idea_shadow = load(idea_root / "shadow" / "governance-report.json", {})
     idea_candidates = idea_latest.get("candidates", []) if isinstance(idea_latest, dict) else []
     idea_outcomes = load(idea_root / "shadow" / "outcomes.json", {}).get("outcomes", [])
     idea_complete_mature = sum(
-        all(row.get("horizons", {}).get(str(horizon), {}).get("status") == "matured" for horizon in (1, 4, 12))
+        all(row.get("horizons", {}).get(str(horizon), {}).get("status") == "matured" for horizon in ((1, 4) if idea_version == "idea-engine-v3.1" else (1, 4, 12)))
         for row in idea_outcomes
     )
     complete_mature = sum(
@@ -249,7 +250,7 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
         "idea_engine": {
             "schema_version": idea_version,
             "methodology_version": idea_latest.get("methodology_version") if isinstance(idea_latest, dict) else None,
-            "result_source": "v3" if idea_version == "idea-engine-v3" else "历史 v2 结果",
+            "result_source": "v3.1-short-term" if idea_version == "idea-engine-v3.1" else "v3" if idea_version == "idea-engine-v3" else "历史 v2 结果",
             "last_successful_run": idea_latest.get("generated_at") if isinstance(idea_latest, dict) else None,
             "active_provider": idea_provider.get("active_provider") if isinstance(idea_provider, dict) else None,
             "paid_api_key_required": False,
@@ -267,6 +268,7 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
             ),
             "shadow_observation_count": len(load(idea_root / "shadow" / "observations.json", {}).get("observations", [])),
             "shadow_mature_count": idea_complete_mature,
+            "primary_horizon_weeks": idea_latest.get("research_horizon", {}).get("primary_horizon_weeks") if isinstance(idea_latest, dict) else None,
             "human_review_gate": bool(idea_shadow.get("manual_review_eligible", False)),
             "live_promotion_eligible": False,
             "model_degraded": idea_shadow.get("status") == "DEGRADED",
@@ -352,6 +354,8 @@ def markdown(payload: dict) -> str:
     lines += ["", "## SnapTrade Personal 只读同步", "", f"- Status: `{snaptrade.get('status')}`", f"- Connection: `{snaptrade.get('connection_type')}`", f"- Encrypted snapshot: `{snaptrade.get('encrypted_snapshot_present')}`", "- No trading: `true`", "- Requires human review: `true`", ""]
     research = payload.get("research_pipeline", {})
     lines += ["## Research Pipeline", "", f"- DCA-L2 v2 valid: `{research.get('dca_l2_v2_valid')}`", f"- Schedule events: `{research.get('schedule_event_count')}`", f"- Executed trades: `{research.get('executed_trade_count')}`", "- Scope: `research_only`", ""]
+    idea = payload.get("idea_engine", {})
+    lines += ["## Idea Engine", "", f"- Version: `{idea.get('schema_version')}`", f"- Source: `{idea.get('result_source')}`", f"- Primary horizon: `{idea.get('primary_horizon_weeks')}` weeks", f"- Shadow observations: `{idea.get('shadow_observation_count')}`", f"- Mature short-term outcomes: `{idea.get('shadow_mature_count')}`", f"- Human review gate: `{idea.get('human_review_gate')}`", "- Scope: research only; never enters DCA or automatic trading.", ""]
     return "\n".join(lines)
 
 

@@ -1,4 +1,4 @@
-name: Update Idea Engine v3 Shadow
+name: Update Idea Engine v3.1 Short-term Shadow
 
 on:
   schedule:
@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: update-idea-engine-v3
+  group: update-idea-engine-v3-1
   cancel-in-progress: true
 
 jobs:
@@ -41,10 +41,10 @@ jobs:
           print("provider_manifest_valid=true")
           PY
 
-      - name: Generate isolated v3 candidates from free public data
+      - name: Generate isolated v3.1 candidates from free public data
         env:
           PYTHONPATH: .
-        run: python -m research.idea_engine.v3.run_idea_engine_v3 --provider free --output research/results/v3/idea-engine
+        run: python -m research.idea_engine.v3.run_idea_engine_v3 --provider free --output research/results/v3_1/idea-engine
 
       - name: Build same-origin research price fallback
         run: python scripts/build_idea_price_trends.py
@@ -62,8 +62,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: automation/update-idea-engine-shadow
           delete-branch: true
-          commit-message: "Update Idea Engine Shadow results"
-          title: "Update Idea Engine Shadow results"
+          commit-message: "Update Idea Engine v3.1 short-term Shadow results"
+          title: "Update Idea Engine v3.1 short-term Shadow results"
           draft: true
           body: |
             仅更新潜力股 Shadow 研究结果。
@@ -72,7 +72,8 @@ jobs:
             - 不连接券商
             - 不自动交易
             - 候选结果仅可人工复核
+            - 1–4 周为短线验证窗口，12 周仅监测信号衰减
             - 数据源为免费 SEC EDGAR 与公开价格数据，无需付费 API Key
           add-paths: |
-            research/results/v3/idea-engine/**
+            research/results/v3_1/idea-engine/**
             data/idea-engine-v3/price-trends.json
