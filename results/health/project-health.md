@@ -1,24 +1,25 @@
 # Project Health
 
 - Status: **WARNING**
-- Generated: `2026-08-12T14:44:17.800458+00:00`
+- Generated: `2026-08-13T14:44:45.350339+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
 - `pending_idea_engine_pr`
+- `workflow_pages_smoke_pending`
 
 ## Historical Coverage
 
-- QQQ: 271 rows; latest `2026-08-07`; lag `5` days
-- SPY: 271 rows; latest `2026-08-07`; lag `5` days
+- QQQ: 271 rows; latest `2026-08-07`; lag `6` days
+- SPY: 271 rows; latest `2026-08-07`; lag `6` days
 
 ## Workflows
 
 - market_update: `completed` / `success`
 - historical_update: `completed` / `success`
 - quality_checks: `completed` / `success`
-- pages_smoke: `completed` / `success`
+- pages_smoke: `in_progress` / `pending`
 - shadow_update: `completed` / `success`
 - idea_engine_update: `completed` / `success`
 
@@ -30,7 +31,7 @@
 
 ## Watchlist
 
-- Static fallback status: `ready`
+- Static fallback status: `unknown`
 - Runtime primary: `Yahoo Finance chart API`
 - Same-origin fallback: `data/backtest-prices.json`
 
@@ -40,6 +41,7 @@
 - Complete mature outcomes: `0`
 - Human review gate: `False`
 - Live promotion eligible: `false`
+
 
 ## SnapTrade Personal 只读同步
 
