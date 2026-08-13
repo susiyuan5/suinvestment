@@ -186,12 +186,15 @@
       if (v3Panel && ["idea-engine-v3", "idea-engine-v3.1"].indexOf(candidate.schema_version) >= 0) {
         v3Panel.hidden = false;
         var v3Facts = doc.getElementById("stockDetailV3Facts"); v3Facts.innerHTML = "";
-        appendOptionalFact(doc, v3Facts, "研究类型", candidate.research_type);
+        appendOptionalFact(doc, v3Facts, "研究类型", typeof engine.researchTypeLabel === "function" ? engine.researchTypeLabel(candidate.research_type) : candidate.research_type);
         appendOptionalFact(doc, v3Facts, "为什么现在", candidate.why_now);
         appendOptionalFact(doc, v3Facts, "市场可能忽略什么", candidate.variant_wedge);
         appendOptionalFact(doc, v3Facts, "主题暴露证据", candidate.exposure_proof);
         appendOptionalFact(doc, v3Facts, "市场预期风险", candidate.expectations_risk);
-        appendOptionalFact(doc, v3Facts, "第一否决风险", candidate.first_rejection);
+        var limitations = typeof engine.researchLimitations === "function" ? engine.researchLimitations(candidate) : candidate.research_limitations;
+        var killRisks = typeof engine.thesisKillRisks === "function" ? engine.thesisKillRisks(candidate) : candidate.what_kills_thesis;
+        appendOptionalFact(doc, v3Facts, "研究限制", limitations);
+        appendOptionalFact(doc, v3Facts, "公司假设失效风险", killRisks);
         appendOptionalFact(doc, v3Facts, "继续研究所需条件", candidate.what_makes_investable);
         appendOptionalFact(doc, v3Facts, "假设失效条件", candidate.what_kills_thesis);
         appendOptionalFact(doc, v3Facts, "下一步研究动作", candidate.next_workflow);

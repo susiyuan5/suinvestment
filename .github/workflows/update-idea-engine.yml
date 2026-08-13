@@ -49,6 +49,11 @@ jobs:
       - name: Build same-origin research price fallback
         run: python scripts/build_idea_price_trends.py
 
+      - name: Refresh strict short-term daily OHLCV snapshot
+        env:
+          PYTHONPATH: .
+        run: python -m scripts.refresh_short_term_daily_bars
+
       - name: Validate strict short-term daily OHLCV snapshot
         env:
           PYTHONPATH: .
@@ -96,6 +101,7 @@ jobs:
           add-paths: |
             research/results/v3_1/idea-engine/**
             research/results/v3_1/short-term-trade-plans/**
+            research/results/v3_1/short-term-trade-plans-v1_1/**
             data/short-term-daily-bars-v1.json
             data/idea-engine-events-v1.json
             data/idea-engine-v3/price-trends.json

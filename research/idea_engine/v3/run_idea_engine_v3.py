@@ -156,6 +156,9 @@ def _candidate(raw: dict[str, Any], universe_row: dict[str, Any], as_of: str, co
     )
     ticker = str(raw.get("ticker") or universe_row.get("ticker") or "").upper()
     company_name = str(universe_row.get("company_name") or raw.get("company_name") or ticker)
+    research_limitations = sorted(set(gates_failed))
+    thesis_kill_risks = list(raw.get("what_kills_thesis") or [])
+    first_thesis_risk = thesis_kill_risks[0] if thesis_kill_risks else "尚未识别明确的公司假设失效条件"
     return {
         "schema_version": SCHEMA_VERSION,
         "ticker": ticker,
@@ -195,9 +198,11 @@ def _candidate(raw: dict[str, Any], universe_row: dict[str, Any], as_of: str, co
         "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
         "exposure_proof": exposure,
         "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
-        "first_rejection": sorted(set(gates_failed))[0] if gates_failed else "等待下一次财务与估值复核",
+        "first_rejection": first_thesis_risk,
+        "research_limitations": research_limitations,
+        "thesis_kill_risks": thesis_kill_risks,
         "what_makes_investable": list(raw.get("what_makes_investable") or []),
-        "what_kills_thesis": list(raw.get("what_kills_thesis") or []),
+        "what_kills_thesis": thesis_kill_risks,
         "next_workflow": workflow,
         "data_quality": {
             **quality,

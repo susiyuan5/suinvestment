@@ -88,10 +88,15 @@ class IdeaEngineV31RunnerTests(unittest.TestCase):
             self.assertEqual(top["evidence_independence_score"], 66.666667)
             self.assertIsNone(top["model_calibration_score"])
             self.assertIn("model_not_calibrated", top["gates_failed"])
+            self.assertEqual(top["independent_evidence"]["count"], 2)
+            self.assertEqual(top["research_limitations"], top["gates_failed"])
+            self.assertEqual(top["first_rejection"], "财务趋势反转")
             governance = json.loads((Path(temp_dir) / "shadow" / "governance-report.json").read_text(encoding="utf-8"))
             self.assertFalse(governance["manual_review_eligible"])
             self.assertFalse(governance["reliability_claim_eligible"])
             self.assertEqual(governance["primary_horizons_weeks"], [1, 4])
+            self.assertEqual(governance["manual_review_requirements"]["observation_count"], 26)
+            self.assertEqual(governance["reliability_requirements"]["observation_count"], 52)
             self.assertTrue((Path(temp_dir) / result["source_manifest"]["input_snapshot"]).exists())
 
     def test_retry_at_same_as_of_does_not_duplicate_or_rewrite_shadow_observation(self):

@@ -10,6 +10,8 @@ test('safe payload and research-only status labels are stable', () => {
   assert.equal(plan.statusLabel('simulation_only'), '\u4ec5\u7814\u7a76\u6f14\u7ec3');
   assert.equal(plan.statusLabel('blocked'), '\u6570\u636e\u963b\u65ad');
   assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v1', research_only: true, no_trade: true, plans: [] }).schema_version, 'short-term-trade-plan-v1');
+  assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v1.1', research_only: true, no_trade: true, plans: [] }).schema_version, 'short-term-trade-plan-v1.1');
+  assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v2', research_only: true, no_trade: true, plans: [] }), null);
 });
 
 test('indicators and position sizing are deterministic', () => {
@@ -34,4 +36,12 @@ test('short-term status labels never imply a research grade', () => {
   assert.equal(plan.statusLabel('waiting_breakout'), '等待突破');
   assert.equal(plan.statusLabel('event_blocked'), '财报风险阻断');
   assert.equal(plan.statusLabel('manual_review_ready'), '条件满足，待人工确认');
+});
+
+test('blocked plans expose one prioritized Chinese reason', () => {
+  const blocked = { status: 'blocked', reason_codes: ['TSM:rows_missing', 'common_trading_date_alignment_insufficient', 'short_term_daily_bars_unavailable'] };
+  assert.equal(plan.planSummary(blocked), '主要阻断：缺少经过验证的日线 OHLCV 数据');
+  assert.deepEqual(plan.prioritizedReasons(blocked), ['short_term_daily_bars_unavailable', 'TSM:rows_missing', 'common_trading_date_alignment_insufficient']);
+  assert.equal(plan.reasonLabel('TSM:rows_missing'), 'TSM 日线数据缺失');
+  assert.equal(plan.planSummary({ status: 'waiting_breakout', reason_codes: ['event_date_unknown', 'no_trigger'] }), '当前条件：尚未满足突破或回踩条件');
 });
