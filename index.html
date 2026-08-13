@@ -267,7 +267,7 @@
             <p class="eyebrow">持仓</p>
             <h2 id="inline-holdings-title">当前持仓</h2>
           </div>
-          <span class="inline-holdings-mode">只读数据</span>
+          <span id="inlineHoldingsSource" class="inline-holdings-mode">人工持仓 · 只读数据</span>
         </div>
         <div id="inlineHoldingsStats" class="inline-holdings-stats" aria-live="polite"></div>
         <div id="inlineHoldingsRows" class="inline-holdings-rows" aria-live="polite">
@@ -524,6 +524,14 @@
               </section>
 
               <div class="settings-account-heading"><div><h4>账户与资金</h4><p>只显示你添加的本地账户；不会保存 Wealthsimple 登录信息或真实账户号码。</p></div><button id="addWealthsimpleAccountBtn" class="secondary-button" type="button">添加账户</button></div>
+              <section class="snaptrade-sync-card" aria-labelledby="snaptradeSyncTitle">
+                <div class="settings-account-heading"><div><h4 id="snaptradeSyncTitle">Wealthsimple 自动同步</h4><p>SnapTrade Personal 只读连接；不会创建、修改或取消订单。</p></div><span id="snaptradeSyncStatus" class="settings-state-pill" role="status" aria-live="polite">已锁定 · 等待本机解密密钥</span></div>
+                <dl class="settings-fx-meta snaptrade-sync-meta"><div><dt>连接模式</dt><dd id="snaptradeConnectionSummary">未解密</dd></div><div><dt>最近成功同步</dt><dd id="snaptradeSyncLastSuccess">--</dd></div><div><dt>数据 as-of</dt><dd id="snaptradeSyncAsOf">--</dd></div><div><dt>账户数量</dt><dd id="snaptradeAccountCount">--</dd></div><div><dt>持仓数量</dt><dd id="snaptradePositionCount">--</dd></div></dl>
+                <label for="snaptradeSnapshotKeyInput"><span>导入本机解密密钥</span><input id="snaptradeSnapshotKeyInput" type="password" autocomplete="off" placeholder="32 字节 Base64 密钥" aria-describedby="snaptradeSyncWarning"></label>
+                <div class="settings-advanced-actions"><button id="snaptradeImportKeyBtn" class="secondary-button" type="button">导入并解密</button><button id="snaptradeForgetKeyBtn" class="danger-button" type="button">忘记本机解密密钥</button></div>
+                <label for="snaptradeHoldingsSourceMode"><span>实际持仓来源</span><select id="snaptradeHoldingsSourceMode"><option value="automatic">使用自动持仓</option><option value="manual">暂时使用人工持仓</option></select></label>
+                <p id="snaptradeSyncWarning" class="status-line" role="status" aria-live="polite">自动持仓不可用时，本周决策继续使用最后有效人工持仓并要求人工复核。</p>
+              </section>
               <div id="wealthsimpleSettingsAccountCards" class="settings-account-cards" aria-live="polite"></div>
               <p id="wealthsimpleAccountsEmpty" class="settings-empty-state" hidden>尚未添加账户。添加一个本地账户后，人工计划才能按账户币种和可交易资金进行核对。</p>
               <p id="wealthsimpleAccountStatus" class="status-line" role="status" aria-live="polite"></p>
@@ -712,5 +720,7 @@
     <script src="project-health.js?v=health-2"></script>
     <script src="wealthsimple-execution.js?v=wealthsimple-v1"></script>
     <script src="settings-center.js?v=settings-center-v2"></script>
+    <script src="snaptrade-holdings-store.js?v=snaptrade-readonly-v1"></script>
+    <script src="snaptrade-holdings-view.js?v=snaptrade-readonly-v1"></script>
   </body>
 </html>

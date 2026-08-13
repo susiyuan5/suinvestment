@@ -1,0 +1,47 @@
+name: Sync encrypted Wealthsimple holdings
+
+on:
+  schedule:
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: snaptrade-holdings-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SNAPTRADE_CLIENT_ID: ${{ secrets.SNAPTRADE_CLIENT_ID }}
+      SNAPTRADE_CONSUMER_KEY: ${{ secrets.SNAPTRADE_CONSUMER_KEY }}
+      HOLDINGS_SNAPSHOT_KEY: ${{ secrets.HOLDINGS_SNAPSHOT_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node scripts/sync-snaptrade-holdings.mjs
+      - run: node scripts/validate-encrypted-holdings.mjs
+      - run: npm test
+      - run: python -m unittest discover -s tests
+      - run: git diff --check
+      - name: Commit changed encrypted snapshot
+        shell: bash
+        run: |
+          if git diff --quiet -- data/private/wealthsimple-holdings.enc.json; then
+            echo "No holdings changes."
+            exit 0
+          fi
+          git add data/private/wealthsimple-holdings.enc.json
+          test "$(git diff --cached --name-only)" = "data/private/wealthsimple-holdings.enc.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(data): refresh encrypted Wealthsimple holdings"
+          git push origin main

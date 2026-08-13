@@ -41,6 +41,14 @@
 - Human review gate: `False`
 - Live promotion eligible: `false`
 
+## SnapTrade Personal 只读同步
+
+- Status: `locked`
+- Connection: `read`
+- Encrypted snapshot: `True`
+- No trading: `true`
+- Requires human review: `true`
+
 ## Research Pipeline
 
 - DCA-L2 v2 valid: `True`

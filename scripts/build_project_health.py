@@ -179,6 +179,8 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
         shadow_missing_rate = float(shadow_missing_count) / observation_total
     else:
         shadow_missing_rate = load(root / "research" / "results" / "phase6s" / "shadow-observation-outcomes.json", {}).get("metrics", {}).get("missing_price_frequency")
+    encrypted_snapshot = load(root / "data" / "private" / "wealthsimple-holdings.enc.json")
+    snaptrade_snapshot_valid = isinstance(encrypted_snapshot, dict) and encrypted_snapshot.get("schema_version") == "wealthsimple-holdings-encrypted-v1" and encrypted_snapshot.get("algorithm") == "AES-256-GCM"
     return {
         "version": "project-health-v1",
         "generated_at": now.astimezone(timezone.utc).isoformat(),
@@ -187,6 +189,18 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
         "manual_decision_only": True,
         "broker_connected": False,
         "automatic_trading": False,
+        "snaptrade_readonly": {
+            "status": "locked" if snaptrade_snapshot_valid else "blocked",
+            "mode": "Personal",
+            "connection_type": "read",
+            "encrypted_snapshot_present": snaptrade_snapshot_valid,
+            "last_snapshot_generated_at": encrypted_snapshot.get("generated_at") if snaptrade_snapshot_valid else None,
+            "accounts_count": None,
+            "positions_count": None,
+            "manual_review_required": True,
+            "no_trading": True,
+            "note": "浏览器只有在用户导入本地密钥后才解密；健康状态不代表可交易。",
+        },
         "issues": sorted(set(issues)),
         "market_snapshot": {
             "generated_at": market.get("generatedAt"), "lag_days": market_lag,
@@ -327,6 +341,8 @@ def markdown(payload: dict) -> str:
             lines.append(f"- {name}: none")
     lines += ["", "## Watchlist", "", f"- Static fallback status: `{payload['watchlist']['status']}`", f"- Runtime primary: `{payload['watchlist']['runtime_primary']}`", f"- Same-origin fallback: `{payload['watchlist']['same_origin_fallback']}`"]
     lines += ["", "## Shadow", "", f"- Observation runs: `{payload['shadow']['observation_runs_available']}`", f"- Complete mature outcomes: `{payload['shadow']['complete_mature_outcome_count']}`", f"- Human review gate: `{payload['shadow']['human_review_gate']}`", "- Live promotion eligible: `false`", ""]
+    snaptrade = payload.get("snaptrade_readonly", {})
+    lines += ["", "## SnapTrade Personal 只读同步", "", f"- Status: `{snaptrade.get('status')}`", f"- Connection: `{snaptrade.get('connection_type')}`", f"- Encrypted snapshot: `{snaptrade.get('encrypted_snapshot_present')}`", "- No trading: `true`", "- Requires human review: `true`", ""]
     research = payload.get("research_pipeline", {})
     lines += ["## Research Pipeline", "", f"- DCA-L2 v2 valid: `{research.get('dca_l2_v2_valid')}`", f"- Schedule events: `{research.get('schedule_event_count')}`", f"- Executed trades: `{research.get('executed_trade_count')}`", "- Scope: `research_only`", ""]
     return "\n".join(lines)
