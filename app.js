@@ -928,6 +928,8 @@ amountBreakdown: "金额分解",
     coreSatellitePresetReady: false,
     coreSatellitePresetError: "",
     portfolioRiskInput: normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {})),
+    manualPortfolioRiskInput: normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {})),
+    portfolioRiskSource: "manual",
     deployment: normalizeDeployment(loadJson(STORAGE_KEYS.deployment, DEFAULT_DEPLOYMENT)),
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {}),
@@ -943,6 +945,24 @@ amountBreakdown: "金额分解",
   };
 
   const cardsEl = document.getElementById("cards");
+  window.addEventListener("snaptrade:holdings-updated", function (event) {
+    const detail = event.detail || {};
+    if (detail.status !== "ready" || !detail.portfolioRisk || (detail.sourceMode || "automatic") !== "automatic") return;
+    state.portfolioRiskInput = normalizePortfolioRiskInput(detail.portfolioRisk);
+    state.portfolioRiskSource = "snaptrade_automatic";
+    if (state.rows && state.rows.size) render();
+  });
+  window.addEventListener("snaptrade:holdings-mode", function (event) {
+    if (event.detail && event.detail.mode === "automatic") return;
+    state.portfolioRiskInput = normalizePortfolioRiskInput(state.manualPortfolioRiskInput);
+    state.portfolioRiskSource = "manual";
+    if (state.rows && state.rows.size) render();
+  });
+  window.addEventListener("snaptrade:holdings-forgotten", function () {
+    state.portfolioRiskInput = normalizePortfolioRiskInput(state.manualPortfolioRiskInput);
+    state.portfolioRiskSource = "manual";
+    if (state.rows && state.rows.size) render();
+  });
   const orderTextEl = document.getElementById("orderText");
   const dcaPreviewRowsEl = document.getElementById("dcaPreviewRows");
   const dcaLedgerSummaryEl = document.getElementById("dcaLedgerSummary");
@@ -1032,6 +1052,7 @@ amountBreakdown: "金额分解",
   const adjustAllocationBtn = document.getElementById("adjustAllocationBtn");
   const inlineHoldingsStatsEl = document.getElementById("inlineHoldingsStats");
   const inlineHoldingsRowsEl = document.getElementById("inlineHoldingsRows");
+  const inlineHoldingsSourceEl = document.getElementById("inlineHoldingsSource");
   const dataQualityPanelEl = document.getElementById("dataQualityPanel");
   const dataQualityFreshEl = document.getElementById("dataQualityFresh");
   const dataQualityStaleEl = document.getElementById("dataQualityStale");
@@ -6171,6 +6192,7 @@ function equalizeAllocations() {
 
   function renderInlineHoldings(entries, portfolioRisk) {
     if (!inlineHoldingsStatsEl || !inlineHoldingsRowsEl) return;
+    if (inlineHoldingsSourceEl) inlineHoldingsSourceEl.textContent = state.portfolioRiskSource === "snaptrade_automatic" ? "Wealthsimple 自动同步 · 只读数据" : "人工持仓 · 只读数据";
     const positions = portfolioRisk && portfolioRisk.positions ? portfolioRisk.positions : {};
     const holdings = (entries || []).map(function (entry) {
       const position = positions[entry.stock.symbol] || {};
