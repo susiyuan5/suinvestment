@@ -47,3 +47,33 @@ test("Shadow reliability progress uses report requirements", () => {
   const progress = engine.shadowProgress({ observation_count: 1, calendar_week_count: 1, primary_complete_count: 0, reliability_requirements: { observation_count: 52, calendar_week_count: 52, primary_complete_count: 26 } });
   assert.equal(progress, "Shadow 校准进度：观察 1/52 次 · 日历周 1/52 · 完整成熟结果 0/26");
 });
+
+test("historical OOS is accepted only as a separate no-trade price-timing layer", () => {
+  const payload = {
+    schema_version: "historical-oos-price-timing-v1",
+    research_only: true,
+    no_trade: true,
+    scope: "price_timing_layer_only",
+    composite_score_calibrated: false,
+    current_mappings: {
+      TSM: {
+        calibration_bin: 3,
+        oos_samples: 975,
+        oos_origin_dates: 63,
+        oos_cost_adjusted_hit_rate: 0.4226,
+        oos_hit_rate_ci_low: 0.3436,
+        oos_hit_rate_ci_high: 0.506,
+        mean_oos_net_relative_return: -0.01397,
+        evidence_status: "no_historical_edge"
+      }
+    }
+  };
+  assert.equal(engine.safeHistoricalOos(payload), payload);
+  assert.equal(engine.safeHistoricalOos({ ...payload, composite_score_calibrated: true }), null);
+  const details = engine.historicalOosDetails("tsm", payload);
+  assert.match(details.text, /永久留出 975 个样本、63 个独立周/);
+  assert.match(details.text, /命中率 42.3%/);
+  assert.match(details.text, /未形成历史优势/);
+  assert.match(details.boundary, /不校验综合分/);
+  assert.match(details.boundary, /幸存者偏差/);
+});

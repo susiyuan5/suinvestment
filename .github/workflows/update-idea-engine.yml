@@ -73,6 +73,16 @@ jobs:
           PYTHONPATH: .
         run: python -m research.idea_engine.v3.short_term_trade_plan --output research/results/v3_1/short-term-trade-plans-v1_1/latest.json
 
+      - name: Refresh extended history for permanent OOS calibration
+        env:
+          PYTHONPATH: .
+        run: python -m scripts.refresh_short_term_daily_bars --start 2020-01-01 --output "$RUNNER_TEMP/historical-oos-bars.json"
+
+      - name: Generate leakage-aware historical OOS price-timing report
+        env:
+          PYTHONPATH: .
+        run: python -m research.idea_engine.v3.historical_oos --prices "$RUNNER_TEMP/historical-oos-bars.json"
+
       - name: Run complete quality checks
         run: |
           python -m pip install "pandas>=2,<3"
@@ -97,11 +107,13 @@ jobs:
             - 不自动交易
             - 候选结果仅可人工复核
             - 1–4 周为短线验证窗口，12 周仅监测信号衰减
+            - 历史 OOS 只校验价格择时层，冻结训练边界，不代替实时 Shadow
             - 数据源为免费 SEC EDGAR 与公开价格数据，无需付费 API Key
           add-paths: |
             research/results/v3_1/idea-engine/**
             research/results/v3_1/short-term-trade-plans/**
             research/results/v3_1/short-term-trade-plans-v1_1/**
+            research/results/v3_1/historical-oos-price-timing/**
             data/short-term-daily-bars-v1.json
             data/idea-engine-events-v1.json
             data/idea-engine-v3/price-trends.json
