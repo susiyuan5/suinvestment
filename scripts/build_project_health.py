@@ -153,11 +153,15 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
     core_validity = core_summary.get("validity", {}) if isinstance(core_summary, dict) else {}
     core_preset = load(root / "data" / "core-satellite-v4.json", {})
     core_strategy = (core_summary.get("strategies", {}).get("core_satellite_v1", {}) if isinstance(core_summary, dict) else {})
-    idea_latest = load(root / "research" / "results" / "v2" / "idea-engine" / "latest-candidates.json", {})
-    idea_provider = load(root / "research" / "results" / "v2" / "idea-engine" / "provider-status.json", {})
-    idea_shadow = load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "governance-report.json", {})
+    v3_idea_root = root / "research" / "results" / "v3" / "idea-engine"
+    v2_idea_root = root / "research" / "results" / "v2" / "idea-engine"
+    idea_root = v3_idea_root if (v3_idea_root / "latest-candidates.json").exists() else v2_idea_root
+    idea_version = "idea-engine-v3" if idea_root == v3_idea_root else "idea-engine-v1"
+    idea_latest = load(idea_root / "latest-candidates.json", {})
+    idea_provider = load(idea_root / "provider-status.json", {})
+    idea_shadow = load(idea_root / "shadow" / "governance-report.json", {})
     idea_candidates = idea_latest.get("candidates", []) if isinstance(idea_latest, dict) else []
-    idea_outcomes = load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "outcomes.json", {}).get("outcomes", [])
+    idea_outcomes = load(idea_root / "shadow" / "outcomes.json", {}).get("outcomes", [])
     idea_complete_mature = sum(
         all(row.get("horizons", {}).get(str(horizon), {}).get("status") == "matured" for horizon in (1, 4, 12))
         for row in idea_outcomes
@@ -243,13 +247,15 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
             "healthy_scope_note": "Healthy is operational workflow status only; it does not mean the strategy is effective or trading is approved.",
         },
         "idea_engine": {
-            "schema_version": "idea-engine-v1",
+            "schema_version": idea_version,
+            "methodology_version": idea_latest.get("methodology_version") if isinstance(idea_latest, dict) else None,
+            "result_source": "v3" if idea_version == "idea-engine-v3" else "历史 v2 结果",
             "last_successful_run": idea_latest.get("generated_at") if isinstance(idea_latest, dict) else None,
             "active_provider": idea_provider.get("active_provider") if isinstance(idea_provider, dict) else None,
             "paid_api_key_required": False,
             "provider_status": idea_provider.get("providers", {}) if isinstance(idea_provider, dict) else {},
             "data_freshness": idea_latest.get("as_of") if isinstance(idea_latest, dict) else None,
-            "candidate_counts": {status: sum(1 for row in idea_candidates if row.get("status") == status) for status in ("A", "B", "C", "blocked")},
+            "candidate_counts": {status: sum(1 for row in idea_candidates if row.get("status") == status) for status in ("A", "B", "C", "A_RESEARCH", "B_WATCH", "C_SCREEN", "VALUATION_GATED", "EXPOSURE_UNPROVEN", "BLOCKED", "REJECTED")},
             "single_source_dependency_count": sum(
                 "single_provider_score_dependency" in row.get("data_quality", {}).get("gates_failed", [])
                 or "单源依赖" in str(row.get("conflicts", []))
@@ -259,10 +265,11 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
                 "free_source_scope_limited" in row.get("data_quality", {}).get("gates_failed", [])
                 for row in idea_candidates
             ),
-            "shadow_observation_count": len(load(root / "research" / "results" / "v2" / "idea-engine" / "shadow" / "observations.json", {}).get("observations", [])),
+            "shadow_observation_count": len(load(idea_root / "shadow" / "observations.json", {}).get("observations", [])),
             "shadow_mature_count": idea_complete_mature,
             "human_review_gate": bool(idea_shadow.get("manual_review_eligible", False)),
             "live_promotion_eligible": False,
+            "model_degraded": idea_shadow.get("status") == "DEGRADED",
             "status": "blocked" if idea_provider.get("status") != "ready" else "manual_review_only" if idea_shadow.get("manual_review_eligible") else "shadow_only",
             "scope_note": "Idea Engine 只影响潜力股研究，不影响 DCA 或人工计划。",
         },

@@ -40,6 +40,12 @@ REQUIRED_IDS = {
     "ideaEngineStatus",
     "ideaEngineMaturity",
     "ideaEngineRows",
+    "ideaEngineStatusFilter",
+    "ideaEngineIndustryFilter",
+    "ideaEngineTypeFilter",
+    "ideaEngineFitFilter",
+    "ideaEngineSort",
+    "ideaEngineClearFilters",
 }
 REQUIRED_PRE_APP_SCRIPTS = {
     "market-data.js", "market-analysis.js", "signal-engine.js", "portfolio-policy.js",
@@ -50,6 +56,7 @@ DETAIL_REQUIRED_IDS = {
     "stockDetailStatus", "stockDetailContent", "stockDetailTicker", "stockDetailCompanyName",
     "stockDetailPrice", "stockDetailChart", "stockDetailChartSummary", "stockDetailCompanyFacts",
     "stockDetailResearchTitle", "stockDetailEvidence", "stockDetailAddWatchlist",
+    "stockDetailV3Research", "stockDetailV3Questions", "stockDetailV3Contributions", "stockDetailV3Gates",
 }
 
 
