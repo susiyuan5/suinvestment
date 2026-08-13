@@ -7,8 +7,8 @@ const config = { indicators: { atr_period: 14 }, sizing: { risk_budget_pct_asset
 
 test('safe payload and research-only status labels are stable', () => {
   assert.equal(plan.statusLabel('conditional_review'), '条件满足，待人工确认');
-  assert.equal(plan.statusLabel('simulation_only'), '仅作研究演练');
-  assert.equal(plan.statusLabel('blocked'), '安全门禁阻断');
+  assert.equal(plan.statusLabel('simulation_only'), '\u4ec5\u7814\u7a76\u6f14\u7ec3');
+  assert.equal(plan.statusLabel('blocked'), '\u6570\u636e\u963b\u65ad');
   assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v1', research_only: true, no_trade: true, plans: [] }).schema_version, 'short-term-trade-plan-v1');
 });
 
@@ -28,4 +28,10 @@ test('missing sizing inputs never become an order', () => {
   assert.equal(size.shares, null);
   const payload = { schema_version: 'short-term-trade-plan-v1', research_only: true, no_trade: true, plans: [{ ticker: 'AAPL', status: 'simulation_only', reason_codes: ['event_date_unknown'] }] };
   assert.equal(plan.planForTicker(payload, 'aapl').status, 'simulation_only');
+});
+
+test('short-term status labels never imply a research grade', () => {
+  assert.equal(plan.statusLabel('waiting_breakout'), '等待突破');
+  assert.equal(plan.statusLabel('event_blocked'), '财报风险阻断');
+  assert.equal(plan.statusLabel('manual_review_ready'), '条件满足，待人工确认');
 });

@@ -51,7 +51,8 @@ class ShortTermTradePlanTests(unittest.TestCase):
         rows[-1]["volume"] = 200
         benchmark = series([100 + i * 0.1 for i in range(80)])
         result = evaluate_plan(self.candidate(event_dates={}), rows, benchmark, CONFIG, as_of="2026-03-21")
-        self.assertEqual(result["status"], "simulation_only")
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn("risk_distance_out_of_bounds", result["reason_codes"])
         self.assertIn("event_date_unknown", result["reason_codes"])
         self.assertTrue(result["research_only"])
         self.assertTrue(result["no_trade"])

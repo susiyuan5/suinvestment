@@ -21,3 +21,13 @@ test("v3 statuses, filters and sorting stay Chinese and deterministic", () => {
   assert.deepEqual(engine.sortCandidates(rows, "independence").map((item) => item.ticker), ["B", "A"]);
   assert.equal(engine.formatScore(82.6457), "82.6");
 });
+
+test("research grade and short-term state stay separate", () => {
+  assert.equal(engine.gradeLabel("B_WATCH"), "B级 · 研究观察");
+  assert.equal(engine.workflowLabel("EARNINGS_REVIEW"), "建议复核财报与电话会");
+  assert.equal(engine.rejectionLabel("free_source_scope_limited"), "免费数据限制：缺少一致预期、电话会或事件催化证据");
+  const coverage = engine.coverageDetails({ evidence_coverage_score: 100, evidence_independence_score: 66.666667, evidence: [{ lineage_group: "ISSUER_DISCLOSURE" }, { lineage_group: "MARKET_PRICE" }], data_quality: { missing_fields: ["analyst_consensus", "earnings_transcript", "news_catalyst"] } });
+  assert.equal(coverage.dimension, "100.0");
+  assert.equal(coverage.critical, "40.0");
+  assert.deepEqual(coverage.missing, ["一致预期", "电话会", "事件证据"]);
+});

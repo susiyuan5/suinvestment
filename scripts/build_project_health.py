@@ -162,7 +162,7 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
     idea_provider = load(idea_root / "provider-status.json", {})
     idea_shadow = load(idea_root / "shadow" / "governance-report.json", {})
     idea_candidates = idea_latest.get("candidates", []) if isinstance(idea_latest, dict) else []
-    short_term = load(root / "research" / "results" / "v3_1" / "short-term-trade-plans" / "latest.json", {})
+    short_term = load(root / "research" / "results" / "v3_1" / "short-term-trade-plans-v1_1" / "latest.json", {}) or load(root / "research" / "results" / "v3_1" / "short-term-trade-plans" / "latest.json", {})
     short_term_plans = short_term.get("plans", []) if isinstance(short_term, dict) else []
     idea_outcomes = load(idea_root / "shadow" / "outcomes.json", {}).get("outcomes", [])
     idea_complete_mature = sum(
@@ -281,7 +281,7 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
             "schema_version": short_term.get("schema_version") if isinstance(short_term, dict) else None,
             "last_successful_run": short_term.get("generated_at") if isinstance(short_term, dict) else None,
             "candidate_count": len(short_term_plans),
-            "status_counts": {status: sum(1 for row in short_term_plans if row.get("status") == status) for status in ("conditional_review", "simulation_only", "waiting_trigger", "blocked")},
+            "status_counts": {status: sum(1 for row in short_term_plans if row.get("status") == status) for status in ("conditional_review", "manual_review_ready", "simulation_only", "waiting_trigger", "waiting_breakout", "waiting_pullback", "chase_blocked", "event_blocked", "invalidated", "blocked")},
             "shadow_mature": bool(short_term.get("shadow_mature")) if isinstance(short_term, dict) else False,
             "human_review_required": True,
             "no_trade": True,

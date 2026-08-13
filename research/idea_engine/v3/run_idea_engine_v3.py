@@ -86,6 +86,50 @@ def _research_type(raw: dict[str, Any]) -> str:
     return "QUALITY_COMPOUNDER"
 
 
+CRITICAL_EVIDENCE = (
+    ("company_filings", "公司申报与财务数据", ("SEC", "ISSUER_DISCLOSURE", "COMPANY_FILINGS")),
+    ("market_price", "价格与成交量", ("PUBLIC_PRICE", "MARKET_PRICE", "PRICE")),
+    ("analyst_consensus", "一致预期", ("ANALYST_CONSENSUS", "CONSENSUS")),
+    ("earnings_transcript", "财报电话会", ("EARNINGS_TRANSCRIPT", "TRANSCRIPT", "QUARTR")),
+    ("news_catalyst", "事件催化", ("NEWS", "CATALYST", "EVENT")),
+)
+
+
+def _evidence_coverage(evidence: list[dict[str, Any]], missing: list[str], scores: dict[str, Any], gates_failed: list[str]) -> dict[str, Any]:
+    """Expose coverage semantics without changing the scoring calculation."""
+    lineages = {str(item.get("lineage_group") or item.get("source_family") or "").upper() for item in evidence}
+    missing_set = {str(item) for item in missing}
+    available: list[str] = []
+    critical_missing: list[str] = []
+    for key, label, aliases in CRITICAL_EVIDENCE:
+        present = any(any(alias in lineage for alias in aliases) for lineage in lineages)
+        if key in missing_set or any(key in str(gate) for gate in gates_failed):
+            present = False
+        (available if present else critical_missing).append(label)
+    required = len(CRITICAL_EVIDENCE)
+    independent_count = int(scores.get("independent_lineage_count") or 0)
+    return {
+        "score_dimension_coverage": {
+            "covered": 6 - len(scores.get("missing_dimensions") or []),
+            "required": 6,
+            "percent": round(float(scores.get("evidence_coverage_score") or 0), 6),
+        },
+        "critical_evidence_coverage": {
+            "covered": len(available),
+            "required": required,
+            "percent": round(len(available) / required * 100, 6),
+            "available": available,
+            "missing": critical_missing,
+        },
+        "independent_evidence": {
+            "count": independent_count,
+            "target": 3,
+            "percent": round(min(100.0, independent_count / 3 * 100), 6),
+            "lineages": sorted(lineages - {""}),
+        },
+    }
+
+
 def _candidate(raw: dict[str, Any], universe_row: dict[str, Any], as_of: str, config: dict[str, Any], calibration: float | None) -> dict[str, Any]:
     evidence = _v3_evidence(raw.get("evidence", []), as_of, int(config["limits"]["max_evidence_age_days"]))
     dimensions = dict(raw.get("dimensions") or raw.get("family_scores") or {})
@@ -99,6 +143,7 @@ def _candidate(raw: dict[str, Any], universe_row: dict[str, Any], as_of: str, co
     missing = sorted(set(list(quality.get("missing_fields") or []) + scores["missing_dimensions"]))
     if missing:
         gates_failed.append("missing_evidence_fields")
+    coverage = _evidence_coverage(evidence, missing, scores, gates_failed)
     exposure = list(raw.get("exposure_proof") or [])
     valuation_verified = "valuation" in dimensions and "valuation" not in missing
     status, passed, workflow = classify_candidate(
@@ -145,6 +190,7 @@ def _candidate(raw: dict[str, Any], universe_row: dict[str, Any], as_of: str, co
         "gates_passed": passed,
         "gates_failed": sorted(set(gates_failed)),
         "evidence": evidence,
+        **coverage,
         "why_now": list(raw.get("what_makes_investable") or []),
         "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
         "exposure_proof": exposure,
@@ -163,6 +209,7 @@ def _candidate(raw: dict[str, Any], universe_row: dict[str, Any], as_of: str, co
                 "evidence_independence": scores["evidence_independence_score"],
                 "model_calibration": scores["model_calibration_score"],
             },
+            **coverage,
         },
         "portfolio_fit_status": "UNKNOWN",
         "portfolio_relation": {"computed_in_browser": True, "direct_position": False, "watchlist": False},

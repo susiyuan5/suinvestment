@@ -8,6 +8,7 @@ from research.idea_engine.v3.contracts import validate_https, validate_payload
 from research.idea_engine.v3.evidence import deduplicate_evidence, make_evidence
 from research.idea_engine.v3.funnel import classify_candidate
 from research.idea_engine.v3.scoring import score_candidate
+from research.idea_engine.v3.run_idea_engine_v3 import _evidence_coverage
 from research.idea_engine.v3.shadow import maturity, model_statistics
 
 
@@ -21,6 +22,14 @@ def evidence(family="SEC", content="same", stale=False, contradicts=None):
 
 
 class IdeaEngineV3Tests(unittest.TestCase):
+
+    def test_evidence_coverage_distinguishes_dimension_and_critical_evidence(self):
+        scores = {"positive_dimensions": ["financial_quality", "valuation", "demand_catalyst", "industry_cycle", "risk_liquidity_health", "expectations_confirmation"], "missing_dimensions": [], "evidence_coverage_score": 100, "independent_lineage_count": 2}
+        evidence = [{"lineage_group": "ISSUER_DISCLOSURE"}, {"lineage_group": "MARKET_PRICE"}]
+        result = _evidence_coverage(evidence, ["analyst_consensus", "earnings_transcript", "news_catalyst"], scores, ["free_source_scope_limited"])
+        self.assertEqual(result["score_dimension_coverage"]["percent"], 100)
+        self.assertEqual(result["critical_evidence_coverage"]["percent"], 40.0)
+        self.assertEqual(result["independent_evidence"]["count"], 2)
     def test_https_and_duplicate_content_are_enforced(self):
         with self.assertRaises(ValueError):
             validate_https("http://example.com")
