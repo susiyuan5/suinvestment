@@ -11,6 +11,7 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   sync:
@@ -39,6 +40,8 @@ jobs:
       - run: git diff --check
       - name: Commit changed encrypted snapshot
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if git diff --quiet -- data/private/wealthsimple-holdings.enc.json; then
             echo "No holdings changes."
@@ -49,4 +52,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(data): refresh encrypted Wealthsimple holdings"
-          git push origin main
+          branch="automation/snaptrade-holdings-${GITHUB_RUN_ID}"
+          git switch -c "$branch"
+          git push --set-upstream origin "$branch"
+          gh pr create --base main --head "$branch" --title "chore(data): refresh encrypted Wealthsimple holdings" --body "Automated encrypted Wealthsimple read-only holdings refresh. The snapshot contains no plaintext holdings or secrets." 
