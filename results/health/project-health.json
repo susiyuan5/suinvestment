@@ -1,6 +1,6 @@
 {
   "version": "project-health-v1",
-  "generated_at": "2026-08-12T14:44:17.800458+00:00",
+  "generated_at": "2026-08-13T14:44:45.350339+00:00",
   "status": "warning",
   "status_scope": "Operational data and workflow health only; not strategy validation or trading approval.",
   "manual_decision_only": true,
@@ -11,18 +11,19 @@
     "mode": "Personal",
     "connection_type": "read",
     "encrypted_snapshot_present": true,
-    "last_snapshot_generated_at": "2026-08-12T00:00:00.000Z",
+    "last_snapshot_generated_at": "2026-08-13T14:17:45.885Z",
     "accounts_count": null,
     "positions_count": null,
     "manual_review_required": true,
     "no_trading": true,
-    "note": "浏览器只有在用户导入本地密钥后才解密；健康状态不代表可交易。"
+    "note": "\u6d4f\u89c8\u5668\u53ea\u6709\u5728\u7528\u6237\u5bfc\u5165\u672c\u5730\u5bc6\u94a5\u540e\u624d\u89e3\u5bc6\uff1b\u5065\u5eb7\u72b6\u6001\u4e0d\u4ee3\u8868\u53ef\u4ea4\u6613\u3002"
   },
   "issues": [
-    "pending_idea_engine_pr"
+    "pending_idea_engine_pr",
+    "workflow_pages_smoke_pending"
   ],
   "market_snapshot": {
-    "generated_at": "2026-08-11T23:12:18.898026Z",
+    "generated_at": "2026-08-12T23:10:37.408866Z",
     "lag_days": 1,
     "fresh_symbols": 8,
     "stale_symbols": 0
@@ -33,19 +34,19 @@
       "QQQ": {
         "row_count": 271,
         "latest_date": "2026-08-07",
-        "lag_days": 5
+        "lag_days": 6
       },
       "SPY": {
         "row_count": 271,
         "latest_date": "2026-08-07",
-        "lag_days": 5
+        "lag_days": 6
       }
     }
   },
   "watchlist": {
-    "status": "ready",
+    "status": "unknown",
     "static_fallback_status": "ready",
-    "synthetic_probe_status": "ready",
+    "synthetic_probe_status": "unknown",
     "runtime_primary": "Yahoo Finance chart API",
     "same_origin_fallback": "data/backtest-prices.json",
     "fallback_symbol_rows": {
@@ -60,8 +61,8 @@
     "market_update": {
       "status": "completed",
       "conclusion": "success",
-      "updated_at": "2026-08-11T23:12:33Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31545547639"
+      "updated_at": "2026-08-12T23:10:50Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31649893050"
     },
     "historical_update": {
       "status": "completed",
@@ -72,14 +73,14 @@
     "quality_checks": {
       "status": "completed",
       "conclusion": "success",
-      "updated_at": "2026-08-12T14:44:12Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31608378077"
+      "updated_at": "2026-08-13T14:38:43Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31711158933"
     },
     "pages_smoke": {
-      "status": "completed",
-      "conclusion": "success",
-      "updated_at": "2026-08-12T03:43:47Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31560932364"
+      "status": "in_progress",
+      "conclusion": "pending",
+      "updated_at": "2026-08-13T14:44:19Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31711544734"
     },
     "shadow_update": {
       "status": "completed",
@@ -118,11 +119,11 @@
     "research_only": true
   },
   "core_satellite": {
-    "preset_version": "core-satellite-v1",
+    "preset_version": "core-satellite-v4",
     "spy_data_status": "fresh",
     "qqq_risk_signal_status": "available",
-    "core_target_pct": 60.0,
-    "satellite_target_pct": 40.0,
+    "core_target_pct": 40.0,
+    "satellite_target_pct": 60.0,
     "technology_concentration_pct": 44.13814121,
     "recent_backtest_valid": true,
     "fund_redirection_anomaly_count": 0,
@@ -160,14 +161,14 @@
   "operational_metrics": {
     "data_delay_count": 3,
     "workflow_failure_rate": 0.0,
-    "workflow_unknown_count": 0,
-    "watchlist_degradation_ratio": 0,
+    "workflow_unknown_count": 1,
+    "watchlist_degradation_ratio": null,
     "shadow_missing_rate": 0.0,
     "page_js_error_count": null,
     "data_source_response_ms": null
   },
   "versions": {
-    "market_input": "2026-08-11T23:12:18.898026Z",
+    "market_input": "2026-08-12T23:10:37.408866Z",
     "historical_input": "2026-08-08T12:53:53.399728+00:00",
     "shadow_model": "phase6s-candidate-ranking-v1",
     "v2_research": "v2-causal-baseline"
