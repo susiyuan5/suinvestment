@@ -162,6 +162,8 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
     idea_provider = load(idea_root / "provider-status.json", {})
     idea_shadow = load(idea_root / "shadow" / "governance-report.json", {})
     idea_candidates = idea_latest.get("candidates", []) if isinstance(idea_latest, dict) else []
+    short_term = load(root / "research" / "results" / "v3_1" / "short-term-trade-plans" / "latest.json", {})
+    short_term_plans = short_term.get("plans", []) if isinstance(short_term, dict) else []
     idea_outcomes = load(idea_root / "shadow" / "outcomes.json", {}).get("outcomes", [])
     idea_complete_mature = sum(
         all(row.get("horizons", {}).get(str(horizon), {}).get("status") == "matured" for horizon in ((1, 4) if idea_version == "idea-engine-v3.1" else (1, 4, 12)))
@@ -275,6 +277,16 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
             "status": "blocked" if idea_provider.get("status") != "ready" else "manual_review_only" if idea_shadow.get("manual_review_eligible") else "shadow_only",
             "scope_note": "Idea Engine 只影响潜力股研究，不影响 DCA 或人工计划。",
         },
+        "short_term_trade_plan": {
+            "schema_version": short_term.get("schema_version") if isinstance(short_term, dict) else None,
+            "last_successful_run": short_term.get("generated_at") if isinstance(short_term, dict) else None,
+            "candidate_count": len(short_term_plans),
+            "status_counts": {status: sum(1 for row in short_term_plans if row.get("status") == status) for status in ("conditional_review", "simulation_only", "waiting_trigger", "blocked")},
+            "shadow_mature": bool(short_term.get("shadow_mature")) if isinstance(short_term, dict) else False,
+            "human_review_required": True,
+            "no_trade": True,
+            "status": "research_only" if isinstance(short_term, dict) and short_term.get("research_only") is True else "unavailable",
+        },
         "operational_metrics": {
             "data_delay_count": sum(1 for lag in [market_lag] + [row["lag_days"] for row in historical_rows.values()] if lag is None or lag > 0),
             "workflow_failure_rate": failed_workflows / max(1, known_workflows),
@@ -356,6 +368,8 @@ def markdown(payload: dict) -> str:
     lines += ["## Research Pipeline", "", f"- DCA-L2 v2 valid: `{research.get('dca_l2_v2_valid')}`", f"- Schedule events: `{research.get('schedule_event_count')}`", f"- Executed trades: `{research.get('executed_trade_count')}`", "- Scope: `research_only`", ""]
     idea = payload.get("idea_engine", {})
     lines += ["## Idea Engine", "", f"- Version: `{idea.get('schema_version')}`", f"- Source: `{idea.get('result_source')}`", f"- Primary horizon: `{idea.get('primary_horizon_weeks')}` weeks", f"- Shadow observations: `{idea.get('shadow_observation_count')}`", f"- Mature short-term outcomes: `{idea.get('shadow_mature_count')}`", f"- Human review gate: `{idea.get('human_review_gate')}`", "- Scope: research only; never enters DCA or automatic trading.", ""]
+    short_term = payload.get("short_term_trade_plan", {})
+    lines += ["## Short-term trade-plan research", "", f"- Schema: `{short_term.get('schema_version')}`", f"- Candidates: `{short_term.get('candidate_count')}`", f"- Status counts: `{short_term.get('status_counts')}`", f"- Shadow mature: `{short_term.get('shadow_mature')}`", "- Scope: research-only simulation; no orders or automatic trading.", ""]
     return "\n".join(lines)
 
 

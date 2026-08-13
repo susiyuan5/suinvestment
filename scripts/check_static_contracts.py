@@ -57,6 +57,7 @@ DETAIL_REQUIRED_IDS = {
     "stockDetailPrice", "stockDetailChart", "stockDetailChartSummary", "stockDetailCompanyFacts",
     "stockDetailResearchTitle", "stockDetailEvidence", "stockDetailAddWatchlist",
     "stockDetailV3Research", "stockDetailV3Questions", "stockDetailV3Contributions", "stockDetailV3Gates",
+    "stockDetailShortTermPlan", "stockDetailShortTermPlanContent",
 }
 
 

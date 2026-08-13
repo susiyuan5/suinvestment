@@ -54,7 +54,7 @@
     return normalized ? "stock-detail.html?ticker=" + encodeURIComponent(normalized) : "";
   }
   function addText(doc, parent, tag, value, className) { var node = doc.createElement(tag); if (className) node.className = className; node.textContent = value; parent.appendChild(node); return node; }
-  function createCard(candidate, doc) {
+  function createCard(candidate, doc, shortTermPlans) {
     var ticker = normalizeTicker(candidate.ticker);
     var card = doc.createElement("article");
     card.className = "idea-engine-card";
@@ -101,7 +101,10 @@
     var links = safeEvidenceLinks(candidate); if (links.length) { var sourceBlock = doc.createElement("section"); sourceBlock.className = "idea-engine-detail-section"; addText(doc, sourceBlock, "h4", "来源链接"); links.forEach(function (item) { var link = doc.createElement("a"); link.href = item.url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = item.source; sourceBlock.appendChild(link); }); body.appendChild(sourceBlock); }
     var actionStatus = addText(doc, body, "span", "", "idea-engine-action-status"); actionStatus.setAttribute("role", "status"); actionStatus.setAttribute("aria-live", "polite");
     var button = doc.createElement("button"); button.type = "button"; button.className = "secondary-button"; button.textContent = "手动加入盯盘"; button.addEventListener("click", function () { var api = root.SuinvestmentWatchlist; if (!api || typeof api.addSymbol !== "function") { button.textContent = "填入盯盘代码"; var input = doc.getElementById("watchlistSymbolInput"); if (input) { input.value = candidate.ticker; input.focus(); } actionStatus.textContent = "当前无法安全调用盯盘添加接口，请手动确认。"; return; } button.disabled = true; Promise.resolve(api.addSymbol(candidate.ticker)).then(function (result) { actionStatus.textContent = result && result.ok ? "已加入盯盘。" : (result && result.message ? result.message : "加入盯盘失败，请人工复核。"); }).catch(function () { actionStatus.textContent = "加入盯盘失败，请人工复核。"; }).finally(function () { button.disabled = false; }); }); body.appendChild(button);
-    detail.appendChild(body); card.appendChild(detail); return card;
+    detail.appendChild(body); card.appendChild(detail);
+    var shortTermPlan = shortTermPlans && shortTermPlans[String(candidate.ticker || "").toUpperCase()];
+    if (shortTermPlan && root.ShortTermTradePlan && typeof root.ShortTermTradePlan.createCardSection === "function") card.appendChild(root.ShortTermTradePlan.createCardSection(shortTermPlan, doc));
+    return card;
   }
   function sortCandidates(candidates, sort) {
     var rows = (candidates || []).slice();
@@ -132,7 +135,7 @@
     } catch (_error) { relation.computed_in_browser = true; }
     return relation;
   }
-  function render(payload, elements, doc, governance) {
+  function render(payload, elements, doc, governance, shortTermPayload) {
     var safe = safePayload(payload); elements.rows.innerHTML = "";
     var mature = governance && governance.status === "mature" && governance.manual_review_eligible === true;
     if (!safe || safe.status === "blocked") {
@@ -143,11 +146,13 @@
     var versionLabel = safe.source_version === "v3_1" ? "当前显示 Idea Engine v3.1 短线结果；" : safe.source_version === "v2" ? "当前显示历史 v2 结果；" : "当前显示 Idea Engine v3；";
     elements.status.textContent = versionLabel + (safe.active_provider === "free_public_data" ? "已使用 SEC EDGAR 与公开价格数据加载 " : "已加载 ") + safe.candidates.length + " 个研究候选；不生成买入金额。";
     elements.maturity.textContent = "Shadow 状态：" + (mature ? "1–4 周短线样本已成熟，仅可人工复核" : "1–4 周短线样本继续观察，12 周仅监测衰减；不会自动进入定投决策");
+    var shortTermPlans = {};
+    if (root.ShortTermTradePlan && typeof root.ShortTermTradePlan.safePayload === "function") { var safeShortTerm = root.ShortTermTradePlan.safePayload(shortTermPayload); (safeShortTerm ? safeShortTerm.plans : []).forEach(function (plan) { shortTermPlans[String(plan.ticker || "").toUpperCase()] = plan; }); }
     var controls = { status: doc.getElementById("ideaEngineStatusFilter"), industry: doc.getElementById("ideaEngineIndustryFilter"), type: doc.getElementById("ideaEngineTypeFilter"), fit: doc.getElementById("ideaEngineFitFilter"), sort: doc.getElementById("ideaEngineSort") };
     function draw() {
       elements.rows.innerHTML = "";
       var candidates = filterCandidates(safe.candidates, { status: controls.status && controls.status.value, industry: controls.industry && controls.industry.value, type: controls.type && controls.type.value, fit: controls.fit && controls.fit.value });
-      candidates.forEach(function (candidate) { candidate.portfolio_relation = localPortfolioRelation(candidate); elements.rows.appendChild(createCard(candidate, doc)); });
+      candidates.forEach(function (candidate) { candidate.portfolio_relation = localPortfolioRelation(candidate); elements.rows.appendChild(createCard(candidate, doc, shortTermPlans)); });
       if (!candidates.length) addText(doc, elements.rows, "p", "没有符合当前筛选条件的候选。", "idea-engine-empty");
     }
     var rerender = function () { var sorted = sortCandidates(safe.candidates, controls.sort && controls.sort.value); safe.candidates = sorted; draw(); };
@@ -161,7 +166,7 @@
     var panel = doc.getElementById("ideaEnginePanel");
     if (panel && root.location && root.location.hash === "#ideaEnginePanel") panel.open = true;
     function fetchJson(url) { return fetcher(url, { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("idea engine unavailable"); return response.json(); }); }
-    fetchJson("research/results/v3_1/idea-engine/latest-candidates.json").catch(function () { return fetchJson("research/results/v3/idea-engine/latest-candidates.json"); }).catch(function () { return fetchJson("research/results/v2/idea-engine/latest-candidates.json").then(function (payload) { payload.source_version = "v2"; return payload; }); }).then(function (payload) { var resultRoot = payload.source_version === "v2" ? "research/results/v2" : payload.schema_version === "idea-engine-v3.1" ? "research/results/v3_1" : "research/results/v3"; return Promise.all([payload, fetchJson(resultRoot + "/idea-engine/shadow/governance-report.json").catch(function () { return null; })]); }).then(function (values) { render(values[0], elements, doc, values[1]); }).catch(function () { render(null, elements, doc, null); });
+    fetchJson("research/results/v3_1/idea-engine/latest-candidates.json").catch(function () { return fetchJson("research/results/v3/idea-engine/latest-candidates.json"); }).catch(function () { return fetchJson("research/results/v2/idea-engine/latest-candidates.json").then(function (payload) { payload.source_version = "v2"; return payload; }); }).then(function (payload) { var resultRoot = payload.source_version === "v2" ? "research/results/v2" : payload.schema_version === "idea-engine-v3.1" ? "research/results/v3_1" : "research/results/v3"; return Promise.all([payload, fetchJson(resultRoot + "/idea-engine/shadow/governance-report.json").catch(function () { return null; }), fetchJson("research/results/v3_1/short-term-trade-plans/latest.json").catch(function () { return null; })]); }).then(function (values) { render(values[0], elements, doc, values[1], values[2]); }).catch(function () { render(null, elements, doc, null, null); });
   }
   if (typeof document !== "undefined" && typeof fetch === "function") init(document, fetch);
   return { safePayload: safePayload, gradeLabel: label, formatScore: formatScore, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, normalizeTicker: normalizeTicker, detailHref: detailHref, filterCandidates: filterCandidates, sortCandidates: sortCandidates, render: render, init: init };

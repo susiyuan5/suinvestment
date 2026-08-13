@@ -143,7 +143,7 @@
     ctx.strokeStyle = closes[closes.length - 1] >= closes[0] ? "#69e6c2" : "#ff637d"; ctx.lineWidth = 2.5; ctx.stroke(); return true;
   }
   function safeEvidence(candidate) { return Array.isArray(candidate && candidate.evidence) ? candidate.evidence.map(function (item) { if (!item) return null; var url = item.url || item.canonical_url; return /^https:\/\//i.test(String(url || "")) ? Object.assign({}, item, { url: url, source: item.source || item.source_name }) : null; }).filter(Boolean) : []; }
-  function render(doc, ticker, quote, candidate, universe) {
+  function render(doc, ticker, quote, candidate, universe, shortTermPlan) {
     var engine = root.IdeaEngine || {};
     var candidateName = candidate && String(candidate.company_name || "").trim();
     if (normalizeTicker(candidateName) === ticker) candidateName = "";
@@ -211,6 +211,11 @@
       setText(doc, "stockDetailGrade", "未进入候选"); setText(doc, "stockDetailLimitations", "当前股票不在最新潜力股候选中，仅展示可获得的公司和价格资料。");
       renderList(doc, "stockDetailReasons", [], "当前没有潜力股研究依据。"); renderList(doc, "stockDetailRisks", [], "当前没有潜力股风险结论。");
     }
+    var shortTermPanel = doc.getElementById("stockDetailShortTermPlan");
+    if (shortTermPanel && root.ShortTermTradePlan && typeof root.ShortTermTradePlan.renderDetail === "function" && shortTermPlan) {
+      shortTermPanel.hidden = false;
+      root.ShortTermTradePlan.renderDetail(shortTermPlan, doc.getElementById("stockDetailShortTermPlanContent"), doc);
+    }
     doc.getElementById("stockDetailStatus").hidden = true; doc.getElementById("stockDetailContent").hidden = false;
   }
   function init(doc, fetcher) {
@@ -221,15 +226,18 @@
       fetchJsonWithTimeout(fetcher, quoteUrl, { cache: "no-cache" }, 4500).then(parseYahooChart),
       fetcher("data/idea-engine-v3/price-trends.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("static trend unavailable"); return response.json(); }).then(function (payload) { return parseStaticTrend(payload, ticker); }),
       fetcher("research/results/v3_1/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("v3.1 research unavailable"); return response.json(); }).catch(function () { return fetcher("research/results/v3/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("v3 research unavailable"); return response.json(); }); }).catch(function () { return fetcher("research/results/v2/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("research unavailable"); return response.json(); }); }),
-      fetcher("data/research-universe-sector-balanced-80.json", { cache: "no-cache" }).then(function (response) { return response.ok ? response.json() : null; }).catch(function () { return null; })
+      fetcher("data/research-universe-sector-balanced-80.json", { cache: "no-cache" }).then(function (response) { return response.ok ? response.json() : null; }).catch(function () { return null; }),
+      fetcher("research/results/v3_1/short-term-trade-plans/latest.json", { cache: "no-cache" }).then(function (response) { return response.ok ? response.json() : null; }).catch(function () { return null; })
     ]).then(function (values) {
       var liveQuote = values[0].status === "fulfilled" ? values[0].value : null;
       var staticQuote = values[1].status === "fulfilled" ? values[1].value : null;
       var quote = selectQuote(liveQuote, staticQuote);
       var research = values[2].status === "fulfilled" ? values[2].value : null;
       var universe = values[3].status === "fulfilled" ? values[3].value : null;
+      var shortTermPayload = values[4].status === "fulfilled" ? values[4].value : null;
+      var shortTermPlan = root.ShortTermTradePlan && typeof root.ShortTermTradePlan.planForTicker === "function" ? root.ShortTermTradePlan.planForTicker(shortTermPayload, ticker) : null;
       if (!quote && !research) { setText(doc, "stockDetailStatus", "公司与研究资料暂不可用，请稍后重试；不影响本周定投。"); return; }
-      render(doc, ticker, quote, candidateForTicker(research, ticker), universe);
+      render(doc, ticker, quote, candidateForTicker(research, ticker), universe, shortTermPlan);
       var addButton = doc.getElementById("stockDetailAddWatchlist"); addButton.addEventListener("click", function () { var result = addToWatchlist(root.localStorage, ticker); setText(doc, "stockDetailActionStatus", result.message); });
       if (quote && quote.points) root.addEventListener("resize", function () { renderChart(doc.getElementById("stockDetailChart"), quote.points); });
     });
