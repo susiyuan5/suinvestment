@@ -1,0 +1,62 @@
+{
+  "schema_version": "short-term-trade-plan-v1",
+  "research_only": true,
+  "execution_boundary": "manual_review_only",
+  "benchmark": "QQQ",
+  "regular_hours_only": true,
+  "indicators": {
+    "atr_period": 14,
+    "sma_periods": [10, 20, 50],
+    "prior_high_period": 20,
+    "recent_low_period": 10,
+    "volume_average_period": 20
+  },
+  "gates": {
+    "eligible_statuses": ["A_RESEARCH", "B_WATCH"],
+    "minimum_evidence_coverage": 66.0,
+    "minimum_relative_return_20": 0.0,
+    "max_data_age_days": 5,
+    "earnings_blackout_trading_days": 3,
+    "unknown_event_action": "simulation_only"
+  },
+  "breakout": {
+    "close_buffer_atr": 0.05,
+    "volume_ratio_min": 1.2,
+    "min_relative_return_5": 0.0,
+    "min_relative_return_20": 0.0
+  },
+  "pullback": {
+    "touch_tolerance": 0.02,
+    "minimum_trend_slope": 0.0
+  },
+  "risk": {
+    "entry_low_atr": -0.15,
+    "entry_high_atr": 0.25,
+    "chase_limit_atr": 0.5,
+    "structure_stop_atr": 0.1,
+    "volatility_stop_atr": 1.5,
+    "minimum_risk_pct": 0.01,
+    "maximum_risk_pct": 0.08,
+    "target_r_multiples": [1.5, 2.5]
+  },
+  "sizing": {
+    "risk_budget_pct_assets": 0.0025,
+    "maximum_notional_pct_assets": 0.02,
+    "maximum_experiment_pct_assets": 0.05,
+    "minimum_cash_buffer_pct": 0.02
+  },
+  "execution": {
+    "default_tick_size": 0.01,
+    "whole_share_first": true,
+    "fractional_supported": false,
+    "order_type": "limit",
+    "stop_type": "stop_market_with_slippage_warning",
+    "no_private_api": true
+  },
+  "shadow": {
+    "mature": false,
+    "minimum_observations": 8,
+    "minimum_calendar_weeks": 8,
+    "minimum_complete_outcomes": 4
+  }
+}
