@@ -1232,7 +1232,30 @@ amountBreakdown: "金额分解",
   if (restoreDefaultAllocationBtn) restoreDefaultAllocationBtn.addEventListener("click", restoreDefaultAllocations);
   if (undoAllocationBtn) undoAllocationBtn.addEventListener("click", undoAllocationChange);
   if (adjustAllocationBtn) adjustAllocationBtn.addEventListener("click", function () { window.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "allocation" } })); });
+  const adjustBudgetBtn = document.getElementById("adjustBudgetBtn");
+  if (adjustBudgetBtn) adjustBudgetBtn.addEventListener("click", function () { window.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "deployment" } })); });
   if (inlineHoldingsSettingsBtn) inlineHoldingsSettingsBtn.addEventListener("click", function () { window.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "accounts" } })); });
+  const dashboardAnchorNav = document.querySelector(".dashboard-anchor-nav");
+  if (dashboardAnchorNav) {
+    dashboardAnchorNav.querySelectorAll("a[href^='#']").forEach(function (link) {
+      link.addEventListener("click", function (event) {
+        const target = document.querySelector(link.getAttribute("href"));
+        if (!target) return;
+        event.preventDefault();
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+    if (window.IntersectionObserver) {
+      const observed = Array.from(dashboardAnchorNav.querySelectorAll("a[href^='#']")).map(function (link) { return document.querySelector(link.getAttribute("href")); }).filter(Boolean);
+      const observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          dashboardAnchorNav.querySelectorAll("a").forEach(function (link) { link.classList.toggle("is-active", link.getAttribute("href") === "#" + entry.target.id); });
+        });
+      }, { rootMargin: "-18% 0px -65% 0px", threshold: 0 });
+      observed.forEach(function (target) { observer.observe(target); });
+    }
+  }
 
   // This dashboard runs on the user's private device, so keep the Finnhub key
   // across browser restarts. Migrate an active session key once for a seamless
@@ -1967,6 +1990,7 @@ amountBreakdown: "金额分解",
       copyStatusEl.textContent = t("keepOneStock");
       return;
     }
+    if (!window.confirm("确认移除 " + symbol + "？这只会修改未来定投配置，不会卖出或修改真实持仓。")) return;
 
     state.portfolio = state.portfolio.filter(function (stock) {
       return stock.symbol !== symbol;
@@ -3558,6 +3582,7 @@ allocWrapper.appendChild(editBtn);
       input.value = overrideRecord ? formatSignedInput(overrideRecord.value) : "";
       card.querySelector(".source-badge").textContent = t("loading");
       card.querySelector(".action-badge").textContent = t("loading");
+      card.querySelector(".primary-buy-amount").textContent = formatCurrency(round2(state.deployment.weeklyDeployment * stock.allocation));
       card.querySelector(".weekly-change").textContent = t("loading");
       card.querySelector(".daily-change").textContent = "--";
       card.querySelector(".five-day-change").textContent = "--";
@@ -5552,6 +5577,8 @@ function equalizeAllocations() {
     card.querySelector(".risk-level").textContent = displayRiskLevel(signal.risk_level);
     card.querySelector(".multiplier").textContent = formatMultiplier(signal.multiplier);
     card.querySelector(".buy-amount").textContent = formatCurrency(signal.suggested_buy_amount);
+    const primaryAmount = card.querySelector(".primary-buy-amount");
+    if (primaryAmount) primaryAmount.textContent = formatCurrency(signal.suggested_buy_amount);
     const priceText = isFiniteNumber(signal.latest_price) ? formatPrice(signal.latest_price) : "--";
     card.querySelector(".price").textContent = isFiniteNumber(signal.latest_price) ? priceText : "--";
     setChangeMetric(card.querySelector(".daily-change"), signal.daily_change);
@@ -6187,7 +6214,7 @@ function equalizeAllocations() {
       const signalAdjustment = Number(row.dcaAdjustedAmount || 0) - base + Number(row.crashFundEnhancement || 0);
       const riskAdjustment = Number(row.riskReduction || 0);
       const redirected = Number(row.redirectedToSpy || 0);
-      const status = Number(row.finalAmount || 0) > 0 ? "可供人工核对" : "已阻止或保留现金";
+      const status = window.DashboardUiPolicy ? window.DashboardUiPolicy.decisionStatus(row.finalAmount, row.action || row.suggested_action) : (Number(row.finalAmount || 0) > 0 ? "可供人工核对" : "已阻止或保留现金");
       card.innerHTML = "<strong></strong><span class=\"weekly-decision-target\"></span><span class=\"weekly-decision-final\"></span><span class=\"weekly-decision-status\"></span><details><summary>查看详情</summary><div class=\"weekly-decision-detail\"><span></span><span></span><span></span><span></span><p></p></div></details>";
       card.querySelector("strong").textContent = symbol;
       card.querySelector(".weekly-decision-target").textContent = "目标 " + (targetBySymbol[symbol] || 0).toFixed(2) + "% / 当前 " + current.toFixed(2) + "%";
@@ -6305,11 +6332,12 @@ function equalizeAllocations() {
       action.className = "secondary-button";
       action.type = "button";
       action.textContent = "查看持仓同步设置";
-      if (automatic && model.meta.status === "ready") {
-        title.textContent = "Wealthsimple 已同步，当前没有股票或 ETF 持仓";
-        copy.textContent = model.summary.cashProvided && model.summary.availableCash > 0
-          ? "本次快照只检测到可用现金 " + formatCurrency(model.summary.availableCash) + "。这不是同步失败，也不会生成自动买入。"
-          : "本次快照没有返回可纳入股票计划的持仓；请核对 Wealthsimple 自主管理账户范围。";
+      if (window.DashboardUiPolicy) {
+        title.textContent = window.DashboardUiPolicy.emptyHoldingsState(automatic ? "automatic" : "manual", model.meta.status, model.summary.cashProvided && model.summary.availableCash > 0);
+        copy.textContent = automatic && model.meta.status === "ready" && model.summary.cashProvided && model.summary.availableCash > 0 ? "已检测到现金 " + formatCurrency(model.summary.availableCash) + "；不会生成自动买入。" : "持仓展示和同步状态不会修改目标比例或交易计划。";
+      } else if (automatic && model.meta.status === "ready") {
+        title.textContent = "已同步 Wealthsimple，当前没有股票或 ETF 持仓";
+        copy.textContent = "不会生成自动买入。";
       } else if (model.meta.status === "locked") {
         title.textContent = "加密持仓快照尚未在本机解锁";
         copy.textContent = "前往设置导入本机解密密钥后，才会显示 Wealthsimple 只读持仓明细。";
@@ -6326,7 +6354,8 @@ function equalizeAllocations() {
       return;
     }
 
-    model.rows.forEach(function (holding) {
+    const displayRows = window.DashboardUiPolicy ? window.DashboardUiPolicy.sortHoldingsByDeviation(model.rows) : model.rows;
+    displayRows.forEach(function (holding) {
       const row = document.createElement("article");
       row.className = "inline-holding-row";
       row.dataset.allocationState = holding.allocationState;
