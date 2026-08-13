@@ -79,6 +79,7 @@
   function formatDateTime(value) { return finite(value) === null ? "时间暂无" : new Date(Number(value)).toLocaleString("zh-CN", { hour12: false }); }
   function setText(doc, id, value) { var node = doc.getElementById(id); if (node) node.textContent = value; return node; }
   function appendFact(doc, parent, label, value) { var wrapper = doc.createElement("div"); var term = doc.createElement("dt"); var description = doc.createElement("dd"); term.textContent = label; description.textContent = value || "暂无"; wrapper.append(term, description); parent.appendChild(wrapper); }
+  function appendOptionalFact(doc, parent, label, value) { if (value === undefined || value === null || value === "" || (Array.isArray(value) && !value.length)) return; appendFact(doc, parent, label, Array.isArray(value) ? value.join("；") : value); }
   function renderList(doc, id, values, fallback) { var parent = doc.getElementById(id); parent.innerHTML = ""; var rows = Array.isArray(values) && values.length ? values : [fallback]; rows.forEach(function (value) { var item = doc.createElement("li"); item.textContent = value; parent.appendChild(item); }); }
   function renderChart(canvas, points) {
     if (!canvas || !Array.isArray(points) || points.length < 2) return false;
@@ -89,7 +90,7 @@
     ctx.beginPath(); points.forEach(function (point, index) { var x = padding + index / (points.length - 1) * (width - padding * 2); var y = padding + (max - point.close) / span * (height - padding * 2); if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
     ctx.strokeStyle = closes[closes.length - 1] >= closes[0] ? "#69e6c2" : "#ff637d"; ctx.lineWidth = 2.5; ctx.stroke(); return true;
   }
-  function safeEvidence(candidate) { return Array.isArray(candidate && candidate.evidence) ? candidate.evidence.filter(function (item) { return item && /^https:\/\//i.test(String(item.url || "")); }) : []; }
+  function safeEvidence(candidate) { return Array.isArray(candidate && candidate.evidence) ? candidate.evidence.map(function (item) { if (!item) return null; var url = item.url || item.canonical_url; return /^https:\/\//i.test(String(url || "")) ? Object.assign({}, item, { url: url, source: item.source || item.source_name }) : null; }).filter(Boolean) : []; }
   function render(doc, ticker, quote, candidate, universe) {
     var engine = root.IdeaEngine || {};
     var companyName = quote && quote.companyName ? quote.companyName : ticker;
@@ -115,7 +116,8 @@
     if (candidate) {
       setText(doc, "stockDetailGrade", typeof engine.gradeLabel === "function" ? engine.gradeLabel(candidate.status) : candidate.status);
       setText(doc, "stockDetailScore", typeof engine.formatScore === "function" ? engine.formatScore(candidate.composite_score) : String(candidate.composite_score || "--"));
-      setText(doc, "stockDetailRobustScore", typeof engine.formatScore === "function" ? engine.formatScore(candidate.leave_one_out_floor) : String(candidate.leave_one_out_floor || "--"));
+      var robustScore = candidate.leave_one_source_out_floor !== undefined ? Math.min(Number(candidate.leave_one_dimension_out_floor || candidate.composite_score || 0), Number(candidate.leave_one_source_out_floor || candidate.composite_score || 0)) : candidate.leave_one_out_floor;
+      setText(doc, "stockDetailRobustScore", typeof engine.formatScore === "function" ? engine.formatScore(robustScore) : String(robustScore || "--"));
       setText(doc, "stockDetailLimitations", typeof engine.limitation === "function" ? engine.limitation(candidate) : "仅限研究观察，不进入本周定投。");
       var dimensions = doc.getElementById("stockDetailDimensions"); dimensions.innerHTML = ""; var values = candidate.dimensions || candidate.family_scores || {};
       Object.keys(dimensionLabels).forEach(function (key) { var score = finite(values[key]); if (score === null) return; var row = doc.createElement("div"); row.className = "stock-detail-dimension"; var label = doc.createElement("span"); label.textContent = dimensionLabels[key]; var track = doc.createElement("span"); track.className = "stock-detail-dimension-track"; var fill = doc.createElement("span"); fill.className = "stock-detail-dimension-fill"; fill.style.width = Math.max(0, Math.min(100, score)) + "%"; track.appendChild(fill); var value = doc.createElement("strong"); value.textContent = score.toFixed(1); row.append(label, track, value); dimensions.appendChild(row); });
@@ -123,6 +125,25 @@
       renderList(doc, "stockDetailRisks", candidate.what_kills_thesis, "暂无明确风险证据，请人工复核。");
       var evidence = doc.getElementById("stockDetailEvidence"); evidence.innerHTML = ""; safeEvidence(candidate).forEach(function (item) { var link = doc.createElement("a"); link.href = item.url; link.target = "_blank"; link.rel = "noopener noreferrer"; var source = doc.createElement("strong"); source.textContent = item.source || "来源"; var date = doc.createElement("small"); date.textContent = "发布日期：" + (item.published_at ? new Date(item.published_at).toLocaleDateString("zh-CN") : "暂无"); link.append(source, date); evidence.appendChild(link); });
       if (!evidence.children.length) { var empty = doc.createElement("div"); empty.textContent = "暂无可验证来源。"; evidence.appendChild(empty); }
+      var v3Panel = doc.getElementById("stockDetailV3Research");
+      if (v3Panel && candidate.schema_version === "idea-engine-v3") {
+        v3Panel.hidden = false;
+        var v3Facts = doc.getElementById("stockDetailV3Facts"); v3Facts.innerHTML = "";
+        appendOptionalFact(doc, v3Facts, "研究类型", candidate.research_type);
+        appendOptionalFact(doc, v3Facts, "为什么现在", candidate.why_now);
+        appendOptionalFact(doc, v3Facts, "市场可能忽略什么", candidate.variant_wedge);
+        appendOptionalFact(doc, v3Facts, "主题暴露证据", candidate.exposure_proof);
+        appendOptionalFact(doc, v3Facts, "市场预期风险", candidate.expectations_risk);
+        appendOptionalFact(doc, v3Facts, "第一否决风险", candidate.first_rejection);
+        appendOptionalFact(doc, v3Facts, "继续研究所需条件", candidate.what_makes_investable);
+        appendOptionalFact(doc, v3Facts, "假设失效条件", candidate.what_kills_thesis);
+        appendOptionalFact(doc, v3Facts, "下一步研究动作", candidate.next_workflow);
+        appendOptionalFact(doc, v3Facts, "组合关系", candidate.portfolio_fit_status);
+        appendOptionalFact(doc, v3Facts, "研究 as-of", candidate.as_of);
+        var contributions = doc.getElementById("stockDetailV3Contributions"); contributions.innerHTML = "";
+        if (candidate.score_contributions) { var contributionTitle = doc.createElement("h3"); contributionTitle.textContent = "评分贡献"; contributions.appendChild(contributionTitle); var contributionText = doc.createElement("p"); contributionText.textContent = Object.keys(candidate.score_contributions).map(function (key) { return key + " " + Number(candidate.score_contributions[key]).toFixed(1); }).join("；"); contributions.appendChild(contributionText); }
+        var gates = doc.getElementById("stockDetailV3Gates"); gates.innerHTML = ""; var gateTitle = doc.createElement("h3"); gateTitle.textContent = "数据门禁"; gates.appendChild(gateTitle); var gateText = doc.createElement("p"); gateText.textContent = "已通过：" + (candidate.gates_passed || []).join("、") + "；未通过：" + (candidate.gates_failed || []).join("、"); gates.appendChild(gateText);
+      }
     } else {
       setText(doc, "stockDetailGrade", "未进入候选"); setText(doc, "stockDetailLimitations", "当前股票不在最新潜力股候选中，仅展示可获得的公司和价格资料。");
       renderList(doc, "stockDetailReasons", [], "当前没有潜力股研究依据。"); renderList(doc, "stockDetailRisks", [], "当前没有潜力股风险结论。");
@@ -135,7 +156,7 @@
     var quoteUrl = "https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(ticker) + "?range=1y&interval=1d&includePrePost=false";
     Promise.allSettled([
       fetcher(quoteUrl, { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("quote unavailable"); return response.json(); }).then(parseYahooChart),
-      fetcher("research/results/v2/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("research unavailable"); return response.json(); }),
+      fetcher("research/results/v3/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("v3 research unavailable"); return response.json(); }).catch(function () { return fetcher("research/results/v2/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("research unavailable"); return response.json(); }); }),
       fetcher("data/research-universe-sector-balanced-80.json", { cache: "no-cache" }).then(function (response) { return response.ok ? response.json() : null; }).catch(function () { return null; })
     ]).then(function (values) {
       var quote = values[0].status === "fulfilled" ? values[0].value : null;

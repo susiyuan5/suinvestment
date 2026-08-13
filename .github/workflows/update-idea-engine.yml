@@ -1,4 +1,4 @@
-name: Update Idea Engine Shadow
+name: Update Idea Engine v3 Shadow
 
 on:
   schedule:
@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: update-idea-engine-shadow
+  group: update-idea-engine-v3
   cancel-in-progress: true
 
 jobs:
@@ -24,6 +24,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
 
       - name: Validate pinned provider manifest
         run: |
@@ -38,10 +41,10 @@ jobs:
           print("provider_manifest_valid=true")
           PY
 
-      - name: Generate candidates from free public data
+      - name: Generate isolated v3 candidates from free public data
         env:
           PYTHONPATH: .
-        run: python -m research.idea_engine.run_idea_engine --provider free --output research/results/v2/idea-engine
+        run: python -m research.idea_engine.v3.run_idea_engine_v3 --provider free --output research/results/v3/idea-engine
 
       - name: Run complete quality checks
         run: |
@@ -68,4 +71,4 @@ jobs:
             - 候选结果仅可人工复核
             - 数据源为免费 SEC EDGAR 与公开价格数据，无需付费 API Key
           add-paths: |
-            research/results/v2/idea-engine/**
+            research/results/v3/idea-engine/**
