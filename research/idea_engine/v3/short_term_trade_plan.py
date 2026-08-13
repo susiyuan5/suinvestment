@@ -126,14 +126,32 @@ def atomic_write(path, payload):
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False, suffix=".tmp") as handle: json.dump(payload, handle, ensure_ascii=False, indent=2); handle.write("\n"); temp = Path(handle.name)
     temp.replace(path)
 
+def relevant_validation_errors(errors, ticker, benchmark="QQQ"):
+    ticker = str(ticker or "").upper(); benchmark = str(benchmark or "QQQ").upper()
+    return [error for error in errors if error.startswith(f"{ticker}:") or error.startswith(f"{benchmark}:") or ":" not in error]
+
+def event_dates_by_ticker(payload):
+    rows = payload.get("events", []) if isinstance(payload, dict) and payload.get("research_only") is True else []
+    output = {}
+    for row in rows if isinstance(rows, list) else []:
+        ticker = str(row.get("ticker") or "").upper() if isinstance(row, dict) else ""
+        if ticker:
+            output[ticker] = {key: row.get(key) for key in ("earnings",) if row.get(key)}
+    return output
+
 def generate(candidates_path=DEFAULT_CANDIDATES, prices_path=DEFAULT_PRICES, config_path=DEFAULT_CONFIG, output_path=DEFAULT_OUTPUT, *, as_of=None, events_path=DEFAULT_EVENTS, governance_path=DEFAULT_GOVERNANCE):
-    config = json.loads(config_path.read_text(encoding="utf-8")); candidates = json.loads(candidates_path.read_text(encoding="utf-8")); prices = json.loads(prices_path.read_text(encoding="utf-8")); governance = json.loads(governance_path.read_text(encoding="utf-8")) if governance_path.exists() else {"status": "blocked", "manual_review_eligible": False, "reason": "Shadow治理报告缺失"}
+    config = json.loads(config_path.read_text(encoding="utf-8")); candidates = json.loads(candidates_path.read_text(encoding="utf-8")); prices = json.loads(prices_path.read_text(encoding="utf-8")); governance = json.loads(governance_path.read_text(encoding="utf-8")) if governance_path.exists() else {"status": "blocked", "manual_review_eligible": False, "reason": "Shadow治理报告缺失"}; events = json.loads(events_path.read_text(encoding="utf-8")) if events_path.exists() else {}
     symbols = [str(row.get("ticker", "")).upper() for row in candidates.get("candidates", []) if row.get("ticker")]; effective_as_of = as_of or candidates.get("as_of") or datetime.now(timezone.utc).isoformat(); validation = validate_snapshot(prices, symbols, benchmark=config.get("benchmark", "QQQ"), as_of=effective_as_of); rows_by_symbol = prices.get("symbols", {}); benchmark = rows_by_symbol.get(config.get("benchmark", "QQQ"), {})
-    plans = [evaluate_plan(candidate, rows_by_symbol.get(candidate.get("ticker"), {}), benchmark, config, as_of=effective_as_of) for candidate in candidates.get("candidates", [])]
+    event_map = event_dates_by_ticker(events)
+    plans = [evaluate_plan({**candidate, "event_dates": event_map.get(str(candidate.get("ticker") or "").upper(), candidate.get("event_dates") or {})}, rows_by_symbol.get(candidate.get("ticker"), {}), benchmark, config, as_of=effective_as_of) for candidate in candidates.get("candidates", [])]
     for plan in plans:
-        if not validation["valid"]: plan.update(status="blocked", status_label="数据阻断", signal=None, reason_codes=list(dict.fromkeys(["short_term_daily_bars_unavailable", *validation["errors"]])), warnings=["缺少经过验证的日线OHLCV数据；不生成短线交易研究触发建议"])
+        ticker = plan["ticker"]
+        ticker_errors = relevant_validation_errors(validation["errors"], ticker, config.get("benchmark", "QQQ"))
+        if ticker_errors:
+            plan.update(status="blocked", status_label="数据阻断", signal=None, reason_codes=list(dict.fromkeys(["short_term_daily_bars_unavailable", *ticker_errors])), warnings=["缺少经过验证的日线OHLCV数据；不生成短线交易研究触发建议"])
     statuses = ("conditional_review", "manual_review_ready", "simulation_only", "waiting_breakout", "waiting_pullback", "chase_blocked", "event_blocked", "invalidated", "blocked")
-    return {"schema_version": "short-term-trade-plan-v1.1", "methodology_version": "short-term-trade-plan-v1.1.0", "generated_at": datetime.now(timezone.utc).isoformat(), "as_of": effective_as_of, "research_only": True, "no_trade": True, "benchmark": "QQQ", "config_version": config["schema_version"], "shadow_governance": {key: governance.get(key) for key in ("status", "observation_count", "calendar_week_count", "complete_count", "primary_complete_count", "manual_review_eligible", "reliability_claim_eligible", "reason")}, "data_validation": {"valid": validation["valid"], "errors": validation["errors"], "coverage": validation["coverage"], "common_dates": validation.get("common_dates", 0)}, "plans": plans, "summary": {"candidate_count": len(plans), "status_counts": {status: sum(plan["status"] == status for plan in plans) for status in statuses}, "manual_review_required": True}}
+    governance_keys = ("status", "observation_count", "calendar_week_count", "complete_count", "primary_complete_count", "manual_review_requirements", "reliability_requirements", "manual_review_eligible", "reliability_claim_eligible", "reason")
+    return {"schema_version": "short-term-trade-plan-v1.1", "methodology_version": "short-term-trade-plan-v1.1.0", "generated_at": datetime.now(timezone.utc).isoformat(), "as_of": effective_as_of, "research_only": True, "no_trade": True, "benchmark": "QQQ", "config_version": config["schema_version"], "shadow_governance": {key: governance.get(key) for key in governance_keys}, "data_validation": {"valid": validation["valid"], "errors": validation["errors"], "coverage": validation["coverage"], "common_dates": validation.get("common_dates", 0)}, "plans": plans, "summary": {"candidate_count": len(plans), "status_counts": {status: sum(plan["status"] == status for plan in plans) for status in statuses}, "manual_review_required": True}}
 
 def main():
     parser = argparse.ArgumentParser(); parser.add_argument("--candidates", type=Path, default=DEFAULT_CANDIDATES); parser.add_argument("--prices", type=Path, default=DEFAULT_PRICES); parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG); parser.add_argument("--events", type=Path, default=DEFAULT_EVENTS); parser.add_argument("--governance", type=Path, default=DEFAULT_GOVERNANCE); parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT); parser.add_argument("--as-of", default=None); args = parser.parse_args(); atomic_write(args.output, generate(args.candidates, args.prices, args.config, args.output, as_of=args.as_of, events_path=args.events, governance_path=args.governance))

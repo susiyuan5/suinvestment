@@ -7,7 +7,9 @@ from research.idea_engine.v3.short_term_trade_plan import (
     calculate_position_size,
     compute_indicators,
     evaluate_plan,
+    event_dates_by_ticker,
     finite,
+    relevant_validation_errors,
 )
 
 
@@ -70,6 +72,18 @@ class ShortTermTradePlanTests(unittest.TestCase):
         result = evaluate_plan(self.candidate(), [{"close": "bad"}], [], CONFIG, as_of="2026-03-21")
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["signal"], None)
+
+    def test_snapshot_errors_are_scoped_to_the_candidate_and_benchmark(self):
+        errors = ["TSM:rows_missing", "AAPL:rows_missing", "QQQ:insufficient_daily_history", "common_trading_date_alignment_insufficient"]
+        self.assertEqual(
+            relevant_validation_errors(errors, "TSM"),
+            ["TSM:rows_missing", "QQQ:insufficient_daily_history", "common_trading_date_alignment_insufficient"],
+        )
+
+    def test_verified_event_export_is_mapped_by_ticker(self):
+        payload = {"research_only": True, "events": [{"ticker": "tsm", "earnings": "2026-10-15"}]}
+        self.assertEqual(event_dates_by_ticker(payload), {"TSM": {"earnings": "2026-10-15"}})
+        self.assertEqual(event_dates_by_ticker({"research_only": False, "events": payload["events"]}), {})
 
 
 if __name__ == "__main__":

@@ -15,6 +15,7 @@ class PricePoint:
     high: float | None = None
     low: float | None = None
     adjusted_close: float | None = None
+    volume: float | None = None
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,7 @@ def load_yahoo_daily_prices(ticker: str, start: str, end: str) -> list[PricePoin
     opens = quote.get("open") or []
     highs = quote.get("high") or []
     lows = quote.get("low") or []
+    volumes = quote.get("volume") or []
     adjusted_closes = ((result.get("indicators", {}).get("adjclose") or [{}])[0].get("adjclose") or [])
     points: list[PricePoint] = []
 
@@ -74,6 +76,7 @@ def load_yahoo_daily_prices(ticker: str, start: str, end: str) -> list[PricePoin
             high_price = highs[index] if index < len(highs) else None
             low_price = lows[index] if index < len(lows) else None
             adjusted_close = adjusted_closes[index] if index < len(adjusted_closes) else None
+            volume = volumes[index] if index < len(volumes) else None
             points.append(
                 PricePoint(
                     point_date,
@@ -82,6 +85,7 @@ def load_yahoo_daily_prices(ticker: str, start: str, end: str) -> list[PricePoin
                     float(high_price) if isinstance(high_price, (int, float)) and high_price > 0 else None,
                     float(low_price) if isinstance(low_price, (int, float)) and low_price > 0 else None,
                     float(adjusted_close) if isinstance(adjusted_close, (int, float)) and adjusted_close > 0 else None,
+                    float(volume) if isinstance(volume, (int, float)) and volume > 0 else None,
                 )
             )
 

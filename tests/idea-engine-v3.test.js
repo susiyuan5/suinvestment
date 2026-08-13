@@ -29,5 +29,21 @@ test("research grade and short-term state stay separate", () => {
   const coverage = engine.coverageDetails({ evidence_coverage_score: 100, evidence_independence_score: 66.666667, evidence: [{ lineage_group: "ISSUER_DISCLOSURE" }, { lineage_group: "MARKET_PRICE" }], data_quality: { missing_fields: ["analyst_consensus", "earnings_transcript", "news_catalyst"] } });
   assert.equal(coverage.dimension, "100.0");
   assert.equal(coverage.critical, "40.0");
+  assert.equal(coverage.independent, "66.7");
+  assert.equal(coverage.independentCount, 2);
+  assert.equal(coverage.independentTarget, 3);
   assert.deepEqual(coverage.missing, ["一致预期", "电话会", "事件证据"]);
+});
+
+test("research limitations, thesis risks and Chinese metadata stay separate", () => {
+  const candidate = { first_rejection: "free_source_scope_limited", gates_failed: ["free_source_scope_limited", "model_not_calibrated"], what_kills_thesis: ["收入或经营利润同比转负"] };
+  assert.equal(engine.sectorLabel("semiconductors"), "半导体");
+  assert.equal(engine.researchTypeLabel("CYCLICAL_RECOVERY"), "周期复苏");
+  assert.deepEqual(engine.researchLimitations(candidate), ["免费数据限制：缺少一致预期、电话会或事件催化证据", "模型尚未完成 Shadow 校准"]);
+  assert.deepEqual(engine.thesisKillRisks(candidate), ["收入或经营利润同比转负"]);
+});
+
+test("Shadow reliability progress uses report requirements", () => {
+  const progress = engine.shadowProgress({ observation_count: 1, calendar_week_count: 1, primary_complete_count: 0, reliability_requirements: { observation_count: 52, calendar_week_count: 52, primary_complete_count: 26 } });
+  assert.equal(progress, "Shadow 校准进度：观察 1/52 次 · 日历周 1/52 · 完整成熟结果 0/26");
 });

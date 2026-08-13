@@ -72,6 +72,8 @@ class IdeaEngineV3Tests(unittest.TestCase):
         outcomes = [{"horizons": {str(h): {"status": "matured"} for h in (1, 4, 12)}} for _ in range(4)]
         result = maturity(observations, outcomes, min_observations=8, min_calendar_weeks=8, min_complete=4)
         self.assertEqual(result["status"], "mature")
+        self.assertEqual(result["manual_review_requirements"]["observation_count"], 8)
+        self.assertEqual(result["reliability_requirements"]["observation_count"], 52)
         self.assertFalse(maturity(observations, outcomes, min_observations=8, min_calendar_weeks=8, min_complete=4, degraded=True)["manual_review_eligible"])
         self.assertIn("degraded", model_statistics([], CONFIG))
         self.assertFalse(result["reliability_claim_eligible"])

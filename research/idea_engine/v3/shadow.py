@@ -53,7 +53,30 @@ def maturity(observations: list[dict], outcomes: list[dict], *, min_observations
     week_count = len(_weeks(observations))
     eligible = len(observations) >= min_observations and week_count >= min_calendar_weeks and complete >= min_complete and not degraded
     reliability_ready = len(observations) >= reliability_observations and week_count >= reliability_calendar_weeks and complete >= reliability_complete and not degraded
-    return {"status": "DEGRADED" if degraded else "mature" if eligible else "not_mature", "observation_count": len(observations), "calendar_week_count": week_count, "complete_count": complete, "primary_complete_count": complete, "decay_complete_count": decay_complete, "primary_horizons_weeks": [1, 4], "decay_horizon_weeks": 12, "manual_review_eligible": eligible, "reliability_claim_eligible": reliability_ready, "live_promotion_eligible": False, "reason": "模型退化，暂停人工复核" if degraded else "短线 Shadow 已成熟，仅可人工复核" if eligible else "短线样本尚未满足人工复核门槛"}
+    return {
+        "status": "DEGRADED" if degraded else "mature" if eligible else "not_mature",
+        "observation_count": len(observations),
+        "calendar_week_count": week_count,
+        "complete_count": complete,
+        "primary_complete_count": complete,
+        "decay_complete_count": decay_complete,
+        "primary_horizons_weeks": [1, 4],
+        "decay_horizon_weeks": 12,
+        "manual_review_requirements": {
+            "observation_count": min_observations,
+            "calendar_week_count": min_calendar_weeks,
+            "primary_complete_count": min_complete,
+        },
+        "reliability_requirements": {
+            "observation_count": reliability_observations,
+            "calendar_week_count": reliability_calendar_weeks,
+            "primary_complete_count": reliability_complete,
+        },
+        "manual_review_eligible": eligible,
+        "reliability_claim_eligible": reliability_ready,
+        "live_promotion_eligible": False,
+        "reason": "模型退化，暂停人工复核" if degraded else "短线 Shadow 已成熟，仅可人工复核" if eligible else "短线样本尚未满足人工复核门槛",
+    }
 
 
 def spearman(values_a: list[float], values_b: list[float]) -> float | None:
