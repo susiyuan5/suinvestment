@@ -46,6 +46,9 @@ jobs:
           PYTHONPATH: .
         run: python -m research.idea_engine.v3.run_idea_engine_v3 --provider free --output research/results/v3/idea-engine
 
+      - name: Build same-origin research price fallback
+        run: python scripts/build_idea_price_trends.py
+
       - name: Run complete quality checks
         run: |
           python -m pip install "pandas>=2,<3"
@@ -72,3 +75,4 @@ jobs:
             - 数据源为免费 SEC EDGAR 与公开价格数据，无需付费 API Key
           add-paths: |
             research/results/v3/idea-engine/**
+            data/idea-engine-v3/price-trends.json

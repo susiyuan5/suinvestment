@@ -216,6 +216,16 @@ async function main() {
     failedSignals.every((signal) => signal.amount === 0 && !["BUY", "STRONG_BUY", "NORMAL_BUY"].includes(signal.action)),
     `failed data must not generate enhanced buy recommendations: ${JSON.stringify(failedSignals)}`
   );
+  const fallbackDetailPage = await failedContext.newPage();
+  await fallbackDetailPage.goto(`${baseUrl}stock-detail.html?ticker=TSM`, { waitUntil: "domcontentloaded" });
+  await fallbackDetailPage.locator("#stockDetailContent").waitFor({ state: "visible", timeout: 15000 });
+  assert.match(await fallbackDetailPage.locator("#stockDetailQuoteSource").textContent(), /同源研究周线/,
+    "stock detail should use the same-origin research trend when Yahoo is unavailable");
+  assert.doesNotMatch(await fallbackDetailPage.locator("#stockDetailChartSummary").textContent(), /价格走势暂不可用/,
+    "same-origin research history should keep the price trend usable");
+  assert.match(await fallbackDetailPage.locator("#stockDetailQuoteTime").textContent(), /非实时/,
+    "fallback trend must not be presented as a live quote");
+  await fallbackDetailPage.close();
   await failedPage.close();
   await failedContext.close();
 
