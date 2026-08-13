@@ -49,10 +49,24 @@ jobs:
       - name: Build same-origin research price fallback
         run: python scripts/build_idea_price_trends.py
 
+      - name: Validate strict short-term daily OHLCV snapshot
+        env:
+          PYTHONPATH: .
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from research.idea_engine.v3.short_term_daily_bars import validate_snapshot
+          universe = json.loads(Path('data/research-universe-sector-balanced-80.json').read_text())
+          payload = json.loads(Path('data/short-term-daily-bars-v1.json').read_text())
+          result = validate_snapshot(payload, universe['research_universe_symbols'], as_of=payload.get('as_of'))
+          print(json.dumps({'valid': result['valid'], 'errors': result['errors'][:10], 'validated_symbols': sum(1 for row in result['coverage'].values() if row['valid'])}, ensure_ascii=False))
+        continue-on-error: true
+
       - name: Generate research-only short-term trade plans
         env:
           PYTHONPATH: .
-        run: python -m research.idea_engine.v3.short_term_trade_plan --output research/results/v3_1/short-term-trade-plans/latest.json
+        run: python -m research.idea_engine.v3.short_term_trade_plan --output research/results/v3_1/short-term-trade-plans-v1_1/latest.json
 
       - name: Run complete quality checks
         run: |
@@ -82,4 +96,6 @@ jobs:
           add-paths: |
             research/results/v3_1/idea-engine/**
             research/results/v3_1/short-term-trade-plans/**
+            data/short-term-daily-bars-v1.json
+            data/idea-engine-events-v1.json
             data/idea-engine-v3/price-trends.json
