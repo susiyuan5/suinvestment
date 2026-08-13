@@ -45,6 +45,5 @@ try {
   // First run, unavailable old key, or placeholder: replace only after successful validation.
 }
 const envelope = encryptSnapshot(snapshot, key);
-await mkdir(path.dirname(outputPath), { recursive: true });
 await writeEncryptedSnapshotAtomic(outputPath, envelope);
 console.log(JSON.stringify({ changed: true, output: path.relative(process.cwd(), outputPath), accountCount: snapshot.accounts.length, positionCount: snapshot.holdings.length, generatedAt: snapshot.generated_at }, null, 2));
