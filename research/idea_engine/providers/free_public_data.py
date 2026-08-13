@@ -266,8 +266,19 @@ def _price_metrics(payload: dict[str, Any], benchmark: dict[str, Any]) -> dict[s
         benchmark_end = benchmark_by_date.get(latest["date"])
         if benchmark_start and benchmark_end:
             relative.append((latest["close"] / start["close"] - 1) - (benchmark_end / benchmark_start - 1))
+    short_relative = []
+    for sessions in (5, 20):
+        if len(rows) <= sessions:
+            continue
+        start = rows[-sessions - 1]
+        benchmark_start = benchmark_by_date.get(start["date"])
+        benchmark_end = benchmark_by_date.get(latest["date"])
+        if benchmark_start and benchmark_end:
+            short_relative.append((latest["close"] / start["close"] - 1) - (benchmark_end / benchmark_start - 1))
     liquid_rows = [row for row in rows[-20:] if row.get("volume") is not None]
     adv20 = mean(row["close"] * row["volume"] for row in liquid_rows) if len(liquid_rows) >= 10 else 0.0
+    recent_volumes = [float(row["volume"]) for row in liquid_rows if row.get("volume") is not None]
+    volume_confirmation = recent_volumes[-1] / mean(recent_volumes[:-1]) if len(recent_volumes) >= 10 and mean(recent_volumes[:-1]) > 0 else None
     return {
         "latest_price": latest["close"],
         "latest_date": latest["date"],
@@ -275,6 +286,8 @@ def _price_metrics(payload: dict[str, Any], benchmark: dict[str, Any]) -> dict[s
         "annualized_volatility": pstdev(daily_returns[-252:]) * math.sqrt(252) if len(daily_returns) >= 20 else None,
         "max_drawdown": drawdown,
         "relative_return_mean": mean(relative) if relative else None,
+        "short_relative_return_mean": mean(short_relative) if short_relative else None,
+        "volume_confirmation": volume_confirmation,
     }
 
 
@@ -336,6 +349,7 @@ def _candidate(
     market_cap = float(metrics["latest_price"]) * shares if shares and shares > 0 else 0.0
     universe_row = {
         "ticker": ticker,
+        "company_name": str(submissions.get("name") or ticker),
         "exchange": _exchange(submissions, ticker),
         "asset_type": "adr" if any(form in {"20-F", "6-K", "40-F"} for form in (submissions.get("filings", {}).get("recent", {}).get("form") or [])[:20]) else "stock",
         "is_us_listed": ticker in [str(value).upper() for value in submissions.get("tickers") or []],
@@ -366,7 +380,12 @@ def _candidate(
     if pe is not None:
         valuation = 80.0 if pe <= 15 else 65.0 if pe <= 25 else 50.0 if pe <= 40 else 35.0 if pe <= 60 else 20.0
     demand = _bounded(50 + (revenue_growth or 0) * 220 + (operating_growth or 0) * 60) if revenue_growth is not None else None
-    confirmation = _bounded(50 + float(metrics["relative_return_mean"]) * 120) if metrics["relative_return_mean"] is not None else None
+    short_relative = metrics["short_relative_return_mean"]
+    volume_confirmation = metrics["volume_confirmation"]
+    confirmation = _average([
+        _bounded(50 + float(short_relative) * 220) if short_relative is not None else None,
+        _bounded(50 + (float(volume_confirmation) - 1) * 35) if volume_confirmation is not None else None,
+    ])
     volatility = metrics["annualized_volatility"]
     risk = _bounded(100 - (float(volatility) * 85 if volatility is not None else 35) + float(metrics["max_drawdown"]) * 30)
 

@@ -39,6 +39,18 @@ def source_family_for(url: str, source_name: str = "") -> str:
     return "OTHER_PUBLIC"
 
 
+def lineage_group_for(source_family: str, url: str, source_name: str = "") -> str:
+    """Collapse derivative records from the same underlying information origin."""
+    family = str(source_family or source_family_for(url, source_name)).upper()
+    if family in {"SEC", "COMPANY_IR", "COMPANY_EARNINGS"}:
+        return "ISSUER_DISCLOSURE"
+    if family == "PUBLIC_PRICE":
+        return "MARKET_PRICE"
+    if family == "PUBLIC_MACRO":
+        return "PUBLIC_MACRO"
+    return "OTHER_PUBLIC"
+
+
 def make_evidence(*, evidence_id: str, source_name: str, url: str, document_type: str, published_at: str, accessed_at: str, as_of: str, claim: str, metric: str = "", value: Any = None, unit: str = "", period: str = "", confidence: float = 0.0, content: str = "", supports_or_contradicts: dict[str, Any] | None = None, stale: bool = False, source_family: str | None = None) -> dict[str, Any]:
     item = {
         "evidence_id": evidence_id, "source_family": source_family or source_family_for(url, source_name), "source_name": source_name,
@@ -46,6 +58,7 @@ def make_evidence(*, evidence_id: str, source_name: str, url: str, document_type
         "claim": claim, "metric": metric, "value": value, "unit": unit, "period": period, "confidence": confidence,
         "content_hash": content_hash(content), "supports_or_contradicts": supports_or_contradicts or {"supports": [], "contradicts": []}, "stale": stale,
     }
+    item["lineage_group"] = lineage_group_for(item["source_family"], url, source_name)
     validate_evidence(item)
     return item
 

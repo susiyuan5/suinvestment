@@ -1,7 +1,4 @@
-"""Freeze an isolated v3 Idea Engine result from existing free public inputs.
-
-This runner never writes v1/v2 results and never accepts credentials or holdings.
-"""
+"""Run the independent, free-public-data, Shadow-only Idea Engine v3.1."""
 
 from __future__ import annotations
 
@@ -10,7 +7,11 @@ import json
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
+
+from research.idea_engine.providers.free_public_data import fetch_research_payload
+from research.idea_engine.universe import filter_universe
+from research.update_shadow_outcomes import horizon_outcome, normalized_rows
 
 from .contracts import SCHEMA_VERSION, validate_payload
 from .evidence import deduplicate_evidence, input_hash, make_evidence, mark_stale
@@ -18,10 +19,12 @@ from .funnel import classify_candidate, funnel_summary
 from .scoring import score_candidate
 from .shadow import maturity, model_statistics
 
+
 ROOT = Path(__file__).resolve().parents[3]
-V2 = ROOT / "research" / "results" / "v2" / "idea-engine"
-DEFAULT_OUTPUT = ROOT / "research" / "results" / "v3" / "idea-engine"
+DEFAULT_OUTPUT = ROOT / "research" / "results" / "v3_1" / "idea-engine"
 CONFIG_PATH = Path(__file__).with_name("config.v3.json")
+UNIVERSE_PATH = ROOT / "data" / "research-universe-sector-balanced-80.json"
+PRICES_PATH = ROOT / "data" / "research-prices-sector-balanced-80.json"
 
 
 def load(path: Path, fallback: Any) -> Any:
@@ -41,122 +44,278 @@ def atomic_json(path: Path, payload: Any) -> None:
 
 
 def _as_of(value: str | None) -> str:
-    if value:
-        return value
-    return datetime.now(timezone.utc).isoformat()
+    return value or datetime.now(timezone.utc).isoformat()
 
 
-def _string_list(value: Any) -> list[str]:
-    return [str(item) for item in value] if isinstance(value, list) else []
+def research_symbols() -> list[str]:
+    universe = load(UNIVERSE_PATH, {})
+    return list(dict.fromkeys(str(item).upper() for item in universe.get("research_universe_symbols", []) if item))
 
 
-def _evidence(old: dict[str, Any], as_of: str) -> list[dict[str, Any]]:
+def _provider_payload(as_of: str, provider_fetcher: Callable[..., dict[str, Any]] | None = None) -> dict[str, Any]:
+    fetcher = provider_fetcher or fetch_research_payload
+    return fetcher(research_symbols(), as_of=as_of)
+
+
+def _v3_evidence(items: list[dict[str, Any]], as_of: str, max_age_days: int) -> list[dict[str, Any]]:
     output = []
-    for index, item in enumerate(old.get("evidence", [])):
+    for index, item in enumerate(items):
         url = item.get("url")
-        if not isinstance(url, str) or not url.lower().startswith("https://"):
+        if not isinstance(url, str) or not url.startswith("https://"):
             continue
-        source = str(item.get("source", "公开来源"))
         output.append(make_evidence(
-            evidence_id=str(item.get("lineage_id") or f"v2-{index}-{old.get('ticker', 'unknown')}"), source_name=source, url=url,
-            document_type="公开研究资料", published_at=str(item.get("published_at", as_of)), accessed_at=str(item.get("retrieved_at", as_of)), as_of=as_of,
-            claim="原 v2 证据链，进入 v3 后重新执行来源、日期和去重门禁", metric="", value=None, unit="", period="", confidence=float(item.get("confidence", 0.0)),
-            content=str(item.get("content_hash", "")), supports_or_contradicts={"supports": _string_list(item.get("supports")), "contradicts": []}, stale=False,
-            source_family=None,
+            evidence_id=str(item.get("lineage_id") or f"public-{index}"),
+            source_name=str(item.get("source") or "公开来源"),
+            url=url,
+            document_type="公开研究资料",
+            published_at=str(item.get("published_at") or as_of),
+            accessed_at=str(item.get("retrieved_at") or as_of),
+            as_of=as_of,
+            claim="公开数据直接生成的可追溯研究输入",
+            confidence=float(item.get("confidence", 0.0)),
+            content=str(item.get("content_hash") or item.get("lineage_id") or url),
+            supports_or_contradicts={"supports": list(item.get("supports") or []), "contradicts": []},
+            stale=str(item.get("freshness", "fresh")) == "stale",
         ))
-    return deduplicate_evidence(mark_stale(output, as_of=as_of, max_age_days=45))
+    return deduplicate_evidence(mark_stale(output, as_of=as_of, max_age_days=max_age_days))
 
 
-def _research_type(old: dict[str, Any]) -> str:
-    text = " ".join(_string_list(old.get("what_makes_investable"))).lower()
-    if any(token in text for token in ("cycle", "周期", "recovery", "复苏")):
+def _research_type(raw: dict[str, Any]) -> str:
+    if "industry_cycle" in raw.get("dimensions", {}):
         return "CYCLICAL_RECOVERY"
-    if any(token in text for token in ("catalyst", "催化", "event", "事件")):
-        return "CATALYST"
     return "QUALITY_COMPOUNDER"
 
 
-def _candidate(old: dict[str, Any], as_of: str, config: dict[str, Any]) -> dict[str, Any]:
-    evidence = _evidence(old, as_of)
-    quality = old.get("data_quality", {}) if isinstance(old.get("data_quality"), dict) else {}
-    dimensions = old.get("family_scores", {}) if isinstance(old.get("family_scores"), dict) else {}
-    scores = score_candidate(dimensions, evidence, config, gates_failed=_string_list(quality.get("gates_failed")))
-    missing = _string_list(quality.get("missing_fields")) + scores["missing_dimensions"]
-    exposure = _string_list(old.get("exposure_proof"))
-    if not exposure and any("demand_catalyst" in item.get("supports_or_contradicts", {}).get("supports", []) for item in evidence):
-        exposure = ["公开财务资料包含需求或收入相关证据，仍需公司披露进一步确认"]
-    gates_failed = _string_list(quality.get("gates_failed"))
+def _candidate(raw: dict[str, Any], universe_row: dict[str, Any], as_of: str, config: dict[str, Any], calibration: float | None) -> dict[str, Any]:
+    evidence = _v3_evidence(raw.get("evidence", []), as_of, int(config["limits"]["max_evidence_age_days"]))
+    dimensions = dict(raw.get("dimensions") or raw.get("family_scores") or {})
+    quality = dict(raw.get("data_quality") or {})
+    gates_failed = list(raw.get("gates_failed") or [])
+    scores = score_candidate(dimensions, evidence, config, gates_failed=gates_failed, model_calibration_score=calibration)
+    if scores["independent_lineage_count"] < 2:
+        gates_failed.append("insufficient_independent_evidence")
+    if scores["model_calibration_score"] is None:
+        gates_failed.append("model_not_calibrated")
+    missing = sorted(set(list(quality.get("missing_fields") or []) + scores["missing_dimensions"]))
     if missing:
         gates_failed.append("missing_evidence_fields")
-    valuation_verified = "valuation" in dimensions and not any(key in missing for key in ("valuation", "valuation_data"))
-    status, gates_passed, workflow = classify_candidate(scores, gates_failed=gates_failed, research_type=_research_type(old), exposure_proof=exposure, valuation_verified=valuation_verified, config=config)
-    company_name = str(old.get("company_name") or old.get("ticker") or "未知公司")
-    candidate = {
-        "schema_version": SCHEMA_VERSION, "ticker": str(old.get("ticker", "")).upper(), "company_name": company_name, "exchange": old.get("exchange", ""),
-        "security_type": old.get("security_type", "stock"), "adr": bool(old.get("adr", False)), "sector": old.get("sector", "technology"), "industry": old.get("industry", ""),
-        "category_metadata": old.get("category_metadata", {}), "listing_currency": old.get("listing_currency", "USD"), "market_cap": old.get("market_cap"), "liquidity_status": old.get("liquidity_status", "unknown"),
-        "benchmark_membership": old.get("benchmark_membership", ["QQQ"]), "research_type": _research_type(old), "as_of": as_of, "research_only": True, "status": status,
-        "raw_score": scores["raw_score"], "composite_score": scores["composite_score"], "leave_one_dimension_out_floor": scores["leave_one_dimension_out_floor"], "leave_one_source_out_floor": scores["leave_one_source_out_floor"],
-        "evidence_coverage_score": scores["evidence_coverage_score"], "confidence_score": scores["confidence_score"], "sector_percentile": scores["sector_percentile"], "penalties": scores["penalties"], "score_contributions": scores["score_contributions"],
-        "family_scores": dimensions, "gates_passed": gates_passed, "gates_failed": sorted(set(gates_failed)), "evidence": evidence,
-        "why_now": old.get("why_now") or _string_list(old.get("what_makes_investable")), "variant_wedge": old.get("variant_wedge") or "尚未形成可验证的市场预期差异。", "exposure_proof": exposure,
-        "expectations_risk": old.get("expectations_risk") or ("市场预期尚未充分验证" if "analyst_consensus" in missing else "需要复核估值与增长匹配程度。"), "first_rejection": old.get("first_rejection") or (gates_failed[0] if gates_failed else "等待下一轮财务与估值核验"),
-        "what_makes_investable": old.get("what_makes_investable", []), "what_kills_thesis": old.get("what_kills_thesis", []), "next_workflow": workflow,
-        "data_quality": {**quality, "missing_fields": sorted(set(missing)), "gates_failed": sorted(set(gates_failed)), "latest_filing": quality.get("latest_filing"), "latest_price": quality.get("latest_price"), "status": "limited_free_sources" if missing else "complete"},
-        "portfolio_fit_status": "UNKNOWN", "portfolio_relation": {"computed_in_browser": True, "direct_position": False, "watchlist": False, "spy_overlap": None, "sector_overlap": None, "fx_warning": None},
-        "catalysts": _string_list(old.get("catalysts")), "method_versions": {"v3": config["methodology_version"], **(old.get("method_versions", {}) if isinstance(old.get("method_versions"), dict) else {})},
+    exposure = list(raw.get("exposure_proof") or [])
+    valuation_verified = "valuation" in dimensions and "valuation" not in missing
+    status, passed, workflow = classify_candidate(
+        scores,
+        gates_failed=sorted(set(gates_failed)),
+        research_type=_research_type(raw),
+        exposure_proof=exposure,
+        valuation_verified=valuation_verified,
+        config=config,
+    )
+    ticker = str(raw.get("ticker") or universe_row.get("ticker") or "").upper()
+    company_name = str(universe_row.get("company_name") or raw.get("company_name") or ticker)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "ticker": ticker,
+        "company_name": company_name,
+        "exchange": universe_row.get("exchange", ""),
+        "security_type": "adr" if universe_row.get("asset_type") == "adr" else "stock",
+        "adr": universe_row.get("asset_type") == "adr",
+        "sector": str(universe_row.get("category") or "mixed"),
+        "industry": str(universe_row.get("category") or ""),
+        "category_metadata": {"category": universe_row.get("category")},
+        "listing_currency": "USD",
+        "market_cap": universe_row.get("market_cap_usd"),
+        "liquidity_status": "verified",
+        "benchmark_membership": ["QQQ", "SPY"],
+        "research_type": _research_type(raw),
+        "as_of": as_of,
+        "research_only": True,
+        "status": status,
+        "raw_score": scores["raw_score"],
+        "composite_score": scores["composite_score"],
+        "leave_one_dimension_out_floor": scores["leave_one_dimension_out_floor"],
+        "leave_one_source_out_floor": scores["leave_one_source_out_floor"],
+        "evidence_coverage_score": scores["evidence_coverage_score"],
+        "evidence_independence_score": scores["evidence_independence_score"],
+        "model_calibration_score": scores["model_calibration_score"],
+        "confidence_score": scores["confidence_score"],
+        "sector_percentile": scores["sector_percentile"],
+        "independent_lineages": scores["independent_lineages"],
+        "penalties": scores["penalties"],
+        "score_contributions": scores["score_contributions"],
+        "family_scores": dimensions,
+        "gates_passed": passed,
+        "gates_failed": sorted(set(gates_failed)),
+        "evidence": evidence,
+        "why_now": list(raw.get("what_makes_investable") or []),
+        "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+        "exposure_proof": exposure,
+        "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+        "first_rejection": sorted(set(gates_failed))[0] if gates_failed else "等待下一次财务与估值复核",
+        "what_makes_investable": list(raw.get("what_makes_investable") or []),
+        "what_kills_thesis": list(raw.get("what_kills_thesis") or []),
+        "next_workflow": workflow,
+        "data_quality": {
+            **quality,
+            "status": "limited_free_sources" if missing or gates_failed else "complete",
+            "missing_fields": missing,
+            "gates_failed": sorted(set(gates_failed)),
+            "reliability_labels": {
+                "data_completeness": scores["evidence_coverage_score"],
+                "evidence_independence": scores["evidence_independence_score"],
+                "model_calibration": scores["model_calibration_score"],
+            },
+        },
+        "portfolio_fit_status": "UNKNOWN",
+        "portfolio_relation": {"computed_in_browser": True, "direct_position": False, "watchlist": False},
+        "catalysts": [],
+        "method_versions": {"v3_1": config["methodology_version"], **dict(raw.get("method_versions") or {})},
     }
-    return candidate
 
 
-def _shadow(output_dir: Path, candidates: list[dict[str, Any]], as_of: str, config: dict[str, Any]) -> dict[str, Any]:
+def _backfill(observations: list[dict[str, Any]], prices_payload: dict[str, Any]) -> list[dict[str, Any]]:
+    prices = prices_payload.get("symbols", {}) if isinstance(prices_payload, dict) else {}
+    benchmark_rows = normalized_rows(prices.get("QQQ", {}))
+    outcomes = []
+    for observation in observations:
+        for rank, ticker in enumerate(observation.get("ranking", []), start=1):
+            score = float(observation.get("scores", {}).get(ticker, 0))
+            rows = normalized_rows(prices.get(ticker, {}))
+            horizon_rows = {}
+            for week in (1, 4, 12):
+                outcome = horizon_outcome(rows, benchmark_rows, observation.get("as_of", ""), week)
+                horizon_rows[str(week)] = {**outcome, "baseline_relative_return": 0.0 if outcome.get("status") == "matured" else None}
+            outcomes.append({
+                "observation_id": observation.get("observation_id"),
+                "observation_as_of": observation.get("as_of"),
+                "ticker": ticker,
+                "as_of_rank": rank,
+                "score": score,
+                "horizons": horizon_rows,
+            })
+    return outcomes
+
+
+def _shadow(output_dir: Path, candidates: list[dict[str, Any]], as_of: str, config: dict[str, Any], raw_input_hash: str) -> dict[str, Any]:
     shadow_dir = output_dir / "shadow"
-    old = load(shadow_dir / "observations.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "observations": []})
-    observations = list(old.get("observations", [])) if isinstance(old, dict) else []
-    observation_id = input_hash({"as_of": as_of, "tickers": [item["ticker"] for item in candidates]})[:20]
-    if not any(item.get("observation_id") == observation_id for item in observations):
-        observations.append({"observation_id": observation_id, "as_of": as_of, "ranking": [item["ticker"] for item in candidates], "funnel_status": {item["ticker"]: item["status"] for item in candidates}, "scores": {item["ticker"]: item["composite_score"] for item in candidates}, "input_hash": input_hash(candidates), "evidence_hash": input_hash([item["evidence"] for item in candidates]), "code_version": "idea-engine-v3", "model_version": config["methodology_version"], "universe_version": config["universe"]["version"], "benchmark": config["universe"]["benchmark_symbols"], "market_regime": "unknown", "sector": "technology", "industry": "mixed"})
-    outcomes = list(load(shadow_dir / "outcomes.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "outcomes": []}).get("outcomes", []))
+    previous = load(shadow_dir / "observations.json", {"observations": []})
+    observations = []
+    seen_as_of_dates = set()
+    for item in previous.get("observations", []):
+        frozen_as_of = str(item.get("as_of", ""))
+        frozen_date = frozen_as_of[:10]
+        if frozen_date in seen_as_of_dates:
+            continue
+        seen_as_of_dates.add(frozen_date)
+        observations.append(item)
+    observation_id = input_hash({"as_of": as_of, "input_hash": raw_input_hash})[:20]
+    # One immutable observation per as-of instant. A retry can fetch slightly
+    # different public data, but it must not rewrite or double-count the freeze.
+    if as_of[:10] not in seen_as_of_dates:
+        observations.append({
+            "observation_id": observation_id,
+            "as_of": as_of,
+            "ranking": [item["ticker"] for item in candidates],
+            "funnel_status": {item["ticker"]: item["status"] for item in candidates},
+            "scores": {item["ticker"]: item["composite_score"] for item in candidates},
+            "input_hash": raw_input_hash,
+            "evidence_hash": input_hash([item["evidence"] for item in candidates]),
+            "code_version": "idea-engine-v3.1",
+            "model_version": config["methodology_version"],
+            "universe_version": config["universe"]["version"],
+            "benchmark": ["QQQ", "SPY"],
+        })
+    outcomes = _backfill(observations, load(PRICES_PATH, {}))
     stats = model_statistics(outcomes, config)
-    gate = maturity(observations, outcomes, min_observations=config["shadow"]["min_observations"], min_calendar_weeks=config["shadow"]["min_calendar_weeks"], min_complete=config["shadow"]["min_complete_matured"], degraded=stats["degraded"])
+    gate = maturity(
+        observations, outcomes,
+        min_observations=config["shadow"]["min_observations"],
+        min_calendar_weeks=config["shadow"]["min_calendar_weeks"],
+        min_complete=config["shadow"]["min_complete_matured"],
+        reliability_observations=config["shadow"]["reliability_observations"],
+        reliability_calendar_weeks=config["shadow"]["reliability_calendar_weeks"],
+        reliability_complete=config["shadow"]["reliability_complete_matured"],
+        degraded=stats["degraded"],
+    )
     atomic_json(shadow_dir / "observations.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "observations": observations})
-    atomic_json(shadow_dir / "history" / "observations-history.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "entries": observations})
-    atomic_json(shadow_dir / "outcomes.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "benchmark": ["QQQ", "SPY"], "outcomes": outcomes, "statistics": stats})
-    governance = {"schema_version": SCHEMA_VERSION, "research_only": True, **gate, "model_statistics": stats}
+    atomic_json(shadow_dir / "outcomes.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "benchmark": "QQQ", "false_positive_definition": "成熟候选 4 周相对 QQQ 收益不大于 0", "outcomes": outcomes, "statistics": stats})
+    governance = {"schema_version": SCHEMA_VERSION, "research_only": True, "research_horizon": config["horizon"], **gate, "model_statistics": stats}
     atomic_json(shadow_dir / "governance-report.json", governance)
     return governance
 
 
-def run(input_path: Path | None = None, output_dir: Path = DEFAULT_OUTPUT, as_of: str | None = None) -> dict[str, Any]:
+def run(output_dir: Path = DEFAULT_OUTPUT, as_of: str | None = None, *, provider_fetcher: Callable[..., dict[str, Any]] | None = None) -> dict[str, Any]:
     config = load(CONFIG_PATH, {})
     frozen = _as_of(as_of)
-    source = load(input_path or (V2 / "latest-candidates.json"), {})
-    old_candidates = source.get("candidates", []) if isinstance(source, dict) else []
-    candidates = [_candidate(item, frozen, config) for item in old_candidates if isinstance(item, dict)]
+    payload = _provider_payload(frozen, provider_fetcher)
+    if payload.get("research_only") is not True:
+        raise ValueError("provider payload must be research_only")
+    accepted, rejected_rows = filter_universe(payload.get("universe_rows", []), config)
+    accepted_by_ticker = {str(row.get("ticker", "")).upper(): row for row in accepted}
+    category_map = load(UNIVERSE_PATH, {}).get("symbol_metadata", {})
+    for ticker, row in accepted_by_ticker.items():
+        row["category"] = (category_map.get(ticker) or {}).get("category", "mixed")
+
+    old_stats = load(output_dir / "shadow" / "outcomes.json", {}).get("statistics", {})
+    calibration = old_stats.get("model_calibration_score")
+    candidates = [
+        _candidate(raw, accepted_by_ticker[ticker], frozen, config, calibration)
+        for raw in payload.get("candidates", [])
+        if (ticker := str(raw.get("ticker", "")).upper()) in accepted_by_ticker
+    ]
     candidates.sort(key=lambda item: (-float(item["composite_score"]), item["ticker"]))
-    candidates = candidates[: int(config.get("output", {}).get("max_candidates", 10) or 10)]
-    result = {"schema_version": SCHEMA_VERSION, "methodology_version": config["methodology_version"], "generated_at": frozen, "as_of": frozen, "research_only": True, "active_provider": "free_public_data_reused_v2_input", "universe_version": config["universe"]["version"], "benchmark_symbols": config["universe"]["benchmark_symbols"], "source_manifest": {"input": "research/results/v2/idea-engine/latest-candidates.json", "providers": ["SEC_EDGAR", "PUBLIC_PRICE"], "api_key_required": False}, "funnel_summary": funnel_summary(candidates), "candidates": candidates, "rejected_candidates": [], "warnings": ["v3 仅使用免费公开数据；缺少一致预期、电话会或事件证据的候选会被降级。", "仅供研究，不进入本周定投，不生成买入金额。"], "input_hash": input_hash(source)}
+    displayed = candidates[: int(config["output"]["max_candidates"])]
+    raw_hash = input_hash(payload)
+    snapshot_name = f"{frozen[:10]}-{raw_hash[:12]}.json"
+    atomic_json(output_dir / "input-snapshots" / snapshot_name, {
+        "schema_version": SCHEMA_VERSION,
+        "research_only": True,
+        "research_horizon": config["horizon"],
+        "as_of": frozen,
+        "input_hash": raw_hash,
+        "provider": payload.get("provider"),
+        "requested_symbols": research_symbols(),
+        "normalized_provider_payload": payload,
+    })
+    governance = _shadow(output_dir, displayed, frozen, config, raw_hash)
+    result = {
+        "schema_version": SCHEMA_VERSION,
+        "methodology_version": config["methodology_version"],
+        "generated_at": frozen,
+        "as_of": frozen,
+        "research_only": True,
+        "status": "ready" if candidates else "blocked",
+        "active_provider": str(payload.get("provider") or "free_public_data"),
+        "universe_version": config["universe"]["version"],
+        "benchmark_symbols": ["QQQ", "SPY"],
+        "research_horizon": config["horizon"],
+        "screened_universe_count": len(payload.get("universe_rows", [])),
+        "requested_universe_count": len(research_symbols()),
+        "eligible_universe_count": len(accepted),
+        "scored_candidate_count": len(candidates),
+        "source_manifest": {"input": "direct_free_public_data", "input_snapshot": f"input-snapshots/{snapshot_name}", "providers": ["SEC_EDGAR", "PUBLIC_PRICE"], "api_key_required": False, "failures": payload.get("failures", [])},
+        "funnel_summary": funnel_summary(candidates),
+        "candidates": displayed,
+        "rejected_candidates": rejected_rows,
+        "warnings": ["短线定义为 1–4 周研究窗口，4 周相对 QQQ 为主要验收目标。", "12 周结果只用于监测信号衰减，不阻塞短线成熟门槛。", "仅用于候选研究优先级，不代表买入建议。", "模型校准度在 Shadow 达到 52 周和 26 条完整成熟结果前保持未验证。"],
+        "input_hash": raw_hash,
+        "shadow_status": governance["status"],
+    }
     validate_payload(result)
     output_dir.mkdir(parents=True, exist_ok=True)
     atomic_json(output_dir / "latest-candidates.json", result)
-    atomic_json(output_dir / "rejected-candidates.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "as_of": frozen, "items": []})
-    governance = _shadow(output_dir, candidates, frozen, config)
-    atomic_json(output_dir / "provider-status.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "status": "ready" if candidates else "blocked", "active_provider": result["active_provider"], "providers": {"SEC_EDGAR": "free_public_data", "PUBLIC_PRICE": "free_public_data", "paid_providers": "disabled"}, "last_successful_run": frozen})
-    lines = ["# 潜力股研究 Idea Engine v3", "", "仅供候选研究，不代表买入建议，不参与本周定投计算。", "", f"- as-of：`{frozen}`", f"- Shadow：`{governance['status']}`", ""]
-    lines.extend(f"- `{item['ticker']}`：{item['status']}，稳健分 {item['leave_one_source_out_floor']:.1f}，可信度 {item['confidence_score']:.1f}" for item in candidates)
-    (output_dir / "latest-candidates.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    atomic_json(output_dir / "rejected-candidates.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "as_of": frozen, "items": rejected_rows})
+    atomic_json(output_dir / "provider-status.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "status": result["status"], "active_provider": result["active_provider"], "last_successful_run": frozen, "screened_universe_count": result["screened_universe_count"], "research_horizon": config["horizon"], "providers": {"SEC_EDGAR": "free_public_data", "PUBLIC_PRICE": "free_public_data", "paid_providers": "disabled"}})
+    (output_dir / "latest-candidates.md").write_text("# 潜力股短线研究 Idea Engine v3.1\n\n1–4 周为短线研究窗口，4 周相对 QQQ 为主要验证目标；12 周只监测信号衰减。仅供研究，不进入本周定投。\n", encoding="utf-8")
     return result
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=Path)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--as-of", default="")
-    parser.add_argument("--provider", choices=("free",), default="free", help="兼容旧工作流参数；v3 仅使用免费公开数据")
+    parser.add_argument("--provider", choices=("free",), default="free")
     args = parser.parse_args()
-    result = run(args.input, args.output, args.as_of or None)
-    print(f"idea_engine_v3_status=ready candidates={len(result['candidates'])}")
+    result = run(args.output, args.as_of or None)
+    print(f"idea_engine_v3_1_status={result['status']} screened={result['screened_universe_count']} candidates={len(result['candidates'])}")
 
 
 if __name__ == "__main__":

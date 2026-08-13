@@ -7,7 +7,7 @@ from math import isfinite
 from typing import Any
 from urllib.parse import urlparse
 
-SCHEMA_VERSION = "idea-engine-v3"
+SCHEMA_VERSION = "idea-engine-v3.1"
 STATUSES = {"A_RESEARCH", "B_WATCH", "C_SCREEN", "VALUATION_GATED", "EXPOSURE_UNPROVEN", "BLOCKED", "REJECTED"}
 RESEARCH_TYPES = {"QUALITY_COMPOUNDER", "CYCLICAL_RECOVERY", "VALUATION_DISLOCATION", "CATALYST", "THEMATIC_BENEFICIARY", "RELATIVE_VALUE", "WATCH_ONLY"}
 WORKFLOWS = {"COMPANY_TEARSHEET", "EARNINGS_REVIEW", "VALUATION_REVIEW", "CATALYST_TRACKER", "THESIS_TRACKER", "WATCHLIST_ONLY", "REJECT"}
@@ -62,7 +62,7 @@ def validate_evidence(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def validate_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
-    required = ("schema_version", "ticker", "company_name", "as_of", "research_only", "research_type", "status", "raw_score", "composite_score", "leave_one_dimension_out_floor", "leave_one_source_out_floor", "evidence_coverage_score", "confidence_score", "penalties", "score_contributions", "gates_passed", "gates_failed", "why_now", "variant_wedge", "exposure_proof", "expectations_risk", "first_rejection", "what_makes_investable", "what_kills_thesis", "next_workflow", "evidence", "data_quality", "portfolio_fit_status")
+    required = ("schema_version", "ticker", "company_name", "as_of", "research_only", "research_type", "status", "raw_score", "composite_score", "leave_one_dimension_out_floor", "leave_one_source_out_floor", "evidence_coverage_score", "evidence_independence_score", "model_calibration_score", "confidence_score", "penalties", "score_contributions", "gates_passed", "gates_failed", "why_now", "variant_wedge", "exposure_proof", "expectations_risk", "first_rejection", "what_makes_investable", "what_kills_thesis", "next_workflow", "evidence", "data_quality", "portfolio_fit_status")
     missing = [key for key in required if key not in candidate]
     if missing:
         raise ValueError(f"候选缺少字段: {','.join(missing)}")
@@ -74,9 +74,11 @@ def validate_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("股票代码无效")
     if candidate["research_type"] not in RESEARCH_TYPES or candidate["status"] not in STATUSES or candidate["next_workflow"] not in WORKFLOWS:
         raise ValueError("研究类型、漏斗状态或下一步工作流无效")
-    for key in ("raw_score", "composite_score", "leave_one_dimension_out_floor", "leave_one_source_out_floor", "evidence_coverage_score", "confidence_score"):
+    for key in ("raw_score", "composite_score", "leave_one_dimension_out_floor", "leave_one_source_out_floor", "evidence_coverage_score", "evidence_independence_score", "confidence_score"):
         if not _finite(candidate[key]) or not 0 <= float(candidate[key]) <= 100:
             raise ValueError(f"{key} 必须是 0 到 100 的有限数")
+    if candidate["model_calibration_score"] is not None and (not _finite(candidate["model_calibration_score"]) or not 0 <= float(candidate["model_calibration_score"]) <= 100):
+        raise ValueError("model_calibration_score 必须为空或 0 到 100 的有限数")
     if not isinstance(candidate["evidence"], list) or not isinstance(candidate["data_quality"], dict) or not isinstance(candidate["gates_passed"], list) or not isinstance(candidate["gates_failed"], list):
         raise ValueError("候选容器字段无效")
     for evidence in candidate["evidence"]:

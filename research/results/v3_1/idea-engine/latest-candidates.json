@@ -1,0 +1,2166 @@
+{
+  "schema_version": "idea-engine-v3.1",
+  "methodology_version": "idea-engine-v3.1.0",
+  "generated_at": "2026-08-13T16:30:00+00:00",
+  "as_of": "2026-08-13T16:30:00+00:00",
+  "research_only": true,
+  "status": "ready",
+  "active_provider": "free_public_data",
+  "universe_version": "sector-balanced-80-v1",
+  "benchmark_symbols": [
+    "QQQ",
+    "SPY"
+  ],
+  "research_horizon": {
+    "style": "short_term_swing",
+    "primary_horizon_weeks": 4,
+    "entry_confirmation_weeks": 1,
+    "decay_monitor_weeks": 12,
+    "benchmark": "QQQ"
+  },
+  "screened_universe_count": 78,
+  "requested_universe_count": 80,
+  "eligible_universe_count": 75,
+  "scored_candidate_count": 75,
+  "source_manifest": {
+    "input": "direct_free_public_data",
+    "input_snapshot": "input-snapshots/2026-08-13-ad201ab72677.json",
+    "providers": [
+      "SEC_EDGAR",
+      "PUBLIC_PRICE"
+    ],
+    "api_key_required": false,
+    "failures": [
+      {
+        "ticker": "BYDDY",
+        "reason": "sec_cik_not_found"
+      },
+      {
+        "ticker": "TCEHY",
+        "reason": "sec_cik_not_found"
+      }
+    ]
+  },
+  "funnel_summary": {
+    "A_RESEARCH": 0,
+    "BLOCKED": 0,
+    "B_WATCH": 5,
+    "C_SCREEN": 66,
+    "EXPOSURE_UNPROVEN": 0,
+    "REJECTED": 0,
+    "VALUATION_GATED": 4
+  },
+  "candidates": [
+    {
+      "schema_version": "idea-engine-v3.1",
+      "ticker": "TSM",
+      "company_name": "TAIWAN SEMICONDUCTOR MANUFACTURING CO LTD",
+      "exchange": "NYSE",
+      "security_type": "adr",
+      "adr": true,
+      "sector": "semiconductors",
+      "industry": "semiconductors",
+      "category_metadata": {
+        "category": "semiconductors"
+      },
+      "listing_currency": "USD",
+      "market_cap": 11238897182027.154,
+      "liquidity_status": "verified",
+      "benchmark_membership": [
+        "QQQ",
+        "SPY"
+      ],
+      "research_type": "CYCLICAL_RECOVERY",
+      "as_of": "2026-08-13T16:30:00+00:00",
+      "research_only": true,
+      "status": "B_WATCH",
+      "raw_score": 72.716308,
+      "composite_score": 70.716308,
+      "leave_one_dimension_out_floor": 37.716308,
+      "leave_one_source_out_floor": 0.0,
+      "evidence_coverage_score": 100.0,
+      "evidence_independence_score": 66.666667,
+      "model_calibration_score": null,
+      "confidence_score": 89.5,
+      "sector_percentile": null,
+      "independent_lineages": [
+        "ISSUER_DISCLOSURE",
+        "MARKET_PRICE"
+      ],
+      "penalties": {
+        "missing": 0.0,
+        "contradiction": 0.0,
+        "staleness": 0.0,
+        "liquidity_data": 2.0
+      },
+      "score_contributions": {
+        "financial_quality": 12.79345,
+        "valuation": 8.0,
+        "demand_catalyst": 25.0,
+        "expectations_confirmation": 10.033769,
+        "industry_cycle": 7.99261,
+        "risk_liquidity_health": 8.896479
+      },
+      "family_scores": {
+        "financial_quality": 85.289665,
+        "valuation": 80.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 40.135077,
+        "industry_cycle": 79.926095,
+        "risk_liquidity_health": 59.309862
+      },
+      "gates_passed": [
+        "evidence_coverage",
+        "confidence",
+        "evidence_independence"
+      ],
+      "gates_failed": [
+        "free_source_scope_limited",
+        "missing_evidence_fields",
+        "model_not_calibrated",
+        "no_consensus_estimates"
+      ],
+      "evidence": [
+        {
+          "evidence_id": "sec:1046179:0001046179-26-000539",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR 6-K",
+          "canonical_url": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000539/sonysemiconductorsolutions.htm",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-11T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.9,
+          "content_hash": "3d3f6cbe1048db0850723c0c57117a5a60b076b96b3d65d4d879cb262f5fa5a6",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst",
+              "industry_cycle"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "sec-companyfacts:1046179:2026-08-11",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR companyfacts",
+          "canonical_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001046179.json",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-11T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.85,
+          "content_hash": "0b9ae9ddc227589169e8553b8241d270ff70f3a57800d2fce2cf54504c8f9d87",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst",
+              "industry_cycle"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "yahoo-chart:TSM:2026-08-13",
+          "source_family": "PUBLIC_PRICE",
+          "source_name": "Yahoo Finance chart",
+          "canonical_url": "https://query1.finance.yahoo.com/v8/finance/chart/TSM?events=history&interval=1d&period1=1752078600&period2=1786725000",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-13T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.75,
+          "content_hash": "487b9037445226cb9166af5b9b117c29cc73b3d74e95fc8f4bf340548d971947",
+          "supports_or_contradicts": {
+            "supports": [
+              "expectations_confirmation",
+              "risk_liquidity_health"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "MARKET_PRICE"
+        }
+      ],
+      "why_now": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+      "exposure_proof": [],
+      "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "next_workflow": "EARNINGS_REVIEW",
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-08-11",
+        "latest_price": "2026-08-13",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_evidence_fields",
+          "model_not_calibrated",
+          "no_consensus_estimates"
+        ],
+        "reliability_labels": {
+          "data_completeness": 100.0,
+          "evidence_independence": 66.666667,
+          "model_calibration": null
+        }
+      },
+      "portfolio_fit_status": "UNKNOWN",
+      "portfolio_relation": {
+        "computed_in_browser": true,
+        "direct_position": false,
+        "watchlist": false
+      },
+      "catalysts": [],
+      "method_versions": {
+        "v3_1": "idea-engine-v3.1.0",
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      }
+    },
+    {
+      "schema_version": "idea-engine-v3.1",
+      "ticker": "LRCX",
+      "company_name": "LAM RESEARCH CORP",
+      "exchange": "NASDAQ",
+      "security_type": "stock",
+      "adr": false,
+      "sector": "semiconductors",
+      "industry": "semiconductors",
+      "category_metadata": {
+        "category": "semiconductors"
+      },
+      "listing_currency": "USD",
+      "market_cap": 427736866937.6831,
+      "liquidity_status": "verified",
+      "benchmark_membership": [
+        "QQQ",
+        "SPY"
+      ],
+      "research_type": "CYCLICAL_RECOVERY",
+      "as_of": "2026-08-13T16:30:00+00:00",
+      "research_only": true,
+      "status": "B_WATCH",
+      "raw_score": 64.573756,
+      "composite_score": 62.573756,
+      "leave_one_dimension_out_floor": 29.573756,
+      "leave_one_source_out_floor": 0.0,
+      "evidence_coverage_score": 100.0,
+      "evidence_independence_score": 66.666667,
+      "model_calibration_score": null,
+      "confidence_score": 89.5,
+      "sector_percentile": null,
+      "independent_lineages": [
+        "ISSUER_DISCLOSURE",
+        "MARKET_PRICE"
+      ],
+      "penalties": {
+        "missing": 0.0,
+        "contradiction": 0.0,
+        "staleness": 0.0,
+        "liquidity_data": 2.0
+      },
+      "score_contributions": {
+        "financial_quality": 12.371701,
+        "valuation": 3.5,
+        "demand_catalyst": 25.0,
+        "expectations_confirmation": 11.249476,
+        "industry_cycle": 7.420577,
+        "risk_liquidity_health": 5.032002
+      },
+      "family_scores": {
+        "financial_quality": 82.478009,
+        "valuation": 35.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 44.997903,
+        "industry_cycle": 74.205766,
+        "risk_liquidity_health": 33.546681
+      },
+      "gates_passed": [
+        "evidence_coverage",
+        "confidence",
+        "evidence_independence"
+      ],
+      "gates_failed": [
+        "free_source_scope_limited",
+        "missing_evidence_fields",
+        "model_not_calibrated",
+        "no_consensus_estimates"
+      ],
+      "evidence": [
+        {
+          "evidence_id": "sec:707549:0000707549-26-000037",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR 10-K",
+          "canonical_url": "https://www.sec.gov/Archives/edgar/data/707549/000070754926000037/lrcx-20260628.htm",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.9,
+          "content_hash": "749f2527a2a9ce80f2b330fbb381a79f401b75981a1283d4206ddf12c3f0096b",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst",
+              "industry_cycle"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "sec-companyfacts:707549:2026-08-07",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR companyfacts",
+          "canonical_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000707549.json",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-07T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.85,
+          "content_hash": "4ee1be08b0bc7473211c04deef953fa263050dc8295a5c2c410e33e881a18452",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst",
+              "industry_cycle"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "yahoo-chart:LRCX:2026-08-13",
+          "source_family": "PUBLIC_PRICE",
+          "source_name": "Yahoo Finance chart",
+          "canonical_url": "https://query1.finance.yahoo.com/v8/finance/chart/LRCX?events=history&interval=1d&period1=1752078600&period2=1786725000",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-13T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.75,
+          "content_hash": "1e7359e1f4c547e85de2edc55d65416ffc698ee1f13dac8a5539bda91cd1abdb",
+          "supports_or_contradicts": {
+            "supports": [
+              "expectations_confirmation",
+              "risk_liquidity_health"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "MARKET_PRICE"
+        }
+      ],
+      "why_now": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+      "exposure_proof": [],
+      "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "next_workflow": "EARNINGS_REVIEW",
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-08-07",
+        "latest_price": "2026-08-13",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_evidence_fields",
+          "model_not_calibrated",
+          "no_consensus_estimates"
+        ],
+        "reliability_labels": {
+          "data_completeness": 100.0,
+          "evidence_independence": 66.666667,
+          "model_calibration": null
+        }
+      },
+      "portfolio_fit_status": "UNKNOWN",
+      "portfolio_relation": {
+        "computed_in_browser": true,
+        "direct_position": false,
+        "watchlist": false
+      },
+      "catalysts": [],
+      "method_versions": {
+        "v3_1": "idea-engine-v3.1.0",
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      }
+    },
+    {
+      "schema_version": "idea-engine-v3.1",
+      "ticker": "TXN",
+      "company_name": "TEXAS INSTRUMENTS INC",
+      "exchange": "NASDAQ",
+      "security_type": "stock",
+      "adr": false,
+      "sector": "semiconductors",
+      "industry": "semiconductors",
+      "category_metadata": {
+        "category": "semiconductors"
+      },
+      "listing_currency": "USD",
+      "market_cap": 253380581628.74304,
+      "liquidity_status": "verified",
+      "benchmark_membership": [
+        "QQQ",
+        "SPY"
+      ],
+      "research_type": "CYCLICAL_RECOVERY",
+      "as_of": "2026-08-13T16:30:00+00:00",
+      "research_only": true,
+      "status": "B_WATCH",
+      "raw_score": 63.797443,
+      "composite_score": 61.797443,
+      "leave_one_dimension_out_floor": 28.797443,
+      "leave_one_source_out_floor": 0.0,
+      "evidence_coverage_score": 100.0,
+      "evidence_independence_score": 66.666667,
+      "model_calibration_score": null,
+      "confidence_score": 89.5,
+      "sector_percentile": null,
+      "independent_lineages": [
+        "ISSUER_DISCLOSURE",
+        "MARKET_PRICE"
+      ],
+      "penalties": {
+        "missing": 0.0,
+        "contradiction": 0.0,
+        "staleness": 0.0,
+        "liquidity_data": 2.0
+      },
+      "score_contributions": {
+        "financial_quality": 12.216962,
+        "valuation": 3.5,
+        "demand_catalyst": 25.0,
+        "expectations_confirmation": 7.773842,
+        "industry_cycle": 7.037699,
+        "risk_liquidity_health": 8.26894
+      },
+      "family_scores": {
+        "financial_quality": 81.44641,
+        "valuation": 35.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 31.095367,
+        "industry_cycle": 70.376994,
+        "risk_liquidity_health": 55.126267
+      },
+      "gates_passed": [
+        "evidence_coverage",
+        "confidence",
+        "evidence_independence"
+      ],
+      "gates_failed": [
+        "free_source_scope_limited",
+        "missing_evidence_fields",
+        "model_not_calibrated",
+        "no_consensus_estimates"
+      ],
+      "evidence": [
+        {
+          "evidence_id": "sec:97476:0000097476-26-000152",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR 10-Q",
+          "canonical_url": "https://www.sec.gov/Archives/edgar/data/97476/000009747626000152/txn-20260630.htm",
+          "document_type": "公开研究资料",
+          "published_at": "2026-07-24T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.9,
+          "content_hash": "51f964a0dccc9c2fd865c6fe92b023f841bb9d94465727be4838fa03819750b4",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst",
+              "industry_cycle"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "sec-companyfacts:97476:2026-07-24",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR companyfacts",
+          "canonical_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000097476.json",
+          "document_type": "公开研究资料",
+          "published_at": "2026-07-24T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.85,
+          "content_hash": "e0eddf22a322a79cdcddacc084eef91a045a0247f638cf2ecec1ad7acf255243",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst",
+              "industry_cycle"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "yahoo-chart:TXN:2026-08-13",
+          "source_family": "PUBLIC_PRICE",
+          "source_name": "Yahoo Finance chart",
+          "canonical_url": "https://query1.finance.yahoo.com/v8/finance/chart/TXN?events=history&interval=1d&period1=1752078600&period2=1786725000",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-13T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.75,
+          "content_hash": "4fe7410cdd34df277c0ca8cb3d0c75f60ef6f1d7bfebdd378937399f7ca4411a",
+          "supports_or_contradicts": {
+            "supports": [
+              "expectations_confirmation",
+              "risk_liquidity_health"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "MARKET_PRICE"
+        }
+      ],
+      "why_now": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+      "exposure_proof": [],
+      "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "next_workflow": "EARNINGS_REVIEW",
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-07-24",
+        "latest_price": "2026-08-13",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_evidence_fields",
+          "model_not_calibrated",
+          "no_consensus_estimates"
+        ],
+        "reliability_labels": {
+          "data_completeness": 100.0,
+          "evidence_independence": 66.666667,
+          "model_calibration": null
+        }
+      },
+      "portfolio_fit_status": "UNKNOWN",
+      "portfolio_relation": {
+        "computed_in_browser": true,
+        "direct_position": false,
+        "watchlist": false
+      },
+      "catalysts": [],
+      "method_versions": {
+        "v3_1": "idea-engine-v3.1.0",
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      }
+    },
+    {
+      "schema_version": "idea-engine-v3.1",
+      "ticker": "ASML",
+      "company_name": "ASML HOLDING NV",
+      "exchange": "NASDAQ",
+      "security_type": "adr",
+      "adr": true,
+      "sector": "semiconductors",
+      "industry": "semiconductors",
+      "category_metadata": {
+        "category": "semiconductors"
+      },
+      "listing_currency": "USD",
+      "market_cap": 716714964543.4003,
+      "liquidity_status": "verified",
+      "benchmark_membership": [
+        "QQQ",
+        "SPY"
+      ],
+      "research_type": "CYCLICAL_RECOVERY",
+      "as_of": "2026-08-13T16:30:00+00:00",
+      "research_only": true,
+      "status": "B_WATCH",
+      "raw_score": 63.024304,
+      "composite_score": 61.024304,
+      "leave_one_dimension_out_floor": 28.164793,
+      "leave_one_source_out_floor": 0.0,
+      "evidence_coverage_score": 100.0,
+      "evidence_independence_score": 66.666667,
+      "model_calibration_score": null,
+      "confidence_score": 89.5,
+      "sector_percentile": null,
+      "independent_lineages": [
+        "ISSUER_DISCLOSURE",
+        "MARKET_PRICE"
+      ],
+      "penalties": {
+        "missing": 0.0,
+        "contradiction": 0.0,
+        "staleness": 0.0,
+        "liquidity_data": 2.0
+      },
+      "score_contributions": {
+        "financial_quality": 11.332323,
+        "valuation": 2.0,
+        "demand_catalyst": 24.859511,
+        "expectations_confirmation": 10.665456,
+        "industry_cycle": 6.032926,
+        "risk_liquidity_health": 8.134088
+      },
+      "family_scores": {
+        "financial_quality": 75.548818,
+        "valuation": 20.0,
+        "demand_catalyst": 99.438044,
+        "expectations_confirmation": 42.661825,
+        "industry_cycle": 60.329258,
+        "risk_liquidity_health": 54.227253
+      },
+      "gates_passed": [
+        "evidence_coverage",
+        "confidence",
+        "evidence_independence"
+      ],
+      "gates_failed": [
+        "free_source_scope_limited",
+        "missing_evidence_fields",
+        "model_not_calibrated",
+        "no_consensus_estimates"
+      ],
+      "evidence": [
+        {
+          "evidence_id": "sec:937966:0001628280-26-048235",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR 6-K",
+          "canonical_url": "https://www.sec.gov/Archives/edgar/data/937966/000162828026048235/form6-kquarterlyfilings.htm",
+          "document_type": "公开研究资料",
+          "published_at": "2026-07-15T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.9,
+          "content_hash": "5374ae89217847f97f5811e06fa2eea23d9720e565c59590891d0f016f542159",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst",
+              "industry_cycle"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "sec-companyfacts:937966:2026-07-15",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR companyfacts",
+          "canonical_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000937966.json",
+          "document_type": "公开研究资料",
+          "published_at": "2026-07-15T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.85,
+          "content_hash": "4cb85a412c95df3d31f0a1a57a9c383256b323da5874d71955599ce948d653a4",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst",
+              "industry_cycle"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "yahoo-chart:ASML:2026-08-13",
+          "source_family": "PUBLIC_PRICE",
+          "source_name": "Yahoo Finance chart",
+          "canonical_url": "https://query1.finance.yahoo.com/v8/finance/chart/ASML?events=history&interval=1d&period1=1752078600&period2=1786725000",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-13T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.75,
+          "content_hash": "9fe01b125e8c523310a585e0c0b1a0cd3e8b65de9d39347acc989ee2bf61542d",
+          "supports_or_contradicts": {
+            "supports": [
+              "expectations_confirmation",
+              "risk_liquidity_health"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "MARKET_PRICE"
+        }
+      ],
+      "why_now": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+      "exposure_proof": [],
+      "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "next_workflow": "EARNINGS_REVIEW",
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-07-15",
+        "latest_price": "2026-08-13",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_evidence_fields",
+          "model_not_calibrated",
+          "no_consensus_estimates"
+        ],
+        "reliability_labels": {
+          "data_completeness": 100.0,
+          "evidence_independence": 66.666667,
+          "model_calibration": null
+        }
+      },
+      "portfolio_fit_status": "UNKNOWN",
+      "portfolio_relation": {
+        "computed_in_browser": true,
+        "direct_position": false,
+        "watchlist": false
+      },
+      "catalysts": [],
+      "method_versions": {
+        "v3_1": "idea-engine-v3.1.0",
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      }
+    },
+    {
+      "schema_version": "idea-engine-v3.1",
+      "ticker": "AMD",
+      "company_name": "ADVANCED MICRO DEVICES INC",
+      "exchange": "NASDAQ",
+      "security_type": "stock",
+      "adr": false,
+      "sector": "semiconductors",
+      "industry": "semiconductors",
+      "category_metadata": {
+        "category": "semiconductors"
+      },
+      "listing_currency": "USD",
+      "market_cap": 802952167968.75,
+      "liquidity_status": "verified",
+      "benchmark_membership": [
+        "QQQ",
+        "SPY"
+      ],
+      "research_type": "CYCLICAL_RECOVERY",
+      "as_of": "2026-08-13T16:30:00+00:00",
+      "research_only": true,
+      "status": "B_WATCH",
+      "raw_score": 60.903795,
+      "composite_score": 58.903795,
+      "leave_one_dimension_out_floor": 25.903795,
+      "leave_one_source_out_floor": 0.0,
+      "evidence_coverage_score": 100.0,
+      "evidence_independence_score": 66.666667,
+      "model_calibration_score": null,
+      "confidence_score": 89.5,
+      "sector_percentile": null,
+      "independent_lineages": [
+        "ISSUER_DISCLOSURE",
+        "MARKET_PRICE"
+      ],
+      "penalties": {
+        "missing": 0.0,
+        "contradiction": 0.0,
+        "staleness": 0.0,
+        "liquidity_data": 2.0
+      },
+      "score_contributions": {
+        "financial_quality": 12.293776,
+        "valuation": 2.0,
+        "demand_catalyst": 25.0,
+        "expectations_confirmation": 8.666474,
+        "industry_cycle": 8.289308,
+        "risk_liquidity_health": 4.654237
+      },
+      "family_scores": {
+        "financial_quality": 81.958507,
+        "valuation": 20.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 34.665894,
+        "industry_cycle": 82.893082,
+        "risk_liquidity_health": 31.02825
+      },
+      "gates_passed": [
+        "evidence_coverage",
+        "confidence",
+        "evidence_independence"
+      ],
+      "gates_failed": [
+        "free_source_scope_limited",
+        "missing_evidence_fields",
+        "model_not_calibrated",
+        "no_consensus_estimates"
+      ],
+      "evidence": [
+        {
+          "evidence_id": "sec:2488:0000002488-26-000123",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR 10-Q",
+          "canonical_url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000123/amd-20260627.htm",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-05T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.9,
+          "content_hash": "0ad22039a2b8153c915dc17cdc9193b5010c56c4c41f0e4622d14568d1e630c4",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst",
+              "industry_cycle"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "sec-companyfacts:2488:2026-08-05",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR companyfacts",
+          "canonical_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000002488.json",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-05T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.85,
+          "content_hash": "17d519b9a187136732c34cae514c7c1801e1896a2763769cf55cbd71fc3027a6",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst",
+              "industry_cycle"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "yahoo-chart:AMD:2026-08-13",
+          "source_family": "PUBLIC_PRICE",
+          "source_name": "Yahoo Finance chart",
+          "canonical_url": "https://query1.finance.yahoo.com/v8/finance/chart/AMD?events=history&interval=1d&period1=1752078600&period2=1786725000",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-13T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.75,
+          "content_hash": "74478c678340959216cdc0a46ba6a7efc10690f018db2bc2e6f80d582dff8b3f",
+          "supports_or_contradicts": {
+            "supports": [
+              "expectations_confirmation",
+              "risk_liquidity_health"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "MARKET_PRICE"
+        }
+      ],
+      "why_now": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+      "exposure_proof": [],
+      "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "next_workflow": "EARNINGS_REVIEW",
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-08-05",
+        "latest_price": "2026-08-13",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_evidence_fields",
+          "model_not_calibrated",
+          "no_consensus_estimates"
+        ],
+        "reliability_labels": {
+          "data_completeness": 100.0,
+          "evidence_independence": 66.666667,
+          "model_calibration": null
+        }
+      },
+      "portfolio_fit_status": "UNKNOWN",
+      "portfolio_relation": {
+        "computed_in_browser": true,
+        "direct_position": false,
+        "watchlist": false
+      },
+      "catalysts": [],
+      "method_versions": {
+        "v3_1": "idea-engine-v3.1.0",
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "deterministic-proxy-v1"
+      }
+    },
+    {
+      "schema_version": "idea-engine-v3.1",
+      "ticker": "COP",
+      "company_name": "CONOCOPHILLIPS",
+      "exchange": "NYSE",
+      "security_type": "stock",
+      "adr": false,
+      "sector": "energy_materials",
+      "industry": "energy_materials",
+      "category_metadata": {
+        "category": "energy_materials"
+      },
+      "listing_currency": "USD",
+      "market_cap": 149668628721.3577,
+      "liquidity_status": "verified",
+      "benchmark_membership": [
+        "QQQ",
+        "SPY"
+      ],
+      "research_type": "QUALITY_COMPOUNDER",
+      "as_of": "2026-08-13T16:30:00+00:00",
+      "research_only": true,
+      "status": "C_SCREEN",
+      "raw_score": 64.27648,
+      "composite_score": 54.27648,
+      "leave_one_dimension_out_floor": 21.27648,
+      "leave_one_source_out_floor": 0.0,
+      "evidence_coverage_score": 83.333333,
+      "evidence_independence_score": 66.666667,
+      "model_calibration_score": null,
+      "confidence_score": 81.166667,
+      "sector_percentile": null,
+      "independent_lineages": [
+        "ISSUER_DISCLOSURE",
+        "MARKET_PRICE"
+      ],
+      "penalties": {
+        "missing": 8.0,
+        "contradiction": 0.0,
+        "staleness": 0.0,
+        "liquidity_data": 2.0
+      },
+      "score_contributions": {
+        "financial_quality": 11.603604,
+        "valuation": 6.5,
+        "demand_catalyst": 25.0,
+        "expectations_confirmation": 11.072477,
+        "risk_liquidity_health": 10.100398
+      },
+      "family_scores": {
+        "financial_quality": 77.357363,
+        "valuation": 65.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 44.28991,
+        "risk_liquidity_health": 67.335986
+      },
+      "gates_passed": [
+        "evidence_coverage",
+        "confidence",
+        "evidence_independence"
+      ],
+      "gates_failed": [
+        "free_source_scope_limited",
+        "missing_evidence_fields",
+        "model_not_calibrated",
+        "no_consensus_estimates"
+      ],
+      "evidence": [
+        {
+          "evidence_id": "sec:1163165:0001163165-26-000032",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR 10-Q",
+          "canonical_url": "https://www.sec.gov/Archives/edgar/data/1163165/000116316526000032/cop-20260630.htm",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-06T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.9,
+          "content_hash": "ef1481a462923bbfb79e59cfa5c45c44b5802843da47057edfb1e90f4a6b93a5",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "sec-companyfacts:1163165:2026-08-06",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR companyfacts",
+          "canonical_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001163165.json",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-06T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.85,
+          "content_hash": "7656595ed59bc683049b2dd612ec016a7d42bac2482b0c8a7fbf5b18f79b83cc",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "yahoo-chart:COP:2026-08-13",
+          "source_family": "PUBLIC_PRICE",
+          "source_name": "Yahoo Finance chart",
+          "canonical_url": "https://query1.finance.yahoo.com/v8/finance/chart/COP?events=history&interval=1d&period1=1752078600&period2=1786725000",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-13T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.75,
+          "content_hash": "51d0a2421d64fd2e5e8bd656b5360d754baca9e05aa8ea9ecb264fbcb0df0a3b",
+          "supports_or_contradicts": {
+            "supports": [
+              "expectations_confirmation",
+              "risk_liquidity_health"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "MARKET_PRICE"
+        }
+      ],
+      "why_now": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+      "exposure_proof": [],
+      "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "next_workflow": "WATCHLIST_ONLY",
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-08-06",
+        "latest_price": "2026-08-13",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "industry_cycle",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_evidence_fields",
+          "model_not_calibrated",
+          "no_consensus_estimates"
+        ],
+        "reliability_labels": {
+          "data_completeness": 83.333333,
+          "evidence_independence": 66.666667,
+          "model_calibration": null
+        }
+      },
+      "portfolio_fit_status": "UNKNOWN",
+      "portfolio_relation": {
+        "computed_in_browser": true,
+        "direct_position": false,
+        "watchlist": false
+      },
+      "catalysts": [],
+      "method_versions": {
+        "v3_1": "idea-engine-v3.1.0",
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "not-applicable"
+      }
+    },
+    {
+      "schema_version": "idea-engine-v3.1",
+      "ticker": "V",
+      "company_name": "VISA INC.",
+      "exchange": "NYSE",
+      "security_type": "stock",
+      "adr": false,
+      "sector": "financial_payments",
+      "industry": "financial_payments",
+      "category_metadata": {
+        "category": "financial_payments"
+      },
+      "listing_currency": "USD",
+      "market_cap": 169159316992.97223,
+      "liquidity_status": "verified",
+      "benchmark_membership": [
+        "QQQ",
+        "SPY"
+      ],
+      "research_type": "QUALITY_COMPOUNDER",
+      "as_of": "2026-08-13T16:30:00+00:00",
+      "research_only": true,
+      "status": "C_SCREEN",
+      "raw_score": 63.411211,
+      "composite_score": 53.411211,
+      "leave_one_dimension_out_floor": 20.411211,
+      "leave_one_source_out_floor": 0.0,
+      "evidence_coverage_score": 83.333333,
+      "evidence_independence_score": 66.666667,
+      "model_calibration_score": null,
+      "confidence_score": 81.166667,
+      "sector_percentile": null,
+      "independent_lineages": [
+        "ISSUER_DISCLOSURE",
+        "MARKET_PRICE"
+      ],
+      "penalties": {
+        "missing": 8.0,
+        "contradiction": 0.0,
+        "staleness": 0.0,
+        "liquidity_data": 2.0
+      },
+      "score_contributions": {
+        "financial_quality": 11.404481,
+        "valuation": 8.0,
+        "demand_catalyst": 25.0,
+        "expectations_confirmation": 7.567712,
+        "risk_liquidity_health": 11.439018
+      },
+      "family_scores": {
+        "financial_quality": 76.029871,
+        "valuation": 80.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 30.270847,
+        "risk_liquidity_health": 76.260121
+      },
+      "gates_passed": [
+        "evidence_coverage",
+        "confidence",
+        "evidence_independence"
+      ],
+      "gates_failed": [
+        "free_source_scope_limited",
+        "missing_evidence_fields",
+        "model_not_calibrated",
+        "no_consensus_estimates"
+      ],
+      "evidence": [
+        {
+          "evidence_id": "sec:1403161:0001403161-26-000104",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR 10-Q",
+          "canonical_url": "https://www.sec.gov/Archives/edgar/data/1403161/000140316126000104/v-20260630.htm",
+          "document_type": "公开研究资料",
+          "published_at": "2026-07-29T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.9,
+          "content_hash": "c6da73096f6024abf93d146f4ee97e6c352aec35944981b02509d78f36aa960e",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "sec-companyfacts:1403161:2026-07-29",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR companyfacts",
+          "canonical_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001403161.json",
+          "document_type": "公开研究资料",
+          "published_at": "2026-07-29T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.85,
+          "content_hash": "eaa684306ba95e6bd5321c1b6970ec7542319022458d379785268a32ea5bf2af",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "yahoo-chart:V:2026-08-13",
+          "source_family": "PUBLIC_PRICE",
+          "source_name": "Yahoo Finance chart",
+          "canonical_url": "https://query1.finance.yahoo.com/v8/finance/chart/V?events=history&interval=1d&period1=1752078600&period2=1786725000",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-13T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.75,
+          "content_hash": "5edfb4575aabb51cb7e048da68abf2fcf4c56c028b9457d7a19fb0e29275ade1",
+          "supports_or_contradicts": {
+            "supports": [
+              "expectations_confirmation",
+              "risk_liquidity_health"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "MARKET_PRICE"
+        }
+      ],
+      "why_now": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+      "exposure_proof": [],
+      "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "next_workflow": "WATCHLIST_ONLY",
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-07-29",
+        "latest_price": "2026-08-13",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "industry_cycle",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_evidence_fields",
+          "model_not_calibrated",
+          "no_consensus_estimates"
+        ],
+        "reliability_labels": {
+          "data_completeness": 83.333333,
+          "evidence_independence": 66.666667,
+          "model_calibration": null
+        }
+      },
+      "portfolio_fit_status": "UNKNOWN",
+      "portfolio_relation": {
+        "computed_in_browser": true,
+        "direct_position": false,
+        "watchlist": false
+      },
+      "catalysts": [],
+      "method_versions": {
+        "v3_1": "idea-engine-v3.1.0",
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "not-applicable"
+      }
+    },
+    {
+      "schema_version": "idea-engine-v3.1",
+      "ticker": "CVX",
+      "company_name": "CHEVRON CORP",
+      "exchange": "NYSE",
+      "security_type": "stock",
+      "adr": false,
+      "sector": "energy_materials",
+      "industry": "energy_materials",
+      "category_metadata": {
+        "category": "energy_materials"
+      },
+      "listing_currency": "USD",
+      "market_cap": 389483800890.9407,
+      "liquidity_status": "verified",
+      "benchmark_membership": [
+        "QQQ",
+        "SPY"
+      ],
+      "research_type": "QUALITY_COMPOUNDER",
+      "as_of": "2026-08-13T16:30:00+00:00",
+      "research_only": true,
+      "status": "C_SCREEN",
+      "raw_score": 63.156563,
+      "composite_score": 53.156563,
+      "leave_one_dimension_out_floor": 20.156563,
+      "leave_one_source_out_floor": 0.0,
+      "evidence_coverage_score": 83.333333,
+      "evidence_independence_score": 66.666667,
+      "model_calibration_score": null,
+      "confidence_score": 81.166667,
+      "sector_percentile": null,
+      "independent_lineages": [
+        "ISSUER_DISCLOSURE",
+        "MARKET_PRICE"
+      ],
+      "penalties": {
+        "missing": 8.0,
+        "contradiction": 0.0,
+        "staleness": 0.0,
+        "liquidity_data": 2.0
+      },
+      "score_contributions": {
+        "financial_quality": 11.869431,
+        "valuation": 5.0,
+        "demand_catalyst": 25.0,
+        "expectations_confirmation": 10.254372,
+        "risk_liquidity_health": 11.032761
+      },
+      "family_scores": {
+        "financial_quality": 79.129538,
+        "valuation": 50.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 41.017487,
+        "risk_liquidity_health": 73.55174
+      },
+      "gates_passed": [
+        "evidence_coverage",
+        "confidence",
+        "evidence_independence"
+      ],
+      "gates_failed": [
+        "free_source_scope_limited",
+        "missing_evidence_fields",
+        "model_not_calibrated",
+        "no_consensus_estimates"
+      ],
+      "evidence": [
+        {
+          "evidence_id": "sec:93410:0000093410-26-000167",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR 10-Q",
+          "canonical_url": "https://www.sec.gov/Archives/edgar/data/93410/000009341026000167/cvx-20260630.htm",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-06T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.9,
+          "content_hash": "ed8201217c55e336a58396b5c8de1c2c033cdfc66b1d3bbddd276a883ce5450b",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "sec-companyfacts:93410:2026-08-06",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR companyfacts",
+          "canonical_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000093410.json",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-06T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.85,
+          "content_hash": "7534d09428cc59fee0324637b6ce3d9a6bc7344e571fb4bbfd3587684113b465",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "yahoo-chart:CVX:2026-08-13",
+          "source_family": "PUBLIC_PRICE",
+          "source_name": "Yahoo Finance chart",
+          "canonical_url": "https://query1.finance.yahoo.com/v8/finance/chart/CVX?events=history&interval=1d&period1=1752078600&period2=1786725000",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-13T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.75,
+          "content_hash": "11279151ffc42bb5aae8bbd8da23c8c5cc857578e04c791b7f665a162effc8ea",
+          "supports_or_contradicts": {
+            "supports": [
+              "expectations_confirmation",
+              "risk_liquidity_health"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "MARKET_PRICE"
+        }
+      ],
+      "why_now": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+      "exposure_proof": [],
+      "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "next_workflow": "WATCHLIST_ONLY",
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-08-06",
+        "latest_price": "2026-08-13",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "industry_cycle",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_evidence_fields",
+          "model_not_calibrated",
+          "no_consensus_estimates"
+        ],
+        "reliability_labels": {
+          "data_completeness": 83.333333,
+          "evidence_independence": 66.666667,
+          "model_calibration": null
+        }
+      },
+      "portfolio_fit_status": "UNKNOWN",
+      "portfolio_relation": {
+        "computed_in_browser": true,
+        "direct_position": false,
+        "watchlist": false
+      },
+      "catalysts": [],
+      "method_versions": {
+        "v3_1": "idea-engine-v3.1.0",
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "not-applicable"
+      }
+    },
+    {
+      "schema_version": "idea-engine-v3.1",
+      "ticker": "BLK",
+      "company_name": "BlackRock, Inc.",
+      "exchange": "NYSE",
+      "security_type": "stock",
+      "adr": false,
+      "sector": "financial_payments",
+      "industry": "financial_payments",
+      "category_metadata": {
+        "category": "financial_payments"
+      },
+      "listing_currency": "USD",
+      "market_cap": 181164911114.42688,
+      "liquidity_status": "verified",
+      "benchmark_membership": [
+        "QQQ",
+        "SPY"
+      ],
+      "research_type": "QUALITY_COMPOUNDER",
+      "as_of": "2026-08-13T16:30:00+00:00",
+      "research_only": true,
+      "status": "C_SCREEN",
+      "raw_score": 63.02222,
+      "composite_score": 53.02222,
+      "leave_one_dimension_out_floor": 20.02222,
+      "leave_one_source_out_floor": 0.0,
+      "evidence_coverage_score": 83.333333,
+      "evidence_independence_score": 66.666667,
+      "model_calibration_score": null,
+      "confidence_score": 81.166667,
+      "sector_percentile": null,
+      "independent_lineages": [
+        "ISSUER_DISCLOSURE",
+        "MARKET_PRICE"
+      ],
+      "penalties": {
+        "missing": 8.0,
+        "contradiction": 0.0,
+        "staleness": 0.0,
+        "liquidity_data": 2.0
+      },
+      "score_contributions": {
+        "financial_quality": 11.975895,
+        "valuation": 5.0,
+        "demand_catalyst": 25.0,
+        "expectations_confirmation": 10.525356,
+        "risk_liquidity_health": 10.520969
+      },
+      "family_scores": {
+        "financial_quality": 79.839303,
+        "valuation": 50.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 42.101423,
+        "risk_liquidity_health": 70.139791
+      },
+      "gates_passed": [
+        "evidence_coverage",
+        "confidence",
+        "evidence_independence"
+      ],
+      "gates_failed": [
+        "free_source_scope_limited",
+        "missing_evidence_fields",
+        "model_not_calibrated",
+        "no_consensus_estimates"
+      ],
+      "evidence": [
+        {
+          "evidence_id": "sec:2012383:0001193125-26-337177",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR 10-Q",
+          "canonical_url": "https://www.sec.gov/Archives/edgar/data/2012383/000119312526337177/blk-20260630.htm",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-06T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.9,
+          "content_hash": "ff266e3fd8dd2e7a95f2e286312f385cd98980ed952e8057d964a0d017617e26",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "sec-companyfacts:2012383:2026-08-06",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR companyfacts",
+          "canonical_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0002012383.json",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-06T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.85,
+          "content_hash": "598143351269f4c6a72a176cd8ad8a1fe149216b76fd8ed08ede0275a1852963",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "yahoo-chart:BLK:2026-08-13",
+          "source_family": "PUBLIC_PRICE",
+          "source_name": "Yahoo Finance chart",
+          "canonical_url": "https://query1.finance.yahoo.com/v8/finance/chart/BLK?events=history&interval=1d&period1=1752078600&period2=1786725000",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-13T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.75,
+          "content_hash": "06745c2e201d7323d7129b2ddb161dbcecb1aca839dc4c53c4f18c8510b560ff",
+          "supports_or_contradicts": {
+            "supports": [
+              "expectations_confirmation",
+              "risk_liquidity_health"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "MARKET_PRICE"
+        }
+      ],
+      "why_now": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+      "exposure_proof": [],
+      "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "next_workflow": "WATCHLIST_ONLY",
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-08-06",
+        "latest_price": "2026-08-13",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "industry_cycle",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_evidence_fields",
+          "model_not_calibrated",
+          "no_consensus_estimates"
+        ],
+        "reliability_labels": {
+          "data_completeness": 83.333333,
+          "evidence_independence": 66.666667,
+          "model_calibration": null
+        }
+      },
+      "portfolio_fit_status": "UNKNOWN",
+      "portfolio_relation": {
+        "computed_in_browser": true,
+        "direct_position": false,
+        "watchlist": false
+      },
+      "catalysts": [],
+      "method_versions": {
+        "v3_1": "idea-engine-v3.1.0",
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "not-applicable"
+      }
+    },
+    {
+      "schema_version": "idea-engine-v3.1",
+      "ticker": "MSFT",
+      "company_name": "MICROSOFT CORP",
+      "exchange": "NASDAQ",
+      "security_type": "stock",
+      "adr": false,
+      "sector": "core_technology",
+      "industry": "core_technology",
+      "category_metadata": {
+        "category": "core_technology"
+      },
+      "listing_currency": "USD",
+      "market_cap": 3671425981536.865,
+      "liquidity_status": "verified",
+      "benchmark_membership": [
+        "QQQ",
+        "SPY"
+      ],
+      "research_type": "QUALITY_COMPOUNDER",
+      "as_of": "2026-08-13T16:30:00+00:00",
+      "research_only": true,
+      "status": "C_SCREEN",
+      "raw_score": 62.907187,
+      "composite_score": 52.907187,
+      "leave_one_dimension_out_floor": 19.907187,
+      "leave_one_source_out_floor": 0.0,
+      "evidence_coverage_score": 83.333333,
+      "evidence_independence_score": 66.666667,
+      "model_calibration_score": null,
+      "confidence_score": 81.166667,
+      "sector_percentile": null,
+      "independent_lineages": [
+        "ISSUER_DISCLOSURE",
+        "MARKET_PRICE"
+      ],
+      "penalties": {
+        "missing": 8.0,
+        "contradiction": 0.0,
+        "staleness": 0.0,
+        "liquidity_data": 2.0
+      },
+      "score_contributions": {
+        "financial_quality": 12.122281,
+        "valuation": 5.0,
+        "demand_catalyst": 25.0,
+        "expectations_confirmation": 11.442954,
+        "risk_liquidity_health": 9.341951
+      },
+      "family_scores": {
+        "financial_quality": 80.81521,
+        "valuation": 50.0,
+        "demand_catalyst": 100.0,
+        "expectations_confirmation": 45.771817,
+        "risk_liquidity_health": 62.279675
+      },
+      "gates_passed": [
+        "evidence_coverage",
+        "confidence",
+        "evidence_independence"
+      ],
+      "gates_failed": [
+        "free_source_scope_limited",
+        "missing_evidence_fields",
+        "model_not_calibrated",
+        "no_consensus_estimates"
+      ],
+      "evidence": [
+        {
+          "evidence_id": "sec:789019:0001193125-26-323660",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR 10-K",
+          "canonical_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/msft-20260630.htm",
+          "document_type": "公开研究资料",
+          "published_at": "2026-07-29T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.9,
+          "content_hash": "3fcae8d9c6ef4945a42e747f8293445ea9d0215536d40ff99e436d70e04d8d11",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "sec-companyfacts:789019:2026-07-29",
+          "source_family": "SEC",
+          "source_name": "SEC EDGAR companyfacts",
+          "canonical_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+          "document_type": "公开研究资料",
+          "published_at": "2026-07-29T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.85,
+          "content_hash": "15cc7ca601026c481a919a328302af4337327dcc2eef9312f5ef1f6477298521",
+          "supports_or_contradicts": {
+            "supports": [
+              "financial_quality",
+              "valuation",
+              "demand_catalyst"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "ISSUER_DISCLOSURE"
+        },
+        {
+          "evidence_id": "yahoo-chart:MSFT:2026-08-13",
+          "source_family": "PUBLIC_PRICE",
+          "source_name": "Yahoo Finance chart",
+          "canonical_url": "https://query1.finance.yahoo.com/v8/finance/chart/MSFT?events=history&interval=1d&period1=1752078600&period2=1786725000",
+          "document_type": "公开研究资料",
+          "published_at": "2026-08-13T00:00:00+00:00",
+          "accessed_at": "2026-08-13T16:30:00+00:00",
+          "as_of": "2026-08-13T16:30:00+00:00",
+          "claim": "公开数据直接生成的可追溯研究输入",
+          "metric": "",
+          "value": null,
+          "unit": "",
+          "period": "",
+          "confidence": 0.75,
+          "content_hash": "e886e4b59e98837ef26682df7402f88bbb5cd98f8c7fc34108e4c7c731e2c758",
+          "supports_or_contradicts": {
+            "supports": [
+              "expectations_confirmation",
+              "risk_liquidity_health"
+            ],
+            "contradicts": []
+          },
+          "stale": false,
+          "lineage_group": "MARKET_PRICE"
+        }
+      ],
+      "why_now": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "variant_wedge": "尚未获得一致预期证据，当前仅能作为研究优先级候选。",
+      "exposure_proof": [],
+      "expectations_risk": "缺少免费、可审计的一致预期与持仓拥挤度数据。",
+      "first_rejection": "free_source_scope_limited",
+      "what_makes_investable": [
+        "SEC 财务质量与相对 QQQ 趋势继续同步改善",
+        "后续补齐一致预期或公司事件证据"
+      ],
+      "what_kills_thesis": [
+        "收入或经营利润同比转负",
+        "相对 QQQ 趋势恶化且回撤扩大"
+      ],
+      "next_workflow": "WATCHLIST_ONLY",
+      "data_quality": {
+        "status": "limited_free_sources",
+        "provider": "free_public_data",
+        "latest_filing": "2026-07-29",
+        "latest_price": "2026-08-13",
+        "missing_fields": [
+          "analyst_consensus",
+          "earnings_transcript",
+          "industry_cycle",
+          "news_catalyst"
+        ],
+        "gates_failed": [
+          "free_source_scope_limited",
+          "missing_evidence_fields",
+          "model_not_calibrated",
+          "no_consensus_estimates"
+        ],
+        "reliability_labels": {
+          "data_completeness": 83.333333,
+          "evidence_independence": 66.666667,
+          "model_calibration": null
+        }
+      },
+      "portfolio_fit_status": "UNKNOWN",
+      "portfolio_relation": {
+        "computed_in_browser": true,
+        "direct_position": false,
+        "watchlist": false
+      },
+      "catalysts": [],
+      "method_versions": {
+        "v3_1": "idea-engine-v3.1.0",
+        "sec_edgar": "submissions-companyfacts-v1",
+        "price_confirmation": "yahoo-chart-v1",
+        "anthropic_screen": "reference-v1",
+        "serenity_alpha": "deterministic-proxy-v1",
+        "juglar_cycle": "not-applicable"
+      }
+    }
+  ],
+  "rejected_candidates": [
+    {
+      "ticker": "META",
+      "company_name": "Meta Platforms, Inc.",
+      "exchange": "NASDAQ",
+      "asset_type": "stock",
+      "is_us_listed": true,
+      "market_cap_usd": 0.0,
+      "average_dollar_volume_20d_usd": 9536150112.470892,
+      "rejection_reasons": [
+        "market_cap_below_minimum"
+      ]
+    },
+    {
+      "ticker": "RTX",
+      "company_name": "RTX Corp",
+      "exchange": "NYSE",
+      "asset_type": "stock",
+      "is_us_listed": true,
+      "market_cap_usd": 304349826.7852783,
+      "average_dollar_volume_20d_usd": 1098097956.4351928,
+      "rejection_reasons": [
+        "market_cap_below_minimum"
+      ]
+    },
+    {
+      "ticker": "NVO",
+      "company_name": "NOVO NORDISK A S",
+      "exchange": "NYSE",
+      "asset_type": "adr",
+      "is_us_listed": true,
+      "market_cap_usd": 0.0,
+      "average_dollar_volume_20d_usd": 594184380.3324734,
+      "rejection_reasons": [
+        "market_cap_below_minimum"
+      ]
+    }
+  ],
+  "warnings": [
+    "短线定义为 1–4 周研究窗口，4 周相对 QQQ 为主要验收目标。",
+    "12 周结果只用于监测信号衰减，不阻塞短线成熟门槛。",
+    "仅用于候选研究优先级，不代表买入建议。",
+    "模型校准度在 Shadow 达到 52 周和 26 条完整成熟结果前保持未验证。"
+  ],
+  "input_hash": "ad201ab72677f632d739109ccbf01f371df71c5b436f719efdf07ef344f8a286",
+  "shadow_status": "not_mature"
+}
