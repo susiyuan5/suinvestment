@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#080d14">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://finnhub.io https://www.bankofcanada.ca https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>量化定投决策台</title>
-    <link rel="stylesheet" href="style.css?v=currency-preference-1">
+    <link rel="stylesheet" href="style.css?v=holdings-detail-v1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-2">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
     <link rel="stylesheet" href="watchlist.css?v=accessibility-3">
@@ -266,9 +266,19 @@
           <div>
             <p class="eyebrow">持仓</p>
             <h2 id="inline-holdings-title">当前持仓</h2>
+            <p id="inlineHoldingsMeta" class="inline-holdings-meta">正在核对持仓来源与同步状态</p>
           </div>
-          <span id="inlineHoldingsSource" class="inline-holdings-mode">人工持仓 · 只读数据</span>
+          <div class="inline-holdings-actions">
+            <span id="inlineHoldingsSource" class="inline-holdings-mode">人工持仓 · 只读数据</span>
+            <button id="inlineHoldingsSettingsBtn" class="secondary-button" type="button">管理同步</button>
+          </div>
         </div>
+        <dl id="inlineHoldingsSync" class="inline-holdings-sync" aria-live="polite">
+          <div><dt>同步状态</dt><dd id="inlineHoldingsSyncState">等待数据</dd></div>
+          <div><dt>持仓数据时间</dt><dd id="inlineHoldingsAsOf">--</dd></div>
+          <div><dt>账户</dt><dd id="inlineHoldingsAccounts">--</dd></div>
+          <div><dt>账户币种</dt><dd id="inlineHoldingsCurrencies">--</dd></div>
+        </dl>
         <div id="inlineHoldingsStats" class="inline-holdings-stats" aria-live="polite"></div>
         <div id="inlineHoldingsRows" class="inline-holdings-rows" aria-live="polite">
           <p class="inline-holdings-empty">正在加载已保存持仓</p>
@@ -712,7 +722,8 @@
     <script src="wealthsimple-reconciliation.js?v=wealthsimple-v1"></script>
     <script src="etf-lookthrough.js?v=wealthsimple-v2"></script>
     <script src="portfolio-stress-test.js?v=wealthsimple-v1"></script>
-    <script src="app.js?v=currency-preference-1"></script>
+    <script src="holdings-detail-model.js?v=holdings-detail-v1"></script>
+    <script src="app.js?v=holdings-detail-v1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>
@@ -721,6 +732,6 @@
     <script src="wealthsimple-execution.js?v=wealthsimple-v1"></script>
     <script src="settings-center.js?v=settings-center-v2"></script>
     <script src="snaptrade-holdings-store.js?v=snaptrade-readonly-v1"></script>
-    <script src="snaptrade-holdings-view.js?v=snaptrade-readonly-v1"></script>
+    <script src="snaptrade-holdings-view.js?v=holdings-detail-v1"></script>
   </body>
 </html>

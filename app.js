@@ -930,6 +930,8 @@ amountBreakdown: "金额分解",
     portfolioRiskInput: normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {})),
     manualPortfolioRiskInput: normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {})),
     portfolioRiskSource: "manual",
+    snaptradeHoldingsStatus: "locked",
+    snaptradeHoldingsSnapshot: null,
     deployment: normalizeDeployment(loadJson(STORAGE_KEYS.deployment, DEFAULT_DEPLOYMENT)),
     cache: loadJson(STORAGE_KEYS.cache, {}),
     overrides: loadJson(STORAGE_KEYS.overrides, {}),
@@ -947,9 +949,15 @@ amountBreakdown: "金额分解",
   const cardsEl = document.getElementById("cards");
   window.addEventListener("snaptrade:holdings-updated", function (event) {
     const detail = event.detail || {};
-    if (detail.status !== "ready" || !detail.portfolioRisk || (detail.sourceMode || "automatic") !== "automatic") return;
-    state.portfolioRiskInput = normalizePortfolioRiskInput(detail.portfolioRisk);
-    state.portfolioRiskSource = "snaptrade_automatic";
+    state.snaptradeHoldingsStatus = detail.status || "locked";
+    state.snaptradeHoldingsSnapshot = detail.snapshot || null;
+    if (detail.status === "ready" && detail.portfolioRisk && (detail.sourceMode || "automatic") === "automatic") {
+      state.portfolioRiskInput = normalizePortfolioRiskInput(detail.portfolioRisk);
+      state.portfolioRiskSource = "snaptrade_automatic";
+    } else if ((detail.sourceMode || "automatic") !== "automatic" || detail.status !== "ready") {
+      state.portfolioRiskInput = normalizePortfolioRiskInput(state.manualPortfolioRiskInput);
+      state.portfolioRiskSource = "manual";
+    }
     if (state.rows && state.rows.size) render();
   });
   window.addEventListener("snaptrade:holdings-mode", function (event) {
@@ -959,6 +967,8 @@ amountBreakdown: "金额分解",
     if (state.rows && state.rows.size) render();
   });
   window.addEventListener("snaptrade:holdings-forgotten", function () {
+    state.snaptradeHoldingsStatus = "locked";
+    state.snaptradeHoldingsSnapshot = null;
     state.portfolioRiskInput = normalizePortfolioRiskInput(state.manualPortfolioRiskInput);
     state.portfolioRiskSource = "manual";
     if (state.rows && state.rows.size) render();
@@ -1053,6 +1063,12 @@ amountBreakdown: "金额分解",
   const inlineHoldingsStatsEl = document.getElementById("inlineHoldingsStats");
   const inlineHoldingsRowsEl = document.getElementById("inlineHoldingsRows");
   const inlineHoldingsSourceEl = document.getElementById("inlineHoldingsSource");
+  const inlineHoldingsMetaEl = document.getElementById("inlineHoldingsMeta");
+  const inlineHoldingsSyncStateEl = document.getElementById("inlineHoldingsSyncState");
+  const inlineHoldingsAsOfEl = document.getElementById("inlineHoldingsAsOf");
+  const inlineHoldingsAccountsEl = document.getElementById("inlineHoldingsAccounts");
+  const inlineHoldingsCurrenciesEl = document.getElementById("inlineHoldingsCurrencies");
+  const inlineHoldingsSettingsBtn = document.getElementById("inlineHoldingsSettingsBtn");
   const dataQualityPanelEl = document.getElementById("dataQualityPanel");
   const dataQualityFreshEl = document.getElementById("dataQualityFresh");
   const dataQualityStaleEl = document.getElementById("dataQualityStale");
@@ -1216,6 +1232,7 @@ amountBreakdown: "金额分解",
   if (restoreDefaultAllocationBtn) restoreDefaultAllocationBtn.addEventListener("click", restoreDefaultAllocations);
   if (undoAllocationBtn) undoAllocationBtn.addEventListener("click", undoAllocationChange);
   if (adjustAllocationBtn) adjustAllocationBtn.addEventListener("click", function () { window.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "allocation" } })); });
+  if (inlineHoldingsSettingsBtn) inlineHoldingsSettingsBtn.addEventListener("click", function () { window.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "accounts" } })); });
 
   // This dashboard runs on the user's private device, so keep the Finnhub key
   // across browser restarts. Migrate an active session key once for a seamless
@@ -6190,37 +6207,84 @@ function equalizeAllocations() {
     weeklyDecisionRowsEl.appendChild(cash);
   }
 
-  function renderInlineHoldings(entries, portfolioRisk) {
-    if (!inlineHoldingsStatsEl || !inlineHoldingsRowsEl) return;
-    if (inlineHoldingsSourceEl) inlineHoldingsSourceEl.textContent = state.portfolioRiskSource === "snaptrade_automatic" ? "Wealthsimple 自动同步 · 只读数据" : "人工持仓 · 只读数据";
-    const positions = portfolioRisk && portfolioRisk.positions ? portfolioRisk.positions : {};
-    const holdings = (entries || []).map(function (entry) {
-      const position = positions[entry.stock.symbol] || {};
-      const shares = Number(position.shares || 0);
-      const averageCost = Number(position.average_cost || 0);
-      const currentValue = Number(position.current_value || 0);
-      const costBasis = shares > 0 && averageCost > 0 ? round2(shares * averageCost) : null;
-      return {
-        symbol: entry.stock.symbol,
-        shares,
-        latestPrice: Number(entry.signal.latest_price || 0),
-        averageCost,
-        currentValue,
-        currentAllocation: Number(position.current_allocation || 0),
-        targetAllocation: Number(position.target_allocation || 0),
-        pnl: costBasis !== null ? round2(currentValue - costBasis) : null,
-        dataStatus: entry.signal.data_freshness || "unknown"
-      };
-    }).filter(function (holding) {
-      return holding.shares > 0 || holding.currentValue > 0 || holding.averageCost > 0;
-    });
+  function formatHoldingMoney(value, currency) {
+    if (!Number.isFinite(Number(value))) return "--";
+    if (currency === "MIXED") return "多币种，见明细";
+    const settings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : null;
+    const from = ["CAD", "USD"].includes(currency) ? currency : settings && settings.planningCurrency || state.displayCurrency;
+    if (window.WealthsimpleCurrency && settings) return window.WealthsimpleCurrency.format(Number(value), from, settings).text;
+    return from + " " + Number(value).toFixed(2);
+  }
 
+  function holdingMetric(label, value, extraClass) {
+    return "<div class=\"inline-holding-metric\"><span>" + escapeHtml(label) + "</span><strong class=\"" + escapeHtml(extraClass || "") + "\">" + escapeHtml(value) + "</strong></div>";
+  }
+
+  function formatHoldingTimestamp(value) {
+    return value && Number.isFinite(Date.parse(value)) ? formatDateTime(value) : "--";
+  }
+
+  function holdingQuoteLabel(value) {
+    const status = String(value || "unknown").toLowerCase();
+    if (status === "fresh") return "行情新鲜";
+    if (status === "market_closed_last_close") return "休市 · 最近收盘价";
+    if (status === "stale") return "行情过期";
+    if (status === "manual") return "人工行情";
+    return "行情待核对";
+  }
+
+  function holdingAllocationLabel(value) {
+    return {
+      over: "高于目标",
+      under: "低于目标",
+      near: "接近目标",
+      outside_plan: "计划外持仓",
+      unknown: "配置待核对"
+    }[value] || "配置待核对";
+  }
+
+  function renderInlineHoldings(entries, portfolioRisk) {
+    if (!inlineHoldingsStatsEl || !inlineHoldingsRowsEl || !window.HoldingsDetailModel) return;
+    const currencySettings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : { planningCurrency: state.displayCurrency };
+    const model = window.HoldingsDetailModel.build({
+      entries: entries,
+      portfolioRisk: portfolioRisk,
+      snapshot: state.snaptradeHoldingsSnapshot,
+      status: state.snaptradeHoldingsStatus,
+      sourceMode: state.portfolioRiskSource,
+      planningCurrency: currencySettings.planningCurrency
+    });
+    const automatic = state.portfolioRiskSource === "snaptrade_automatic";
+    const statusLabels = {
+      ready: automatic ? "正常 · SnapTrade 只读" : "自动快照可用 · 当前使用人工持仓",
+      warning: "警告 · 自动持仓已过期",
+      error: "阻断 · 自动持仓不可用",
+      locked: "已锁定 · 需本机解密"
+    };
+    if (inlineHoldingsSourceEl) inlineHoldingsSourceEl.textContent = automatic ? "Wealthsimple 自动同步 · 只读数据" : "人工持仓 · 只读数据";
+    if (inlineHoldingsSyncStateEl) {
+      inlineHoldingsSyncStateEl.textContent = statusLabels[model.meta.status] || "人工持仓";
+      inlineHoldingsSyncStateEl.dataset.state = model.meta.status;
+    }
+    if (inlineHoldingsAsOfEl) inlineHoldingsAsOfEl.textContent = formatHoldingTimestamp(model.meta.asOf);
+    if (inlineHoldingsAccountsEl) inlineHoldingsAccountsEl.textContent = model.meta.accountCount ? model.meta.accountLabel + " · " + model.meta.accountTypeLabel : "--";
+    if (inlineHoldingsCurrenciesEl) inlineHoldingsCurrenciesEl.textContent = model.meta.currencyLabel;
+    if (inlineHoldingsMetaEl) {
+      const outside = model.summary.outsidePlanCount ? "；另有 " + model.summary.outsidePlanCount + " 项计划外持仓仅展示" : "";
+      inlineHoldingsMetaEl.textContent = automatic
+        ? "同步数据只更新实际持仓，不改变目标比例，也不会下单或自动再平衡" + outside
+        : "人工录入用于本周计划核对；不会连接券商或自动执行";
+    }
+
+    const pnlSummary = model.summary.positionCount === 0 ? "--" : model.summary.pnlComplete ? formatCurrency(model.summary.unrealizedPnl) : "成本待补齐";
     inlineHoldingsStatsEl.innerHTML = "";
     [
-      ["持仓市值", formatCurrency(portfolioRisk ? portfolioRisk.total_stock_value : 0)],
-      ["总资产", formatCurrency(portfolioRisk ? portfolioRisk.total_portfolio_value : 0)],
-      ["可用现金", portfolioRisk && portfolioRisk.available_cash_provided ? formatCurrency(portfolioRisk.available_cash) : "未填写"],
-      ["持仓数量", String(holdings.length)]
+      ["计划内持仓市值", formatCurrency(model.summary.stockValue)],
+      ["计划总资产", formatCurrency(model.summary.totalValue)],
+      ["可用现金", model.summary.cashProvided ? formatCurrency(model.summary.availableCash) : "未填写"],
+      ["计划内浮盈亏", pnlSummary],
+      ["股票仓位", model.summary.equityExposure === null ? "--" : model.summary.equityExposure.toFixed(2) + "%"],
+      ["持仓明细数", String(model.summary.positionCount)]
     ].forEach(function (item) {
       const metric = document.createElement("div");
       const label = document.createElement("span");
@@ -6232,28 +6296,62 @@ function equalizeAllocations() {
     });
 
     inlineHoldingsRowsEl.innerHTML = "";
-    if (!holdings.length) {
-      const empty = document.createElement("p");
+    if (!model.rows.length) {
+      const empty = document.createElement("div");
       empty.className = "inline-holdings-empty";
-      empty.textContent = "当前浏览器暂无已保存持仓数据。";
+      const title = document.createElement("strong");
+      const copy = document.createElement("p");
+      const action = document.createElement("button");
+      action.className = "secondary-button";
+      action.type = "button";
+      action.textContent = "查看持仓同步设置";
+      if (automatic && model.meta.status === "ready") {
+        title.textContent = "Wealthsimple 已同步，当前没有股票或 ETF 持仓";
+        copy.textContent = model.summary.cashProvided && model.summary.availableCash > 0
+          ? "本次快照只检测到可用现金 " + formatCurrency(model.summary.availableCash) + "。这不是同步失败，也不会生成自动买入。"
+          : "本次快照没有返回可纳入股票计划的持仓；请核对 Wealthsimple 自主管理账户范围。";
+      } else if (model.meta.status === "locked") {
+        title.textContent = "加密持仓快照尚未在本机解锁";
+        copy.textContent = "前往设置导入本机解密密钥后，才会显示 Wealthsimple 只读持仓明细。";
+      } else if (["warning", "error"].includes(model.meta.status)) {
+        title.textContent = "自动持仓当前不可用于本周核对";
+        copy.textContent = "系统已回退到人工持仓；最后有效数据不会被空结果覆盖。";
+      } else {
+        title.textContent = "尚未填写人工持仓";
+        copy.textContent = "可在设置中填写实际份额、平均成本和可用现金，或启用 Wealthsimple 只读同步。";
+      }
+      action.addEventListener("click", function () { window.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "accounts" } })); });
+      empty.append(title, copy, action);
       inlineHoldingsRowsEl.appendChild(empty);
       return;
     }
-    holdings.forEach(function (holding) {
+
+    model.rows.forEach(function (holding) {
       const row = document.createElement("article");
       row.className = "inline-holding-row";
-      const pnlText = holding.pnl === null ? "--" : formatCurrency(holding.pnl);
-      const status = document.createElement("span");
-      status.className = "inline-holding-status is-" + String(holding.dataStatus).replace(/[^a-z]/gi, "").toLowerCase();
-      status.textContent = String(holding.dataStatus).replaceAll("_", " ");
-      row.innerHTML = "<strong>" + escapeHtml(holding.symbol) + "</strong>" +
-        "<span>份额 <b>" + (holding.shares > 0 ? holding.shares.toFixed(4).replace(/\.?0+$/, "") : "--") + "</b></span>" +
-        "<span>最新价 <b>" + (holding.latestPrice > 0 ? formatCurrency(holding.latestPrice) : "--") + "</b></span>" +
-        "<span>平均成本 <b>" + (holding.averageCost > 0 ? formatCurrency(holding.averageCost) : "--") + "</b></span>" +
-        "<span>市值 <b>" + formatCurrency(holding.currentValue) + "</b></span>" +
-        "<span>P/L / 浮盈亏 <b class=\"" + (holding.pnl > 0 ? "is-positive" : holding.pnl < 0 ? "is-negative" : "") + "\">" + pnlText + "</b></span>" +
-        "<span>Allocation / 配置 <b>" + holding.currentAllocation.toFixed(2) + "% / " + holding.targetAllocation.toFixed(2) + "%</b></span>";
-      row.appendChild(status);
+      row.dataset.allocationState = holding.allocationState;
+      const pnlClass = holding.pnl > 0 ? "is-positive" : holding.pnl < 0 ? "is-negative" : "";
+      const pnlValue = holding.pnl === null ? "--" : formatHoldingMoney(holding.pnl, holding.currency);
+      const pnlPercent = holding.pnlPercent === null ? "" : " · " + (holding.pnlPercent > 0 ? "+" : "") + holding.pnlPercent.toFixed(2) + "%";
+      const identityMeta = [holding.exchange, holding.currency].filter(function (value) { return value && value !== "--"; }).join(" · ") || "证券信息待核对";
+      const allocationValue = holding.planned && holding.currentAllocation !== null
+        ? holding.currentAllocation.toFixed(2) + "% / 目标 " + holding.targetAllocation.toFixed(2) + "%"
+        : "不参与本周目标组合";
+      const driftValue = holding.allocationDrift === null ? "--" : (holding.allocationDrift > 0 ? "+" : "") + holding.allocationDrift.toFixed(2) + " 个百分点";
+      row.innerHTML =
+        "<header class=\"inline-holding-row-heading\"><div class=\"inline-holding-identity\"><a class=\"inline-holding-symbol\" href=\"stock-detail.html?ticker=" + encodeURIComponent(holding.symbol) + "\">" + escapeHtml(holding.symbol) + "</a><span>" + escapeHtml(holding.description || (holding.planned ? "当前定投组合" : "同步持仓")) + "</span><small>" + escapeHtml(identityMeta) + "</small></div><div class=\"inline-holding-value\"><span>当前市值</span><strong>" + escapeHtml(formatHoldingMoney(holding.currentValue, holding.currency)) + "</strong></div><div class=\"inline-holding-badges\"><span class=\"inline-holding-status is-" + escapeHtml(String(holding.quoteStatus).replace(/[^a-z]/gi, "").toLowerCase()) + "\">" + escapeHtml(holdingQuoteLabel(holding.quoteStatus)) + "</span><span class=\"inline-holding-status is-allocation-" + escapeHtml(holding.allocationState) + "\">" + escapeHtml(holdingAllocationLabel(holding.allocationState)) + "</span></div></header>" +
+        "<div class=\"inline-holding-metrics\">" +
+          holdingMetric("持仓数量", holding.shares > 0 ? holding.shares.toFixed(6).replace(/\.?0+$/, "") : "--") +
+          holdingMetric("最新价格", holding.latestPrice && holding.latestPrice > 0 ? formatHoldingMoney(holding.latestPrice, holding.currency) : "--") +
+          holdingMetric("平均成本", holding.averageCost !== null && holding.averageCost > 0 ? formatHoldingMoney(holding.averageCost, holding.currency) : "--") +
+          holdingMetric("成本总额", holding.costBasis !== null ? formatHoldingMoney(holding.costBasis, holding.currency) : "--") +
+          holdingMetric("浮盈亏", pnlValue + pnlPercent, pnlClass) +
+          holdingMetric("当前 / 目标", allocationValue) +
+        "</div>" +
+        "<div class=\"inline-holding-allocation\"><div><span>配置偏差</span><strong>" + escapeHtml(driftValue) + "</strong></div><div class=\"inline-holding-allocation-track\" role=\"progressbar\" aria-label=\"" + escapeHtml(holding.symbol + " 当前配置") + "\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + escapeHtml(holding.currentAllocation === null ? "0" : String(Math.max(0, Math.min(100, holding.currentAllocation)))) + "\"><span></span></div></div>" +
+        "<footer class=\"inline-holding-row-meta\"><span>账户：" + escapeHtml(holding.accountLabel) + "</span><span>持仓数据：" + escapeHtml(formatHoldingTimestamp(holding.dataAsOf)) + "</span>" + (holding.planned ? "" : "<span>仅展示，不进入本周定投算法</span>") + "</footer>";
+      const bar = row.querySelector(".inline-holding-allocation-track span");
+      if (bar) bar.style.width = holding.currentAllocation === null ? "0%" : Math.max(0, Math.min(100, holding.currentAllocation)) + "%";
       inlineHoldingsRowsEl.appendChild(row);
     });
   }

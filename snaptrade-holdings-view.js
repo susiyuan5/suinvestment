@@ -31,13 +31,13 @@
   }
   async function refresh() {
     var result = await root.SnaptradeHoldingsStore.load(); state.status = result.status; state.snapshot = result.snapshot;
-    if (state.status === "ready" && !isFresh(result.snapshot)) { state.status = "warning"; state.portfolioRisk = null; render("警告 · 持仓数据已过期，不并入本周决策"); return; }
+    if (state.status === "ready" && !isFresh(result.snapshot)) { state.status = "warning"; state.portfolioRisk = null; render("警告 · 持仓数据已过期，不并入本周决策"); dispatch(); return; }
     state.portfolioRisk = result.snapshot ? portfolioRisk(result.snapshot) : null; render(result.error ? "阻断 · 解密失败，未显示部分数据" : "");
-    if (state.status === "ready" && (localStorage.getItem(modeKey) || "automatic") === "automatic") dispatch();
+    dispatch();
   }
   async function bind() {
     if (!root.SnaptradeHoldingsStore || !id("snaptradeImportKeyBtn")) return;
-    id("snaptradeImportKeyBtn").addEventListener("click", async function () { var input = id("snaptradeSnapshotKeyInput"); try { var snapshot = await root.SnaptradeHoldingsStore.unlock(input.value.trim()); if (!isFresh(snapshot)) throw new Error("snapshot_stale"); state.status = "ready"; state.snapshot = snapshot; state.portfolioRisk = portfolioRisk(snapshot); input.value = ""; render("正常 · 本机解密成功"); dispatch(); } catch (_) { state.status = "error"; state.snapshot = null; state.portfolioRisk = null; render("阻断 · 密钥或快照无效，未显示任何持仓"); } });
+    id("snaptradeImportKeyBtn").addEventListener("click", async function () { var input = id("snaptradeSnapshotKeyInput"); try { var snapshot = await root.SnaptradeHoldingsStore.unlock(input.value.trim()); if (!isFresh(snapshot)) throw new Error("snapshot_stale"); state.status = "ready"; state.snapshot = snapshot; state.portfolioRisk = portfolioRisk(snapshot); input.value = ""; render("正常 · 本机解密成功"); dispatch(); } catch (_) { state.status = "error"; state.snapshot = null; state.portfolioRisk = null; render("阻断 · 密钥或快照无效，未显示任何持仓"); dispatch(); } });
     id("snaptradeForgetKeyBtn").addEventListener("click", async function () { await root.SnaptradeHoldingsStore.forgetKey(); state.status = "locked"; state.snapshot = null; state.portfolioRisk = null; render("已忘记本机解密密钥"); root.dispatchEvent(new CustomEvent("snaptrade:holdings-forgotten")); });
     var mode = id("snaptradeHoldingsSourceMode"); if (mode) { mode.value = localStorage.getItem(modeKey) || "automatic"; mode.addEventListener("change", function () { localStorage.setItem(modeKey, mode.value); root.dispatchEvent(new CustomEvent("snaptrade:holdings-mode", { detail: { mode: mode.value } })); if (mode.value === "automatic") dispatch(); }); }
     await refresh();

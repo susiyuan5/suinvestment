@@ -27,6 +27,12 @@ REQUIRED_IDS = {
     "decisionSummary",
     "decisionAction",
     "healthHistoryMetrics",
+    "inlineHoldingsMeta",
+    "inlineHoldingsSyncState",
+    "inlineHoldingsAsOf",
+    "inlineHoldingsAccounts",
+    "inlineHoldingsCurrencies",
+    "inlineHoldingsSettingsBtn",
     "displayCurrencySelect",
     "displayCurrencyNote",
     "displayCurrencyStatus",
@@ -38,6 +44,7 @@ REQUIRED_IDS = {
 REQUIRED_PRE_APP_SCRIPTS = {
     "market-data.js", "market-analysis.js", "signal-engine.js", "portfolio-policy.js",
     "backtest-engine.js", "dca-policy.js", "settings-storage.js",
+    "holdings-detail-model.js",
 }
 DETAIL_REQUIRED_IDS = {
     "stockDetailStatus", "stockDetailContent", "stockDetailTicker", "stockDetailCompanyName",

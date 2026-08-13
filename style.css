@@ -1948,6 +1948,30 @@ input::placeholder {
   gap: 12px;
 }
 
+.inline-holdings-heading h2 {
+  margin-bottom: 3px;
+}
+
+.inline-holdings-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.inline-holdings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.inline-holdings-actions .secondary-button {
+  min-height: 34px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
 .inline-holdings-mode {
   padding: 7px 10px;
   border: 1px solid var(--line);
@@ -1959,9 +1983,63 @@ input::placeholder {
   white-space: nowrap;
 }
 
+.inline-holdings-sync {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1.25fr .7fr;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(55, 72, 94, .78);
+  border-radius: 7px;
+  background: #0a1119;
+}
+
+.inline-holdings-sync > div {
+  min-width: 0;
+  padding: 8px 10px;
+  border-right: 1px solid rgba(55, 72, 94, .72);
+}
+
+.inline-holdings-sync > div:last-child {
+  border-right: 0;
+}
+
+.inline-holdings-sync dt,
+.inline-holdings-sync dd {
+  margin: 0;
+}
+
+.inline-holdings-sync dt {
+  color: var(--muted);
+  font-size: .7rem;
+  font-weight: 750;
+}
+
+.inline-holdings-sync dd {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--soft);
+  font-size: .78rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inline-holdings-sync dd[data-state="ready"] {
+  color: var(--positive);
+}
+
+.inline-holdings-sync dd[data-state="warning"],
+.inline-holdings-sync dd[data-state="locked"] {
+  color: var(--warning);
+}
+
+.inline-holdings-sync dd[data-state="error"] {
+  color: var(--negative);
+}
+
 .inline-holdings-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1993,33 +2071,113 @@ input::placeholder {
 
 .inline-holdings-rows {
   display: grid;
-  gap: 7px;
+  gap: 9px;
 }
 
 .inline-holding-row {
   display: grid;
-  grid-template-columns: minmax(60px, .65fr) repeat(6, minmax(0, 1fr)) auto;
-  align-items: center;
   gap: 10px;
-  padding: 10px;
+  padding: 12px;
 }
 
-.inline-holding-row > strong {
-  font-size: 1rem;
+.inline-holding-row-heading {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(130px, .7fr) auto;
+  align-items: center;
+  gap: 12px;
 }
 
-.inline-holding-row b {
+.inline-holding-identity {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.inline-holding-symbol {
+  width: fit-content;
+  color: var(--text);
+  font-size: 1.02rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.inline-holding-symbol:hover,
+.inline-holding-symbol:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.inline-holding-identity > span {
+  overflow: hidden;
+  color: var(--soft);
+  font-size: .8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inline-holding-identity small,
+.inline-holding-row-meta {
+  color: var(--muted);
+  font-size: .7rem;
+}
+
+.inline-holding-value {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.inline-holding-value span,
+.inline-holding-metric span,
+.inline-holding-allocation span {
+  color: var(--muted);
+  font-size: .7rem;
+  font-weight: 750;
+}
+
+.inline-holding-value strong {
+  font-size: .96rem;
+}
+
+.inline-holding-badges {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.inline-holding-metrics {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid rgba(55, 72, 94, .64);
+  border-radius: 6px;
+  background: rgba(7, 13, 21, .45);
+}
+
+.inline-holding-metric {
+  min-width: 0;
+  padding: 8px 9px;
+  border-right: 1px solid rgba(55, 72, 94, .58);
+}
+
+.inline-holding-metric:last-child {
+  border-right: 0;
+}
+
+.inline-holding-metric strong {
   display: block;
   margin-top: 3px;
+  overflow-wrap: anywhere;
   color: var(--text);
-  font-size: .88rem;
+  font-size: .82rem;
 }
 
-.inline-holding-row b.is-positive {
+.inline-holding-metric strong.is-positive {
   color: var(--positive);
 }
 
-.inline-holding-row b.is-negative {
+.inline-holding-metric strong.is-negative {
   color: var(--negative);
 }
 
@@ -2039,6 +2197,63 @@ input::placeholder {
   color: var(--positive);
 }
 
+.inline-holding-status.is-stale,
+.inline-holding-status.is-allocation-over,
+.inline-holding-status.is-allocation-under,
+.inline-holding-status.is-allocation-outside_plan {
+  border-color: rgba(245, 201, 104, .45);
+  color: var(--warning);
+}
+
+.inline-holding-status.is-allocation-near {
+  border-color: rgba(79, 195, 161, .45);
+  color: var(--positive);
+}
+
+.inline-holding-allocation {
+  display: grid;
+  grid-template-columns: minmax(150px, .55fr) minmax(220px, 1.45fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.inline-holding-allocation > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.inline-holding-allocation strong {
+  color: var(--soft);
+  font-size: .76rem;
+}
+
+.inline-holding-allocation-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(65, 84, 108, .48);
+}
+
+.inline-holding-allocation-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.inline-holding-row[data-allocation-state="over"] .inline-holding-allocation-track > span,
+.inline-holding-row[data-allocation-state="outside_plan"] .inline-holding-allocation-track > span {
+  background: var(--warning);
+}
+
+.inline-holding-row-meta {
+  display: flex;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+}
+
 .inline-holdings-empty {
   margin: 0;
   padding: 12px;
@@ -2047,6 +2262,24 @@ input::placeholder {
   color: var(--soft);
   font-size: .86rem;
   line-height: 1.45;
+}
+
+.inline-holdings-empty strong,
+.inline-holdings-empty p {
+  display: block;
+  margin: 0;
+}
+
+.inline-holdings-empty strong {
+  color: var(--text);
+}
+
+.inline-holdings-empty p {
+  margin-top: 4px;
+}
+
+.inline-holdings-empty .secondary-button {
+  margin-top: 10px;
 }
 
 .algorithm-research-content {
@@ -3652,6 +3885,22 @@ input::placeholder {
     overflow-wrap: anywhere;
   }
 
+  .inline-holdings-actions {
+    justify-content: space-between;
+  }
+
+  .inline-holdings-sync {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inline-holdings-sync > div:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .inline-holdings-sync > div:nth-child(-n + 2) {
+    border-bottom: 1px solid rgba(55, 72, 94, .72);
+  }
+
   .inline-holdings-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     min-width: 0;
@@ -3660,12 +3909,43 @@ input::placeholder {
   }
 
   .inline-holding-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 9px;
   }
 
-  .inline-holding-row > strong {
+  .inline-holding-row-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .inline-holding-identity {
     grid-column: 1 / -1;
+  }
+
+  .inline-holding-identity > span {
+    white-space: normal;
+  }
+
+  .inline-holding-value {
+    justify-items: start;
+  }
+
+  .inline-holding-badges {
+    justify-content: flex-end;
+  }
+
+  .inline-holding-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inline-holding-metric:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .inline-holding-metric:nth-child(-n + 4) {
+    border-bottom: 1px solid rgba(55, 72, 94, .58);
+  }
+
+  .inline-holding-allocation {
+    grid-template-columns: 1fr;
   }
 
   .inline-holding-status {
@@ -3873,7 +4153,7 @@ body {
 }
 
 .inline-holdings-stats {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0;
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -4247,16 +4527,16 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .inline-holdings-stats > div:nth-child(2) {
+  .inline-holdings-stats > div:nth-child(2n) {
     border-right: 0;
   }
 
-  .inline-holdings-stats > div:nth-child(-n + 2) {
+  .inline-holdings-stats > div:nth-child(-n + 4) {
     border-bottom: 1px solid var(--line);
   }
 
   .inline-holding-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 10px;
   }
 
   .stock-card {
