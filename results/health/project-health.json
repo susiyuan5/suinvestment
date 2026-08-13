@@ -1,6 +1,6 @@
 {
   "version": "project-health-v1",
-  "generated_at": "2026-08-13T14:44:45.350339+00:00",
+  "generated_at": "2026-08-13T15:55:13.528540+00:00",
   "status": "warning",
   "status_scope": "Operational data and workflow health only; not strategy validation or trading approval.",
   "manual_decision_only": true,
@@ -19,8 +19,7 @@
     "note": "\u6d4f\u89c8\u5668\u53ea\u6709\u5728\u7528\u6237\u5bfc\u5165\u672c\u5730\u5bc6\u94a5\u540e\u624d\u89e3\u5bc6\uff1b\u5065\u5eb7\u72b6\u6001\u4e0d\u4ee3\u8868\u53ef\u4ea4\u6613\u3002"
   },
   "issues": [
-    "pending_idea_engine_pr",
-    "workflow_pages_smoke_pending"
+    "pending_idea_engine_pr"
   ],
   "market_snapshot": {
     "generated_at": "2026-08-12T23:10:37.408866Z",
@@ -44,9 +43,9 @@
     }
   },
   "watchlist": {
-    "status": "unknown",
+    "status": "ready",
     "static_fallback_status": "ready",
-    "synthetic_probe_status": "unknown",
+    "synthetic_probe_status": "ready",
     "runtime_primary": "Yahoo Finance chart API",
     "same_origin_fallback": "data/backtest-prices.json",
     "fallback_symbol_rows": {
@@ -73,14 +72,14 @@
     "quality_checks": {
       "status": "completed",
       "conclusion": "success",
-      "updated_at": "2026-08-13T14:38:43Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31711158933"
+      "updated_at": "2026-08-13T15:52:37Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31717708356"
     },
     "pages_smoke": {
-      "status": "in_progress",
-      "conclusion": "pending",
-      "updated_at": "2026-08-13T14:44:19Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31711544734"
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-08-13T15:54:19Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31717818108"
     },
     "shadow_update": {
       "status": "completed",
@@ -130,24 +129,29 @@
     "healthy_scope_note": "Healthy is operational workflow status only; it does not mean the strategy is effective or trading is approved."
   },
   "idea_engine": {
-    "schema_version": "idea-engine-v1",
-    "last_successful_run": "2026-08-10T12:45:50.880896+00:00",
-    "active_provider": "free_public_data",
+    "schema_version": "idea-engine-v3",
+    "methodology_version": "idea-engine-v3.0.0",
+    "result_source": "v3",
+    "last_successful_run": "2026-08-13T12:00:00+00:00",
+    "active_provider": "free_public_data_reused_v2_input",
     "paid_api_key_required": false,
     "provider_status": {
-      "anthropic": "reference_method_applied",
-      "serenity": "reference_method_applied",
-      "juglar": "reference_method_applied",
-      "sec_edgar": "public_api_no_key",
-      "yahoo_chart": "public_chart_no_key",
-      "octagon": "optional_paid_api_disabled"
+      "SEC_EDGAR": "free_public_data",
+      "PUBLIC_PRICE": "free_public_data",
+      "paid_providers": "disabled"
     },
-    "data_freshness": "2026-08-10T12:45:50.880896+00:00",
+    "data_freshness": "2026-08-13T12:00:00+00:00",
     "candidate_counts": {
       "A": 0,
-      "B": 10,
+      "B": 0,
       "C": 0,
-      "blocked": 0
+      "A_RESEARCH": 0,
+      "B_WATCH": 5,
+      "C_SCREEN": 5,
+      "VALUATION_GATED": 0,
+      "EXPOSURE_UNPROVEN": 0,
+      "BLOCKED": 0,
+      "REJECTED": 0
     },
     "single_source_dependency_count": 0,
     "free_source_scope_limited_count": 10,
@@ -155,14 +159,15 @@
     "shadow_mature_count": 0,
     "human_review_gate": false,
     "live_promotion_eligible": false,
+    "model_degraded": false,
     "status": "shadow_only",
     "scope_note": "Idea Engine \u53ea\u5f71\u54cd\u6f5c\u529b\u80a1\u7814\u7a76\uff0c\u4e0d\u5f71\u54cd DCA \u6216\u4eba\u5de5\u8ba1\u5212\u3002"
   },
   "operational_metrics": {
     "data_delay_count": 3,
     "workflow_failure_rate": 0.0,
-    "workflow_unknown_count": 1,
-    "watchlist_degradation_ratio": null,
+    "workflow_unknown_count": 0,
+    "watchlist_degradation_ratio": 0,
     "shadow_missing_rate": 0.0,
     "page_js_error_count": null,
     "data_source_response_ms": null
