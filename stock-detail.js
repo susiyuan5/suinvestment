@@ -27,6 +27,23 @@
     catch (_error) { return ""; }
   }
   function finite(value) { var parsed = Number(value); return Number.isFinite(parsed) ? parsed : null; }
+  function fetchJsonWithTimeout(fetcher, url, options, timeoutMs) {
+    var controller = typeof root.AbortController === "function" ? new root.AbortController() : null;
+    var requestOptions = Object.assign({}, options || {});
+    if (controller) requestOptions.signal = controller.signal;
+    var timer = null;
+    var timeout = new Promise(function (_resolve, reject) {
+      timer = setTimeout(function () {
+        if (controller) controller.abort();
+        reject(new Error("request timeout"));
+      }, Math.max(1, Number(timeoutMs) || 4500));
+    });
+    var request = fetcher(url, requestOptions).then(function (response) {
+      if (!response.ok) throw new Error("request unavailable");
+      return response.json();
+    });
+    return Promise.race([request, timeout]).finally(function () { if (timer !== null) clearTimeout(timer); });
+  }
   function parseYahooChart(payload) {
     var result = payload && payload.chart && Array.isArray(payload.chart.result) ? payload.chart.result[0] : null;
     if (!result || !result.meta) return null;
@@ -52,8 +69,43 @@
       change: current !== null && previous ? current - previous : null,
       changePct: current !== null && previous ? (current / previous - 1) * 100 : null,
       quoteTime: finite(meta.regularMarketTime) !== null ? Number(meta.regularMarketTime) * 1000 : (points.length ? points[points.length - 1].time : null),
-      points: points
+      points: points,
+      source: "yahoo-live",
+      interval: "1d"
     };
+  }
+  function parseStaticTrend(payload, ticker) {
+    var normalized = normalizeTicker(ticker);
+    if (!normalized || !payload || payload.schema_version !== "idea-price-trends-v1" || payload.research_only !== true || !payload.symbols) return null;
+    var record = payload.symbols[normalized];
+    if (!record || !Array.isArray(record.points)) return null;
+    var points = record.points.map(function (point) {
+      var close = finite(point && point.close);
+      var time = Date.parse(String(point && point.date || "") + "T00:00:00Z");
+      return close !== null && close > 0 && Number.isFinite(time) ? { time: time, close: close } : null;
+    }).filter(Boolean).sort(function (left, right) { return left.time - right.time; });
+    if (points.length < 2) return null;
+    var current = points[points.length - 1].close;
+    var previous = points[points.length - 2].close;
+    return {
+      ticker: normalized,
+      companyName: "",
+      exchange: "",
+      currency: String(record.currency || "USD").trim().toUpperCase(),
+      instrumentType: "EQUITY",
+      current: current,
+      previous: previous,
+      change: current - previous,
+      changePct: previous ? (current / previous - 1) * 100 : null,
+      quoteTime: points[points.length - 1].time,
+      asOf: String(record.as_of || ""),
+      points: points,
+      source: "same-origin-research-weekly",
+      interval: "1wk"
+    };
+  }
+  function selectQuote(liveQuote, staticQuote) {
+    return liveQuote && Array.isArray(liveQuote.points) && liveQuote.points.length >= 2 ? liveQuote : staticQuote || null;
   }
   function candidateForTicker(payload, ticker) {
     if (!payload || payload.research_only !== true || !Array.isArray(payload.candidates)) return null;
@@ -93,16 +145,21 @@
   function safeEvidence(candidate) { return Array.isArray(candidate && candidate.evidence) ? candidate.evidence.map(function (item) { if (!item) return null; var url = item.url || item.canonical_url; return /^https:\/\//i.test(String(url || "")) ? Object.assign({}, item, { url: url, source: item.source || item.source_name }) : null; }).filter(Boolean) : []; }
   function render(doc, ticker, quote, candidate, universe) {
     var engine = root.IdeaEngine || {};
-    var companyName = quote && quote.companyName ? quote.companyName : ticker;
+    var candidateName = candidate && String(candidate.company_name || "").trim();
+    if (normalizeTicker(candidateName) === ticker) candidateName = "";
+    var companyName = quote && quote.companyName ? quote.companyName : candidateName || ticker;
+    var isStaticTrend = quote && quote.source === "same-origin-research-weekly";
     doc.title = companyName + "（" + ticker + "）· 股票详情";
     setText(doc, "stockDetailTicker", ticker);
     setText(doc, "stockDetailCompanyName", companyName);
     setText(doc, "stockDetailListing", [quote && quote.exchange, quote && quote.currency, quote && quote.instrumentType === "ETF" ? "ETF" : "股票"].filter(Boolean).join(" · ") || "上市信息暂无");
     setText(doc, "stockDetailPrice", formatPrice(quote && quote.current, quote && quote.currency));
-    var changeNode = setText(doc, "stockDetailChange", quote && quote.change !== null ? (quote.change >= 0 ? "+" : "") + quote.change.toFixed(2) + "（" + (quote.changePct >= 0 ? "+" : "") + quote.changePct.toFixed(2) + "%）" : "涨跌暂无");
+    var changePrefix = isStaticTrend ? "较前一周 " : "";
+    var changeNode = setText(doc, "stockDetailChange", quote && quote.change !== null ? changePrefix + (quote.change >= 0 ? "+" : "") + quote.change.toFixed(2) + "（" + (quote.changePct >= 0 ? "+" : "") + quote.changePct.toFixed(2) + "%）" : "涨跌暂无");
     if (quote && quote.change !== null) changeNode.className = quote.change >= 0 ? "stock-detail-positive" : "stock-detail-negative";
-    setText(doc, "stockDetailQuoteTime", "报价时间：" + formatDateTime(quote && quote.quoteTime));
-    setText(doc, "stockDetailQuoteSource", quote ? "Yahoo Finance 最近报价" : "报价暂不可用");
+    setText(doc, "stockDetailQuoteTime", isStaticTrend ? "研究数据截至：" + (quote.asOf || new Date(quote.quoteTime).toLocaleDateString("zh-CN")) + "（非实时）" : "报价时间：" + formatDateTime(quote && quote.quoteTime));
+    setText(doc, "stockDetailQuoteSource", isStaticTrend ? "同源研究周线 · 非实时" : (quote ? "Yahoo Finance 最近报价" : "报价暂不可用"));
+    setText(doc, "stockDetailChartTitle", isStaticTrend ? "近一年研究周线" : "近一年价格走势");
     var chartDrawn = renderChart(doc.getElementById("stockDetailChart"), quote && quote.points);
     setText(doc, "stockDetailChartSummary", chartDrawn ? "走势区间：" + new Date(quote.points[0].time).toLocaleDateString("zh-CN") + " 至 " + new Date(quote.points[quote.points.length - 1].time).toLocaleDateString("zh-CN") + "；区间首价 " + formatPrice(quote.points[0].close, quote.currency) + "，末价 " + formatPrice(quote.points[quote.points.length - 1].close, quote.currency) + "。" : "价格走势暂不可用，请以券商订单页为准。");
     var facts = doc.getElementById("stockDetailCompanyFacts"); facts.innerHTML = "";
@@ -155,13 +212,16 @@
     if (!ticker) { setText(doc, "stockDetailStatus", "股票代码无效，请返回潜力股研究重新选择。"); return; }
     var quoteUrl = "https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(ticker) + "?range=1y&interval=1d&includePrePost=false";
     Promise.allSettled([
-      fetcher(quoteUrl, { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("quote unavailable"); return response.json(); }).then(parseYahooChart),
+      fetchJsonWithTimeout(fetcher, quoteUrl, { cache: "no-cache" }, 4500).then(parseYahooChart),
+      fetcher("data/idea-engine-v3/price-trends.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("static trend unavailable"); return response.json(); }).then(function (payload) { return parseStaticTrend(payload, ticker); }),
       fetcher("research/results/v3/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("v3 research unavailable"); return response.json(); }).catch(function () { return fetcher("research/results/v2/idea-engine/latest-candidates.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("research unavailable"); return response.json(); }); }),
       fetcher("data/research-universe-sector-balanced-80.json", { cache: "no-cache" }).then(function (response) { return response.ok ? response.json() : null; }).catch(function () { return null; })
     ]).then(function (values) {
-      var quote = values[0].status === "fulfilled" ? values[0].value : null;
-      var research = values[1].status === "fulfilled" ? values[1].value : null;
-      var universe = values[2].status === "fulfilled" ? values[2].value : null;
+      var liveQuote = values[0].status === "fulfilled" ? values[0].value : null;
+      var staticQuote = values[1].status === "fulfilled" ? values[1].value : null;
+      var quote = selectQuote(liveQuote, staticQuote);
+      var research = values[2].status === "fulfilled" ? values[2].value : null;
+      var universe = values[3].status === "fulfilled" ? values[3].value : null;
       if (!quote && !research) { setText(doc, "stockDetailStatus", "公司与研究资料暂不可用，请稍后重试；不影响本周定投。"); return; }
       render(doc, ticker, quote, candidateForTicker(research, ticker), universe);
       var addButton = doc.getElementById("stockDetailAddWatchlist"); addButton.addEventListener("click", function () { var result = addToWatchlist(root.localStorage, ticker); setText(doc, "stockDetailActionStatus", result.message); });
@@ -169,5 +229,5 @@
     });
   }
   if (typeof document !== "undefined" && typeof fetch === "function") init(document, fetch);
-  return { normalizeTicker: normalizeTicker, tickerFromSearch: tickerFromSearch, parseYahooChart: parseYahooChart, candidateForTicker: candidateForTicker, categoryForTicker: categoryForTicker, addToWatchlist: addToWatchlist, renderChart: renderChart, init: init };
+  return { normalizeTicker: normalizeTicker, tickerFromSearch: tickerFromSearch, fetchJsonWithTimeout: fetchJsonWithTimeout, parseYahooChart: parseYahooChart, parseStaticTrend: parseStaticTrend, selectQuote: selectQuote, candidateForTicker: candidateForTicker, categoryForTicker: categoryForTicker, addToWatchlist: addToWatchlist, renderChart: renderChart, init: init };
 });

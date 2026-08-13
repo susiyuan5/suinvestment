@@ -65,6 +65,9 @@ jobs:
               if any(not isinstance(row.get("close"), (int, float)) or not math.isfinite(row["close"]) or row["close"] <= 0 for row in rows):
                   raise SystemExit(f"{symbol} contains invalid closes")
           PY
+      - name: Build same-origin research price fallback
+        if: env.SHADOW_UPDATE_DUE == 'true'
+        run: python scripts/build_idea_price_trends.py
       - name: Generate frozen observation and outcomes
         if: env.SHADOW_UPDATE_DUE == 'true'
         run: |
@@ -91,6 +94,7 @@ jobs:
             Research-only monthly Shadow refresh. No live strategy, portfolio, broker, or Manual Trade Plan changes.
           add-paths: |
             data/research-prices-sector-balanced-80.json
+            data/idea-engine-v3/price-trends.json
             research/results/phase6s/**
 
       - name: Merge validated research-only pull request
