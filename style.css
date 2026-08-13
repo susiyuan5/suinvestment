@@ -4986,3 +4986,54 @@ h2 {
    .allocation-editor-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
    .weekly-decision-overview, .weekly-decision-allocation-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
  }
+.dashboard-anchor-nav {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  max-width: 1680px;
+  margin: 0 auto 16px;
+  padding: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+.dashboard-anchor-nav a { flex: 0 0 auto; padding: 8px 12px; color: var(--muted); border-radius: 8px; text-decoration: none; font-weight: 700; }
+.dashboard-anchor-nav a:hover, .dashboard-anchor-nav a:focus-visible, .dashboard-anchor-nav a.is-active { color: var(--text); background: var(--panel-2); outline: 2px solid var(--accent); outline-offset: 1px; }
+.weekly-decision-actions { align-items: center; flex-wrap: wrap; }
+.weekly-decision-overview { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.weekly-decision-overview > span:nth-child(2), .weekly-decision-overview > span:nth-child(n + 7), .weekly-decision-allocation-summary { display: none; }
+.weekly-decision-row { grid-template-columns: 5rem minmax(10rem, 1.6fr) minmax(8rem, 1fr) minmax(8rem, 1fr) auto; }
+.weekly-decision-row details { grid-column: 1 / -1; }
+.primary-buy-amount { justify-self: end; color: var(--text); font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
+.stock-values { display: none; }
+.stock-details-row { margin-top: 2px; }
+.stock-details-row > summary { color: var(--accent); font-weight: 800; }
+.stock-card .remove-stock { margin-left: auto; color: var(--muted); border-color: transparent; background: transparent; }
+.stock-card .remove-stock:hover, .stock-card .remove-stock:focus-visible { color: var(--danger, #ff7188); border-color: var(--danger, #ff7188); }
+.stock-danger-zone { display: flex; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--line); }
+.inline-holdings-row[data-allocation-state="over"], .inline-holdings-row[data-allocation-state="under"] { border-color: color-mix(in srgb, var(--warning) 70%, var(--line)); }
+.inline-holdings-row[data-allocation-state="over"] .inline-holding-status.is-allocation-over, .inline-holdings-row[data-allocation-state="under"] .inline-holding-status.is-allocation-under { color: var(--warning); font-weight: 800; }
+.app-shell { max-width: 1680px; }
+@media (min-width: 1024px) {
+  .decision-summary-grid { grid-template-columns: minmax(0, 1fr); }
+  .decision-summary-grid .decision-summary-item:not(.decision-summary-action) { display: none; }
+  .decision-summary-action { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 8px 16px; }
+  .decision-summary-action small { grid-column: 1 / -1; }
+  .coreSatelliteRebalanceNotice { max-width: 100%; overflow-wrap: anywhere; }
+  .signals-panel, .inline-holdings-panel, .decision-summary, .overview-panel, .dashboard-layout { min-width: 0; max-width: 100%; }
+}
+@media (max-width: 1023px) {
+  .weekly-decision-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .primary-buy-amount { justify-self: start; }
+}
+@media (max-width: 719px) {
+  .dashboard-anchor-nav { top: 0; margin-bottom: 12px; border-radius: 8px; }
+  .weekly-decision-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .weekly-decision-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

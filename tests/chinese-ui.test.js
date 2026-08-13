@@ -28,7 +28,8 @@ test("weekly decision is the single visible planning surface", () => {
 
 test("desktop hierarchy follows the static DOM order", () => {
   const html = fs.readFileSync("index.html", "utf8");
-  const ordered = ["id=\"decisionSummary\"", "class=\"overview-panel\"", "class=\"dashboard-layout\"", "class=\"inline-holdings-panel\"", "id=\"coreSatelliteAllocationEditor\"", "deployment-overview", "id=\"watchlist\"", "research-panel", "id=\"dataQualityPanel\""];
+  const app = fs.readFileSync("app.js", "utf8");
+  const ordered = ["id=\"decisionSummary\"", "class=\"overview-panel\"", "class=\"dashboard-layout\"", "class=\"inline-holdings-panel\"", "id=\"coreSatelliteAllocationEditor\"", "deployment-overview", "id=\"watchlist\"", "class=\"panel research-panel\"", "id=\"dataQualityPanel\""];
   let previous = -1;
   ordered.forEach((marker) => { const index = html.indexOf(marker); assert.ok(index > previous, `${marker} is out of order`); previous = index; });
   assert.match(html, /id="coreSatelliteSummary" class="visually-hidden"/);
@@ -36,6 +37,9 @@ test("desktop hierarchy follows the static DOM order", () => {
   assert.equal((html.match(/恢复默认 40\/60/g) || []).length, 1);
   assert.match(html, /data-core-allocation-preset="40"/);
   assert.match(html, /大盘 40% 意味着个股合计 60%/);
+  for (const href of ["#decisionSummary", "#signalsSection", "#inlineHoldingsSection", "#research-panel", "#dataQualityPanel"]) assert.match(html, new RegExp(`href="${href}"`));
+  assert.match(html, /id="research-panel" class="panel research-panel"/);
+  assert.match(app, /确认移除 /);
 });
 
 test("weekly decision order contract contains SPY and four satellites", () => {

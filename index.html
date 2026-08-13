@@ -35,6 +35,14 @@
         </div>
       </header>
 
+      <nav class="dashboard-anchor-nav" aria-label="页面导航">
+        <a href="#decisionSummary">本周决策</a>
+        <a href="#signalsSection">个股信号</a>
+        <a href="#inlineHoldingsSection">当前持仓</a>
+        <a href="#research-panel">研究</a>
+        <a href="#dataQualityPanel">数据质量</a>
+      </nav>
+
       <section id="decisionSummary" class="decision-summary" aria-labelledby="decision-summary-title" data-testid="decision-summary">
         <div class="decision-summary-heading">
           <div>
@@ -69,7 +77,7 @@
         <p class="decision-summary-note">健康仅表示数据和工作流正常，不代表策略有效或允许交易。研究和回测结果仅供辅助复核。</p>
         <section id="weeklyDecisionPlan" class="weekly-decision-plan" aria-labelledby="weeklyDecisionPlanTitle">
           <div class="weekly-decision-heading"><h3 id="weeklyDecisionPlanTitle">本周资金概览与人工计划</h3><strong id="weeklyDecisionTotal">CAD 0.00</strong></div>
-          <div class="weekly-decision-actions"><button id="adjustAllocationBtn" class="secondary-button" type="button">调整目标比例</button><button id="refreshBtn" class="primary-button" type="button">刷新并重新检查</button><button id="copyBtn" class="secondary-button" type="button">复制本周人工计划</button></div>
+          <div class="weekly-decision-actions"><button id="adjustAllocationBtn" class="secondary-button" type="button">调整目标比例</button><button id="adjustBudgetBtn" class="secondary-button" type="button">调整预算</button><button id="refreshBtn" class="primary-button" type="button">刷新并重新检查</button><button id="copyBtn" class="secondary-button" type="button">复制本周人工计划</button></div>
           <div id="weeklyDecisionOverview" class="weekly-decision-overview" aria-live="polite">
             <span>本周基础预算<strong id="weeklyBaseBudget">CAD 0.00</strong></span><span>已批准下跌备用金<strong id="weeklyCrashFund">CAD 0.00</strong></span><span>本周可用资金总额<strong id="weeklyAvailableFunds">CAD 0.00</strong></span><span>本周计划买入总额<strong id="weeklyPlannedTotal">CAD 0.00</strong></span><span>本周保留现金<strong id="weeklyRetainedCash">CAD 0.00</strong></span><span>资金守恒状态<strong id="weeklyConservationStatus">等待计算</strong></span>
             <span>可执行买入<strong id="weeklyExecutableTotal">CAD 0.00</strong></span><span>碎股/账户限制保留现金<strong id="weeklyExecutionCash">CAD 0.00</strong></span><span>单股上限保留现金<strong id="weeklyExposureCash">CAD 0.00</strong></span><span>风险规则保留现金<strong id="weeklyRiskRuleCash">CAD 0.00</strong></span>
@@ -148,7 +156,7 @@
             <strong>QQQ 信号小于或等于 -10%</strong>
           </section>
 
-          <section class="panel signals-panel" aria-labelledby="holdings-title">
+          <section id="signalsSection" class="panel signals-panel" aria-labelledby="holdings-title">
             <div class="section-heading compact">
               <div>
               <p class="eyebrow">信号</p>
@@ -261,7 +269,7 @@
         </aside>
       </main>
 
-      <section class="inline-holdings-panel" aria-labelledby="inline-holdings-title">
+      <section id="inlineHoldingsSection" class="inline-holdings-panel" aria-labelledby="inline-holdings-title">
         <div class="inline-holdings-heading">
           <div>
             <p class="eyebrow">持仓</p>
@@ -351,7 +359,7 @@
         <div id="ideaEngineRows" class="idea-engine-rows" aria-live="polite"></div>
       </details>
 
-<section class="panel research-panel" aria-labelledby="research-title">
+<section id="research-panel" class="panel research-panel" aria-labelledby="research-title">
         <div class="section-heading compact">
           <div>
             <p class="eyebrow">辅助工具</p>
@@ -630,12 +638,12 @@
             <span class="allocation"></span>
           </div>
           <span class="action-badge"></span>
+          <span class="primary-buy-amount" aria-label="最终建议金额"></span>
           <div class="price-row">
             <span class="price"></span>
             <span class="note"></span>
           </div>
           <span class="source-badge"></span>
-          <button class="remove-stock stock-action-button" type="button" aria-label="移除股票">移除</button>
         </div>
 
         <div class="stock-values">
@@ -648,29 +656,30 @@
             <strong class="five-day-change"></strong>
           </div>
           <div>
-            <span>signal_score</span>
+            <span>信号分</span>
             <strong class="weekly-change"></strong>
           </div>
           <div>
-            <span>signal_strength</span>
+            <span>信号强度</span>
             <strong class="signal-strength"></strong>
           </div>
           <div>
-            <span>risk_level</span>
+            <span>风险等级</span>
             <strong class="risk-level"></strong>
           </div>
           <div>
-            <span>Multiplier</span>
+            <span>买入倍数</span>
             <strong class="multiplier"></strong>
           </div>
           <div>
-            <span>Buy</span>
+            <span>最终建议金额</span>
             <strong class="buy-amount"></strong>
           </div>
         </div>
 
         <details class="stock-details-row expanded-detail-panel">
-          <summary>Details</summary>
+          <summary>查看详情</summary>
+          <div class="stock-danger-zone"><button class="remove-stock stock-action-button" type="button" aria-label="移除股票">移除股票</button></div>
           <details class="decision-context">
             <summary>reason / warning</summary>
             <div>
@@ -723,6 +732,7 @@
     <script src="etf-lookthrough.js?v=wealthsimple-v2"></script>
     <script src="portfolio-stress-test.js?v=wealthsimple-v1"></script>
     <script src="holdings-detail-model.js?v=holdings-detail-v1"></script>
+    <script src="dashboard-ui-policy.js?v=desktop-ui-hierarchy-v1"></script>
     <script src="app.js?v=holdings-detail-v1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
