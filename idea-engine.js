@@ -37,6 +37,28 @@
     if (!payload || payload.research_only !== true || !Array.isArray(payload.candidates) || ["idea-engine-v1", "idea-engine-v3", "idea-engine-v3.1"].indexOf(payload.schema_version) < 0) return null;
     return Object.assign({ source_version: payload.schema_version === "idea-engine-v3.1" ? "v3_1" : payload.schema_version === "idea-engine-v3" ? "v3" : "v2" }, payload);
   }
+  function safeHistoricalOos(payload) {
+    if (!payload || payload.schema_version !== "historical-oos-price-timing-v1" || payload.research_only !== true || payload.no_trade !== true || payload.scope !== "price_timing_layer_only" || payload.composite_score_calibrated !== false || !payload.current_mappings) return null;
+    return payload;
+  }
+  function percent(value) { return Number.isFinite(Number(value)) ? (Number(value) * 100).toFixed(1) + "%" : "暂无"; }
+  function historicalOosDetails(ticker, payload) {
+    var safe = safeHistoricalOos(payload);
+    var mapping = safe && safe.current_mappings[normalizeTicker(ticker)];
+    if (!mapping) return null;
+    var statusLabels = {
+      preliminary_reliable_edge: "达到初步历史门禁",
+      positive_skew_unconfirmed: "存在正收益偏斜，但统计仍不可靠",
+      no_historical_edge: "未形成历史优势"
+    };
+    return {
+      ticker: normalizeTicker(ticker),
+      status: mapping.evidence_status,
+      statusLabel: statusLabels[mapping.evidence_status] || "历史证据不足",
+      text: "历史 OOS（价格择时层）：当前第 " + Number(mapping.calibration_bin) + "/5 档；永久留出 " + Number(mapping.oos_samples || 0) + " 个样本、" + Number(mapping.oos_origin_dates || 0) + " 个独立周，成本后相对 QQQ 命中率 " + percent(mapping.oos_cost_adjusted_hit_rate) + "（95% 区间 " + percent(mapping.oos_hit_rate_ci_low) + "–" + percent(mapping.oos_hit_rate_ci_high) + "），平均相对收益 " + percent(mapping.mean_oos_net_relative_return) + "；" + (statusLabels[mapping.evidence_status] || "历史证据不足") + "。",
+      boundary: "仅校验价格与成交量择时层；使用当前股票池回填，仍存在幸存者偏差；不校验综合分，也不替代实时 Shadow。"
+    };
+  }
   function label(status) { return gradeLabels[status] || "已阻断 · 暂停研究"; }
   function formatScore(value) { return Number.isFinite(Number(value)) ? Number(value).toFixed(1) : "暂无"; }
   function text(value, fallback) { return value === undefined || value === null || value === "" ? (fallback || "暂无数据") : String(value); }
@@ -79,7 +101,7 @@
     return normalized ? "stock-detail.html?ticker=" + encodeURIComponent(normalized) : "";
   }
   function addText(doc, parent, tag, value, className) { var node = doc.createElement(tag); if (className) node.className = className; node.textContent = value; parent.appendChild(node); return node; }
-  function createCard(candidate, doc, shortTermPlans) {
+  function createCard(candidate, doc, shortTermPlans, historicalOos) {
     var ticker = normalizeTicker(candidate.ticker);
     var shortTermPlan = shortTermPlans && shortTermPlans[String(candidate.ticker || "").toUpperCase()];
     var card = doc.createElement("article");
@@ -110,7 +132,12 @@
       if (candidate.schema_version === "idea-engine-v3.1") {
         var coverage = coverageDetails(candidate);
         addText(doc, card, "p", "评分维度覆盖 " + coverage.dimension + "%（" + coverage.dimensionCovered + "/" + coverage.dimensionRequired + "） · 关键证据覆盖 " + coverage.critical + "%（" + coverage.criticalCovered + "/" + coverage.criticalRequired + "） · 独立证据 " + coverage.independent + "%（" + coverage.independentCount + "/" + coverage.independentTarget + "） · 模型校准：" + (candidate.model_calibration_score === null || candidate.model_calibration_score === undefined ? "尚未验证（需达到 Shadow 治理门槛）" : formatScore(candidate.model_calibration_score) + "%"), "idea-engine-evidence-summary");
-        if (candidate.model_calibration_score === null || candidate.model_calibration_score === undefined) addText(doc, card, "p", "模型校准尚未完成，综合分不能解释为短线上涨概率。", "idea-engine-score-help");
+        if (candidate.model_calibration_score === null || candidate.model_calibration_score === undefined) addText(doc, card, "p", "综合分仍只是研究排序，不是上涨概率；完整模型继续由实时 Shadow 验证。", "idea-engine-score-help");
+        var oos = historicalOosDetails(ticker, historicalOos);
+        if (oos) {
+          addText(doc, card, "p", oos.text, "idea-engine-oos-summary");
+          addText(doc, card, "p", oos.boundary, "idea-engine-score-help");
+        }
       }
       else addText(doc, card, "p", "证据覆盖率 " + formatScore(candidate.evidence_coverage_score) + "% · 数据可信度 " + formatScore(candidate.confidence_score) + "%", "idea-engine-evidence-summary");
       if (candidate.portfolio_fit_status) addText(doc, card, "p", "组合关系：" + text(candidate.portfolio_fit_status, "待核对"), "idea-engine-portfolio-fit");
@@ -165,7 +192,7 @@
     } catch (_error) { relation.computed_in_browser = true; }
     return relation;
   }
-  function render(payload, elements, doc, governance, shortTermPayload) {
+  function render(payload, elements, doc, governance, shortTermPayload, historicalOos) {
     var safe = safePayload(payload); elements.rows.innerHTML = "";
     var mature = governance && governance.status === "mature" && governance.manual_review_eligible === true;
     var progress = shadowProgress(governance);
@@ -184,7 +211,7 @@
     function draw() {
       elements.rows.innerHTML = "";
       var candidates = filterCandidates(safe.candidates, { status: controls.status && controls.status.value, industry: controls.industry && controls.industry.value, type: controls.type && controls.type.value, fit: controls.fit && controls.fit.value });
-      candidates.forEach(function (candidate) { var displayCandidate = Object.assign({}, candidate); displayCandidate.portfolio_relation = localPortfolioRelation(candidate); displayCandidate.portfolio_fit_status = portfolioRelationLabel(displayCandidate.portfolio_relation); elements.rows.appendChild(createCard(displayCandidate, doc, shortTermPlans)); });
+      candidates.forEach(function (candidate) { var displayCandidate = Object.assign({}, candidate); displayCandidate.portfolio_relation = localPortfolioRelation(candidate); displayCandidate.portfolio_fit_status = portfolioRelationLabel(displayCandidate.portfolio_relation); elements.rows.appendChild(createCard(displayCandidate, doc, shortTermPlans, historicalOos)); });
       if (!candidates.length) addText(doc, elements.rows, "p", "没有符合当前筛选条件的候选。", "idea-engine-empty");
     }
     var rerender = function () { var sorted = sortCandidates(safe.candidates, controls.sort && controls.sort.value); safe.candidates = sorted; draw(); };
@@ -198,8 +225,8 @@
     var panel = doc.getElementById("ideaEnginePanel");
     if (panel && root.location && root.location.hash === "#ideaEnginePanel") panel.open = true;
     function fetchJson(url) { return fetcher(url, { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("idea engine unavailable"); return response.json(); }); }
-    fetchJson("research/results/v3_1/idea-engine/latest-candidates.json").catch(function () { return fetchJson("research/results/v3/idea-engine/latest-candidates.json"); }).catch(function () { return fetchJson("research/results/v2/idea-engine/latest-candidates.json").then(function (payload) { payload.source_version = "v2"; return payload; }); }).then(function (payload) { var resultRoot = payload.source_version === "v2" ? "research/results/v2" : payload.schema_version === "idea-engine-v3.1" ? "research/results/v3_1" : "research/results/v3"; return Promise.all([payload, fetchJson(resultRoot + "/idea-engine/shadow/governance-report.json").catch(function () { return null; }), fetchJson("research/results/v3_1/short-term-trade-plans-v1_1/latest.json").catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans/latest.json"); }).catch(function () { return null; })]); }).then(function (values) { render(values[0], elements, doc, values[1], values[2]); }).catch(function () { render(null, elements, doc, null, null); });
+    fetchJson("research/results/v3_1/idea-engine/latest-candidates.json").catch(function () { return fetchJson("research/results/v3/idea-engine/latest-candidates.json"); }).catch(function () { return fetchJson("research/results/v2/idea-engine/latest-candidates.json").then(function (payload) { payload.source_version = "v2"; return payload; }); }).then(function (payload) { var resultRoot = payload.source_version === "v2" ? "research/results/v2" : payload.schema_version === "idea-engine-v3.1" ? "research/results/v3_1" : "research/results/v3"; return Promise.all([payload, fetchJson(resultRoot + "/idea-engine/shadow/governance-report.json").catch(function () { return null; }), fetchJson("research/results/v3_1/short-term-trade-plans-v1_1/latest.json").catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans/latest.json"); }).catch(function () { return null; }), fetchJson("research/results/v3_1/historical-oos-price-timing/latest.json").catch(function () { return null; })]); }).then(function (values) { render(values[0], elements, doc, values[1], values[2], values[3]); }).catch(function () { render(null, elements, doc, null, null, null); });
   }
   if (typeof document !== "undefined" && typeof fetch === "function") init(document, fetch);
-  return { safePayload: safePayload, gradeLabel: label, researchGradeLabel: label, workflowLabel: workflowLabel, rejectionLabel: rejectionLabel, sectorLabel: sectorLabel, researchTypeLabel: researchTypeLabel, coverageDetails: coverageDetails, researchLimitations: researchLimitations, thesisKillRisks: thesisKillRisks, shadowProgress: shadowProgress, dataLimitation: dataLimitation, portfolioRelationLabel: portfolioRelationLabel, formatScore: formatScore, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, normalizeTicker: normalizeTicker, detailHref: detailHref, filterCandidates: filterCandidates, sortCandidates: sortCandidates, render: render, init: init };
+  return { safePayload: safePayload, safeHistoricalOos: safeHistoricalOos, historicalOosDetails: historicalOosDetails, gradeLabel: label, researchGradeLabel: label, workflowLabel: workflowLabel, rejectionLabel: rejectionLabel, sectorLabel: sectorLabel, researchTypeLabel: researchTypeLabel, coverageDetails: coverageDetails, researchLimitations: researchLimitations, thesisKillRisks: thesisKillRisks, shadowProgress: shadowProgress, dataLimitation: dataLimitation, portfolioRelationLabel: portfolioRelationLabel, formatScore: formatScore, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, normalizeTicker: normalizeTicker, detailHref: detailHref, filterCandidates: filterCandidates, sortCandidates: sortCandidates, render: render, init: init };
 });

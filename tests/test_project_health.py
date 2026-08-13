@@ -103,10 +103,20 @@ class ProjectHealthTests(unittest.TestCase):
             })
             write_json(root, "research/results/v3_1/idea-engine/provider-status.json", {"status": "ready", "active_provider": "free_public_data"})
             write_json(root, "research/results/v3_1/idea-engine/shadow/governance-report.json", {"manual_review_eligible": False, "status": "not_mature"})
+            write_json(root, "research/results/v3_1/historical-oos-price-timing/latest.json", {
+                "schema_version": "historical-oos-price-timing-v1",
+                "scope": "price_timing_layer_only",
+                "status": "preliminary_no_reliable_edge",
+                "as_of": "2026-07-10",
+                "sample_counts": {"permanent_oos": 5039, "permanent_oos_origin_dates": 63},
+                "reliability_gate": {"passed": False},
+            })
             payload = build_health(root, now=NOW, workflows=SUCCESS)
             self.assertEqual(payload["idea_engine"]["schema_version"], "idea-engine-v3.1")
             self.assertEqual(payload["idea_engine"]["result_source"], "v3.1-short-term")
             self.assertEqual(payload["idea_engine"]["primary_horizon_weeks"], 4)
+            self.assertEqual(payload["idea_engine"]["historical_oos"]["permanent_oos_samples"], 5039)
+            self.assertFalse(payload["idea_engine"]["historical_oos"]["composite_score_calibrated"])
 
     def test_health_history_is_retained_for_the_last_90_days(self):
         with tempfile.TemporaryDirectory() as directory:

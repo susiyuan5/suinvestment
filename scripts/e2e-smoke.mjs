@@ -148,6 +148,8 @@ async function main() {
   if (await ideaCard.count()) {
     assert.match(await ideaCard.textContent(), /综合分 \d+\.\d/);
     assert.match(await ideaCard.textContent(), /稳健分 \d+\.\d/);
+    assert.match(await ideaCard.textContent(), /历史 OOS（价格择时层）/, "candidate card should expose the separate historical OOS evidence");
+    assert.match(await ideaCard.textContent(), /不校验综合分/, "historical timing evidence must not be presented as composite-score calibration");
     assert.doesNotMatch(await ideaCard.textContent(), /剔除单源最低/);
     const ideaTicker = (await ideaCard.locator("h3").textContent()).trim();
     const ideaTitleLink = ideaCard.getByRole("link", { name: `查看 ${ideaTicker} 公司与研究详情` });
