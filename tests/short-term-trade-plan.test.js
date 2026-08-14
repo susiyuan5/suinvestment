@@ -12,7 +12,25 @@ test('safe payload and research-only status labels are stable', () => {
   assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v1', research_only: true, no_trade: true, plans: [] }).schema_version, 'short-term-trade-plan-v1');
   assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v1.1', research_only: true, no_trade: true, plans: [] }).schema_version, 'short-term-trade-plan-v1.1');
   assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v1.2', research_only: true, no_trade: true, plans: [] }).schema_version, 'short-term-trade-plan-v1.2');
+  assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v1.3', research_only: true, no_trade: true, plans: [] }).schema_version, 'short-term-trade-plan-v1.3');
   assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v2', research_only: true, no_trade: true, plans: [] }), null);
+});
+
+test('three-strategy labels remain conditional and never imply calibrated prediction', () => {
+  assert.equal(plan.strategyStatusLabel({ status: 'historical_edge_failed' }), '已触发但历史优势未通过');
+  assert.equal(plan.strategyStatusLabel({ status: 'waiting' }), '等待全部条件触发');
+  const memory = new Map();
+  global.localStorage = { getItem: key => memory.has(key) ? memory.get(key) : null, setItem: (key, value) => memory.set(key, value) };
+  plan.saveSelection('tsm', 'oneil_volume_breakout');
+  assert.equal(plan.loadSelections().TSM, 'oneil_volume_breakout');
+  delete global.localStorage;
+});
+
+test('strategy condition values use readable financial units', () => {
+  assert.equal(plan.conditionValue({ code: 'relative_return_20', current: 0.03456 }), '3.46%');
+  assert.equal(plan.conditionValue({ code: 'volume_ratio', current: 1.234 }), '1.23x');
+  assert.equal(plan.conditionValue({ code: 'close_above_sma20', current: 123.456 }), '123.46');
+  assert.equal(plan.conditionValue({ code: 'market_regime', current: 'green' }), 'green');
 });
 
 test('v1.2 style labels and yellow-regime sizing remain research-only', () => {

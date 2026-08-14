@@ -7,13 +7,14 @@ from typing import Any
 from .short_term_daily_bars import validate_snapshot
 
 ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_CONFIG = ROOT / "data/short-term-trade-plan-v1.2.json"
+DEFAULT_CONFIG = ROOT / "data/short-term-trade-plan-v1.3.json"
 DEFAULT_CANDIDATES = ROOT / "research/results/v3_1/idea-engine/latest-candidates.json"
 DEFAULT_PRICES = ROOT / "data/short-term-daily-bars-v1.json"
 DEFAULT_EVENTS = ROOT / "data/idea-engine-events-v1.json"
 DEFAULT_GOVERNANCE = ROOT / "research/results/v3_1/idea-engine/shadow/governance-report.json"
-DEFAULT_OUTPUT = ROOT / "research/results/v3_1/short-term-trade-plans-v1_2/latest.json"
-DEFAULT_STYLE_OOS = ROOT / "research/results/v3_1/global-style-short-term-oos/latest.json"
+DEFAULT_OUTPUT = ROOT / "research/results/v3_1/short-term-trade-plans-v1_3/latest.json"
+DEFAULT_STYLE_OOS = ROOT / "research/results/v3_1/global-style-short-term-oos-v1_3/latest.json"
+STRATEGY_IDS = ("oneil_volume_breakout", "trend_pullback", "vcp_darvas_breakout")
 
 def finite(value: Any) -> float | None:
     try: value = float(value)
@@ -137,8 +138,9 @@ def style_signals(indicators, config):
         and indicators["current_close"] >= indicators["sma20"] and indicators["current_close"] > indicators["previous_high"]
         and indicators["volume_ratio"] <= float(config["pullback"]["maximum_volume_ratio"])
     )
-    model = "vcp_darvas_breakout" if breakout and vcp else "oneil_volume_breakout" if breakout else "trend_pullback" if pullback else None
-    return {"market_regime": regime, "trend_template": trend, "vcp_contraction": vcp, "volume_breakout": breakout, "trend_pullback": pullback, "triggered_model": model}
+    triggered_models = [model for model, passed in (("oneil_volume_breakout", breakout), ("trend_pullback", pullback), ("vcp_darvas_breakout", breakout and vcp)) if passed]
+    model = "vcp_darvas_breakout" if "vcp_darvas_breakout" in triggered_models else triggered_models[0] if triggered_models else None
+    return {"market_regime": regime, "trend_template": trend, "vcp_contraction": vcp, "volume_breakout": breakout, "trend_pullback": pullback, "triggered_models": triggered_models, "triggered_model": model}
 
 def next_business_day(value):
     current = date.fromisoformat(str(value)[:10]) + timedelta(days=1)
@@ -174,8 +176,54 @@ def candidate_evidence_coverage(candidate):
     values = [candidate.get("evidence_coverage_score"), (candidate.get("data_quality") or {}).get("score_dimension_coverage", {}).get("percent")]
     return next((value for value in (finite(item) for item in values) if value is not None), 0.0)
 
-def build_signal(indicators, signals, config):
-    entry = indicators["current_close"]; atr_value = indicators["atr14"]
+def _check(code, label, passed, current, required):
+    return {"code": code, "label": label, "passed": bool(passed), "current": current, "required": required}
+
+def strategy_condition_checks(indicators, signals, config, model):
+    trend_checks = [
+        _check("close_above_sma20", "收盘价高于 SMA20", indicators["current_close"] > indicators["sma20"], indicators["current_close"], f"> {indicators['sma20']:.2f}"),
+        _check("sma20_above_sma50", "SMA20 高于 SMA50", indicators["sma20"] > indicators["sma50"], indicators["sma20"], f"> {indicators['sma50']:.2f}"),
+        _check("sma50_above_sma200", "SMA50 高于 SMA200", indicators["sma50"] > indicators["sma200"], indicators["sma50"], f"> {indicators['sma200']:.2f}"),
+        _check("sma200_rising", "SMA200 保持上升", indicators["sma200_slope_20"] > 0, indicators["sma200_slope_20"], "> 0"),
+        _check("relative_qqq_20_positive", "20 日相对 QQQ 强度为正", indicators["relative_return_20"] > 0, indicators["relative_return_20"], "> 0"),
+        _check("market_regime", "大盘环境允许新开多仓", signals["market_regime"]["passed"], signals["market_regime"]["state"], "green / yellow"),
+    ]
+    breakout_price = indicators["prior20_high"] + indicators["atr14"] * float(config["breakout"]["close_buffer_atr"])
+    breakout_checks = [
+        _check("breakout_price", "收盘突破参考价", indicators["current_close"] >= breakout_price, indicators["current_close"], f">= {breakout_price:.2f}"),
+        _check("breakout_volume", "成交量确认", indicators["volume_ratio"] >= float(config["breakout"]["volume_ratio_min"]), indicators["volume_ratio"], f">= {float(config['breakout']['volume_ratio_min']):.2f}x"),
+        _check("relative_qqq_5_positive", "5 日相对 QQQ 强度为正", indicators["relative_return_5"] > 0, indicators["relative_return_5"], "> 0"),
+    ]
+    if model == "oneil_volume_breakout":
+        return trend_checks + breakout_checks
+    if model == "trend_pullback":
+        touch_limit = indicators["sma20"] * (1 + float(config["pullback"]["touch_tolerance_pct"]))
+        return trend_checks + [
+            _check("pullback_touch", "盘中回踩 SMA20 附近", indicators["current_low"] <= touch_limit, indicators["current_low"], f"<= {touch_limit:.2f}"),
+            _check("pullback_reclaim", "收盘重新站上 SMA20", indicators["current_close"] >= indicators["sma20"], indicators["current_close"], f">= {indicators['sma20']:.2f}"),
+            _check("pullback_confirmation", "收盘高于前一日高点", indicators["current_close"] > indicators["previous_high"], indicators["current_close"], f"> {indicators['previous_high']:.2f}"),
+            _check("pullback_volume", "回踩成交量不过热", indicators["volume_ratio"] <= float(config["pullback"]["maximum_volume_ratio"]), indicators["volume_ratio"], f"<= {float(config['pullback']['maximum_volume_ratio']):.2f}x"),
+        ]
+    range_limit = indicators["prior_contraction_range_pct"] * float(config["vcp_darvas"]["maximum_range_ratio"])
+    return trend_checks + [
+        _check("vcp_range_contract", "波动区间收缩", indicators["recent_contraction_range_pct"] <= range_limit, indicators["recent_contraction_range_pct"], f"<= {range_limit:.4f}"),
+        _check("vcp_volume_dryup", "收缩期成交量萎缩", indicators["contraction_volume_ratio"] <= float(config["vcp_darvas"]["maximum_dryup_volume_ratio"]), indicators["contraction_volume_ratio"], f"<= {float(config['vcp_darvas']['maximum_dryup_volume_ratio']):.2f}x"),
+        _check("vcp_near_high", "价格接近箱体上沿", indicators["distance_prior_high_atr"] <= float(config["vcp_darvas"]["maximum_distance_to_prior_high_atr"]), indicators["distance_prior_high_atr"], f"<= {float(config['vcp_darvas']['maximum_distance_to_prior_high_atr']):.2f} ATR"),
+        *breakout_checks,
+    ]
+
+def strategy_triggered(signals, model):
+    return model in signals.get("triggered_models", []) or signals.get("triggered_model") == model
+
+def build_signal(indicators, signals, config, model=None, *, triggered=True):
+    model = model or signals.get("triggered_model")
+    atr_value = indicators["atr14"]
+    breakout_reference = indicators["prior20_high"] + atr_value * float(config["breakout"]["close_buffer_atr"])
+    if model == "trend_pullback":
+        planned_reference = max(indicators["sma20"], indicators["previous_high"] + float(config.get("execution", {}).get("default_tick_size", 0.01)))
+    else:
+        planned_reference = breakout_reference
+    entry = indicators["current_close"] if triggered else planned_reference
     structure_stop = indicators["recent10_low"] - atr_value * float(config["risk"]["structure_stop_atr"])
     volatility_stop = entry - atr_value * float(config["risk"]["volatility_stop_atr"])
     stop = max(structure_stop, volatility_stop)
@@ -186,11 +234,83 @@ def build_signal(indicators, signals, config):
         "entry_reference": entry, "entry_range": [entry + atr_value * float(config["risk"]["entry_low_atr"]), entry + atr_value * float(config["risk"]["entry_high_atr"])],
         "chase_limit": entry + atr_value * float(config["risk"]["chase_limit_atr"]), "stop": stop,
         "targets": [entry + risk * float(value) for value in config["risk"]["target_r_multiples"]], "risk_per_share": risk,
-        "model": signals["triggered_model"], "holding_window_days": [1, int(config.get("exit", {}).get("maximum_holding_days", 20))],
+        "model": model, "holding_window_days": [1, int(config.get("exit", {}).get("maximum_holding_days", 20))],
+        "trigger_price": planned_reference, "prediction_calibrated": False,
+        "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
         "exit_rules": config.get("exit", {}), "style_fusion_version": config.get("style_fusion", {}).get("version"),
     }
 
+def blocked_strategy_rows(config, reasons):
+    return [{"strategy_id": model, "label": config.get("strategy_labels", {}).get(model, model), "status": "blocked", "status_label": "研究条件阻断", "triggered": False, "condition_checks": [], "missing_conditions": list(reasons), "entry_plan": None, "historical_oos": {"passed": False, "status": "unavailable"}, "prediction_calibrated": False, "research_selection_allowed": False, "execution_ready": False} for model in config.get("strategy_order", STRATEGY_IDS)]
+
+def build_strategy_rows(indicators, signals, config, historical_oos_by_model, governance, global_blockers):
+    rows = []
+    labels = config.get("strategy_labels", {})
+    for model in config.get("strategy_order", STRATEGY_IDS):
+        checks = strategy_condition_checks(indicators, signals, config, model)
+        triggered = strategy_triggered(signals, model)
+        evidence = dict(historical_oos_by_model.get(model) or {})
+        oos_passed = evidence.get("passed") is True
+        signal = build_signal(indicators, signals, config, model, triggered=triggered)
+        risk_distance = signal["risk_per_share"] / signal["entry_reference"] if signal else None
+        local_reasons = list(global_blockers)
+        if signal is None: local_reasons.append("invalid_stop_structure")
+        elif not float(config["risk"]["minimum_risk_pct"]) <= risk_distance <= float(config["risk"]["maximum_risk_pct"]): local_reasons.append("risk_distance_out_of_bounds")
+        if local_reasons:
+            status, status_label = "blocked", "研究条件阻断"
+        elif not triggered:
+            status, status_label = "waiting", "等待全部条件触发"
+        elif not oos_passed:
+            status, status_label = "historical_edge_failed", "已触发但历史优势未通过"
+        elif governance.get("manual_review_eligible") is True:
+            status, status_label = "conditional_review", "正式门禁通过，待人工复核"
+        elif governance.get("preliminary_review_eligible") is True:
+            status, status_label = "preliminary_review", "初步门禁通过，仅可人工研究"
+        else:
+            status, status_label = "triggered_simulation", "条件已触发，仅作模拟"
+        rows.append({
+            "strategy_id": model, "label": labels.get(model, model), "status": status, "status_label": status_label,
+            "triggered": triggered, "condition_checks": checks,
+            "missing_conditions": [item["code"] for item in checks if not item["passed"]] + local_reasons,
+            "entry_plan": signal, "historical_oos": {**evidence, "passed": oos_passed, "status": "passed" if oos_passed else "failed_or_insufficient"},
+            "prediction_calibrated": False, "research_selection_allowed": status != "blocked", "execution_ready": False,
+        })
+    return rows
+
+def evaluate_three_strategy_plan(candidate, rows, benchmark_rows, config, *, as_of=None, historical_oos_by_model=None, governance=None):
+    ticker = str(candidate.get("ticker") or "").upper(); governance = governance or {}; historical_oos_by_model = historical_oos_by_model or {}
+    base = {"schema_version": config["output_schema_version"], "ticker": ticker, "research_only": True, "no_trade": True, "status": "blocked", "status_label": "数据阻断", "reason_codes": [], "warnings": [], "signal": None, "strategies": [], "execution": {"order_type": "limit", "regular_hours_only": True, "human_review_required": True}, "style_fusion": config.get("style_fusion")}
+    if str(candidate.get("status")) not in config["gates"]["eligible_statuses"]:
+        base["reason_codes"] = ["idea_status_not_eligible"]; base["strategies"] = blocked_strategy_rows(config, base["reason_codes"]); return base
+    if candidate_evidence_coverage(candidate) < float(config["gates"]["minimum_evidence_coverage"]):
+        base["reason_codes"] = ["evidence_threshold_not_met"]; base["strategies"] = blocked_strategy_rows(config, base["reason_codes"]); return base
+    try: indicators = compute_indicators(rows, benchmark_rows, config)
+    except ValueError as error:
+        base["reason_codes"] = [str(error)]; base["strategies"] = blocked_strategy_rows(config, base["reason_codes"]); return base
+    signal_date = indicators["signal_date"]
+    if as_of and signal_date > str(as_of)[:10]: base["reason_codes"].append("future_data_detected")
+    if as_of and (date.fromisoformat(str(as_of)[:10]) - date.fromisoformat(signal_date)).days > int(config["gates"]["max_data_age_days"]): base["reason_codes"].append("stale_price_data")
+    event_status, event_reasons = _event_gate(candidate, signal_date, config); base["reason_codes"].extend(event_reasons)
+    signals = style_signals(indicators, config); regime = signals["market_regime"]
+    if not regime["passed"]: base["reason_codes"].append("qqq_market_state_blocked")
+    if not signals.get("trend_template"): base["reason_codes"].append("trend_template_failed")
+    hard_blockers = [code for code in base["reason_codes"] if code in {"future_data_detected", "stale_price_data", "qqq_market_state_blocked", "earnings_blackout_3_trading_days"}]
+    strategies = build_strategy_rows(indicators, signals, config, historical_oos_by_model, governance, hard_blockers)
+    priority = {"conditional_review": 6, "preliminary_review": 5, "triggered_simulation": 4, "historical_edge_failed": 3, "waiting": 2, "blocked": 1}
+    best = max(strategies, key=lambda row: priority[row["status"]])
+    if best["status"] in {"conditional_review", "preliminary_review"}: status = best["status"]
+    elif best["triggered"]: status = "simulation_only"
+    elif all(row["status"] == "blocked" for row in strategies): status = "blocked"
+    else: status = "waiting_trigger"
+    status_label = {"conditional_review": "正式门禁通过，待人工复核", "preliminary_review": "初步门禁通过，仅可人工研究", "simulation_only": "已有策略触发，但仅作模拟", "waiting_trigger": "三种策略均在等待触发", "blocked": "数据或风险门禁阻断"}[status]
+    base.update(status=status, status_label=status_label, indicators=indicators, event_status=event_status, market_regime=regime, trigger_models=signals, strategies=strategies, signal=best.get("entry_plan") if best.get("triggered") else None)
+    if not any(row["triggered"] for row in strategies): base["reason_codes"].append("no_trigger")
+    base["reason_codes"] = list(dict.fromkeys(base["reason_codes"])); base["warnings"] = ["三种策略均为条件情景，不是上涨概率", "未通过历史 OOS 的策略只能记录模拟结果"]
+    return base
+
 def evaluate_plan(candidate, rows, benchmark_rows, config, *, as_of=None, portfolio=None, historical_oos=None):
+    if config.get("output_schema_version") == "short-term-trade-plan-v1.3":
+        return evaluate_three_strategy_plan(candidate, rows, benchmark_rows, config, as_of=as_of, historical_oos_by_model=historical_oos or {}, governance=portfolio or {})
     ticker = str(candidate.get("ticker") or "").upper(); schema = config.get("output_schema_version", "short-term-trade-plan-v1.1"); base = {"schema_version": schema, "ticker": ticker, "research_only": True, "no_trade": True, "status": "blocked", "status_label": "数据阻断", "reason_codes": [], "warnings": [], "signal": None, "execution": {"order_type": "limit", "regular_hours_only": bool(config.get("regular_hours_only", True)), "human_review_required": True}, "style_fusion": config.get("style_fusion"), "historical_oos": historical_oos or {"status": "unavailable", "passed": False}}
     if str(candidate.get("status")) not in config["gates"]["eligible_statuses"]: base["reason_codes"] = ["idea_status_not_eligible"]; base["status_label"] = "仅研究观察"; return base
     if candidate_evidence_coverage(candidate) < float(config["gates"].get("minimum_evidence_coverage", 0)): base["reason_codes"] = ["evidence_threshold_not_met"]; base["status_label"] = "证据覆盖不足"; return base
@@ -247,9 +367,10 @@ def generate(candidates_path=DEFAULT_CANDIDATES, prices_path=DEFAULT_PRICES, con
     config = json.loads(config_path.read_text(encoding="utf-8")); candidates = json.loads(candidates_path.read_text(encoding="utf-8")); prices = json.loads(prices_path.read_text(encoding="utf-8")); governance = json.loads(governance_path.read_text(encoding="utf-8")) if governance_path.exists() else {"status": "blocked", "manual_review_eligible": False, "reason": "Shadow治理报告缺失"}; events = json.loads(events_path.read_text(encoding="utf-8")) if events_path.exists() else {}
     symbols = [str(row.get("ticker", "")).upper() for row in candidates.get("candidates", []) if row.get("ticker")]; effective_as_of = as_of or candidates.get("as_of") or datetime.now(timezone.utc).isoformat(); validation = validate_snapshot(prices, symbols, benchmark=config.get("benchmark", "QQQ"), as_of=effective_as_of); rows_by_symbol = prices.get("symbols", {}); benchmark = rows_by_symbol.get(config.get("benchmark", "QQQ"), {})
     event_map = event_dates_by_ticker(events); style_oos = json.loads(style_oos_path.read_text(encoding="utf-8")) if style_oos_path.exists() else {}
-    oos_mappings = style_oos.get("current_mappings", {}) if style_oos.get("schema_version") == "global-style-short-term-oos-v1" else {}
-    plans = [evaluate_plan({**candidate, "event_dates": event_map.get(str(candidate.get("ticker") or "").upper(), candidate.get("event_dates") or {})}, rows_by_symbol.get(candidate.get("ticker"), {}), benchmark, config, as_of=effective_as_of, historical_oos=oos_mappings.get(str(candidate.get("ticker") or "").upper())) for candidate in candidates.get("candidates", [])]
-    if governance.get("manual_review_eligible") is True:
+    is_v13 = config.get("output_schema_version") == "short-term-trade-plan-v1.3"
+    oos_mappings = style_oos.get("by_model", {}) if is_v13 else style_oos.get("current_mappings", {}) if style_oos.get("schema_version") == "global-style-short-term-oos-v1" else {}
+    plans = [evaluate_plan({**candidate, "event_dates": event_map.get(str(candidate.get("ticker") or "").upper(), candidate.get("event_dates") or {})}, rows_by_symbol.get(candidate.get("ticker"), {}), benchmark, config, as_of=effective_as_of, portfolio=governance if is_v13 else None, historical_oos=oos_mappings if is_v13 else oos_mappings.get(str(candidate.get("ticker") or "").upper())) for candidate in candidates.get("candidates", [])]
+    if not is_v13 and governance.get("manual_review_eligible") is True:
         for plan in plans:
             if plan["status"] == "simulation_only" and plan.get("historical_oos", {}).get("passed") is True:
                 plan["status"] = "conditional_review"
@@ -259,9 +380,11 @@ def generate(candidates_path=DEFAULT_CANDIDATES, prices_path=DEFAULT_PRICES, con
         ticker_errors = relevant_validation_errors(validation["errors"], ticker, config.get("benchmark", "QQQ"))
         if ticker_errors:
             plan.update(status="blocked", status_label="数据阻断", signal=None, reason_codes=list(dict.fromkeys(["short_term_daily_bars_unavailable", *ticker_errors])), warnings=["缺少经过验证的日线OHLCV数据；不生成短线交易研究触发建议"])
-    statuses = ("conditional_review", "manual_review_ready", "simulation_only", "waiting_trigger", "waiting_breakout", "waiting_pullback", "chase_blocked", "event_blocked", "invalidated", "blocked")
-    governance_keys = ("status", "observation_count", "calendar_week_count", "complete_count", "primary_complete_count", "manual_review_requirements", "reliability_requirements", "manual_review_eligible", "reliability_claim_eligible", "reason")
-    return {"schema_version": config.get("output_schema_version", "short-term-trade-plan-v1.1"), "methodology_version": "global-style-short-term-v1.2.0" if config.get("style_fusion") else "short-term-trade-plan-v1.1.0", "generated_at": datetime.now(timezone.utc).isoformat(), "as_of": effective_as_of, "research_only": True, "no_trade": True, "benchmark": "QQQ", "config_version": config["schema_version"], "style_fusion": config.get("style_fusion"), "historical_oos_status": style_oos.get("status", "unavailable"), "shadow_governance": {key: governance.get(key) for key in governance_keys}, "data_validation": {"valid": validation["valid"], "errors": validation["errors"], "coverage": validation["coverage"], "common_dates": validation.get("common_dates", 0)}, "plans": plans, "summary": {"candidate_count": len(plans), "status_counts": {status: sum(plan["status"] == status for plan in plans) for status in statuses}, "manual_review_required": True}}
+            if is_v13: plan["strategies"] = blocked_strategy_rows(config, plan["reason_codes"])
+    statuses = ("conditional_review", "preliminary_review", "manual_review_ready", "simulation_only", "waiting_trigger", "waiting_breakout", "waiting_pullback", "chase_blocked", "event_blocked", "invalidated", "blocked")
+    governance_keys = ("status", "observation_count", "calendar_week_count", "complete_count", "primary_complete_count", "preliminary_review_requirements", "manual_review_requirements", "reliability_requirements", "preliminary_review_eligible", "manual_review_eligible", "reliability_claim_eligible", "reason")
+    methodology = "global-style-short-term-v1.3.0" if is_v13 else "global-style-short-term-v1.2.0" if config.get("style_fusion") else "short-term-trade-plan-v1.1.0"
+    return {"schema_version": config.get("output_schema_version", "short-term-trade-plan-v1.1"), "methodology_version": methodology, "generated_at": datetime.now(timezone.utc).isoformat(), "as_of": effective_as_of, "price_as_of": prices.get("as_of"), "research_only": True, "no_trade": True, "benchmark": "QQQ", "config_version": config["schema_version"], "style_fusion": config.get("style_fusion"), "historical_oos_status": style_oos.get("status", "unavailable"), "shadow_governance": {key: governance.get(key) for key in governance_keys}, "data_validation": {"valid": validation["valid"], "errors": validation["errors"], "coverage": validation["coverage"], "common_dates": validation.get("common_dates", 0)}, "plans": plans, "summary": {"candidate_count": len(plans), "strategy_count": sum(len(plan.get("strategies", [])) for plan in plans), "status_counts": {status: sum(plan["status"] == status for plan in plans) for status in statuses}, "manual_review_required": True}}
 
 def main():
     parser = argparse.ArgumentParser(); parser.add_argument("--candidates", type=Path, default=DEFAULT_CANDIDATES); parser.add_argument("--prices", type=Path, default=DEFAULT_PRICES); parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG); parser.add_argument("--events", type=Path, default=DEFAULT_EVENTS); parser.add_argument("--governance", type=Path, default=DEFAULT_GOVERNANCE); parser.add_argument("--style-oos", type=Path, default=DEFAULT_STYLE_OOS); parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT); parser.add_argument("--as-of", default=None); args = parser.parse_args(); atomic_write(args.output, generate(args.candidates, args.prices, args.config, args.output, as_of=args.as_of, events_path=args.events, governance_path=args.governance, style_oos_path=args.style_oos))

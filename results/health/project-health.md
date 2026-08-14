@@ -1,7 +1,7 @@
 # Project Health
 
 - Status: **WARNING**
-- Generated: `2026-08-14T00:08:25.199334+00:00`
+- Generated: `2026-08-14T00:45:41.642203+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
@@ -83,10 +83,10 @@
 
 ## Short-term trade-plan research
 
-- Schema: `short-term-trade-plan-v1.2`
-- Style fusion: `global-style-fusion-v1`
-- Candidates: `10`
-- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 1, 'waiting_trigger': 2, 'waiting_breakout': 0, 'waiting_pullback': 1, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 6}`
-- Historical OOS: `preliminary_no_reliable_edge` / samples `128` / passed models `[]`
-- Shadow mature: `False`
+- Schema: `short-term-trade-plan-v1.3`
+- Style fusion: `global-style-fusion-v1.3`
+- Candidates / strategies: `10` / `30`
+- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 1, 'waiting_trigger': 5, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 4}`
+- Historical OOS: `preliminary_no_reliable_edge` / samples `139` / passed models `[]`
+- Shadow preliminary / formal review: `False` / `False`
 - Scope: research-only simulation; no orders or automatic trading.

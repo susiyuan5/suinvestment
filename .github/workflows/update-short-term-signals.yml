@@ -1,0 +1,90 @@
+name: Update daily short-term strategy signals
+
+on:
+  schedule:
+    - cron: "20 23 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+
+concurrency:
+  group: update-daily-short-term-signals
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Refresh strict daily OHLCV snapshot
+        env:
+          PYTHONPATH: .
+        run: python -m scripts.refresh_short_term_daily_bars
+
+      - name: Validate snapshot and generate three independent strategies
+        env:
+          PYTHONPATH: .
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from research.idea_engine.v3.short_term_daily_bars import validate_snapshot
+          from research.idea_engine.v3.short_term_trade_plan import DEFAULT_OUTPUT, atomic_write, generate
+
+          prices = json.loads(Path("data/short-term-daily-bars-v1.json").read_text(encoding="utf-8"))
+          candidates = json.loads(Path("research/results/v3_1/idea-engine/latest-candidates.json").read_text(encoding="utf-8"))
+          symbols = [row["ticker"] for row in candidates.get("candidates", [])]
+          result = validate_snapshot(prices, symbols, benchmark="QQQ", as_of=prices.get("as_of"))
+          if not result["valid"]:
+              raise SystemExit("daily short-term snapshot invalid: " + "; ".join(result["errors"][:10]))
+          atomic_write(DEFAULT_OUTPUT, generate(as_of=prices.get("as_of")))
+          PY
+
+      - name: Run short-term regression checks
+        run: |
+          python -m unittest tests.test_short_term_trade_plan tests.test_style_fusion_short_term tests.test_short_term_daily_bars
+          node --test tests/short-term-trade-plan.test.js
+          python scripts/check_static_contracts.py
+
+      - name: Create validated daily signal pull request
+        id: create-pr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/update-short-term-signals
+          delete-branch: true
+          commit-message: "Update daily short-term strategy signals"
+          title: "Update daily short-term strategy signals"
+          body: |
+            每日收盘后刷新三种短线研究情景。
+
+            - 仅更新价格和研究状态
+            - 不生成订单，不进入本周定投
+            - Shadow 仍按周冻结，避免相关样本虚增
+            - 无效数据会阻止发布
+          add-paths: |
+            data/short-term-daily-bars-v1.json
+            research/results/v3_1/short-term-trade-plans-v1_3/**
+
+      - name: Mark validated commit and merge
+        if: steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${{ steps.create-pr.outputs.pull-request-head-sha }}" -f state=success -f context=verify -f description="Daily short-term validation passed"
+          gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --merge --delete-branch
+
+      - name: Report no changes
+        if: steps.create-pr.outputs.pull-request-number == ''
+        run: echo "No validated short-term signal changes to publish."

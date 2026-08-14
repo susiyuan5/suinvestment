@@ -3,9 +3,9 @@
   else root.ShortTermTradePlan = factory(root);
 })(typeof self !== "undefined" ? self : this, function (root) {
   "use strict";
-  var statuses = { conditional_review: "\u6761\u4ef6\u6ee1\u8db3\uff0c\u5f85\u4eba\u5de5\u786e\u8ba4", manual_review_ready: "\u6761\u4ef6\u6ee1\u8db3\uff0c\u5f85\u4eba\u5de5\u786e\u8ba4", simulation_only: "\u4ec5\u7814\u7a76\u6f14\u7ec3", waiting_trigger: "\u7b49\u5f85\u89e6\u53d1", waiting_breakout: "\u7b49\u5f85\u7a81\u7834", waiting_pullback: "等待回踩", chase_blocked: "\u5df2\u8d85\u8fc7\u8ffd\u9ad8\u4e0a\u9650", event_blocked: "\u8d22\u62a5\u98ce\u9669\u963b\u65ad", invalidated: "\u4fe1\u53f7\u5df2\u5931\u6548", blocked: "\u6570\u636e\u963b\u65ad" };
+  var statuses = { conditional_review: "\u6761\u4ef6\u6ee1\u8db3\uff0c\u5f85\u4eba\u5de5\u786e\u8ba4", preliminary_review: "初步门禁通过，仅可人工研究", manual_review_ready: "\u6761\u4ef6\u6ee1\u8db3\uff0c\u5f85\u4eba\u5de5\u786e\u8ba4", simulation_only: "\u4ec5\u7814\u7a76\u6f14\u7ec3", waiting_trigger: "\u7b49\u5f85\u89e6\u53d1", waiting_breakout: "\u7b49\u5f85\u7a81\u7834", waiting_pullback: "等待回踩", chase_blocked: "\u5df2\u8d85\u8fc7\u8ffd\u9ad8\u4e0a\u9650", event_blocked: "\u8d22\u62a5\u98ce\u9669\u963b\u65ad", invalidated: "\u4fe1\u53f7\u5df2\u5931\u6548", blocked: "\u6570\u636e\u963b\u65ad" };
   function finite(value) { var number = Number(value); return Number.isFinite(number) ? number : null; }
-  var supportedSchemas = ["short-term-trade-plan-v1", "short-term-trade-plan-v1.1", "short-term-trade-plan-v1.2"];
+  var supportedSchemas = ["short-term-trade-plan-v1", "short-term-trade-plan-v1.1", "short-term-trade-plan-v1.2", "short-term-trade-plan-v1.3"];
   function safePayload(payload) { return payload && supportedSchemas.indexOf(payload.schema_version) >= 0 && payload.research_only === true && payload.no_trade === true && Array.isArray(payload.plans) ? payload : null; }
   function statusLabel(status) { return statuses[status] || "仅作人工复核"; }
   var reasonLabels = { short_term_daily_bars_unavailable: "缺少经过验证的日线 OHLCV 数据", common_trading_date_alignment_insufficient: "股票与 QQQ 的共同交易日不足", stale_price_data: "\u884c\u60c5\u6570\u636e\u5df2\u8fc7\u671f", future_data_detected: "\u68c0\u6d4b\u5230\u672a\u6765\u6570\u636e", event_date_unknown: "\u4e8b\u4ef6\u65e5\u671f\u672a\u77e5\uff0c\u4ec5\u53ef\u7814\u7a76\u6f14\u7ec3", earnings_date_unknown: "\u8d22\u62a5\u65e5\u671f\u672a\u77e5\uff0c\u4ec5\u53ef\u7814\u7a76\u6f14\u7ec3", earnings_blackout_3_trading_days: "\u4e34\u8fd1\u8d22\u62a5\u7a97\u53e3", qqq_market_state_blocked: "QQQ \u5e02\u573a\u72b6\u6001\u95e8\u7981\u672a\u901a\u8fc7", relative_qqq_gate_failed: "\u76f8\u5bf9 QQQ \u8868\u73b0\u95e8\u7981\u672a\u901a\u8fc7", trend_template_failed: "趋势模板尚未通过", no_trigger: "尚未满足突破或回踩条件", invalid_stop_structure: "止损结构无效", risk_distance_out_of_bounds: "止损距离超出风险规则", sizing_inputs_missing: "\u7f3a\u5c11\u8d44\u4ea7\u3001\u73b0\u91d1\u6216\u6c47\u7387\u4fe1\u606f", idea_status_not_eligible: "\u7814\u7a76\u7b49\u7ea7\u4e0d\u6ee1\u8db3\u77ed\u7ebf\u7b5b\u9009\u95e8\u69db", evidence_threshold_not_met: "\u5173\u952e\u8bc1\u636e\u8986\u76d6\u4e0d\u8db3", insufficient_price_history: "\u4ef7\u683c\u5386\u53f2\u4e0d\u8db3", insufficient_daily_ohlcv_history: "日线 OHLCV 历史不足", invalid_atr: "\u6ce2\u52a8\u6307\u6807\u65e0\u6548" };
@@ -35,6 +35,50 @@
   function modelLabel(value) { return modelLabels[String(value || "")] || "尚无有效触发模型"; }
   function passLabel(value) { return value === true ? "通过" : "未通过"; }
   function appendLine(body, doc, label, value, className) { var row = doc.createElement("p"); if (className) row.className = className; row.textContent = label + "：" + value; body.appendChild(row); }
+  var selectionKey = "su-investment-pro:short-term-strategy-selections-v1";
+  function loadSelections() { try { var value = root.localStorage && root.localStorage.getItem(selectionKey); return value ? JSON.parse(value) : {}; } catch (_) { return {}; } }
+  function saveSelection(ticker, strategyId) { var values = loadSelections(); values[String(ticker || "").toUpperCase()] = strategyId; try { if (root.localStorage) root.localStorage.setItem(selectionKey, JSON.stringify(values)); } catch (_) {} return values; }
+  function strategyStatusLabel(strategy) { return strategy && strategy.status_label || { waiting: "等待全部条件触发", historical_edge_failed: "已触发但历史优势未通过", triggered_simulation: "条件已触发，仅作模拟", preliminary_review: "初步门禁通过，仅可人工研究", conditional_review: "正式门禁通过，待人工复核", blocked: "研究条件阻断" }[strategy && strategy.status] || "仅作研究观察"; }
+  function fixed(value) { return Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "--"; }
+  function conditionValue(item) {
+    var value = item && item.current;
+    if (!Number.isFinite(Number(value))) return value == null || value === "" ? "--" : String(value);
+    var code = String(item.code || "");
+    if (code.indexOf("relative_return") >= 0 || code.indexOf("contraction_pct") >= 0) return (Number(value) * 100).toFixed(2) + "%";
+    if (code.indexOf("volume_ratio") >= 0) return Number(value).toFixed(2) + "x";
+    return Number(value).toFixed(2);
+  }
+  function createStrategyCard(plan, strategy, doc, selectedId) {
+    var card = doc.createElement("article"); card.className = "short-term-strategy-card" + (selectedId === strategy.strategy_id ? " is-selected" : "");
+    var header = doc.createElement("div"); header.className = "short-term-strategy-header";
+    var title = doc.createElement("h5"); title.textContent = strategy.label || modelLabel(strategy.strategy_id); header.appendChild(title);
+    var badge = doc.createElement("span"); badge.className = "short-term-strategy-status status-" + String(strategy.status || "blocked"); badge.textContent = strategyStatusLabel(strategy); header.appendChild(badge); card.appendChild(header);
+    var checks = Array.isArray(strategy.condition_checks) ? strategy.condition_checks : [];
+    appendLine(card, doc, "条件进度", checks.filter(function (item) { return item.passed; }).length + " / " + checks.length + " 通过");
+    appendLine(card, doc, "方向情景", "全部条件触发后观察上行延续；这不是上涨概率");
+    var evidence = strategy.historical_oos || {};
+    var oos = evidence.passed === true ? "通过" : "未通过或样本不足";
+    if (Number.isFinite(Number(evidence.samples))) oos += " · 样本 " + evidence.samples;
+    if (Number.isFinite(Number(evidence.cost_adjusted_hit_rate))) oos += " · 成本后相对 QQQ 命中 " + (Number(evidence.cost_adjusted_hit_rate) * 100).toFixed(1) + "%";
+    appendLine(card, doc, "策略历史 OOS", oos, evidence.passed === true ? "" : "short-term-plan-warning");
+    var signal = strategy.entry_plan;
+    if (signal) {
+      appendLine(card, doc, "触发参考价", fixed(signal.trigger_price));
+      appendLine(card, doc, "计划入场区间", (signal.entry_range || []).map(fixed).join(" – "));
+      appendLine(card, doc, "禁止追高价", fixed(signal.chase_limit));
+      appendLine(card, doc, "失效／止损参考", fixed(signal.stop));
+      appendLine(card, doc, "分段目标参考", (signal.targets || []).map(fixed).join(" / "));
+    }
+    var conditions = doc.createElement("details"); conditions.className = "short-term-strategy-conditions";
+    var conditionSummary = doc.createElement("summary"); conditionSummary.textContent = "查看全部触发条件"; conditions.appendChild(conditionSummary);
+    checks.forEach(function (item) { var row = doc.createElement("p"); row.className = item.passed ? "condition-pass" : "condition-wait"; row.textContent = (item.passed ? "✓ " : "○ ") + item.label + "｜当前 " + conditionValue(item) + "｜要求 " + item.required; conditions.appendChild(row); });
+    card.appendChild(conditions);
+    var choice = doc.createElement("label"); choice.className = "short-term-strategy-choice";
+    var radio = doc.createElement("input"); radio.type = "radio"; radio.name = "short-term-strategy-" + plan.ticker; radio.value = strategy.strategy_id; radio.checked = selectedId === strategy.strategy_id; radio.disabled = strategy.research_selection_allowed !== true;
+    radio.addEventListener("change", function () { if (!radio.checked) return; saveSelection(plan.ticker, strategy.strategy_id); var parent = card.parentNode; if (parent && parent.querySelectorAll) Array.prototype.forEach.call(parent.querySelectorAll(".short-term-strategy-card"), function (node) { node.classList.remove("is-selected"); }); card.classList.add("is-selected"); });
+    choice.appendChild(radio); choice.appendChild(doc.createTextNode(" 选择为我的研究进场方案")); card.appendChild(choice);
+    return card;
+  }
   function createCardSection(plan, doc) {
     if (!plan) return null;
     var details = doc.createElement("details"); details.className = "short-term-plan-details";
@@ -48,6 +92,12 @@
       appendLine(body, doc, "VCP 收缩", passLabel(plan.trigger_models.vcp_contraction));
       appendLine(body, doc, "放量突破", passLabel(plan.trigger_models.volume_breakout));
       appendLine(body, doc, "趋势回踩", passLabel(plan.trigger_models.trend_pullback));
+    }
+    if (Array.isArray(plan.strategies) && plan.strategies.length) {
+      var selectedId = loadSelections()[String(plan.ticker || "").toUpperCase()] || "";
+      var heading = doc.createElement("h4"); heading.className = "short-term-strategy-title"; heading.textContent = "三种独立进场策略"; body.appendChild(heading);
+      var note = doc.createElement("p"); note.className = "short-term-strategy-note"; note.textContent = "你可以保存一种研究偏好；选择不会生成订单，也不会改变模型结果。"; body.appendChild(note);
+      var grid = doc.createElement("div"); grid.className = "short-term-strategy-grid"; plan.strategies.forEach(function (strategy) { grid.appendChild(createStrategyCard(plan, strategy, doc, selectedId)); }); body.appendChild(grid);
     }
     if (plan.historical_oos) {
       var evidence = plan.historical_oos.model_oos || {};
@@ -65,5 +115,5 @@
     details.appendChild(body); return details;
   }
   function renderDetail(plan, container, doc) { if (!container) return; container.innerHTML = ""; var section = createCardSection(plan, doc); if (section) { section.open = true; container.appendChild(section); } }
-  return { finite: finite, safePayload: safePayload, statusLabel: statusLabel, reasonLabel: reasonLabel, prioritizedReasons: prioritizedReasons, planSummary: planSummary, normalizeRows: normalizeRows, sma: sma, ema: ema, atr: atr, computeIndicators: computeIndicators, calculatePositionSize: calculatePositionSize, modelLabel: modelLabel, planForTicker: planForTicker, createCardSection: createCardSection, renderDetail: renderDetail };
+  return { finite: finite, safePayload: safePayload, statusLabel: statusLabel, reasonLabel: reasonLabel, prioritizedReasons: prioritizedReasons, planSummary: planSummary, normalizeRows: normalizeRows, sma: sma, ema: ema, atr: atr, computeIndicators: computeIndicators, calculatePositionSize: calculatePositionSize, modelLabel: modelLabel, strategyStatusLabel: strategyStatusLabel, conditionValue: conditionValue, loadSelections: loadSelections, saveSelection: saveSelection, planForTicker: planForTicker, createCardSection: createCardSection, renderDetail: renderDetail };
 });

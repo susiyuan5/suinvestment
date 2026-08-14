@@ -45,16 +45,17 @@ def _weeks(observations: list[dict[str, Any]]) -> set[tuple[int, int]]:
     return output
 
 
-def maturity(observations: list[dict], outcomes: list[dict], *, min_observations: int = 26, min_calendar_weeks: int = 26, min_complete: int = 12, reliability_observations: int = 52, reliability_calendar_weeks: int = 52, reliability_complete: int = 26, degraded: bool = False) -> dict[str, Any]:
+def maturity(observations: list[dict], outcomes: list[dict], *, preliminary_observations: int = 8, preliminary_calendar_weeks: int = 8, preliminary_complete: int = 4, min_observations: int = 26, min_calendar_weeks: int = 26, min_complete: int = 12, reliability_observations: int = 52, reliability_calendar_weeks: int = 52, reliability_complete: int = 26, degraded: bool = False) -> dict[str, Any]:
     # The 1- and 4-week outcomes are the decision horizon for this short-term
     # research model.  The 12-week outcome remains a non-blocking decay check.
     complete = sum(all(row.get("horizons", {}).get(str(week), {}).get("status") == "matured" for week in (1, 4)) for row in outcomes)
     decay_complete = sum(row.get("horizons", {}).get("12", {}).get("status") == "matured" for row in outcomes)
     week_count = len(_weeks(observations))
+    preliminary_ready = len(observations) >= preliminary_observations and week_count >= preliminary_calendar_weeks and complete >= preliminary_complete and not degraded
     eligible = len(observations) >= min_observations and week_count >= min_calendar_weeks and complete >= min_complete and not degraded
     reliability_ready = len(observations) >= reliability_observations and week_count >= reliability_calendar_weeks and complete >= reliability_complete and not degraded
     return {
-        "status": "DEGRADED" if degraded else "mature" if eligible else "not_mature",
+        "status": "DEGRADED" if degraded else "mature" if eligible else "preliminary" if preliminary_ready else "not_mature",
         "observation_count": len(observations),
         "calendar_week_count": week_count,
         "complete_count": complete,
@@ -62,6 +63,11 @@ def maturity(observations: list[dict], outcomes: list[dict], *, min_observations
         "decay_complete_count": decay_complete,
         "primary_horizons_weeks": [1, 4],
         "decay_horizon_weeks": 12,
+        "preliminary_review_requirements": {
+            "observation_count": preliminary_observations,
+            "calendar_week_count": preliminary_calendar_weeks,
+            "primary_complete_count": preliminary_complete,
+        },
         "manual_review_requirements": {
             "observation_count": min_observations,
             "calendar_week_count": min_calendar_weeks,
@@ -72,10 +78,11 @@ def maturity(observations: list[dict], outcomes: list[dict], *, min_observations
             "calendar_week_count": reliability_calendar_weeks,
             "primary_complete_count": reliability_complete,
         },
+        "preliminary_review_eligible": preliminary_ready,
         "manual_review_eligible": eligible,
         "reliability_claim_eligible": reliability_ready,
         "live_promotion_eligible": False,
-        "reason": "模型退化，暂停人工复核" if degraded else "短线 Shadow 已成熟，仅可人工复核" if eligible else "短线样本尚未满足人工复核门槛",
+        "reason": "模型退化，暂停人工复核" if degraded else "短线 Shadow 已成熟，仅可人工复核" if eligible else "达到初步人工研究门槛，尚未达到正式复核门槛" if preliminary_ready else "短线样本尚未满足初步人工研究门槛",
     }
 
 
