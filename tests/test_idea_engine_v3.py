@@ -78,6 +78,15 @@ class IdeaEngineV3Tests(unittest.TestCase):
         self.assertIn("degraded", model_statistics([], CONFIG))
         self.assertFalse(result["reliability_claim_eligible"])
 
+    def test_preliminary_shadow_tier_does_not_claim_formal_maturity(self):
+        observations = [{"as_of": (datetime(2026, 6, 1) + timedelta(days=7 * index)).date().isoformat()} for index in range(8)]
+        outcomes = [{"horizons": {"1": {"status": "matured"}, "4": {"status": "matured"}, "12": {"status": "pending"}}} for _ in range(4)]
+        result = maturity(observations, outcomes)
+        self.assertEqual(result["status"], "preliminary")
+        self.assertTrue(result["preliminary_review_eligible"])
+        self.assertFalse(result["manual_review_eligible"])
+        self.assertEqual(result["preliminary_review_requirements"]["observation_count"], 8)
+
     def test_short_term_model_statistics_use_four_week_relative_return(self):
         outcomes = [{"score": 80, "horizons": {
             "1": {"status": "matured", "relative_return": -0.5},

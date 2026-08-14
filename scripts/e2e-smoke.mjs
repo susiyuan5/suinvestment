@@ -165,6 +165,14 @@ async function main() {
     assert.ok((await detailPage.locator("#stockDetailChartSummary").textContent()).trim().length > 0, "detail chart should have an accessible text summary");
     await detailPage.screenshot({ path: "output/playwright/stock-detail-desktop.png", fullPage: true });
     await detailPage.close();
+    const shortTermDetails = ideaCard.locator(".short-term-plan-details");
+    if (await shortTermDetails.count()) {
+      await shortTermDetails.locator(":scope > summary").click();
+      assert.equal(await shortTermDetails.locator(".short-term-strategy-card").count(), 3, "each candidate should expose exactly three independent entry strategies");
+      assert.equal(await shortTermDetails.locator(".short-term-strategy-choice input[type='radio']").count(), 3, "each strategy should expose a research-only selection control");
+      assert.match(await shortTermDetails.textContent(), /OOS/, "each strategy view should disclose its historical OOS gate");
+      await shortTermDetails.screenshot({ path: "output/playwright/short-term-three-strategies-desktop.png" });
+    }
     await ideaCard.locator("details").first().locator(":scope > summary").click();
     const sourceLink = ideaCard.locator("a[target='_blank']").first();
     if (await sourceLink.count()) assert.equal(await sourceLink.getAttribute("rel"), "noopener noreferrer");

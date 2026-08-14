@@ -279,6 +279,9 @@ def _shadow(output_dir: Path, candidates: list[dict[str, Any]], as_of: str, conf
     stats = model_statistics(outcomes, config)
     gate = maturity(
         observations, outcomes,
+        preliminary_observations=config["shadow"].get("preliminary_observations", 8),
+        preliminary_calendar_weeks=config["shadow"].get("preliminary_calendar_weeks", 8),
+        preliminary_complete=config["shadow"].get("preliminary_complete_matured", 4),
         min_observations=config["shadow"]["min_observations"],
         min_calendar_weeks=config["shadow"]["min_calendar_weeks"],
         min_complete=config["shadow"]["min_complete_matured"],

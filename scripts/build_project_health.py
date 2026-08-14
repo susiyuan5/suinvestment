@@ -162,10 +162,10 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
     idea_provider = load(idea_root / "provider-status.json", {})
     idea_shadow = load(idea_root / "shadow" / "governance-report.json", {})
     idea_candidates = idea_latest.get("candidates", []) if isinstance(idea_latest, dict) else []
-    short_term = load(root / "research" / "results" / "v3_1" / "short-term-trade-plans-v1_2" / "latest.json", {}) or load(root / "research" / "results" / "v3_1" / "short-term-trade-plans-v1_1" / "latest.json", {}) or load(root / "research" / "results" / "v3_1" / "short-term-trade-plans" / "latest.json", {})
+    short_term = load(root / "research" / "results" / "v3_1" / "short-term-trade-plans-v1_3" / "latest.json", {}) or load(root / "research" / "results" / "v3_1" / "short-term-trade-plans-v1_2" / "latest.json", {}) or load(root / "research" / "results" / "v3_1" / "short-term-trade-plans-v1_1" / "latest.json", {}) or load(root / "research" / "results" / "v3_1" / "short-term-trade-plans" / "latest.json", {})
     short_term_plans = short_term.get("plans", []) if isinstance(short_term, dict) else []
     historical_oos = load(root / "research" / "results" / "v3_1" / "historical-oos-price-timing" / "latest.json", {})
-    style_oos = load(root / "research" / "results" / "v3_1" / "global-style-short-term-oos" / "latest.json", {})
+    style_oos = load(root / "research" / "results" / "v3_1" / "global-style-short-term-oos-v1_3" / "latest.json", {}) or load(root / "research" / "results" / "v3_1" / "global-style-short-term-oos" / "latest.json", {})
     idea_outcomes = load(idea_root / "shadow" / "outcomes.json", {}).get("outcomes", [])
     idea_complete_mature = sum(
         all(row.get("horizons", {}).get(str(horizon), {}).get("status") == "matured" for horizon in ((1, 4) if idea_version == "idea-engine-v3.1" else (1, 4, 12)))
@@ -293,8 +293,11 @@ def build_health(root: Path, *, now: datetime, workflows: dict, pending_updates:
             "schema_version": short_term.get("schema_version") if isinstance(short_term, dict) else None,
             "last_successful_run": short_term.get("generated_at") if isinstance(short_term, dict) else None,
             "candidate_count": len(short_term_plans),
+            "strategy_count": sum(len(row.get("strategies", [])) for row in short_term_plans),
             "status_counts": {status: sum(1 for row in short_term_plans if row.get("status") == status) for status in ("conditional_review", "manual_review_ready", "simulation_only", "waiting_trigger", "waiting_breakout", "waiting_pullback", "chase_blocked", "event_blocked", "invalidated", "blocked")},
             "shadow_mature": bool(short_term.get("shadow_mature")) if isinstance(short_term, dict) else False,
+            "shadow_preliminary_review_eligible": bool(short_term.get("shadow_governance", {}).get("preliminary_review_eligible")) if isinstance(short_term, dict) else False,
+            "shadow_manual_review_eligible": bool(short_term.get("shadow_governance", {}).get("manual_review_eligible")) if isinstance(short_term, dict) else False,
             "style_fusion_version": short_term.get("style_fusion", {}).get("version") if isinstance(short_term, dict) else None,
             "historical_oos_status": style_oos.get("status") if isinstance(style_oos, dict) else "unavailable",
             "historical_oos_samples": style_oos.get("sample_counts", {}).get("permanent_oos") if isinstance(style_oos, dict) else None,
@@ -387,7 +390,7 @@ def markdown(payload: dict) -> str:
     oos = idea.get("historical_oos", {})
     lines += ["## Historical OOS price-timing calibration", "", f"- Status: `{oos.get('status')}`", f"- As of: `{oos.get('as_of')}`", f"- Permanent OOS samples: `{oos.get('permanent_oos_samples')}`", f"- Independent weekly origins: `{oos.get('permanent_oos_origin_dates')}`", f"- Reliability gate: `{oos.get('reliability_gate_passed')}`", "- Scope: price/volume timing only; the composite score remains uncalibrated.", ""]
     short_term = payload.get("short_term_trade_plan", {})
-    lines += ["## Short-term trade-plan research", "", f"- Schema: `{short_term.get('schema_version')}`", f"- Style fusion: `{short_term.get('style_fusion_version')}`", f"- Candidates: `{short_term.get('candidate_count')}`", f"- Status counts: `{short_term.get('status_counts')}`", f"- Historical OOS: `{short_term.get('historical_oos_status')}` / samples `{short_term.get('historical_oos_samples')}` / passed models `{short_term.get('historical_oos_passed_models')}`", f"- Shadow mature: `{short_term.get('shadow_mature')}`", "- Scope: research-only simulation; no orders or automatic trading.", ""]
+    lines += ["## Short-term trade-plan research", "", f"- Schema: `{short_term.get('schema_version')}`", f"- Style fusion: `{short_term.get('style_fusion_version')}`", f"- Candidates / strategies: `{short_term.get('candidate_count')}` / `{short_term.get('strategy_count')}`", f"- Status counts: `{short_term.get('status_counts')}`", f"- Historical OOS: `{short_term.get('historical_oos_status')}` / samples `{short_term.get('historical_oos_samples')}` / passed models `{short_term.get('historical_oos_passed_models')}`", f"- Shadow preliminary / formal review: `{short_term.get('shadow_preliminary_review_eligible')}` / `{short_term.get('shadow_manual_review_eligible')}`", "- Scope: research-only simulation; no orders or automatic trading.", ""]
     return "\n".join(lines)
 
 

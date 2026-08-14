@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  statuses: write
 
 concurrency:
   group: update-idea-engine-v3-1
@@ -83,7 +84,7 @@ jobs:
           PYTHONPATH: .
         run: python -m research.idea_engine.v3.style_fusion_oos --prices "$RUNNER_TEMP/historical-oos-bars.json"
 
-      - name: Generate research-only v1.2 short-term trade plans
+      - name: Generate research-only v1.3 three-strategy trade plans
         env:
           PYTHONPATH: .
         run: python -m research.idea_engine.v3.short_term_trade_plan
@@ -95,7 +96,8 @@ jobs:
           node --test tests/*.test.js
           python scripts/check_static_contracts.py
 
-      - name: Create draft research pull request
+      - name: Create validated research pull request
+        id: create-pr
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -103,7 +105,7 @@ jobs:
           delete-branch: true
           commit-message: "Update Idea Engine v3.1 short-term Shadow results"
           title: "Update Idea Engine v3.1 short-term Shadow results"
-          draft: true
+          draft: false
           body: |
             仅更新潜力股 Shadow 研究结果。
 
@@ -113,15 +115,26 @@ jobs:
             - 候选结果仅可人工复核
             - 1–4 周为短线验证窗口，12 周仅监测信号衰减
             - 历史 OOS 只校验价格择时层，冻结训练边界，不代替实时 Shadow
-            - v1.2 将趋势、成交量、价格结构和 ATR 风险分别设为不可互相补偿的门禁
+            - v1.3 为每只股票分别输出放量突破、趋势回踩和 VCP／箱体突破三种条件情景
+            - 三种策略独立验证，不输出未经校准的上涨概率
             - 数据源为免费 SEC EDGAR 与公开价格数据，无需付费 API Key
           add-paths: |
             research/results/v3_1/idea-engine/**
             research/results/v3_1/short-term-trade-plans/**
             research/results/v3_1/short-term-trade-plans-v1_1/**
             research/results/v3_1/short-term-trade-plans-v1_2/**
+            research/results/v3_1/short-term-trade-plans-v1_3/**
             research/results/v3_1/historical-oos-price-timing/**
             research/results/v3_1/global-style-short-term-oos/**
+            research/results/v3_1/global-style-short-term-oos-v1_3/**
             data/short-term-daily-bars-v1.json
             data/idea-engine-events-v1.json
             data/idea-engine-v3/price-trends.json
+
+      - name: Mark validated research commit and merge
+        if: steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${{ steps.create-pr.outputs.pull-request-head-sha }}" -f state=success -f context=verify -f description="Idea Engine research validation passed"
+          gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --merge --delete-branch

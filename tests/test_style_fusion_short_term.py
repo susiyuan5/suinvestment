@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from research.idea_engine.v3.short_term_trade_plan import (
+    build_strategy_rows,
     calculate_position_size,
     market_regime,
     style_signals,
@@ -13,10 +14,12 @@ from research.idea_engine.v3.style_fusion_oos import simulate_trade, summarize
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = json.loads((ROOT / "data" / "short-term-trade-plan-v1.2.json").read_text(encoding="utf-8"))
+CONFIG_V13 = json.loads((ROOT / "data" / "short-term-trade-plan-v1.3.json").read_text(encoding="utf-8"))
 
 
 def indicator_fixture(**overrides):
     value = {
+        "signal_date": "2026-08-13",
         "current_close": 120.0, "current_low": 117.0, "previous_high": 119.0,
         "sma20": 115.0, "sma50": 110.0, "sma200": 100.0, "sma200_slope_20": 2.0,
         "relative_return_5": 0.03, "relative_return_20": 0.08, "atr14": 2.0,
@@ -51,6 +54,21 @@ class StyleFusionShortTermTests(unittest.TestCase):
         self.assertEqual(signals["triggered_model"], "vcp_darvas_breakout")
         no_volume = style_signals(indicator_fixture(volume_ratio=1.0, current_low=119.0), CONFIG)
         self.assertIsNone(no_volume["triggered_model"])
+
+    def test_v13_outputs_three_independent_strategy_choices(self):
+        signals = style_signals(indicator_fixture(), CONFIG_V13)
+        self.assertEqual(set(signals["triggered_models"]), {"oneil_volume_breakout", "vcp_darvas_breakout"})
+        evidence = {
+            "oneil_volume_breakout": {"samples": 120, "passed": True},
+            "trend_pullback": {"samples": 90, "passed": False},
+            "vcp_darvas_breakout": {"samples": 11, "passed": False},
+        }
+        strategies = build_strategy_rows(indicator_fixture(), signals, CONFIG_V13, evidence, {"preliminary_review_eligible": True}, [])
+        self.assertEqual([row["strategy_id"] for row in strategies], CONFIG_V13["strategy_order"])
+        self.assertEqual(strategies[0]["status"], "preliminary_review")
+        self.assertEqual(strategies[1]["status"], "waiting")
+        self.assertEqual(strategies[2]["status"], "historical_edge_failed")
+        self.assertTrue(all(row["prediction_calibrated"] is False and row["execution_ready"] is False for row in strategies))
 
     def test_yellow_regime_halves_position_risk_budget(self):
         full = calculate_position_size(100_000, 10_000, 100, 95, CONFIG, risk_scale=1.0)
