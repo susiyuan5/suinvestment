@@ -119,6 +119,8 @@ class FreePublicDataProviderTests(unittest.TestCase):
         self.assertNotIn("requirements-octagon", workflow)
         self.assertIn("--provider free", workflow)
         self.assertIn("research/results/v3_1/idea-engine", workflow)
+        self.assertIn("gh pr ready", workflow)
+        self.assertIn("--json isDraft", workflow)
 
 
 if __name__ == "__main__":
