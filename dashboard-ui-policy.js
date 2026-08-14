@@ -20,6 +20,16 @@
     });
   }
 
+  function compactHoldingsByValue(rows, limit) {
+    var maximum = Math.max(0, Math.floor(finite(limit) || 5));
+    return (rows || []).slice().sort(function (a, b) {
+      var left = finite(a && a.currentValue) || 0;
+      var right = finite(b && b.currentValue) || 0;
+      if (right !== left) return right - left;
+      return String(a && a.symbol || "").localeCompare(String(b && b.symbol || ""));
+    }).slice(0, maximum);
+  }
+
   function decisionStatus(amount, action) {
     var value = finite(amount) || 0;
     var normalized = String(action || "").toUpperCase();
@@ -35,5 +45,5 @@
     return "当前没有已录入持仓";
   }
 
-  return Object.freeze({ sortHoldingsByDeviation: sortHoldingsByDeviation, decisionStatus: decisionStatus, emptyHoldingsState: emptyHoldingsState });
+  return Object.freeze({ sortHoldingsByDeviation: sortHoldingsByDeviation, compactHoldingsByValue: compactHoldingsByValue, decisionStatus: decisionStatus, emptyHoldingsState: emptyHoldingsState });
 });

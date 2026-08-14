@@ -339,9 +339,8 @@ amountBreakdown: "Amount Breakdown",
       cache: "Cache",
       manualOverride: "Manual Override",
       dataFinePrint: "Buy signal uses the lower of the latest 1-day and 5-day moves. Manual overrides always take priority for that stock.",
-      portfolioRiskDashboard: "Portfolio risk dashboard",
-      portfolioRisk: "Portfolio Risk",
-      savePortfolio: "Save Portfolio",
+      portfolioRiskDashboard: "Holdings overview",
+      portfolioRisk: "Current Holdings",
       availableCash: "Available Cash",
       availableCashPlaceholder: "CAD available cash",
       copyOrderList: "Copy order list",
@@ -490,7 +489,7 @@ amountBreakdown: "Amount Breakdown",
       dataQualityManualWarning: "Recommendations may be affected by manual override data.",
       dataQualityFallbackWarning: "Fallback data is in use.",
       dataQualityMarketFallbackWarning: "Market regime is neutral because fallback is being used.",
-      editHoldings: "Edit holdings",
+      editHoldings: "Edit manual holdings",
       copyTextDetails: "Copy text details",
       showDetails: "Show details",
       hideDetails: "Hide details",
@@ -600,9 +599,8 @@ amountBreakdown: "Amount Breakdown",
       cache: "缓存数据",
       manualOverride: "手动输入",
       dataFinePrint: "买入信号使用最新 1 日和 5 日变化中的较低值。单只股票的手动输入优先。",
-      portfolioRiskDashboard: "组合风控",
-      portfolioRisk: "组合风险",
-      savePortfolio: "保存组合",
+      portfolioRiskDashboard: "持仓概览",
+      portfolioRisk: "当前持仓",
       availableCash: "可用资金",
       availableCashPlaceholder: "CAD 可用资金",
       copyOrderList: "复制操作清单",
@@ -848,7 +846,7 @@ amountBreakdown: "金额分解",
       dataQualityManualWarning: "建议可能受到手动覆盖数据影响。",
       dataQualityFallbackWarning: "正在使用备用数据。",
       dataQualityMarketFallbackWarning: "市场状态因备用数据而显示为中性。",
-      editHoldings: "编辑持仓",
+      editHoldings: "编辑人工持仓",
       copyTextDetails: "复制文本详情",
       equalWeight: "等权配置",
       normalizeAllocation: "归一化到 100%",
@@ -999,9 +997,9 @@ amountBreakdown: "金额分解",
   const stockSearchResultsEl = document.getElementById("stockSearchResults");
   const portfolioTotalEl = document.getElementById("portfolioTotal");
   const availableCashInput = document.getElementById("availableCashInput");
-  const savePortfolioRiskBtn = document.getElementById("savePortfolioRiskBtn");
   const portfolioPositionInputsEl = document.getElementById("portfolioPositionInputs");
   const portfolioRiskSummaryEl = document.getElementById("portfolioRiskSummary");
+  const portfolioHoldingsSourceEl = document.getElementById("portfolioHoldingsSource");
   const coreSatellitePresetVersionEl = document.getElementById("coreSatellitePresetVersion");
   const coreTargetAllocationEl = document.getElementById("coreTargetAllocation");
   const satelliteTargetAllocationEl = document.getElementById("satelliteTargetAllocation");
@@ -1301,7 +1299,6 @@ amountBreakdown: "金额分解",
     input.addEventListener("keydown", handleDeploymentInputKeydown);
   });
   stockSearchBtn.addEventListener("click", function () { if (state.autocompleteActiveIndex >= 0 && state.autocompleteResults.length > 0) { selectStockSearchResult(state.autocompleteResults[state.autocompleteActiveIndex]); } else if (state.autocompleteSelectedResult) { addSelectedStockToPortfolio(); } else { searchStocks(); } });
-  savePortfolioRiskBtn.addEventListener("click", savePortfolioRiskForm);
   availableCashInput.addEventListener("change", savePortfolioRiskForm);
   availableCashInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") savePortfolioRiskForm();
@@ -5040,7 +5037,7 @@ function equalizeAllocations() {
     orderTextEl.textContent = orderLines.join("\n");
     lastUpdatedEl.textContent = latestTimestamp ? t("updated") + " " + formatDateTime(latestTimestamp) : t("noLiveData");
     renderPortfolioTotal();
-    renderPortfolioRiskSummary(portfolioRisk);
+    renderPortfolioRiskSummary(portfolioRisk, entries);
     renderOverviewSummary(portfolioRisk);
     renderInlineHoldings(entries, portfolioRisk);
     renderDataQualitySummary(entries.map(function (entry) {
@@ -6587,41 +6584,68 @@ function equalizeAllocations() {
     copyStatusEl.textContent = t("portfolioSaved");
   }
 
-  function renderPortfolioRiskSummary(portfolioRisk) {
+  function renderPortfolioRiskSummary(portfolioRisk, entries) {
     if (!portfolioRiskSummaryEl) return;
+    const currencySettings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : { planningCurrency: state.displayCurrency };
+    const model = window.HoldingsDetailModel ? window.HoldingsDetailModel.build({
+      entries: entries,
+      portfolioRisk: portfolioRisk,
+      snapshot: state.snaptradeHoldingsSnapshot,
+      status: state.snaptradeHoldingsStatus,
+      sourceMode: state.portfolioRiskSource,
+      planningCurrency: currencySettings.planningCurrency
+    }) : { rows: [], summary: { totalValue: portfolioRisk.total_portfolio_value, stockValue: portfolioRisk.total_stock_value, availableCash: portfolioRisk.available_cash, cashProvided: portfolioRisk.available_cash_provided, unrealizedPnl: 0, pnlComplete: false, positionCount: 0 } };
+    const automatic = state.portfolioRiskSource === "snaptrade_automatic";
+    if (portfolioHoldingsSourceEl) {
+      portfolioHoldingsSourceEl.textContent = automatic ? "Wealthsimple 自动同步 · 只读数据" : "人工持仓 · 本地自动保存";
+      portfolioHoldingsSourceEl.dataset.source = automatic ? "automatic" : "manual";
+    }
     portfolioRiskSummaryEl.innerHTML = "";
     const metrics = document.createElement("div");
-    metrics.className = "risk-metrics-grid";
+    metrics.className = "holdings-overview-grid";
+    const pnlValue = model.summary.positionCount === 0 ? "--" : model.summary.pnlComplete ? formatCurrency(model.summary.unrealizedPnl) : "成本待补齐";
     [
-      [t("availableCash"), portfolioRisk.available_cash_provided ? formatCurrency(portfolioRisk.available_cash) : t("notProvided")],
-      [t("totalPortfolioValue"), formatCurrency(portfolioRisk.total_portfolio_value)],
-      [t("plannedBuyTotal"), formatCurrency(portfolioRisk.total_planned_buy_amount)],
-      [t("plannedCashUsage"), portfolioRisk.available_cash_provided && isFiniteNumber(portfolioRisk.planned_cash_usage_percentage) ? portfolioRisk.planned_cash_usage_percentage.toFixed(2) + "%" : t("notProvided")],
-      [t("largestPosition"), (portfolioRisk.largest_position.symbol || "无") + " " + portfolioRisk.largest_position.current_allocation.toFixed(2) + "%"],
-      [t("overallRisk"), displayRiskLevel(portfolioRisk.portfolio_risk_level)]
+      ["总资产", formatCurrency(model.summary.totalValue)],
+      ["持仓市值", formatCurrency(model.summary.stockValue)],
+      ["可用现金", model.summary.cashProvided ? formatCurrency(model.summary.availableCash) : "未填写"],
+      ["浮盈亏", pnlValue]
     ].forEach(function (item) {
       const metric = document.createElement("div");
-      metric.className = "risk-metric";
+      metric.className = "holdings-overview-metric";
       metric.innerHTML = "<span></span><strong></strong>";
       metric.querySelector("span").textContent = item[0];
       metric.querySelector("strong").textContent = item[1];
-      if (item[0] === t("overallRisk")) metric.querySelector("strong").className = "risk-" + portfolioRisk.portfolio_risk_level.toLowerCase();
       metrics.appendChild(metric);
     });
-
     portfolioRiskSummaryEl.appendChild(metrics);
-    portfolioRiskSummaryEl.appendChild(createRiskList(t("overAllocated"), portfolioRisk.over_allocated_tickers));
-    portfolioRiskSummaryEl.appendChild(createRiskList(t("underAllocated"), portfolioRisk.under_allocated_tickers));
-    portfolioRiskSummaryEl.appendChild(createRiskList(t("riskWarnings"), portfolioRisk.risk_warnings));
-  }
 
-  function createRiskList(label, items) {
-    const block = document.createElement("div");
-    block.className = "risk-list";
-    block.innerHTML = "<span></span><p></p>";
-    block.querySelector("span").textContent = label;
-    block.querySelector("p").textContent = items.length ? items.join(", ") : t("none");
-    return block;
+    const list = document.createElement("div");
+    list.className = "compact-holdings-list";
+    const rows = window.DashboardUiPolicy ? window.DashboardUiPolicy.compactHoldingsByValue(model.rows, 5) : model.rows.slice(0, 5);
+    if (!rows.length) {
+      const empty = document.createElement("p");
+      empty.className = "compact-holdings-empty";
+      empty.textContent = automatic && state.snaptradeHoldingsStatus === "locked" ? "自动持仓尚未在本机解锁。" : "尚未录入股票或 ETF 持仓。";
+      list.appendChild(empty);
+    } else {
+      rows.forEach(function (holding) {
+        const allocation = model.summary.totalValue > 0 ? holding.currentValue / model.summary.totalValue * 100 : holding.currentAllocation;
+        const allocationLabel = isFiniteNumber(allocation) ? "仓位 " + allocation.toFixed(2) + "%" : "仓位 --";
+        const pnl = holding.pnl === null ? "成本待补齐" : formatHoldingMoney(holding.pnl, holding.currency) + (holding.pnlPercent === null ? "" : " · " + (holding.pnlPercent > 0 ? "+" : "") + holding.pnlPercent.toFixed(2) + "%");
+        const row = document.createElement("article");
+        row.className = "compact-holding-row";
+        row.innerHTML = "<div><a href=\"stock-detail.html?ticker=" + encodeURIComponent(holding.symbol) + "\">" + escapeHtml(holding.symbol) + "</a><span>" + escapeHtml(holding.shares > 0 ? holding.shares.toFixed(6).replace(/\.?0+$/, "") + " 股" : "数量待补齐") + "</span></div><div><strong>" + escapeHtml(formatHoldingMoney(holding.currentValue, holding.currency)) + "</strong><span>" + escapeHtml(allocationLabel) + "</span></div><small class=\"" + (holding.pnl > 0 ? "is-positive" : holding.pnl < 0 ? "is-negative" : "") + "\">" + escapeHtml(pnl) + "</small>";
+        list.appendChild(row);
+      });
+      if (model.rows.length > rows.length) {
+        const more = document.createElement("a");
+        more.className = "compact-holdings-more";
+        more.href = "#inlineHoldingsSection";
+        more.textContent = "另有 " + (model.rows.length - rows.length) + " 项持仓，查看完整明细";
+        list.appendChild(more);
+      }
+    }
+    portfolioRiskSummaryEl.appendChild(list);
   }
 
   function readPositiveNumber(value) {
@@ -6788,7 +6812,6 @@ function equalizeAllocations() {
     setText(".data-panel .fine-print", t("dataFinePrint"));
     setText(".portfolio-risk-panel .eyebrow", t("portfolioRiskDashboard"));
     setText("#portfolio-risk-title", t("portfolioRisk"));
-    setText("#savePortfolioRiskBtn", t("savePortfolio"));
     setText("label[for='availableCashInput'] span", t("availableCash"));
     updateCurrencyPlaceholders();
     setDetailLabels(".holdings-details", t("editHoldings"), t("hideDetails"));

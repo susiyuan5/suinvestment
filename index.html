@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#080d14">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://finnhub.io https://www.bankofcanada.ca https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>量化定投决策台</title>
-    <link rel="stylesheet" href="style.css?v=holdings-detail-v1">
+    <link rel="stylesheet" href="style.css?v=holdings-compact-v1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-2">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
     <link rel="stylesheet" href="watchlist.css?v=accessibility-3">
@@ -195,16 +195,17 @@
 
         </div>
 
-        <aside class="dashboard-sidebar" aria-label="Portfolio risk and manual plan">
-          <section class="panel portfolio-risk-panel" aria-labelledby="portfolio-risk-title">
+        <aside class="dashboard-sidebar" aria-label="当前持仓与人工计划">
+          <section class="panel portfolio-risk-panel portfolio-holdings-panel" aria-labelledby="portfolio-risk-title">
             <div class="section-heading compact">
               <div>
-                <p class="eyebrow">组合风险面板</p>
-                <h2 id="portfolio-risk-title">组合风险</h2>
+                <p class="eyebrow">持仓概览</p>
+                <h2 id="portfolio-risk-title">当前持仓</h2>
               </div>
-              <button id="savePortfolioRiskBtn" class="secondary-button" type="button">保存组合</button>
+              <a class="secondary-button compact-holdings-detail-link" href="#inlineHoldingsSection">查看明细</a>
             </div>
 
+            <p id="portfolioHoldingsSource" class="portfolio-holdings-source">人工持仓 · 本地保存</p>
             <div id="portfolioRiskSummary" class="portfolio-risk-summary" aria-live="polite"></div>
 
             <div class="portfolio-risk-form">
@@ -213,8 +214,9 @@
                 <input id="availableCashInput" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD available cash">
               </label>
               <details class="holdings-details">
-                <summary>编辑持仓</summary>
+                <summary>编辑人工持仓</summary>
                 <div id="portfolioPositionInputs" class="portfolio-position-inputs" aria-live="polite"></div>
+                <p class="portfolio-holdings-form-note">修改后自动保存；只用于人工核对，不会下单或自动再平衡。</p>
               </details>
             </div>
           </section>
@@ -744,8 +746,8 @@
     <script src="etf-lookthrough.js?v=wealthsimple-v2"></script>
     <script src="portfolio-stress-test.js?v=wealthsimple-v1"></script>
     <script src="holdings-detail-model.js?v=holdings-detail-v1"></script>
-    <script src="dashboard-ui-policy.js?v=desktop-ui-hierarchy-v1"></script>
-    <script src="app.js?v=holdings-detail-v1"></script>
+    <script src="dashboard-ui-policy.js?v=holdings-compact-v1"></script>
+    <script src="app.js?v=holdings-compact-v1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>

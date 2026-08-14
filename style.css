@@ -1840,6 +1840,137 @@ input::placeholder {
   gap: 10px;
 }
 
+.portfolio-holdings-source {
+  margin: -2px 0 10px;
+  color: var(--muted);
+  font-size: .76rem;
+  line-height: 1.45;
+}
+
+.portfolio-holdings-source[data-source="automatic"] {
+  color: var(--positive);
+}
+
+.compact-holdings-detail-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.holdings-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.holdings-overview-metric {
+  min-width: 0;
+  padding: 10px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.holdings-overview-metric:nth-child(2n) {
+  border-right: 0;
+}
+
+.holdings-overview-metric:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.holdings-overview-metric span,
+.compact-holding-row span {
+  display: block;
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 750;
+}
+
+.holdings-overview-metric strong {
+  display: block;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  font-size: .92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.compact-holdings-list {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.compact-holding-row {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.compact-holding-row > div:nth-child(2) {
+  text-align: right;
+}
+
+.compact-holding-row a,
+.compact-holding-row strong {
+  color: var(--text);
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.compact-holding-row a {
+  text-underline-offset: 3px;
+}
+
+.compact-holding-row small {
+  grid-column: 1 / -1;
+  color: var(--soft);
+  font-size: .72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.compact-holding-row small.is-positive {
+  color: var(--positive);
+}
+
+.compact-holding-row small.is-negative {
+  color: var(--negative);
+}
+
+.compact-holdings-empty,
+.compact-holdings-more {
+  margin: 0;
+  padding: 11px;
+  color: var(--soft);
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.compact-holdings-more {
+  display: block;
+  color: var(--accent);
+  text-align: center;
+  text-underline-offset: 3px;
+}
+
+.portfolio-holdings-form-note {
+  margin: 0;
+  padding: 0 10px 10px;
+  color: var(--muted);
+  font-size: .72rem;
+  line-height: 1.45;
+}
+
 .risk-metrics-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3041,8 +3172,7 @@ input::placeholder {
   .override-actions button,
   .stock-search-grid button,
   #openSettingsBtn,
-  #copyBtn,
-  #savePortfolioRiskBtn {
+  #copyBtn {
     width: 100%;
   }
 

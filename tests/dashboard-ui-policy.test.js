@@ -7,6 +7,16 @@ test("desktop holdings sort by absolute allocation deviation", () => {
   assert.deepEqual(rows.map((row) => row.symbol), ["NVDA", "SPY", "KO"]);
 });
 
+test("compact holdings sort by current value and respect the visible limit", () => {
+  const rows = policy.compactHoldingsByValue([
+    { symbol: "KO", currentValue: 80 },
+    { symbol: "NVDA", currentValue: 240 },
+    { symbol: "SPY", currentValue: 240 },
+    { symbol: "AAPL", currentValue: 120 }
+  ], 3);
+  assert.deepEqual(rows.map((row) => row.symbol), ["NVDA", "SPY", "AAPL"]);
+});
+
 test("decision labels remain consistent with amount and action", () => {
   assert.equal(policy.decisionStatus(0, "BUY"), "暂停或保留现金");
   assert.equal(policy.decisionStatus(10, "REDUCE_BUY"), "低于基准投入");

@@ -42,6 +42,18 @@ test("desktop hierarchy follows the static DOM order", () => {
   assert.match(app, /确认移除 /);
 });
 
+test("sidebar uses a compact current holdings overview instead of a risk dashboard", () => {
+  const html = fs.readFileSync("index.html", "utf8");
+  const app = fs.readFileSync("app.js", "utf8");
+  assert.match(html, /class="panel portfolio-risk-panel portfolio-holdings-panel"/);
+  assert.match(html, /<h2 id="portfolio-risk-title">当前持仓<\/h2>/);
+  assert.match(html, /id="portfolioHoldingsSource"/);
+  assert.doesNotMatch(html, /组合风险面板|>组合风险</);
+  assert.match(app, /holdings-overview-grid/);
+  assert.match(app, /compactHoldingsByValue\(model\.rows, 5\)/);
+  assert.doesNotMatch(app, /appendChild\(createRiskList/);
+});
+
 test("weekly decision order contract contains SPY and four satellites", () => {
   const source = fs.readFileSync("app.js", "utf8");
   assert.match(source, /const expected = \["SPY", "NVDA", "AAPL", "ASML", "KO"\]/);
