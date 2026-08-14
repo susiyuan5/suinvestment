@@ -29,6 +29,9 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Write refresh status
+        run: python scripts/write_refresh_status.py --task universe --status fetching --run-id "${GITHUB_RUN_ID}"
+
       - name: Validate pinned provider manifest
         run: |
           python - <<'PY'
@@ -96,6 +99,13 @@ jobs:
           node --test tests/*.test.js
           python scripts/check_static_contracts.py
 
+      - name: Mark scan ready for publication
+        if: success()
+        run: python scripts/write_refresh_status.py --task universe --status waiting_publish --run-id "${GITHUB_RUN_ID}"
+      - name: Mark scan failure without replacing results
+        if: failure()
+        run: python scripts/write_refresh_status.py --task universe --status failed --run-id "${GITHUB_RUN_ID}"
+
       - name: Create validated research pull request
         id: create-pr
         uses: peter-evans/create-pull-request@v8
@@ -130,6 +140,7 @@ jobs:
             data/short-term-daily-bars-v1.json
             data/idea-engine-events-v1.json
             data/idea-engine-v3/price-trends.json
+            data/research-refresh-status.json
 
       - name: Mark validated research commit and merge
         if: steps.create-pr.outputs.pull-request-number != ''
