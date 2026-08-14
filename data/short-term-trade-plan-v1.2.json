@@ -1,0 +1,115 @@
+{
+  "schema_version": "short-term-trade-plan-config-v1.2",
+  "output_schema_version": "short-term-trade-plan-v1.2",
+  "research_only": true,
+  "execution_boundary": "manual_review_only",
+  "benchmark": "QQQ",
+  "regular_hours_only": true,
+  "style_fusion": {
+    "version": "global-style-fusion-v1",
+    "principle": "each_style_owns_one_gate_no_blended_probability",
+    "influences": [
+      {"style": "Weinstein-Minervini", "role": "market_and_trend_template"},
+      {"style": "ONeil-CANSLIM", "role": "evidence_and_breakout_volume"},
+      {"style": "Minervini-VCP-Darvas", "role": "contraction_and_price_structure"},
+      {"style": "Turtle-institutional-trend", "role": "atr_risk_and_exit_discipline"}
+    ],
+    "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+  },
+  "indicators": {
+    "atr_period": 14,
+    "sma_periods": [10, 20, 50, 200],
+    "sma200_slope_lookback": 20,
+    "prior_high_period": 20,
+    "recent_low_period": 10,
+    "volume_average_period": 20
+  },
+  "market_regime": {
+    "green_risk_scale": 1.0,
+    "yellow_risk_scale": 0.5,
+    "red_risk_scale": 0.0,
+    "red_action": "block_new_long"
+  },
+  "trend_template": {
+    "require_close_above_sma20": true,
+    "require_sma20_above_sma50": true,
+    "require_sma50_above_sma200": true,
+    "require_rising_sma200": true,
+    "minimum_relative_return_20": 0.0
+  },
+  "gates": {
+    "eligible_statuses": ["A_RESEARCH", "B_WATCH"],
+    "minimum_evidence_coverage": 66.0,
+    "max_data_age_days": 5,
+    "earnings_blackout_trading_days": 3,
+    "unknown_event_action": "simulation_only"
+  },
+  "breakout": {
+    "close_buffer_atr": 0.05,
+    "volume_ratio_min": 1.4,
+    "min_relative_return_5": 0.0,
+    "min_relative_return_20": 0.0
+  },
+  "vcp_darvas": {
+    "contraction_window_days": 5,
+    "comparison_window_days": 10,
+    "maximum_range_ratio": 0.80,
+    "maximum_dryup_volume_ratio": 0.85,
+    "maximum_distance_to_prior_high_atr": 1.0
+  },
+  "pullback": {
+    "touch_tolerance_pct": 0.02,
+    "require_reclaim_sma20": true,
+    "require_close_above_previous_high": true,
+    "maximum_volume_ratio": 1.20
+  },
+  "risk": {
+    "entry_low_atr": -0.15,
+    "entry_high_atr": 0.25,
+    "chase_limit_atr": 0.5,
+    "structure_stop_atr": 0.1,
+    "volatility_stop_atr": 1.5,
+    "trailing_stop_atr": 1.5,
+    "minimum_risk_pct": 0.01,
+    "maximum_risk_pct": 0.08,
+    "target_r_multiples": [1.5, 2.5]
+  },
+  "sizing": {
+    "risk_budget_pct_assets": 0.0025,
+    "maximum_notional_pct_assets": 0.02,
+    "maximum_experiment_pct_assets": 0.05,
+    "maximum_concurrent_positions": 2,
+    "minimum_cash_buffer_pct": 0.02
+  },
+  "exit": {
+    "partial_target_fraction": 0.5,
+    "time_review_days": 10,
+    "time_review_minimum_r": 0.5,
+    "maximum_holding_days": 20,
+    "failed_breakout_review_days": 2,
+    "failed_breakout_action": "exit_review"
+  },
+  "execution": {
+    "default_tick_size": 0.01,
+    "whole_share_first": true,
+    "fractional_supported": false,
+    "order_type": "limit",
+    "stop_type": "stop_market_with_slippage_warning",
+    "no_private_api": true
+  },
+  "validation": {
+    "historical_oos_required": true,
+    "live_shadow_required": true,
+    "unvalidated_action": "simulation_only"
+  },
+  "shadow": {
+    "minimum_observations": 8,
+    "minimum_calendar_weeks": 8,
+    "minimum_complete_outcomes": 4
+  },
+  "method_sources": [
+    "https://www.investors.com/wp-content/uploads/2025/10/IBD_BuyingChecklist_2025_10.pdf",
+    "https://www.man.com/insights/need-for-speed-trend-following",
+    "https://www.nber.org/papers/w20439"
+  ]
+}

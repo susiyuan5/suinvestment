@@ -1,0 +1,918 @@
+{
+  "schema_version": "global-style-short-term-oos-v1",
+  "methodology_version": "global-style-short-term-oos-v1.0.0",
+  "generated_at": "2026-08-14T00:01:03.528719+00:00",
+  "as_of": "2026-08-13",
+  "research_only": true,
+  "no_trade": true,
+  "status": "preliminary_no_reliable_edge",
+  "scope": "global_style_entry_and_exit_policy",
+  "composite_score_calibrated": false,
+  "permanent_oos": true,
+  "survivorship_bias_controlled": false,
+  "universe_method": "current_research_universe_backfill",
+  "benchmark": "QQQ",
+  "round_trip_cost_bps": 30,
+  "input": {
+    "path": "historical-oos-bars.json",
+    "sha256": "8d735ae4501000f9892cb2de0284b924133da58d9a2d0fbee84c693ee0f84dfd",
+    "config_version": "short-term-trade-plan-config-v1.2",
+    "symbols": 81,
+    "source": "Yahoo Finance chart adapter via data_loader.load_yahoo_daily_prices"
+  },
+  "split": {
+    "permanent_oos": true,
+    "outer_test_fraction": 0.2,
+    "split_boundary": "2025-04-09",
+    "test_start": "2025-04-16",
+    "purge_horizon_trading_days": 20,
+    "embargo_trading_days": 5,
+    "train_signal_start": "2020-11-12",
+    "train_signal_end": "2025-03-05",
+    "train_last_exit": "2025-03-07",
+    "oos_signal_start": "2025-06-13",
+    "oos_signal_end": "2026-07-14",
+    "oos_last_exit": "2026-07-20"
+  },
+  "sample_counts": {
+    "all": 517,
+    "train": 389,
+    "permanent_oos": 128,
+    "rejected_chase_entries": 67
+  },
+  "overall_oos": {
+    "samples": 128,
+    "origin_dates": 42,
+    "cost_adjusted_hit_rate": 0.42121212,
+    "hit_rate_ci_low": 0.26825397,
+    "hit_rate_ci_high": 0.57777778,
+    "mean_net_relative_return": -0.00166604,
+    "mean_max_adverse_move": -0.02961472,
+    "passed": false
+  },
+  "by_model": {
+    "oneil_volume_breakout": {
+      "samples": 27,
+      "origin_dates": 17,
+      "cost_adjusted_hit_rate": 0.46078431,
+      "hit_rate_ci_low": 0.35294118,
+      "hit_rate_ci_high": 0.60784314,
+      "mean_net_relative_return": 0.0007535,
+      "mean_max_adverse_move": -0.02386241,
+      "passed": false
+    },
+    "trend_pullback": {
+      "samples": 90,
+      "origin_dates": 40,
+      "cost_adjusted_hit_rate": 0.39208333,
+      "hit_rate_ci_low": 0.22916667,
+      "hit_rate_ci_high": 0.58375,
+      "mean_net_relative_return": -0.00370517,
+      "mean_max_adverse_move": -0.03183897,
+      "passed": false
+    },
+    "vcp_darvas_breakout": {
+      "samples": 11,
+      "origin_dates": 5,
+      "cost_adjusted_hit_rate": 0.62857143,
+      "hit_rate_ci_low": 0.62857143,
+      "hit_rate_ci_high": 0.82857143,
+      "mean_net_relative_return": 0.00907893,
+      "mean_max_adverse_move": -0.02553564,
+      "passed": false
+    }
+  },
+  "reliability_gate": {
+    "minimum_samples": 100,
+    "minimum_origin_dates": 26,
+    "required_ci_low": 0.5,
+    "passed_models": [],
+    "passed": false
+  },
+  "current_mappings": {
+    "AAPL": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "ABBV": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "ABT": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "ADBE": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "AMAT": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "AMD": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "AMT": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "AMZN": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "APD": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "ASML": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "AVGO": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": true,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "AXP": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "BA": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "BABA": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "BAC": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "BKNG": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "BLK": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "BYDDY": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "CAT": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "CMG": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "COP": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "COST": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "CRM": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "CVX": {
+      "as_of": "2026-08-13",
+      "current_model": "trend_pullback",
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": {
+        "samples": 90,
+        "origin_dates": 40,
+        "cost_adjusted_hit_rate": 0.39208333,
+        "hit_rate_ci_low": 0.22916667,
+        "hit_rate_ci_high": 0.58375,
+        "mean_net_relative_return": -0.00370517,
+        "mean_max_adverse_move": -0.03183897,
+        "passed": false
+      },
+      "status": "current_trigger_unvalidated"
+    },
+    "DE": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "DUK": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "ECL": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "ETN": {
+      "as_of": "2026-08-12",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": true,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "FCX": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "GE": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "GOOGL": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "GS": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "HD": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "HON": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "INTC": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "JNJ": {
+      "as_of": "2026-08-13",
+      "current_model": "trend_pullback",
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": {
+        "samples": 90,
+        "origin_dates": 40,
+        "cost_adjusted_hit_rate": 0.39208333,
+        "hit_rate_ci_low": 0.22916667,
+        "hit_rate_ci_high": 0.58375,
+        "mean_net_relative_return": -0.00370517,
+        "mean_max_adverse_move": -0.03183897,
+        "passed": false
+      },
+      "status": "current_trigger_unvalidated"
+    },
+    "JPM": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": true,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "KO": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "LIN": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "LMT": {
+      "as_of": "2026-08-12",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "LOW": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "LRCX": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "MA": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "MCD": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "MELI": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "META": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "MMM": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": true,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "MRK": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "MS": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "MSFT": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "MU": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "NEE": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "NEM": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "NKE": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "NOW": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "NVDA": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "NVO": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "ORCL": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "PEP": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "PFE": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "PG": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "PYPL": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "QCOM": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "RTX": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "SAP": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "SBUX": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "SCHW": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": true,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "SO": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "SONY": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "TCEHY": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "TGT": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "TM": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "TMO": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "TSM": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "TXN": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "UNH": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "UPS": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "V": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "WMT": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": false,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    },
+    "XOM": {
+      "as_of": "2026-08-13",
+      "current_model": null,
+      "market_regime": "green",
+      "trend_template": true,
+      "vcp_contraction": false,
+      "passed": false,
+      "model_oos": null,
+      "status": "no_current_trigger"
+    }
+  },
+  "warnings": [
+    "当前股票池历史回填仍存在幸存者偏差。",
+    "仅校验v1.2价格、成交量、市场门禁和退出规则，不校验Idea Engine综合分。",
+    "任何未通过的子模型不得由其他风格分数补偿。",
+    "历史OOS不替代实时Shadow，不生成订单。"
+  ]
+}

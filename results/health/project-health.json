@@ -1,6 +1,6 @@
 {
   "version": "project-health-v1",
-  "generated_at": "2026-08-13T15:55:13.528540+00:00",
+  "generated_at": "2026-08-14T00:08:25.199334+00:00",
   "status": "warning",
   "status_scope": "Operational data and workflow health only; not strategy validation or trading approval.",
   "manual_decision_only": true,
@@ -19,10 +19,15 @@
     "note": "\u6d4f\u89c8\u5668\u53ea\u6709\u5728\u7528\u6237\u5bfc\u5165\u672c\u5730\u5bc6\u94a5\u540e\u624d\u89e3\u5bc6\uff1b\u5065\u5eb7\u72b6\u6001\u4e0d\u4ee3\u8868\u53ef\u4ea4\u6613\u3002"
   },
   "issues": [
-    "pending_idea_engine_pr"
+    "workflow_historical_update_unknown",
+    "workflow_idea_engine_update_unknown",
+    "workflow_market_update_unknown",
+    "workflow_pages_smoke_unknown",
+    "workflow_quality_checks_unknown",
+    "workflow_shadow_update_unknown"
   ],
   "market_snapshot": {
-    "generated_at": "2026-08-12T23:10:37.408866Z",
+    "generated_at": "2026-08-13T23:11:36.614086Z",
     "lag_days": 1,
     "fresh_symbols": 8,
     "stale_symbols": 0
@@ -33,19 +38,19 @@
       "QQQ": {
         "row_count": 271,
         "latest_date": "2026-08-07",
-        "lag_days": 6
+        "lag_days": 7
       },
       "SPY": {
         "row_count": 271,
         "latest_date": "2026-08-07",
-        "lag_days": 6
+        "lag_days": 7
       }
     }
   },
   "watchlist": {
-    "status": "ready",
+    "status": "unknown",
     "static_fallback_status": "ready",
-    "synthetic_probe_status": "ready",
+    "synthetic_probe_status": "unknown",
     "runtime_primary": "Yahoo Finance chart API",
     "same_origin_fallback": "data/backtest-prices.json",
     "fallback_symbol_rows": {
@@ -58,51 +63,34 @@
   },
   "workflows": {
     "market_update": {
-      "status": "completed",
-      "conclusion": "success",
-      "updated_at": "2026-08-12T23:10:50Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31649893050"
+      "status": "unknown",
+      "conclusion": "unknown"
     },
     "historical_update": {
-      "status": "completed",
-      "conclusion": "success",
-      "updated_at": "2026-08-08T12:54:10Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31258272827"
+      "status": "unknown",
+      "conclusion": "unknown"
     },
     "quality_checks": {
-      "status": "completed",
-      "conclusion": "success",
-      "updated_at": "2026-08-13T15:52:37Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31717708356"
+      "status": "unknown",
+      "conclusion": "unknown"
     },
     "pages_smoke": {
-      "status": "completed",
-      "conclusion": "success",
-      "updated_at": "2026-08-13T15:54:19Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31717818108"
+      "status": "unknown",
+      "conclusion": "unknown"
     },
     "shadow_update": {
-      "status": "completed",
-      "conclusion": "success",
-      "updated_at": "2026-08-01T14:40:20Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/30704251596"
+      "status": "unknown",
+      "conclusion": "unknown"
     },
     "idea_engine_update": {
-      "status": "completed",
-      "conclusion": "success",
-      "updated_at": "2026-08-10T15:28:10Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31403689896"
+      "status": "unknown",
+      "conclusion": "unknown"
     }
   },
   "pending_updates": {
     "historical_prices": null,
     "shadow_observation": null,
-    "idea_engine": {
-      "number": 52,
-      "updated_at": "2026-08-10T15:28:07Z",
-      "url": "https://github.com/susiyuan5/suinvestment/pull/52",
-      "head": "automation/update-idea-engine-shadow"
-    }
+    "idea_engine": null
   },
   "shadow": {
     "archived_observation_count": 3,
@@ -129,25 +117,25 @@
     "healthy_scope_note": "Healthy is operational workflow status only; it does not mean the strategy is effective or trading is approved."
   },
   "idea_engine": {
-    "schema_version": "idea-engine-v3",
-    "methodology_version": "idea-engine-v3.0.0",
-    "result_source": "v3",
-    "last_successful_run": "2026-08-13T12:00:00+00:00",
-    "active_provider": "free_public_data_reused_v2_input",
+    "schema_version": "idea-engine-v3.1",
+    "methodology_version": "idea-engine-v3.1.0",
+    "result_source": "v3.1-short-term",
+    "last_successful_run": "2026-08-13T22:45:00+00:00",
+    "active_provider": "free_public_data",
     "paid_api_key_required": false,
     "provider_status": {
       "SEC_EDGAR": "free_public_data",
       "PUBLIC_PRICE": "free_public_data",
       "paid_providers": "disabled"
     },
-    "data_freshness": "2026-08-13T12:00:00+00:00",
+    "data_freshness": "2026-08-13T22:45:00+00:00",
     "candidate_counts": {
       "A": 0,
       "B": 0,
       "C": 0,
       "A_RESEARCH": 0,
-      "B_WATCH": 5,
-      "C_SCREEN": 5,
+      "B_WATCH": 8,
+      "C_SCREEN": 2,
       "VALUATION_GATED": 0,
       "EXPOSURE_UNPROVEN": 0,
       "BLOCKED": 0,
@@ -157,23 +145,59 @@
     "free_source_scope_limited_count": 10,
     "shadow_observation_count": 1,
     "shadow_mature_count": 0,
+    "primary_horizon_weeks": 4,
     "human_review_gate": false,
     "live_promotion_eligible": false,
     "model_degraded": false,
     "status": "shadow_only",
-    "scope_note": "Idea Engine \u53ea\u5f71\u54cd\u6f5c\u529b\u80a1\u7814\u7a76\uff0c\u4e0d\u5f71\u54cd DCA \u6216\u4eba\u5de5\u8ba1\u5212\u3002"
+    "scope_note": "Idea Engine \u53ea\u5f71\u54cd\u6f5c\u529b\u80a1\u7814\u7a76\uff0c\u4e0d\u5f71\u54cd DCA \u6216\u4eba\u5de5\u8ba1\u5212\u3002",
+    "historical_oos": {
+      "schema_version": "historical-oos-price-timing-v1",
+      "scope": "price_timing_layer_only",
+      "status": "preliminary_no_reliable_edge",
+      "as_of": "2026-08-13",
+      "permanent_oos_samples": 5039,
+      "permanent_oos_origin_dates": 63,
+      "reliability_gate_passed": false,
+      "composite_score_calibrated": false
+    }
+  },
+  "short_term_trade_plan": {
+    "schema_version": "short-term-trade-plan-v1.2",
+    "last_successful_run": "2026-08-14T00:06:51.356104+00:00",
+    "candidate_count": 10,
+    "status_counts": {
+      "conditional_review": 0,
+      "manual_review_ready": 0,
+      "simulation_only": 1,
+      "waiting_trigger": 2,
+      "waiting_breakout": 0,
+      "waiting_pullback": 1,
+      "chase_blocked": 0,
+      "event_blocked": 0,
+      "invalidated": 0,
+      "blocked": 6
+    },
+    "shadow_mature": false,
+    "style_fusion_version": "global-style-fusion-v1",
+    "historical_oos_status": "preliminary_no_reliable_edge",
+    "historical_oos_samples": 128,
+    "historical_oos_passed_models": [],
+    "human_review_required": true,
+    "no_trade": true,
+    "status": "research_only"
   },
   "operational_metrics": {
     "data_delay_count": 3,
     "workflow_failure_rate": 0.0,
-    "workflow_unknown_count": 0,
-    "watchlist_degradation_ratio": 0,
+    "workflow_unknown_count": 6,
+    "watchlist_degradation_ratio": null,
     "shadow_missing_rate": 0.0,
     "page_js_error_count": null,
     "data_source_response_ms": null
   },
   "versions": {
-    "market_input": "2026-08-12T23:10:37.408866Z",
+    "market_input": "2026-08-13T23:11:36.614086Z",
     "historical_input": "2026-08-08T12:53:53.399728+00:00",
     "shadow_model": "phase6s-candidate-ranking-v1",
     "v2_research": "v2-causal-baseline"
