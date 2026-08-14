@@ -55,6 +55,30 @@ class IdeaEngineV3Tests(unittest.TestCase):
         result = score_candidate(dimensions, [sec, price], CONFIG)
         self.assertLess(result["leave_one_source_out_floor"], result["composite_score"])
         self.assertNotEqual(result["leave_one_source_out_floor"], result["composite_score"])
+        self.assertEqual(result["robust_score_raw"], result["leave_one_source_out_floor"])
+        self.assertEqual(result["robust_score_normalized"], 0.0)
+
+    def test_robust_floor_is_normalized_to_an_intuitive_hundred_point_scale(self):
+        dimensions = {name: 100 for name in CONFIG["dimensions"]}
+        macro = evidence(family="PUBLIC_PRICE", content="macro")
+        macro["source_family"] = "PUBLIC_MACRO"
+        macro["lineage_group"] = "PUBLIC_MACRO"
+        rows = [evidence(), evidence(family="PUBLIC_PRICE", content="price"), macro]
+        for row in rows:
+            row["supports_or_contradicts"]["supports"] = list(CONFIG["dimensions"])
+        result = score_candidate(dimensions, rows, CONFIG)
+        self.assertEqual(result["leave_one_dimension_out_floor"], 67.0)
+        self.assertEqual(result["robust_score_raw"], 67.0)
+        self.assertEqual(result["robust_score_ceiling"], 67.0)
+        self.assertEqual(result["robust_score_normalized"], 100.0)
+
+    def test_a_gate_uses_normalized_robust_score(self):
+        scores = {"composite_score": 90, "leave_one_dimension_out_floor": 43, "leave_one_source_out_floor": 43, "robust_score_normalized": 64.9, "confidence_score": 90, "evidence_coverage_score": 100, "evidence_independence_score": 100, "model_calibration_score": 80, "positive_dimensions": ["financial_quality", "valuation", "demand_catalyst"]}
+        status, _, _ = classify_candidate(scores, gates_failed=[], research_type="QUALITY_COMPOUNDER", exposure_proof=[], valuation_verified=True, config=CONFIG)
+        self.assertEqual(status, "B_WATCH")
+        scores["robust_score_normalized"] = 65.0
+        status, _, _ = classify_candidate(scores, gates_failed=[], research_type="QUALITY_COMPOUNDER", exposure_proof=[], valuation_verified=True, config=CONFIG)
+        self.assertEqual(status, "A_RESEARCH")
 
     def test_missing_valuation_cannot_enter_a(self):
         scores = {"composite_score": 90, "leave_one_dimension_out_floor": 80, "leave_one_source_out_floor": 80, "confidence_score": 90, "evidence_coverage_score": 100, "positive_dimensions": ["financial_quality", "valuation", "demand_catalyst"]}
