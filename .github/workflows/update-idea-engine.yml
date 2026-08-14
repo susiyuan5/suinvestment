@@ -68,11 +68,6 @@ jobs:
           print(json.dumps({'valid': result['valid'], 'errors': result['errors'][:10], 'validated_symbols': sum(1 for row in result['coverage'].values() if row['valid'])}, ensure_ascii=False))
         continue-on-error: true
 
-      - name: Generate research-only short-term trade plans
-        env:
-          PYTHONPATH: .
-        run: python -m research.idea_engine.v3.short_term_trade_plan --output research/results/v3_1/short-term-trade-plans-v1_1/latest.json
-
       - name: Refresh extended history for permanent OOS calibration
         env:
           PYTHONPATH: .
@@ -82,6 +77,16 @@ jobs:
         env:
           PYTHONPATH: .
         run: python -m research.idea_engine.v3.historical_oos --prices "$RUNNER_TEMP/historical-oos-bars.json"
+
+      - name: Generate global-style entry and exit OOS report
+        env:
+          PYTHONPATH: .
+        run: python -m research.idea_engine.v3.style_fusion_oos --prices "$RUNNER_TEMP/historical-oos-bars.json"
+
+      - name: Generate research-only v1.2 short-term trade plans
+        env:
+          PYTHONPATH: .
+        run: python -m research.idea_engine.v3.short_term_trade_plan
 
       - name: Run complete quality checks
         run: |
@@ -108,12 +113,15 @@ jobs:
             - 候选结果仅可人工复核
             - 1–4 周为短线验证窗口，12 周仅监测信号衰减
             - 历史 OOS 只校验价格择时层，冻结训练边界，不代替实时 Shadow
+            - v1.2 将趋势、成交量、价格结构和 ATR 风险分别设为不可互相补偿的门禁
             - 数据源为免费 SEC EDGAR 与公开价格数据，无需付费 API Key
           add-paths: |
             research/results/v3_1/idea-engine/**
             research/results/v3_1/short-term-trade-plans/**
             research/results/v3_1/short-term-trade-plans-v1_1/**
+            research/results/v3_1/short-term-trade-plans-v1_2/**
             research/results/v3_1/historical-oos-price-timing/**
+            research/results/v3_1/global-style-short-term-oos/**
             data/short-term-daily-bars-v1.json
             data/idea-engine-events-v1.json
             data/idea-engine-v3/price-trends.json

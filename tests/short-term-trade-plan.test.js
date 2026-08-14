@@ -11,7 +11,17 @@ test('safe payload and research-only status labels are stable', () => {
   assert.equal(plan.statusLabel('blocked'), '\u6570\u636e\u963b\u65ad');
   assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v1', research_only: true, no_trade: true, plans: [] }).schema_version, 'short-term-trade-plan-v1');
   assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v1.1', research_only: true, no_trade: true, plans: [] }).schema_version, 'short-term-trade-plan-v1.1');
+  assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v1.2', research_only: true, no_trade: true, plans: [] }).schema_version, 'short-term-trade-plan-v1.2');
   assert.equal(plan.safePayload({ schema_version: 'short-term-trade-plan-v2', research_only: true, no_trade: true, plans: [] }), null);
+});
+
+test('v1.2 style labels and yellow-regime sizing remain research-only', () => {
+  assert.equal(plan.modelLabel('vcp_darvas_breakout'), 'VCP / 箱体放量突破');
+  assert.equal(plan.reasonLabel('trend_template_failed'), '趋势模板尚未通过');
+  const full = plan.calculatePositionSize(100000, 10000, 100, 95, config, 0, 1);
+  const half = plan.calculatePositionSize(100000, 10000, 100, 95, config, 0, .5);
+  assert.equal(half.risk_budget, full.risk_budget / 2);
+  assert.ok(half.shares <= full.shares);
 });
 
 test('indicators and position sizing are deterministic', () => {
