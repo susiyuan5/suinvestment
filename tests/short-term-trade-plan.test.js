@@ -19,6 +19,8 @@ test('safe payload and research-only status labels are stable', () => {
 test('three-strategy labels remain conditional and never imply calibrated prediction', () => {
   assert.equal(plan.strategyStatusLabel({ status: 'historical_edge_failed' }), '已触发但历史优势未通过');
   assert.equal(plan.strategyStatusLabel({ status: 'waiting' }), '等待全部条件触发');
+  assert.equal(plan.statusLabel('historical_review'), '历史 OOS 已通过，可人工研究');
+  assert.equal(plan.statusLabel('historical_watch'), '历史 OOS 初步为正，仅供观察');
   const memory = new Map();
   global.localStorage = { getItem: key => memory.has(key) ? memory.get(key) : null, setItem: (key, value) => memory.set(key, value) };
   plan.saveSelection('tsm', 'oneil_volume_breakout');

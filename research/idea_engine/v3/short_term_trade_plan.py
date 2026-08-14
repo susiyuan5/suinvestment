@@ -251,6 +251,8 @@ def build_strategy_rows(indicators, signals, config, historical_oos_by_model, go
         triggered = strategy_triggered(signals, model)
         evidence = dict(historical_oos_by_model.get(model) or {})
         oos_passed = evidence.get("passed") is True
+        evidence_tier = str(evidence.get("evidence_tier") or ("validated" if oos_passed else "unavailable"))
+        oos_provisional = evidence_tier == "provisional_positive"
         signal = build_signal(indicators, signals, config, model, triggered=triggered)
         risk_distance = signal["risk_per_share"] / signal["entry_reference"] if signal else None
         local_reasons = list(global_blockers)
@@ -260,10 +262,14 @@ def build_strategy_rows(indicators, signals, config, historical_oos_by_model, go
             status, status_label = "blocked", "研究条件阻断"
         elif not triggered:
             status, status_label = "waiting", "等待全部条件触发"
-        elif not oos_passed:
+        elif not oos_passed and not oos_provisional:
             status, status_label = "historical_edge_failed", "已触发但历史优势未通过"
         elif governance.get("manual_review_eligible") is True:
             status, status_label = "conditional_review", "正式门禁通过，待人工复核"
+        elif oos_passed:
+            status, status_label = "historical_review", "历史 OOS 已通过，可人工研究"
+        elif oos_provisional:
+            status, status_label = "historical_watch", "历史 OOS 初步为正，仅供观察"
         elif governance.get("preliminary_review_eligible") is True:
             status, status_label = "preliminary_review", "初步门禁通过，仅可人工研究"
         else:
@@ -272,8 +278,9 @@ def build_strategy_rows(indicators, signals, config, historical_oos_by_model, go
             "strategy_id": model, "label": labels.get(model, model), "status": status, "status_label": status_label,
             "triggered": triggered, "condition_checks": checks,
             "missing_conditions": [item["code"] for item in checks if not item["passed"]] + local_reasons,
-            "entry_plan": signal, "historical_oos": {**evidence, "passed": oos_passed, "status": "passed" if oos_passed else "failed_or_insufficient"},
+            "entry_plan": signal, "historical_oos": {**evidence, "passed": oos_passed, "status": "passed" if oos_passed else "provisional_positive" if oos_provisional else "failed_or_insufficient"},
             "prediction_calibrated": False, "research_selection_allowed": status != "blocked", "execution_ready": False,
+            "shadow_validation_status": "mature" if governance.get("manual_review_eligible") is True else "monitoring",
         })
     return rows
 
@@ -296,13 +303,18 @@ def evaluate_three_strategy_plan(candidate, rows, benchmark_rows, config, *, as_
     if not signals.get("trend_template"): base["reason_codes"].append("trend_template_failed")
     hard_blockers = [code for code in base["reason_codes"] if code in {"future_data_detected", "stale_price_data", "qqq_market_state_blocked", "earnings_blackout_3_trading_days"}]
     strategies = build_strategy_rows(indicators, signals, config, historical_oos_by_model, governance, hard_blockers)
-    priority = {"conditional_review": 6, "preliminary_review": 5, "triggered_simulation": 4, "historical_edge_failed": 3, "waiting": 2, "blocked": 1}
+    priority = {"conditional_review": 8, "historical_review": 7, "historical_watch": 6, "preliminary_review": 5, "triggered_simulation": 4, "historical_edge_failed": 3, "waiting": 2, "blocked": 1}
     best = max(strategies, key=lambda row: priority[row["status"]])
-    if best["status"] in {"conditional_review", "preliminary_review"}: status = best["status"]
+    if best["status"] in {"conditional_review", "historical_review", "historical_watch", "preliminary_review"}: status = best["status"]
     elif best["triggered"]: status = "simulation_only"
     elif all(row["status"] == "blocked" for row in strategies): status = "blocked"
     else: status = "waiting_trigger"
+    selected_status = status
+    if status in {"historical_review", "historical_watch"}: status = "preliminary_review"
     status_label = {"conditional_review": "正式门禁通过，待人工复核", "preliminary_review": "初步门禁通过，仅可人工研究", "simulation_only": "已有策略触发，但仅作模拟", "waiting_trigger": "三种策略均在等待触发", "blocked": "数据或风险门禁阻断"}[status]
+    status = selected_status
+    if status == "historical_review": status_label = "历史 OOS 已通过，可人工研究"
+    if status == "historical_watch": status_label = "历史 OOS 初步为正，仅供观察"
     base.update(status=status, status_label=status_label, indicators=indicators, event_status=event_status, market_regime=regime, trigger_models=signals, strategies=strategies, signal=best.get("entry_plan") if best.get("triggered") else None)
     if not any(row["triggered"] for row in strategies): base["reason_codes"].append("no_trigger")
     base["reason_codes"] = list(dict.fromkeys(base["reason_codes"])); base["warnings"] = ["三种策略均为条件情景，不是上涨概率", "未通过历史 OOS 的策略只能记录模拟结果"]
@@ -381,7 +393,7 @@ def generate(candidates_path=DEFAULT_CANDIDATES, prices_path=DEFAULT_PRICES, con
         if ticker_errors:
             plan.update(status="blocked", status_label="数据阻断", signal=None, reason_codes=list(dict.fromkeys(["short_term_daily_bars_unavailable", *ticker_errors])), warnings=["缺少经过验证的日线OHLCV数据；不生成短线交易研究触发建议"])
             if is_v13: plan["strategies"] = blocked_strategy_rows(config, plan["reason_codes"])
-    statuses = ("conditional_review", "preliminary_review", "manual_review_ready", "simulation_only", "waiting_trigger", "waiting_breakout", "waiting_pullback", "chase_blocked", "event_blocked", "invalidated", "blocked")
+    statuses = ("conditional_review", "historical_review", "historical_watch", "preliminary_review", "manual_review_ready", "simulation_only", "waiting_trigger", "waiting_breakout", "waiting_pullback", "chase_blocked", "event_blocked", "invalidated", "blocked")
     governance_keys = ("status", "observation_count", "calendar_week_count", "complete_count", "primary_complete_count", "preliminary_review_requirements", "manual_review_requirements", "reliability_requirements", "preliminary_review_eligible", "manual_review_eligible", "reliability_claim_eligible", "reason")
     methodology = "global-style-short-term-v1.3.0" if is_v13 else "global-style-short-term-v1.2.0" if config.get("style_fusion") else "short-term-trade-plan-v1.1.0"
     return {"schema_version": config.get("output_schema_version", "short-term-trade-plan-v1.1"), "methodology_version": methodology, "generated_at": datetime.now(timezone.utc).isoformat(), "as_of": effective_as_of, "price_as_of": prices.get("as_of"), "research_only": True, "no_trade": True, "benchmark": "QQQ", "config_version": config["schema_version"], "style_fusion": config.get("style_fusion"), "historical_oos_status": style_oos.get("status", "unavailable"), "shadow_governance": {key: governance.get(key) for key in governance_keys}, "data_validation": {"valid": validation["valid"], "errors": validation["errors"], "coverage": validation["coverage"], "common_dates": validation.get("common_dates", 0)}, "plans": plans, "summary": {"candidate_count": len(plans), "strategy_count": sum(len(plan.get("strategies", [])) for plan in plans), "status_counts": {status: sum(plan["status"] == status for plan in plans) for status in statuses}, "manual_review_required": True}}

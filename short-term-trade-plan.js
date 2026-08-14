@@ -4,6 +4,8 @@
 })(typeof self !== "undefined" ? self : this, function (root) {
   "use strict";
   var statuses = { conditional_review: "\u6761\u4ef6\u6ee1\u8db3\uff0c\u5f85\u4eba\u5de5\u786e\u8ba4", preliminary_review: "初步门禁通过，仅可人工研究", manual_review_ready: "\u6761\u4ef6\u6ee1\u8db3\uff0c\u5f85\u4eba\u5de5\u786e\u8ba4", simulation_only: "\u4ec5\u7814\u7a76\u6f14\u7ec3", waiting_trigger: "\u7b49\u5f85\u89e6\u53d1", waiting_breakout: "\u7b49\u5f85\u7a81\u7834", waiting_pullback: "等待回踩", chase_blocked: "\u5df2\u8d85\u8fc7\u8ffd\u9ad8\u4e0a\u9650", event_blocked: "\u8d22\u62a5\u98ce\u9669\u963b\u65ad", invalidated: "\u4fe1\u53f7\u5df2\u5931\u6548", blocked: "\u6570\u636e\u963b\u65ad" };
+  statuses.historical_review = "\u5386\u53f2 OOS \u5df2\u901a\u8fc7\uff0c\u53ef\u4eba\u5de5\u7814\u7a76";
+  statuses.historical_watch = "\u5386\u53f2 OOS \u521d\u6b65\u4e3a\u6b63\uff0c\u4ec5\u4f9b\u89c2\u5bdf";
   function finite(value) { var number = Number(value); return Number.isFinite(number) ? number : null; }
   var supportedSchemas = ["short-term-trade-plan-v1", "short-term-trade-plan-v1.1", "short-term-trade-plan-v1.2", "short-term-trade-plan-v1.3"];
   function safePayload(payload) { return payload && supportedSchemas.indexOf(payload.schema_version) >= 0 && payload.research_only === true && payload.no_trade === true && Array.isArray(payload.plans) ? payload : null; }
@@ -38,7 +40,7 @@
   var selectionKey = "su-investment-pro:short-term-strategy-selections-v1";
   function loadSelections() { try { var value = root.localStorage && root.localStorage.getItem(selectionKey); return value ? JSON.parse(value) : {}; } catch (_) { return {}; } }
   function saveSelection(ticker, strategyId) { var values = loadSelections(); values[String(ticker || "").toUpperCase()] = strategyId; try { if (root.localStorage) root.localStorage.setItem(selectionKey, JSON.stringify(values)); } catch (_) {} return values; }
-  function strategyStatusLabel(strategy) { return strategy && strategy.status_label || { waiting: "等待全部条件触发", historical_edge_failed: "已触发但历史优势未通过", triggered_simulation: "条件已触发，仅作模拟", preliminary_review: "初步门禁通过，仅可人工研究", conditional_review: "正式门禁通过，待人工复核", blocked: "研究条件阻断" }[strategy && strategy.status] || "仅作研究观察"; }
+  function strategyStatusLabel(strategy) { return strategy && strategy.status_label || { waiting: "等待全部条件触发", historical_edge_failed: "已触发但历史优势未通过", historical_review: "历史 OOS 已通过，可人工研究", historical_watch: "历史 OOS 初步为正，仅供观察", triggered_simulation: "条件已触发，仅作模拟", preliminary_review: "初步门禁通过，仅可人工研究", conditional_review: "正式门禁通过，待人工复核", blocked: "研究条件阻断" }[strategy && strategy.status] || "仅作研究观察"; }
   function fixed(value) { return Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "--"; }
   function conditionValue(item) {
     var value = item && item.current;
@@ -85,7 +87,7 @@
     var summary = doc.createElement("summary"); summary.textContent = "查看短线研究计划（仅供人工复核）"; details.appendChild(summary);
     var body = doc.createElement("div"); body.className = "short-term-plan-body";
     appendLine(body, doc, "交易状态", statusLabel(plan.status), "short-term-plan-status");
-    appendLine(body, doc, "安全边界", "不生成订单、不进入本周定投；历史 OOS 与实时 Shadow 缺一不可");
+    appendLine(body, doc, "安全边界", "不生成订单、不进入本周定投；历史 OOS 用于当前筛选，Shadow 仅监测未来退化");
     if (plan.market_regime) appendLine(body, doc, "大盘环境", regimeLabels[plan.market_regime.state] || plan.market_regime.state);
     if (plan.trigger_models) {
       appendLine(body, doc, "趋势模板", passLabel(plan.trigger_models.trend_template));

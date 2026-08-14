@@ -1,8 +1,8 @@
 """Permanent OOS validation for the v1.3 three-strategy short-term engine.
 
-The rules are fixed in the versioned config before the permanent OOS segment is
-evaluated.  This report validates the entry and exit policy only; it does not
-calibrate the Idea Engine composite score or replace live Shadow observations.
+The rules are fixed before the permanent OOS segment is evaluated. This report
+validates the entry and exit policy only; it does not calibrate the Idea Engine
+composite score. Live Shadow remains a non-blocking forward degradation check.
 """
 from __future__ import annotations
 
@@ -35,6 +35,9 @@ DEFAULT_CONFIG = ROOT / "data" / "short-term-trade-plan-v1.3.json"
 DEFAULT_OUTPUT = ROOT / "research" / "results" / "v3_1" / "global-style-short-term-oos-v1_3" / "latest.json"
 SCHEMA_VERSION = "global-style-short-term-oos-v1.3"
 FORWARD_DAYS = 20
+PROVISIONAL_MIN_SAMPLES = 30
+PROVISIONAL_MIN_ORIGIN_DATES = 20
+PROVISIONAL_MIN_HIT_RATE = 0.50
 
 
 def adjusted_signal_price(value, signal_row):
@@ -158,14 +161,18 @@ def build_records(prices, config):
 
 def summarize(rows, seed=RANDOM_SEED):
     if not rows:
-        return {"samples": 0, "origin_dates": 0, "cost_adjusted_hit_rate": None, "hit_rate_ci_low": None, "hit_rate_ci_high": None, "mean_net_relative_return": None, "mean_max_adverse_move": None, "passed": False}
+        return {"samples": 0, "origin_dates": 0, "cost_adjusted_hit_rate": None, "hit_rate_ci_low": None, "hit_rate_ci_high": None, "mean_net_relative_return": None, "mean_max_adverse_move": None, "passed": False, "evidence_tier": "insufficient"}
     bootstrap = block_bootstrap_rate(rows, resamples=BOOTSTRAP_RESAMPLES, seed=seed)
-    passed = len(rows) >= 100 and bootstrap["origin_dates"] >= 26 and bootstrap["ci_low"] is not None and bootstrap["ci_low"] > 0.5 and mean(row["net_relative_return"] for row in rows) > 0
+    mean_return = mean(row["net_relative_return"] for row in rows)
+    passed = len(rows) >= 100 and bootstrap["origin_dates"] >= 26 and bootstrap["ci_low"] is not None and bootstrap["ci_low"] > 0.5 and mean_return > 0
+    provisional = not passed and len(rows) >= PROVISIONAL_MIN_SAMPLES and bootstrap["origin_dates"] >= PROVISIONAL_MIN_ORIGIN_DATES and bootstrap["rate"] is not None and bootstrap["rate"] >= PROVISIONAL_MIN_HIT_RATE and mean_return > 0
+    evidence_tier = "validated" if passed else "provisional_positive" if provisional else "insufficient" if len(rows) < PROVISIONAL_MIN_SAMPLES or bootstrap["origin_dates"] < PROVISIONAL_MIN_ORIGIN_DATES else "no_historical_edge"
     return {
         "samples": len(rows), "origin_dates": bootstrap["origin_dates"], "cost_adjusted_hit_rate": bootstrap["rate"],
         "hit_rate_ci_low": bootstrap["ci_low"], "hit_rate_ci_high": bootstrap["ci_high"],
-        "mean_net_relative_return": round(mean(row["net_relative_return"] for row in rows), 8),
+        "mean_net_relative_return": round(mean_return, 8),
         "mean_max_adverse_move": round(mean(row["max_adverse_move"] for row in rows), 8), "passed": passed,
+        "evidence_tier": evidence_tier,
     }
 
 
@@ -189,6 +196,7 @@ def generate(prices_path=DEFAULT_PRICES, config_path=DEFAULT_CONFIG, *, now=None
     models = list(config.get("strategy_order", STRATEGY_IDS)); by_model = {model: summarize([row for row in test if row["model"] == model], RANDOM_SEED + index + 1) for index, model in enumerate(models)}
     overall = summarize(test)
     passed_models = [model for model, result in by_model.items() if result["passed"]]
+    provisional_models = [model for model, result in by_model.items() if result.get("evidence_tier") == "provisional_positive"]
     enough = overall["samples"] >= 100 and overall["origin_dates"] >= 26
     status = "preliminary_reliable_edge" if passed_models else "preliminary_no_reliable_edge" if enough else "insufficient_oos"
     return {
@@ -199,8 +207,9 @@ def generate(prices_path=DEFAULT_PRICES, config_path=DEFAULT_CONFIG, *, now=None
         "split": split, "sample_counts": {"all": len(records), "train": len(train), "permanent_oos": len(test), "rejected_chase_entries": rejected_chases},
         "overall_oos": overall, "by_model": by_model,
         "reliability_gate": {"minimum_samples": 100, "minimum_origin_dates": 26, "required_ci_low": 0.5, "passed_models": passed_models, "passed": bool(passed_models)},
+        "provisional_gate": {"minimum_samples": PROVISIONAL_MIN_SAMPLES, "minimum_origin_dates": PROVISIONAL_MIN_ORIGIN_DATES, "minimum_hit_rate": PROVISIONAL_MIN_HIT_RATE, "requires_positive_mean_net_relative_return": True, "models": provisional_models},
         "current_mappings": current_mappings(prices, config, by_model),
-        "warnings": ["当前股票池历史回填仍存在幸存者偏差。", "仅校验v1.3三种策略的价格、成交量、市场门禁和退出规则，不校验Idea Engine综合分。", "同一日期可由多种策略分别触发；各策略只使用自己的OOS结果。", "任何未通过的策略不得由其他风格分数补偿。", "历史OOS不替代实时Shadow，不生成订单。"],
+        "warnings": ["当前股票池历史回填仍存在幸存者偏差。", "仅校验v1.3三种策略的价格、成交量、市场门禁和退出规则，不校验Idea Engine综合分。", "同一日期可由多种策略分别触发；各策略只使用自己的OOS结果。", "任何未通过的策略不得由其他风格分数补偿。", "历史 OOS 用于当前研究筛选；实时 Shadow 仅监测未来退化；两者都不生成订单。"],
     }
 
 

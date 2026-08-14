@@ -62,13 +62,31 @@ test("research limitations, thesis risks and Chinese metadata stay separate", ()
   const candidate = { first_rejection: "free_source_scope_limited", gates_failed: ["free_source_scope_limited", "model_not_calibrated"], what_kills_thesis: ["收入或经营利润同比转负"] };
   assert.equal(engine.sectorLabel("semiconductors"), "半导体");
   assert.equal(engine.researchTypeLabel("CYCLICAL_RECOVERY"), "周期复苏");
-  assert.deepEqual(engine.researchLimitations(candidate), ["免费数据限制：缺少一致预期、电话会或事件催化证据", "模型尚未完成 Shadow 校准"]);
+  assert.deepEqual(engine.researchLimitations(candidate), ["免费数据限制：缺少一致预期、电话会或事件催化证据", "完整模型尚未实时校准；候选已使用历史 OOS 参考"]);
   assert.deepEqual(engine.thesisKillRisks(candidate), ["收入或经营利润同比转负"]);
 });
 
 test("Shadow reliability progress uses report requirements", () => {
   const progress = engine.shadowProgress({ observation_count: 1, calendar_week_count: 1, primary_complete_count: 0, reliability_requirements: { observation_count: 52, calendar_week_count: 52, primary_complete_count: 26 } });
   assert.equal(progress, "Shadow 校准进度：观察 1/52 次 · 日历周 1/52 · 完整成熟结果 0/26");
+});
+
+test("historical OOS drives research sorting while Shadow remains monitoring only", () => {
+  const payload = {
+    schema_version: "historical-oos-price-timing-v1",
+    research_only: true,
+    no_trade: true,
+    scope: "price_timing_layer_only",
+    composite_score_calibrated: false,
+    current_mappings: {
+      A: { evidence_status: "no_historical_edge", timing_score: 90, mean_oos_net_relative_return: -0.01 },
+      B: { evidence_status: "positive_skew_unconfirmed", timing_score: 70, mean_oos_net_relative_return: 0.01 },
+      C: { evidence_status: "preliminary_reliable_edge", timing_score: 60, mean_oos_net_relative_return: 0.005 }
+    }
+  };
+  const rows = ["A", "B", "C"].map(ticker => ({ ticker, composite_score: 50, historical_oos_reference: engine.historicalReference(ticker, payload) }));
+  assert.deepEqual(engine.sortCandidates(rows, "historical").map(row => row.ticker), ["C", "B", "A"]);
+  assert.equal(engine.historicalScreenSummary(payload), "历史 OOS 已用于候选排序：初步通过 1 只 · 正收益偏度待确认 1 只");
 });
 
 test("historical OOS is accepted only as a separate no-trade price-timing layer", () => {

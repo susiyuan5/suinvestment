@@ -273,6 +273,14 @@ python -m research.idea_engine.run_idea_engine --provider free
 
 免费链只生成最多 10 个 Shadow 研究候选。由于不含分析师一致预期、完整电话会和新闻事件语义，所有候选都会带有 `free_source_scope_limited` 门禁，不能成为 A 级，也不会进入本周定投。Octagon 适配器仅作为默认关闭的可选付费兼容层保留，自动工作流不安装或调用它。
 
+## 潜力股历史 OOS 优先筛选
+
+当前潜力股短线候选不需要等待未来 52 周才展示。每周研究工作流会先使用自 2020 年起的历史日线生成永久留出 OOS 报告，再对当前 80 只研究股票进行排序。排序顺序为：历史证据等级、历史成本后平均相对 QQQ 收益、当前价格择时分、综合研究分。
+
+历史 OOS 使用信号日收盘、下一交易日调整后开盘进入，并扣除默认交易摩擦；训练区间与永久留出区间执行 purge 和 embargo。历史结果只校验价格与成交量择时层，仍存在当前股票池回填造成的幸存者偏差，因此命中率不是上涨概率，也不校准综合分。
+
+实时 Shadow 保留为向前监测层，用于发现历史关系是否退化，但不再阻断历史候选展示。无论历史或 Shadow 状态如何，结果均保持 `research_only=true`、`no_trade=true`，不进入本周定投且不生成订单。
+
 ## Phase 6S-6T Shadow Observation
 
 Phase 6S records a research-only observation snapshot for the 12 monitored symbols:

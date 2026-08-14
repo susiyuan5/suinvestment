@@ -25,6 +25,7 @@ DEFAULT_OUTPUT = ROOT / "research" / "results" / "v3_1" / "idea-engine"
 CONFIG_PATH = Path(__file__).with_name("config.v3.json")
 UNIVERSE_PATH = ROOT / "data" / "research-universe-sector-balanced-80.json"
 PRICES_PATH = ROOT / "data" / "research-prices-sector-balanced-80.json"
+HISTORICAL_OOS_PATH = ROOT / "research" / "results" / "v3_1" / "historical-oos-price-timing" / "latest.json"
 
 
 def load(path: Path, fallback: Any) -> Any:
@@ -45,6 +46,46 @@ def atomic_json(path: Path, payload: Any) -> None:
 
 def _as_of(value: str | None) -> str:
     return value or datetime.now(timezone.utc).isoformat()
+
+
+def _historical_reference(payload: dict[str, Any], ticker: str, as_of: str) -> dict[str, Any] | None:
+    """Return a safe past-only price-timing reference for research ranking."""
+    if not isinstance(payload, dict) or any((
+        payload.get("schema_version") != "historical-oos-price-timing-v1",
+        payload.get("research_only") is not True,
+        payload.get("no_trade") is not True,
+        payload.get("scope") != "price_timing_layer_only",
+        payload.get("composite_score_calibrated") is not False,
+    )):
+        return None
+    mapping = (payload.get("current_mappings") or {}).get(str(ticker).upper())
+    if not isinstance(mapping, dict):
+        return None
+    reference_as_of = str(mapping.get("as_of") or payload.get("as_of") or "")[:10]
+    if not reference_as_of or reference_as_of > str(as_of)[:10]:
+        return None
+    allowed = {
+        "as_of", "timing_score", "calibration_bin", "oos_samples", "oos_origin_dates",
+        "oos_cost_adjusted_hit_rate", "oos_hit_rate_ci_low", "oos_hit_rate_ci_high",
+        "mean_oos_net_relative_return", "evidence_status",
+    }
+    return {key: mapping.get(key) for key in allowed}
+
+
+def _historical_priority(candidate: dict[str, Any]) -> tuple[float, float, float, float, str]:
+    reference = candidate.get("historical_oos_reference") or {}
+    status_rank = {
+        "preliminary_reliable_edge": 3,
+        "positive_skew_unconfirmed": 2,
+        "no_historical_edge": 1,
+    }.get(str(reference.get("evidence_status") or ""), 0)
+    return (
+        -float(status_rank),
+        -float(reference.get("mean_oos_net_relative_return") or -1),
+        -float(reference.get("timing_score") or 0),
+        -float(candidate.get("composite_score") or 0),
+        str(candidate.get("ticker") or ""),
+    )
 
 
 def research_symbols() -> list[str]:
@@ -300,7 +341,13 @@ def _shadow(output_dir: Path, candidates: list[dict[str, Any]], as_of: str, conf
     return governance
 
 
-def run(output_dir: Path = DEFAULT_OUTPUT, as_of: str | None = None, *, provider_fetcher: Callable[..., dict[str, Any]] | None = None) -> dict[str, Any]:
+def run(
+    output_dir: Path = DEFAULT_OUTPUT,
+    as_of: str | None = None,
+    *,
+    provider_fetcher: Callable[..., dict[str, Any]] | None = None,
+    historical_oos_path: Path = HISTORICAL_OOS_PATH,
+) -> dict[str, Any]:
     config = load(CONFIG_PATH, {})
     frozen = _as_of(as_of)
     payload = _provider_payload(frozen, provider_fetcher)
@@ -319,7 +366,17 @@ def run(output_dir: Path = DEFAULT_OUTPUT, as_of: str | None = None, *, provider
         for raw in payload.get("candidates", [])
         if (ticker := str(raw.get("ticker", "")).upper()) in accepted_by_ticker
     ]
-    candidates.sort(key=lambda item: (-float(item["composite_score"]), item["ticker"]))
+    historical_payload = load(historical_oos_path, {})
+    for candidate in candidates:
+        reference = _historical_reference(historical_payload, candidate["ticker"], frozen)
+        candidate["historical_oos_reference"] = reference
+        candidate["historical_screen_status"] = (
+            "HISTORICAL_RESEARCH_CANDIDATE" if reference and reference.get("evidence_status") == "preliminary_reliable_edge"
+            else "HISTORICAL_WATCH_CANDIDATE" if reference and reference.get("evidence_status") == "positive_skew_unconfirmed"
+            else "HISTORICAL_NO_EDGE" if reference
+            else "HISTORICAL_UNAVAILABLE"
+        )
+    candidates.sort(key=_historical_priority)
     displayed = candidates[: int(config["output"]["max_candidates"])]
     raw_hash = input_hash(payload)
     snapshot_name = f"{frozen[:10]}-{raw_hash[:12]}.json"
@@ -350,6 +407,14 @@ def run(output_dir: Path = DEFAULT_OUTPUT, as_of: str | None = None, *, provider
         "eligible_universe_count": len(accepted),
         "scored_candidate_count": len(candidates),
         "source_manifest": {"input": "direct_free_public_data", "input_snapshot": f"input-snapshots/{snapshot_name}", "providers": ["SEC_EDGAR", "PUBLIC_PRICE"], "api_key_required": False, "failures": payload.get("failures", [])},
+        "selection_policy": {
+            "primary_reference": "permanent_historical_oos_price_timing",
+            "tie_breakers": ["historical_evidence_status", "historical_mean_net_relative_return", "current_timing_score", "composite_research_score"],
+            "shadow_role": "forward_monitoring_only",
+            "shadow_blocks_historical_screen": False,
+            "composite_score_calibrated": False,
+            "survivorship_bias_controlled": bool(historical_payload.get("survivorship_bias_controlled")) if isinstance(historical_payload, dict) else False,
+        },
         "funnel_summary": funnel_summary(candidates),
         "candidates": displayed,
         "rejected_candidates": rejected_rows,
@@ -357,6 +422,10 @@ def run(output_dir: Path = DEFAULT_OUTPUT, as_of: str | None = None, *, provider
         "input_hash": raw_hash,
         "shadow_status": governance["status"],
     }
+    result["warnings"].extend([
+        "历史永久 OOS 用于当前研究排序；Shadow 仅用于向前监测，不阻断历史候选展示。",
+        "历史回填仍存在幸存者偏差，历史命中率和收益不能解释为未来上涨概率。",
+    ])
     validate_payload(result)
     output_dir.mkdir(parents=True, exist_ok=True)
     atomic_json(output_dir / "latest-candidates.json", result)
@@ -378,8 +447,9 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--as-of", default="")
     parser.add_argument("--provider", choices=("free",), default="free")
+    parser.add_argument("--historical-oos", type=Path, default=HISTORICAL_OOS_PATH)
     args = parser.parse_args()
-    result = run(args.output, args.as_of or None)
+    result = run(args.output, args.as_of or None, historical_oos_path=args.historical_oos)
     print(f"idea_engine_v3_1_status={result['status']} screened={result['screened_universe_count']} candidates={len(result['candidates'])}")
 
 

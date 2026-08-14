@@ -45,10 +45,25 @@ jobs:
           print("provider_manifest_valid=true")
           PY
 
-      - name: Generate isolated v3.1 candidates from free public data
+      - name: Refresh extended history for permanent OOS calibration
         env:
           PYTHONPATH: .
-        run: python -m research.idea_engine.v3.run_idea_engine_v3 --provider free --output research/results/v3_1/idea-engine
+        run: python -m scripts.refresh_short_term_daily_bars --start 2020-01-01 --output "$RUNNER_TEMP/historical-oos-bars.json"
+
+      - name: Generate leakage-aware historical OOS price-timing report
+        env:
+          PYTHONPATH: .
+        run: python -m research.idea_engine.v3.historical_oos --prices "$RUNNER_TEMP/historical-oos-bars.json"
+
+      - name: Generate global-style entry and exit OOS report
+        env:
+          PYTHONPATH: .
+        run: python -m research.idea_engine.v3.style_fusion_oos --prices "$RUNNER_TEMP/historical-oos-bars.json"
+
+      - name: Generate history-prioritized v3.1 candidates from free public data
+        env:
+          PYTHONPATH: .
+        run: python -m research.idea_engine.v3.run_idea_engine_v3 --provider free --historical-oos research/results/v3_1/historical-oos-price-timing/latest.json --output research/results/v3_1/idea-engine
 
       - name: Build same-origin research price fallback
         run: python scripts/build_idea_price_trends.py
@@ -71,21 +86,6 @@ jobs:
           result = validate_snapshot(payload, universe['research_universe_symbols'], as_of=payload.get('as_of'))
           print(json.dumps({'valid': result['valid'], 'errors': result['errors'][:10], 'validated_symbols': sum(1 for row in result['coverage'].values() if row['valid'])}, ensure_ascii=False))
         continue-on-error: true
-
-      - name: Refresh extended history for permanent OOS calibration
-        env:
-          PYTHONPATH: .
-        run: python -m scripts.refresh_short_term_daily_bars --start 2020-01-01 --output "$RUNNER_TEMP/historical-oos-bars.json"
-
-      - name: Generate leakage-aware historical OOS price-timing report
-        env:
-          PYTHONPATH: .
-        run: python -m research.idea_engine.v3.historical_oos --prices "$RUNNER_TEMP/historical-oos-bars.json"
-
-      - name: Generate global-style entry and exit OOS report
-        env:
-          PYTHONPATH: .
-        run: python -m research.idea_engine.v3.style_fusion_oos --prices "$RUNNER_TEMP/historical-oos-bars.json"
 
       - name: Generate research-only v1.3 three-strategy trade plans
         env:

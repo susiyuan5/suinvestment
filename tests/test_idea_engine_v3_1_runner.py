@@ -101,6 +101,29 @@ class IdeaEngineV31RunnerTests(unittest.TestCase):
             self.assertEqual(governance["reliability_requirements"]["observation_count"], 52)
             self.assertTrue((Path(temp_dir) / result["source_manifest"]["input_snapshot"]).exists())
 
+    def test_historical_oos_prioritizes_research_without_waiting_for_shadow(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            historical = root / "historical.json"
+            historical.write_text(json.dumps({
+                "schema_version": "historical-oos-price-timing-v1",
+                "research_only": True,
+                "no_trade": True,
+                "scope": "price_timing_layer_only",
+                "composite_score_calibrated": False,
+                "survivorship_bias_controlled": False,
+                "current_mappings": {
+                    "TSM": {"as_of": "2026-08-01", "evidence_status": "no_historical_edge", "timing_score": 20, "mean_oos_net_relative_return": -0.01},
+                    "AAPL": {"as_of": "2026-08-01", "evidence_status": "positive_skew_unconfirmed", "timing_score": 80, "mean_oos_net_relative_return": 0.01, "oos_samples": 1000, "oos_origin_dates": 60},
+                },
+            }), encoding="utf-8")
+            result = run(root / "output", AS_OF, provider_fetcher=provider, historical_oos_path=historical)
+            self.assertEqual(result["candidates"][0]["ticker"], "AAPL")
+            self.assertEqual(result["candidates"][0]["historical_screen_status"], "HISTORICAL_WATCH_CANDIDATE")
+            self.assertFalse(result["selection_policy"]["shadow_blocks_historical_screen"])
+            self.assertEqual(result["selection_policy"]["shadow_role"], "forward_monitoring_only")
+            self.assertEqual(result["shadow_status"], "not_mature")
+
     def test_retry_at_same_as_of_does_not_duplicate_or_rewrite_shadow_observation(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             output = Path(temp_dir)

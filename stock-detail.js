@@ -204,7 +204,7 @@
           appendOptionalFact(doc, v3Facts, "研究周期", "短线 1–4 周；以 4 周相对 QQQ 表现为主要验证目标");
           appendOptionalFact(doc, v3Facts, "数据完整度", Number(candidate.evidence_coverage_score).toFixed(1) + "%");
           appendOptionalFact(doc, v3Facts, "证据独立度", Number(candidate.evidence_independence_score).toFixed(1) + "%");
-          appendOptionalFact(doc, v3Facts, "模型校准度", candidate.model_calibration_score === null || candidate.model_calibration_score === undefined ? "尚未验证" : Number(candidate.model_calibration_score).toFixed(1) + "%");
+          appendOptionalFact(doc, v3Facts, "完整模型实时校准", candidate.model_calibration_score === null || candidate.model_calibration_score === undefined ? "Shadow 监测中；不阻断历史筛选" : Number(candidate.model_calibration_score).toFixed(1) + "%");
           appendOptionalFact(doc, v3Facts, "稳健分口径", typeof engine.robustScoreExplanation === "function" ? engine.robustScoreExplanation(candidate) : "删去任一评分维度或证据来源后的最低结果，不是上涨概率");
           var oos = typeof engine.historicalOosDetails === "function" ? engine.historicalOosDetails(ticker, historicalOos) : null;
           appendOptionalFact(doc, v3Facts, "历史 OOS（价格择时层）", oos && oos.text);
