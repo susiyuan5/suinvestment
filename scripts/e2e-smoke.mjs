@@ -151,6 +151,9 @@ async function main() {
     assert.match(await ideaCard.textContent(), /历史 OOS（价格择时层）/, "candidate card should expose the separate historical OOS evidence");
     assert.match(await ideaCard.textContent(), /不校验综合分/, "historical timing evidence must not be presented as composite-score calibration");
     assert.doesNotMatch(await ideaCard.textContent(), /剔除单源最低/);
+    assert.equal(await ideaCard.locator(".idea-engine-strategy-chip:visible").count(), 3, "homepage candidate cards should show only three compact strategy states");
+    assert.equal(await ideaCard.locator(":scope > .short-term-plan-details:visible").count(), 0, "full short-term plans should stay off the compact homepage card");
+    await ideaCard.screenshot({ path: "output/playwright/idea-engine-compact-card-desktop.png" });
     const ideaTicker = (await ideaCard.locator("h3").textContent()).trim();
     const ideaTitleLink = ideaCard.getByRole("link", { name: `查看 ${ideaTicker} 公司与研究详情` });
     const detailHref = await ideaTitleLink.getAttribute("href");
@@ -163,16 +166,9 @@ async function main() {
     assert.match(await detailPage.locator("#stockDetailPrice").textContent(), /USD \d+\.\d{2}/, "detail page should show the latest quote with currency");
     assert.match(await detailPage.locator("#stockDetailResearchTitle").textContent(), /综合判断/, "detail page should retain the research view");
     assert.ok((await detailPage.locator("#stockDetailChartSummary").textContent()).trim().length > 0, "detail chart should have an accessible text summary");
+    assert.equal(await detailPage.locator("#stockDetailShortTermPlan .short-term-strategy-card").count(), 3, "stock detail should retain all three complete strategy plans");
     await detailPage.screenshot({ path: "output/playwright/stock-detail-desktop.png", fullPage: true });
     await detailPage.close();
-    const shortTermDetails = ideaCard.locator(".short-term-plan-details");
-    if (await shortTermDetails.count()) {
-      await shortTermDetails.locator(":scope > summary").click();
-      assert.equal(await shortTermDetails.locator(".short-term-strategy-card").count(), 3, "each candidate should expose exactly three independent entry strategies");
-      assert.equal(await shortTermDetails.locator(".short-term-strategy-choice input[type='radio']").count(), 3, "each strategy should expose a research-only selection control");
-      assert.match(await shortTermDetails.textContent(), /OOS/, "each strategy view should disclose its historical OOS gate");
-      await shortTermDetails.screenshot({ path: "output/playwright/short-term-three-strategies-desktop.png" });
-    }
     await ideaCard.locator("details").first().locator(":scope > summary").click();
     const sourceLink = ideaCard.locator("a[target='_blank']").first();
     if (await sourceLink.count()) assert.equal(await sourceLink.getAttribute("rel"), "noopener noreferrer");

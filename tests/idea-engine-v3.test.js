@@ -35,6 +35,16 @@ test("research grade and short-term state stay separate", () => {
   assert.deepEqual(coverage.missing, ["一致预期", "电话会", "事件证据"]);
 });
 
+test("homepage strategy summary stays compact and preserves three independent states", () => {
+  const rows = engine.compactStrategyRows({ strategies: [
+    { strategy_id: "oneil_volume_breakout", label: "策略一：放量突破", status: "waiting" },
+    { strategy_id: "trend_pullback", label: "策略二：趋势回踩", status: "historical_edge_failed" },
+    { strategy_id: "vcp_darvas_breakout", label: "策略三：VCP／箱体突破", status: "blocked" }
+  ] });
+  assert.deepEqual(rows.map((row) => [row.label, row.status_label]), [["放量突破", "等待"], ["趋势回踩", "历史未通过"], ["VCP／箱体突破", "阻断"]]);
+  assert.equal(engine.compactStrategyRows({ strategies: [] }).length, 0);
+});
+
 test("research limitations, thesis risks and Chinese metadata stay separate", () => {
   const candidate = { first_rejection: "free_source_scope_limited", gates_failed: ["free_source_scope_limited", "model_not_calibrated"], what_kills_thesis: ["收入或经营利润同比转负"] };
   assert.equal(engine.sectorLabel("semiconductors"), "半导体");

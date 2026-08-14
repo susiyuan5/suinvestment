@@ -101,6 +101,15 @@
     return normalized ? "stock-detail.html?ticker=" + encodeURIComponent(normalized) : "";
   }
   function addText(doc, parent, tag, value, className) { var node = doc.createElement(tag); if (className) node.className = className; node.textContent = value; parent.appendChild(node); return node; }
+  function compactStrategyStatus(status) {
+    return { waiting: "等待", historical_edge_failed: "历史未通过", triggered_simulation: "仅作模拟", preliminary_review: "初步复核", conditional_review: "人工复核", blocked: "阻断" }[String(status || "")] || "研究观察";
+  }
+  function compactStrategyRows(plan) {
+    return list(plan && plan.strategies).slice(0, 3).map(function (strategy) {
+      var labelValue = String(strategy && (strategy.label || strategy.strategy_id) || "策略").replace(/^策略[一二三1-3][:：]\s*/, "");
+      return { id: String(strategy && strategy.strategy_id || ""), label: labelValue, status: String(strategy && strategy.status || "blocked"), status_label: compactStrategyStatus(strategy && strategy.status) };
+    });
+  }
   function createCard(candidate, doc, shortTermPlans, historicalOos) {
     var ticker = normalizeTicker(candidate.ticker);
     var shortTermPlan = shortTermPlans && shortTermPlans[String(candidate.ticker || "").toUpperCase()];
@@ -127,6 +136,12 @@
     addText(doc, card, "p", "不进入本周定投，不生成买入金额。", "idea-engine-research-limit");
     addText(doc, card, "p", "交易状态：" + (shortTermPlan && root.ShortTermTradePlan && typeof root.ShortTermTradePlan.statusLabel === "function" ? root.ShortTermTradePlan.statusLabel(shortTermPlan.status) : "尚未形成有效短线计划"), "idea-engine-trade-status");
     if (shortTermPlan && root.ShortTermTradePlan && typeof root.ShortTermTradePlan.planSummary === "function") addText(doc, card, "p", root.ShortTermTradePlan.planSummary(shortTermPlan), "idea-engine-trade-reason");
+    var strategyRows = compactStrategyRows(shortTermPlan);
+    if (strategyRows.length) {
+      var strategySummary = doc.createElement("div"); strategySummary.className = "idea-engine-strategy-summary"; strategySummary.setAttribute("aria-label", "三种进场策略状态");
+      strategyRows.forEach(function (strategy) { addText(doc, strategySummary, "span", strategy.label + " · " + strategy.status_label, "idea-engine-strategy-chip status-" + strategy.status); });
+      card.appendChild(strategySummary);
+    }
     if (["idea-engine-v3", "idea-engine-v3.1"].indexOf(candidate.schema_version) >= 0) {
       addText(doc, card, "p", [text(candidate.company_name, ticker), sectorLabel(candidate.sector), researchTypeLabel(candidate.research_type)].join(" · "), "idea-engine-metadata");
       if (candidate.schema_version === "idea-engine-v3.1") {
@@ -152,7 +167,7 @@
     var values = candidate.dimensions || candidate.family_scores || {};
     if (["idea-engine-v3", "idea-engine-v3.1"].indexOf(candidate.schema_version) < 0) { Object.keys(dimensionLabels).forEach(function (key) { if (!Object.prototype.hasOwnProperty.call(values, key) || !Number.isFinite(Number(values[key]))) return; var row = doc.createElement("div"); row.className = "idea-engine-dimension"; var labelNode = addText(doc, row, "span", dimensionLabels[key] + "：" + formatScore(values[key]), "idea-engine-dimension-label"); labelNode.setAttribute("aria-label", dimensionLabels[key] + "评分 " + formatScore(values[key])); var bar = doc.createElement("span"); bar.className = "idea-engine-dimension-bar"; var fill = doc.createElement("span"); fill.className = "idea-engine-dimension-fill"; fill.style.width = Math.max(0, Math.min(100, Number(values[key]))) + "%"; bar.appendChild(fill); row.appendChild(bar); dimensions.appendChild(row); }); card.appendChild(dimensions); }
     var detail = doc.createElement("details");
-    var summary = doc.createElement("summary"); summary.textContent = "查看研究详情"; detail.appendChild(summary);
+    var summary = doc.createElement("summary"); summary.textContent = "展开研究摘要"; detail.appendChild(summary);
     var body = doc.createElement("div"); body.className = "idea-engine-detail";
     detailSections(candidate).forEach(function (section) { var block = doc.createElement("section"); block.className = "idea-engine-detail-section"; addText(doc, block, "h4", section.title); var paragraph = addText(doc, block, "p", section.values.join("；")); body.appendChild(block); });
     if (["idea-engine-v3", "idea-engine-v3.1"].indexOf(candidate.schema_version) >= 0 && candidate.score_contributions && Object.keys(candidate.score_contributions).length) { var contributionBlock = doc.createElement("section"); contributionBlock.className = "idea-engine-detail-section"; addText(doc, contributionBlock, "h4", "评分贡献分解"); addText(doc, contributionBlock, "p", Object.keys(candidate.score_contributions).map(function (key) { return (dimensionLabels[key] || key) + " " + formatScore(candidate.score_contributions[key]); }).join("；")); body.appendChild(contributionBlock); }
@@ -228,5 +243,5 @@
     fetchJson("research/results/v3_1/idea-engine/latest-candidates.json").catch(function () { return fetchJson("research/results/v3/idea-engine/latest-candidates.json"); }).catch(function () { return fetchJson("research/results/v2/idea-engine/latest-candidates.json").then(function (payload) { payload.source_version = "v2"; return payload; }); }).then(function (payload) { var resultRoot = payload.source_version === "v2" ? "research/results/v2" : payload.schema_version === "idea-engine-v3.1" ? "research/results/v3_1" : "research/results/v3"; return Promise.all([payload, fetchJson(resultRoot + "/idea-engine/shadow/governance-report.json").catch(function () { return null; }), fetchJson("research/results/v3_1/short-term-trade-plans-v1_3/latest.json").catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans-v1_2/latest.json"); }).catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans-v1_1/latest.json"); }).catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans/latest.json"); }).catch(function () { return null; }), fetchJson("research/results/v3_1/historical-oos-price-timing/latest.json").catch(function () { return null; })]); }).then(function (values) { render(values[0], elements, doc, values[1], values[2], values[3]); }).catch(function () { render(null, elements, doc, null, null, null); });
   }
   if (typeof document !== "undefined" && typeof fetch === "function") init(document, fetch);
-  return { safePayload: safePayload, safeHistoricalOos: safeHistoricalOos, historicalOosDetails: historicalOosDetails, gradeLabel: label, researchGradeLabel: label, workflowLabel: workflowLabel, rejectionLabel: rejectionLabel, sectorLabel: sectorLabel, researchTypeLabel: researchTypeLabel, coverageDetails: coverageDetails, researchLimitations: researchLimitations, thesisKillRisks: thesisKillRisks, shadowProgress: shadowProgress, dataLimitation: dataLimitation, portfolioRelationLabel: portfolioRelationLabel, formatScore: formatScore, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, normalizeTicker: normalizeTicker, detailHref: detailHref, filterCandidates: filterCandidates, sortCandidates: sortCandidates, render: render, init: init };
+  return { safePayload: safePayload, safeHistoricalOos: safeHistoricalOos, historicalOosDetails: historicalOosDetails, gradeLabel: label, researchGradeLabel: label, workflowLabel: workflowLabel, rejectionLabel: rejectionLabel, sectorLabel: sectorLabel, researchTypeLabel: researchTypeLabel, coverageDetails: coverageDetails, researchLimitations: researchLimitations, thesisKillRisks: thesisKillRisks, shadowProgress: shadowProgress, dataLimitation: dataLimitation, portfolioRelationLabel: portfolioRelationLabel, formatScore: formatScore, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, normalizeTicker: normalizeTicker, detailHref: detailHref, compactStrategyStatus: compactStrategyStatus, compactStrategyRows: compactStrategyRows, filterCandidates: filterCandidates, sortCandidates: sortCandidates, render: render, init: init };
 });
