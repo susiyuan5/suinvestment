@@ -173,8 +173,8 @@
     if (candidate) {
       setText(doc, "stockDetailGrade", typeof engine.gradeLabel === "function" ? engine.gradeLabel(candidate.status) : candidate.status);
       setText(doc, "stockDetailScore", typeof engine.formatScore === "function" ? engine.formatScore(candidate.composite_score) : String(candidate.composite_score || "--"));
-      var robustScore = candidate.leave_one_source_out_floor !== undefined ? Math.min(Number(candidate.leave_one_dimension_out_floor || candidate.composite_score || 0), Number(candidate.leave_one_source_out_floor || candidate.composite_score || 0)) : candidate.leave_one_out_floor;
-      setText(doc, "stockDetailRobustScore", typeof engine.formatScore === "function" ? engine.formatScore(robustScore) : String(robustScore || "--"));
+      var robustScore = typeof engine.robustScore === "function" ? engine.robustScore(candidate) : 0;
+      setText(doc, "stockDetailRobustScore", (typeof engine.formatScore === "function" ? engine.formatScore(robustScore) : String(robustScore)) + (candidate.robust_score_normalized !== undefined && candidate.robust_score_normalized !== null ? " / 100" : ""));
       setText(doc, "stockDetailLimitations", typeof engine.limitation === "function" ? engine.limitation(candidate) : "仅限研究观察，不进入本周定投。");
       var dimensions = doc.getElementById("stockDetailDimensions"); dimensions.innerHTML = ""; var values = candidate.dimensions || candidate.family_scores || {};
       Object.keys(dimensionLabels).forEach(function (key) { var score = finite(values[key]); if (score === null) return; var row = doc.createElement("div"); row.className = "stock-detail-dimension"; var label = doc.createElement("span"); label.textContent = dimensionLabels[key]; var track = doc.createElement("span"); track.className = "stock-detail-dimension-track"; var fill = doc.createElement("span"); fill.className = "stock-detail-dimension-fill"; fill.style.width = Math.max(0, Math.min(100, score)) + "%"; track.appendChild(fill); var value = doc.createElement("strong"); value.textContent = score.toFixed(1); row.append(label, track, value); dimensions.appendChild(row); });
@@ -205,6 +205,7 @@
           appendOptionalFact(doc, v3Facts, "数据完整度", Number(candidate.evidence_coverage_score).toFixed(1) + "%");
           appendOptionalFact(doc, v3Facts, "证据独立度", Number(candidate.evidence_independence_score).toFixed(1) + "%");
           appendOptionalFact(doc, v3Facts, "模型校准度", candidate.model_calibration_score === null || candidate.model_calibration_score === undefined ? "尚未验证" : Number(candidate.model_calibration_score).toFixed(1) + "%");
+          appendOptionalFact(doc, v3Facts, "稳健分口径", typeof engine.robustScoreExplanation === "function" ? engine.robustScoreExplanation(candidate) : "删去任一评分维度或证据来源后的最低结果，不是上涨概率");
           var oos = typeof engine.historicalOosDetails === "function" ? engine.historicalOosDetails(ticker, historicalOos) : null;
           appendOptionalFact(doc, v3Facts, "历史 OOS（价格择时层）", oos && oos.text);
           appendOptionalFact(doc, v3Facts, "历史校准边界", oos && oos.boundary);

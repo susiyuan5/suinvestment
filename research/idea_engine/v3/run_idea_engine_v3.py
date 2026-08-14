@@ -181,6 +181,9 @@ def _candidate(raw: dict[str, Any], universe_row: dict[str, Any], as_of: str, co
         "composite_score": scores["composite_score"],
         "leave_one_dimension_out_floor": scores["leave_one_dimension_out_floor"],
         "leave_one_source_out_floor": scores["leave_one_source_out_floor"],
+        "robust_score_raw": scores["robust_score_raw"],
+        "robust_score_ceiling": scores["robust_score_ceiling"],
+        "robust_score_normalized": scores["robust_score_normalized"],
         "evidence_coverage_score": scores["evidence_coverage_score"],
         "evidence_independence_score": scores["evidence_independence_score"],
         "model_calibration_score": scores["model_calibration_score"],
@@ -350,7 +353,7 @@ def run(output_dir: Path = DEFAULT_OUTPUT, as_of: str | None = None, *, provider
         "funnel_summary": funnel_summary(candidates),
         "candidates": displayed,
         "rejected_candidates": rejected_rows,
-        "warnings": ["短线定义为 1–4 周研究窗口，4 周相对 QQQ 为主要验收目标。", "12 周结果只用于监测信号衰减，不阻塞短线成熟门槛。", "仅用于候选研究优先级，不代表买入建议。", "模型校准度在 Shadow 达到 52 周和 26 条完整成熟结果前保持未验证。"],
+        "warnings": ["短线定义为 1–4 周研究窗口，4 周相对 QQQ 为主要验收目标。", "12 周结果只用于监测信号衰减，不阻塞短线成熟门槛。", "稳健分以删维度和删来源压力测试的较低值为原始下限，再按当前方法的理论上限归一化到 100 分；不是上涨概率。", "仅用于候选研究优先级，不代表买入建议。", "模型校准度在 Shadow 达到 52 周和 26 条完整成熟结果前保持未验证。"],
         "input_hash": raw_hash,
         "shadow_status": governance["status"],
     }
@@ -359,7 +362,14 @@ def run(output_dir: Path = DEFAULT_OUTPUT, as_of: str | None = None, *, provider
     atomic_json(output_dir / "latest-candidates.json", result)
     atomic_json(output_dir / "rejected-candidates.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "as_of": frozen, "items": rejected_rows})
     atomic_json(output_dir / "provider-status.json", {"schema_version": SCHEMA_VERSION, "research_only": True, "status": result["status"], "active_provider": result["active_provider"], "last_successful_run": frozen, "screened_universe_count": result["screened_universe_count"], "research_horizon": config["horizon"], "providers": {"SEC_EDGAR": "free_public_data", "PUBLIC_PRICE": "free_public_data", "paid_providers": "disabled"}})
-    (output_dir / "latest-candidates.md").write_text("# 潜力股短线研究 Idea Engine v3.1\n\n1–4 周为短线研究窗口，4 周相对 QQQ 为主要验证目标；12 周只监测信号衰减。仅供研究，不进入本周定投。\n", encoding="utf-8")
+    robust_ceiling = displayed[0]["robust_score_ceiling"] if displayed else 0.0
+    (output_dir / "latest-candidates.md").write_text(
+        "# 潜力股短线研究 Idea Engine v3.1\n\n"
+        "1–4 周为短线研究窗口，4 周相对 QQQ 为主要验证目标；12 周只监测信号衰减。仅供研究，不进入本周定投。\n\n"
+        f"稳健分口径：min(删任一评分维度下限, 删任一证据来源下限) / {robust_ceiling:.1f} × 100。"
+        "当前方法的理论上限已归一化为 100；该分数不是上涨概率。\n",
+        encoding="utf-8",
+    )
     return result
 
 

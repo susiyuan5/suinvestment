@@ -30,13 +30,17 @@ def sector_percentile(value: float | None, peer_values: list[float] | None) -> f
     return round(100.0 * sum(peer <= float(value) for peer in peers) / len(peers), 4)
 
 
-def _weighted(dimensions: dict[str, Any], weights: dict[str, float]) -> tuple[float, list[str], dict[str, float]]:
+def _weighted(
+    dimensions: dict[str, Any],
+    weights: dict[str, float],
+    dimension_max_points: float,
+) -> tuple[float, list[str], dict[str, float]]:
     total, positive, contributions = 0.0, [], {}
     for name in DIMENSIONS:
         value = median_score(dimensions.get(name))
         if value is None:
             continue
-        contribution = min(float(weights.get(name, 0.0)) * value, 25.0)
+        contribution = min(float(weights.get(name, 0.0)) * value, dimension_max_points)
         contributions[name] = round(contribution, 6)
         total += contribution
         if value >= 60:
@@ -64,7 +68,11 @@ def _lineage_groups(evidence: list[dict[str, Any]]) -> dict[str, list[dict[str, 
 
 def _score_once(dimensions: dict[str, Any], evidence: list[dict[str, Any]], config: dict[str, Any]) -> dict[str, Any]:
     weights = config["dimensions"]
-    raw, positive, contributions = _weighted(dimensions, weights)
+    raw, positive, contributions = _weighted(
+        dimensions,
+        weights,
+        float(config["limits"]["dimension_max_points"]),
+    )
     missing = [name for name in DIMENSIONS if median_score(dimensions.get(name)) is None]
     groups = _lineage_groups(evidence)
     group_confidence = {
@@ -109,6 +117,26 @@ def _score_once(dimensions: dict[str, Any], evidence: list[dict[str, Any]], conf
     }
 
 
+def robust_score_ceiling(config: dict[str, Any]) -> float:
+    """Return the best possible raw leave-one-dimension robustness score.
+
+    The robustness floor always includes a run with the largest scoring
+    dimension removed and the configured missing-dimension penalty applied.
+    Normalizing by this ceiling preserves the ablation test while presenting
+    the result on an intuitive 0-100 scale.
+    """
+    max_points = float(config["limits"]["dimension_max_points"])
+    ideal_contributions = [
+        min(float(config["dimensions"].get(name, 0.0)) * 100.0, max_points)
+        for name in DIMENSIONS
+    ]
+    if not ideal_contributions:
+        return 0.0
+    ceiling = sum(ideal_contributions) - max(ideal_contributions)
+    ceiling -= float(config["limits"]["missing_dimension_penalty"])
+    return round(clamp(ceiling), 6)
+
+
 def score_candidate(
     dimensions: dict[str, Any],
     evidence: list[dict[str, Any]],
@@ -134,9 +162,18 @@ def score_candidate(
         reduced_dimensions = {name: value for name, value in dimensions.items() if name in supported}
         source_scores.append(_score_once(reduced_dimensions, reduced_evidence, config)["composite_score"])
 
+    dimension_floor = round(min(dimension_scores) if dimension_scores else base["composite_score"], 6)
+    source_floor = round(min(source_scores) if source_scores else 0.0, 6)
+    raw_robust = round(min(dimension_floor, source_floor), 6)
+    robust_ceiling = robust_score_ceiling(config)
+    normalized_robust = round(clamp(raw_robust / robust_ceiling * 100.0), 6) if robust_ceiling > 0 else 0.0
+
     base.update({
-        "leave_one_dimension_out_floor": round(min(dimension_scores) if dimension_scores else base["composite_score"], 6),
-        "leave_one_source_out_floor": round(min(source_scores) if source_scores else 0.0, 6),
+        "leave_one_dimension_out_floor": dimension_floor,
+        "leave_one_source_out_floor": source_floor,
+        "robust_score_raw": raw_robust,
+        "robust_score_ceiling": robust_ceiling,
+        "robust_score_normalized": normalized_robust,
         "model_calibration_score": round(clamp(model_calibration_score), 6) if model_calibration_score is not None else None,
         "sector_percentile": sector_percentile(base["composite_score"], peer_values),
     })

@@ -22,6 +22,19 @@ test("v3 statuses, filters and sorting stay Chinese and deterministic", () => {
   assert.equal(engine.formatScore(82.6457), "82.6");
 });
 
+test("normalized robust score preserves real zero values and sorts on the displayed scale", () => {
+  assert.equal(engine.robustScore({ robust_score_normalized: 72.4, robust_score_raw: 48.5, robust_score_ceiling: 67 }), 72.4);
+  assert.equal(engine.robustScore({ composite_score: 71.7, leave_one_dimension_out_floor: 38.7, leave_one_source_out_floor: 0 }), 0);
+  assert.match(engine.robustScoreExplanation({ robust_score_normalized: 72.4, robust_score_raw: 48.5, robust_score_ceiling: 67 }), /72.4\/100/);
+  assert.match(engine.robustScoreExplanation({ robust_score_normalized: 72.4, robust_score_raw: 48.5, robust_score_ceiling: 67 }), /不是上涨概率/);
+  assert.match(engine.robustScoreExplanation({ robust_score_normalized: 0, robust_score_raw: 0, robust_score_ceiling: 67, leave_one_source_out_floor: 0 }), /依赖单一证据来源/);
+  const rows = [
+    { ticker: "LOW", robust_score_normalized: 0, leave_one_source_out_floor: 60 },
+    { ticker: "HIGH", robust_score_normalized: 80, leave_one_source_out_floor: 10 }
+  ];
+  assert.deepEqual(engine.sortCandidates(rows, "robust").map((item) => item.ticker), ["HIGH", "LOW"]);
+});
+
 test("research grade and short-term state stay separate", () => {
   assert.equal(engine.gradeLabel("B_WATCH"), "B级 · 研究观察");
   assert.equal(engine.workflowLabel("EARNINGS_REVIEW"), "建议复核财报与电话会");

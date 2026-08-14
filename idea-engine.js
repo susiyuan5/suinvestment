@@ -61,6 +61,28 @@
   }
   function label(status) { return gradeLabels[status] || "已阻断 · 暂停研究"; }
   function formatScore(value) { return Number.isFinite(Number(value)) ? Number(value).toFixed(1) : "暂无"; }
+  function scoreValue(value) { if (value === null || value === undefined || value === "") return null; var parsed = Number(value); return Number.isFinite(parsed) ? parsed : null; }
+  function hasNormalizedRobustScore(candidate) { return scoreValue(candidate && candidate.robust_score_normalized) !== null; }
+  function robustScore(candidate) {
+    candidate = candidate || {};
+    var normalized = scoreValue(candidate.robust_score_normalized);
+    if (normalized !== null) return Math.max(0, Math.min(100, normalized));
+    var dimension = scoreValue(candidate.leave_one_dimension_out_floor);
+    var source = scoreValue(candidate.leave_one_source_out_floor);
+    if (dimension !== null && source !== null) return Math.min(dimension, source);
+    if (source !== null) return source;
+    if (dimension !== null) return dimension;
+    var legacy = scoreValue(candidate.leave_one_out_floor);
+    return legacy !== null ? legacy : 0;
+  }
+  function robustScoreExplanation(candidate) {
+    var normalized = scoreValue(candidate && candidate.robust_score_normalized);
+    var raw = scoreValue(candidate && candidate.robust_score_raw);
+    var ceiling = scoreValue(candidate && candidate.robust_score_ceiling);
+    var source = scoreValue(candidate && candidate.leave_one_source_out_floor);
+    if (normalized !== null && raw !== null && ceiling !== null) return "归一化稳健分 " + formatScore(normalized) + "/100；原始压力测试下限 " + formatScore(raw) + "，理论上限 " + formatScore(ceiling) + "。该分数衡量删去任一评分维度或证据来源后的稳定性，不是上涨概率。" + (normalized === 0 && source === 0 ? "当前归零表示至少一组关键评分维度完全依赖单一证据来源，需要补充独立证据。" : "");
+    return "稳健分为移除任一评分维度或证据来源后得到的最低结果，不是上涨概率。";
+  }
   function text(value, fallback) { return value === undefined || value === null || value === "" ? (fallback || "暂无数据") : String(value); }
   function list(value) { return Array.isArray(value) ? value.filter(function (item) { return item !== null && item !== undefined && String(item).trim(); }) : []; }
   function formatDate(value) { if (!value) return "暂无"; var parsed = new Date(value); return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleDateString("zh-CN"); }
@@ -127,12 +149,12 @@
     var grade = doc.createElement("span"); grade.className = "idea-engine-grade"; grade.textContent = label(candidate.status);
     title.append(heading, grade); card.appendChild(title);
     var scores = doc.createElement("div"); scores.className = "idea-engine-scores";
-    var robustScore = candidate.leave_one_source_out_floor !== undefined ? Math.min(Number(candidate.leave_one_dimension_out_floor || candidate.composite_score || 0), Number(candidate.leave_one_source_out_floor || candidate.composite_score || 0)) : candidate.leave_one_out_floor;
+    var candidateRobustScore = robustScore(candidate);
     addText(doc, scores, "strong", "综合分 " + formatScore(candidate.composite_score), "idea-engine-score-primary");
-    var robust = addText(doc, scores, "strong", "稳健分 " + formatScore(robustScore), "idea-engine-score-secondary");
-    robust.setAttribute("aria-label", "稳健分，移除任一维度或来源家族后得到的最低结果：" + formatScore(robustScore));
+    var robust = addText(doc, scores, "strong", "稳健分 " + formatScore(candidateRobustScore) + (hasNormalizedRobustScore(candidate) ? " / 100" : ""), "idea-engine-score-secondary");
+    robust.setAttribute("aria-label", robustScoreExplanation(candidate));
     card.appendChild(scores);
-    addText(doc, card, "p", "稳健分为移除任一单项后得到的最低结果。", "idea-engine-score-help");
+    addText(doc, card, "p", robustScoreExplanation(candidate), "idea-engine-score-help");
     addText(doc, card, "p", "不进入本周定投，不生成买入金额。", "idea-engine-research-limit");
     addText(doc, card, "p", "交易状态：" + (shortTermPlan && root.ShortTermTradePlan && typeof root.ShortTermTradePlan.statusLabel === "function" ? root.ShortTermTradePlan.statusLabel(shortTermPlan.status) : "尚未形成有效短线计划"), "idea-engine-trade-status");
     if (shortTermPlan && root.ShortTermTradePlan && typeof root.ShortTermTradePlan.planSummary === "function") addText(doc, card, "p", root.ShortTermTradePlan.planSummary(shortTermPlan), "idea-engine-trade-reason");
@@ -170,6 +192,7 @@
     var summary = doc.createElement("summary"); summary.textContent = "展开研究摘要"; detail.appendChild(summary);
     var body = doc.createElement("div"); body.className = "idea-engine-detail";
     detailSections(candidate).forEach(function (section) { var block = doc.createElement("section"); block.className = "idea-engine-detail-section"; addText(doc, block, "h4", section.title); var paragraph = addText(doc, block, "p", section.values.join("；")); body.appendChild(block); });
+    if (hasNormalizedRobustScore(candidate)) { var robustBlock = doc.createElement("section"); robustBlock.className = "idea-engine-detail-section"; addText(doc, robustBlock, "h4", "稳健分口径"); addText(doc, robustBlock, "p", robustScoreExplanation(candidate)); body.appendChild(robustBlock); }
     if (["idea-engine-v3", "idea-engine-v3.1"].indexOf(candidate.schema_version) >= 0 && candidate.score_contributions && Object.keys(candidate.score_contributions).length) { var contributionBlock = doc.createElement("section"); contributionBlock.className = "idea-engine-detail-section"; addText(doc, contributionBlock, "h4", "评分贡献分解"); addText(doc, contributionBlock, "p", Object.keys(candidate.score_contributions).map(function (key) { return (dimensionLabels[key] || key) + " " + formatScore(candidate.score_contributions[key]); }).join("；")); body.appendChild(contributionBlock); }
     var links = safeEvidenceLinks(candidate); if (links.length) { var sourceBlock = doc.createElement("section"); sourceBlock.className = "idea-engine-detail-section"; addText(doc, sourceBlock, "h4", "来源链接"); links.forEach(function (item) { var link = doc.createElement("a"); link.href = item.url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = item.source; sourceBlock.appendChild(link); }); body.appendChild(sourceBlock); }
     var actionStatus = addText(doc, body, "span", "", "idea-engine-action-status"); actionStatus.setAttribute("role", "status"); actionStatus.setAttribute("aria-live", "polite");
@@ -184,7 +207,7 @@
       if (sort === "independence") return Number(b.evidence_independence_score || 0) - Number(a.evidence_independence_score || 0);
       if (sort === "coverage") return Number(b.evidence_coverage_score || 0) - Number(a.evidence_coverage_score || 0);
       if (sort === "updated") return String(b.as_of || "").localeCompare(String(a.as_of || ""));
-      if (sort === "robust") return Number(b.leave_one_source_out_floor || b.leave_one_out_floor || 0) - Number(a.leave_one_source_out_floor || a.leave_one_out_floor || 0);
+      if (sort === "robust") return robustScore(b) - robustScore(a);
       return Number(b.composite_score || 0) - Number(a.composite_score || 0);
     });
     return rows;
@@ -243,5 +266,5 @@
     fetchJson("research/results/v3_1/idea-engine/latest-candidates.json").catch(function () { return fetchJson("research/results/v3/idea-engine/latest-candidates.json"); }).catch(function () { return fetchJson("research/results/v2/idea-engine/latest-candidates.json").then(function (payload) { payload.source_version = "v2"; return payload; }); }).then(function (payload) { var resultRoot = payload.source_version === "v2" ? "research/results/v2" : payload.schema_version === "idea-engine-v3.1" ? "research/results/v3_1" : "research/results/v3"; return Promise.all([payload, fetchJson(resultRoot + "/idea-engine/shadow/governance-report.json").catch(function () { return null; }), fetchJson("research/results/v3_1/short-term-trade-plans-v1_3/latest.json").catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans-v1_2/latest.json"); }).catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans-v1_1/latest.json"); }).catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans/latest.json"); }).catch(function () { return null; }), fetchJson("research/results/v3_1/historical-oos-price-timing/latest.json").catch(function () { return null; })]); }).then(function (values) { render(values[0], elements, doc, values[1], values[2], values[3]); }).catch(function () { render(null, elements, doc, null, null, null); });
   }
   if (typeof document !== "undefined" && typeof fetch === "function") init(document, fetch);
-  return { safePayload: safePayload, safeHistoricalOos: safeHistoricalOos, historicalOosDetails: historicalOosDetails, gradeLabel: label, researchGradeLabel: label, workflowLabel: workflowLabel, rejectionLabel: rejectionLabel, sectorLabel: sectorLabel, researchTypeLabel: researchTypeLabel, coverageDetails: coverageDetails, researchLimitations: researchLimitations, thesisKillRisks: thesisKillRisks, shadowProgress: shadowProgress, dataLimitation: dataLimitation, portfolioRelationLabel: portfolioRelationLabel, formatScore: formatScore, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, normalizeTicker: normalizeTicker, detailHref: detailHref, compactStrategyStatus: compactStrategyStatus, compactStrategyRows: compactStrategyRows, filterCandidates: filterCandidates, sortCandidates: sortCandidates, render: render, init: init };
+  return { safePayload: safePayload, safeHistoricalOos: safeHistoricalOos, historicalOosDetails: historicalOosDetails, gradeLabel: label, researchGradeLabel: label, workflowLabel: workflowLabel, rejectionLabel: rejectionLabel, sectorLabel: sectorLabel, researchTypeLabel: researchTypeLabel, coverageDetails: coverageDetails, researchLimitations: researchLimitations, thesisKillRisks: thesisKillRisks, shadowProgress: shadowProgress, dataLimitation: dataLimitation, portfolioRelationLabel: portfolioRelationLabel, formatScore: formatScore, robustScore: robustScore, robustScoreExplanation: robustScoreExplanation, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, normalizeTicker: normalizeTicker, detailHref: detailHref, compactStrategyStatus: compactStrategyStatus, compactStrategyRows: compactStrategyRows, filterCandidates: filterCandidates, sortCandidates: sortCandidates, render: render, init: init };
 });
