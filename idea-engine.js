@@ -16,7 +16,7 @@
   gateLabels.free_source_scope_limited = "免费数据限制：缺少一致预期、电话会或事件催化证据";
   gateLabels.no_consensus_estimates = "缺少一致预期";
   gateLabels.missing_evidence_fields = "关键证据字段缺失";
-  gateLabels.model_not_calibrated = "模型尚未完成 Shadow 校准";
+  gateLabels.model_not_calibrated = "完整模型尚未实时校准；候选已使用历史 OOS 参考";
   var workflowLabels = { EARNINGS_REVIEW: "建议复核财报与电话会", VALUATION_REVIEW: "建议复核估值", CATALYST_TRACKER: "建议跟踪事件催化", THESIS_TRACKER: "建议继续跟踪假设", WATCHLIST_ONLY: "仅加入研究观察", REJECT: "停止后续研究" };
   var sectorLabels = { core_technology: "核心科技", semiconductors: "半导体", consumer_retail: "消费与零售", defensive_healthcare: "防御与医疗", financial_payments: "金融与支付", industrial_diversified: "工业与多元制造", international: "国际股票", energy_materials: "能源与材料", utilities_real_assets: "公用事业与实物资产", mixed: "综合行业" };
   var researchTypeLabels = { QUALITY_COMPOUNDER: "高质量增长", CYCLICAL_RECOVERY: "周期复苏", VALUATION_DISLOCATION: "估值错位", CATALYST: "事件催化", THEMATIC_BENEFICIARY: "主题受益", RELATIVE_VALUE: "同行相对价值", WATCH_ONLY: "仅观察" };
@@ -61,6 +61,21 @@
   }
   function label(status) { return gradeLabels[status] || "已阻断 · 暂停研究"; }
   function formatScore(value) { return Number.isFinite(Number(value)) ? Number(value).toFixed(1) : "暂无"; }
+  function historicalReference(ticker, payload) {
+    var safe = safeHistoricalOos(payload);
+    return safe && safe.current_mappings ? safe.current_mappings[normalizeTicker(ticker)] || null : null;
+  }
+  function historicalStatusRank(reference) {
+    return { preliminary_reliable_edge: 3, positive_skew_unconfirmed: 2, no_historical_edge: 1 }[String(reference && reference.evidence_status || "")] || 0;
+  }
+  function historicalScreenSummary(payload) {
+    var safe = safeHistoricalOos(payload);
+    if (!safe) return "\u5386\u53f2 OOS \u7b5b\u9009\u6682\u4e0d\u53ef\u7528";
+    var rows = Object.keys(safe.current_mappings || {}).map(function (ticker) { return safe.current_mappings[ticker]; });
+    var reliable = rows.filter(function (row) { return row && row.evidence_status === "preliminary_reliable_edge"; }).length;
+    var watch = rows.filter(function (row) { return row && row.evidence_status === "positive_skew_unconfirmed"; }).length;
+    return "\u5386\u53f2 OOS \u5df2\u7528\u4e8e\u5019\u9009\u6392\u5e8f\uff1a\u521d\u6b65\u901a\u8fc7 " + reliable + " \u53ea \u00b7 \u6b63\u6536\u76ca\u504f\u5ea6\u5f85\u786e\u8ba4 " + watch + " \u53ea";
+  }
   function scoreValue(value) { if (value === null || value === undefined || value === "") return null; var parsed = Number(value); return Number.isFinite(parsed) ? parsed : null; }
   function hasNormalizedRobustScore(candidate) { return scoreValue(candidate && candidate.robust_score_normalized) !== null; }
   function robustScore(candidate) {
@@ -124,7 +139,7 @@
   }
   function addText(doc, parent, tag, value, className) { var node = doc.createElement(tag); if (className) node.className = className; node.textContent = value; parent.appendChild(node); return node; }
   function compactStrategyStatus(status) {
-    return { waiting: "等待", historical_edge_failed: "历史未通过", triggered_simulation: "仅作模拟", preliminary_review: "初步复核", conditional_review: "人工复核", blocked: "阻断" }[String(status || "")] || "研究观察";
+    return { waiting: "等待", historical_edge_failed: "历史未通过", historical_review: "历史通过", historical_watch: "历史初步为正", triggered_simulation: "仅作模拟", preliminary_review: "初步复核", conditional_review: "人工复核", blocked: "阻断" }[String(status || "")] || "研究观察";
   }
   function compactStrategyRows(plan) {
     return list(plan && plan.strategies).slice(0, 3).map(function (strategy) {
@@ -168,8 +183,8 @@
       addText(doc, card, "p", [text(candidate.company_name, ticker), sectorLabel(candidate.sector), researchTypeLabel(candidate.research_type)].join(" · "), "idea-engine-metadata");
       if (candidate.schema_version === "idea-engine-v3.1") {
         var coverage = coverageDetails(candidate);
-        addText(doc, card, "p", "评分维度覆盖 " + coverage.dimension + "%（" + coverage.dimensionCovered + "/" + coverage.dimensionRequired + "） · 关键证据覆盖 " + coverage.critical + "%（" + coverage.criticalCovered + "/" + coverage.criticalRequired + "） · 独立证据 " + coverage.independent + "%（" + coverage.independentCount + "/" + coverage.independentTarget + "） · 模型校准：" + (candidate.model_calibration_score === null || candidate.model_calibration_score === undefined ? "尚未验证（需达到 Shadow 治理门槛）" : formatScore(candidate.model_calibration_score) + "%"), "idea-engine-evidence-summary");
-        if (candidate.model_calibration_score === null || candidate.model_calibration_score === undefined) addText(doc, card, "p", "综合分仍只是研究排序，不是上涨概率；完整模型继续由实时 Shadow 验证。", "idea-engine-score-help");
+        addText(doc, card, "p", "评分维度覆盖 " + coverage.dimension + "%（" + coverage.dimensionCovered + "/" + coverage.dimensionRequired + "） · 关键证据覆盖 " + coverage.critical + "%（" + coverage.criticalCovered + "/" + coverage.criticalRequired + "） · 独立证据 " + coverage.independent + "%（" + coverage.independentCount + "/" + coverage.independentTarget + "） · 历史筛选：" + (candidate.historical_oos_reference ? "已纳入永久 OOS 参考" : "历史参考暂不可用"), "idea-engine-evidence-summary");
+        if (candidate.model_calibration_score === null || candidate.model_calibration_score === undefined) addText(doc, card, "p", "候选优先级使用历史永久 OOS 与当前研究证据；综合分和历史命中率都不是上涨概率，Shadow 仅监测未来退化。", "idea-engine-score-help");
         var oos = historicalOosDetails(ticker, historicalOos);
         if (oos) {
           addText(doc, card, "p", oos.text, "idea-engine-oos-summary");
@@ -204,6 +219,14 @@
   function sortCandidates(candidates, sort) {
     var rows = (candidates || []).slice();
     rows.sort(function (a, b) {
+      if (sort === "historical") {
+        var aHistory = a.historical_oos_reference || {};
+        var bHistory = b.historical_oos_reference || {};
+        return historicalStatusRank(bHistory) - historicalStatusRank(aHistory)
+          || Number(bHistory.mean_oos_net_relative_return || -1) - Number(aHistory.mean_oos_net_relative_return || -1)
+          || Number(bHistory.timing_score || 0) - Number(aHistory.timing_score || 0)
+          || Number(b.composite_score || 0) - Number(a.composite_score || 0);
+      }
       if (sort === "independence") return Number(b.evidence_independence_score || 0) - Number(a.evidence_independence_score || 0);
       if (sort === "coverage") return Number(b.evidence_coverage_score || 0) - Number(a.evidence_coverage_score || 0);
       if (sort === "updated") return String(b.as_of || "").localeCompare(String(a.as_of || ""));
@@ -243,16 +266,27 @@
     var versionLabel = safe.source_version === "v3_1" ? "当前显示 Idea Engine v3.1 短线结果；" : safe.source_version === "v2" ? "当前显示历史 v2 结果；" : "当前显示 Idea Engine v3；";
     elements.status.textContent = versionLabel + (safe.active_provider === "free_public_data" ? "已使用 SEC EDGAR 与公开价格数据加载 " : "已加载 ") + safe.candidates.length + " 个研究候选；不生成买入金额。";
     elements.maturity.textContent = progress + (mature ? " · 已达到人工复核门槛" : " · 尚未达到可靠性门槛，仅供研究演练");
+    elements.maturity.textContent = historicalScreenSummary(historicalOos) + " \u00b7 " + progress + " \u00b7 Shadow \u4ec5\u4f5c\u5411\u524d\u76d1\u6d4b\uff0c\u4e0d\u963b\u65ad\u5386\u53f2\u5019\u9009\u5c55\u793a";
     var shortTermPlans = {};
     if (root.ShortTermTradePlan && typeof root.ShortTermTradePlan.safePayload === "function") { var safeShortTerm = root.ShortTermTradePlan.safePayload(shortTermPayload); (safeShortTerm ? safeShortTerm.plans : []).forEach(function (plan) { shortTermPlans[String(plan.ticker || "").toUpperCase()] = plan; }); }
+    var rankedCandidates = safe.candidates.map(function (candidate) {
+      return Object.assign({}, candidate, { historical_oos_reference: candidate.historical_oos_reference || historicalReference(candidate.ticker, historicalOos) });
+    });
     var controls = { status: doc.getElementById("ideaEngineStatusFilter"), industry: doc.getElementById("ideaEngineIndustryFilter"), type: doc.getElementById("ideaEngineTypeFilter"), fit: doc.getElementById("ideaEngineFitFilter"), sort: doc.getElementById("ideaEngineSort") };
+    if (controls.sort && !controls.sort.querySelector('option[value="historical"]')) {
+      var historicalOption = doc.createElement("option");
+      historicalOption.value = "historical";
+      historicalOption.textContent = "\u5386\u53f2 OOS \u53c2\u8003";
+      controls.sort.insertBefore(historicalOption, controls.sort.firstChild);
+      controls.sort.value = "historical";
+    }
     function draw() {
       elements.rows.innerHTML = "";
-      var candidates = filterCandidates(safe.candidates, { status: controls.status && controls.status.value, industry: controls.industry && controls.industry.value, type: controls.type && controls.type.value, fit: controls.fit && controls.fit.value });
+      var candidates = filterCandidates(rankedCandidates, { status: controls.status && controls.status.value, industry: controls.industry && controls.industry.value, type: controls.type && controls.type.value, fit: controls.fit && controls.fit.value });
       candidates.forEach(function (candidate) { var displayCandidate = Object.assign({}, candidate); displayCandidate.portfolio_relation = localPortfolioRelation(candidate); displayCandidate.portfolio_fit_status = portfolioRelationLabel(displayCandidate.portfolio_relation); elements.rows.appendChild(createCard(displayCandidate, doc, shortTermPlans, historicalOos)); });
       if (!candidates.length) addText(doc, elements.rows, "p", "没有符合当前筛选条件的候选。", "idea-engine-empty");
     }
-    var rerender = function () { var sorted = sortCandidates(safe.candidates, controls.sort && controls.sort.value); safe.candidates = sorted; draw(); };
+    var rerender = function () { rankedCandidates = sortCandidates(rankedCandidates, controls.sort && controls.sort.value); draw(); };
     Object.keys(controls).forEach(function (key) { if (controls[key]) controls[key].addEventListener(key === "industry" ? "input" : "change", rerender); });
     var clear = doc.getElementById("ideaEngineClearFilters"); if (clear) clear.addEventListener("click", function () { Object.keys(controls).forEach(function (key) { if (controls[key]) controls[key].value = ""; }); if (controls.sort) controls.sort.value = "priority"; rerender(); });
     rerender();
@@ -266,5 +300,5 @@
     fetchJson("research/results/v3_1/idea-engine/latest-candidates.json").catch(function () { return fetchJson("research/results/v3/idea-engine/latest-candidates.json"); }).catch(function () { return fetchJson("research/results/v2/idea-engine/latest-candidates.json").then(function (payload) { payload.source_version = "v2"; return payload; }); }).then(function (payload) { var resultRoot = payload.source_version === "v2" ? "research/results/v2" : payload.schema_version === "idea-engine-v3.1" ? "research/results/v3_1" : "research/results/v3"; return Promise.all([payload, fetchJson(resultRoot + "/idea-engine/shadow/governance-report.json").catch(function () { return null; }), fetchJson("research/results/v3_1/short-term-trade-plans-v1_3/latest.json").catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans-v1_2/latest.json"); }).catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans-v1_1/latest.json"); }).catch(function () { return fetchJson("research/results/v3_1/short-term-trade-plans/latest.json"); }).catch(function () { return null; }), fetchJson("research/results/v3_1/historical-oos-price-timing/latest.json").catch(function () { return null; })]); }).then(function (values) { render(values[0], elements, doc, values[1], values[2], values[3]); }).catch(function () { render(null, elements, doc, null, null, null); });
   }
   if (typeof document !== "undefined" && typeof fetch === "function") init(document, fetch);
-  return { safePayload: safePayload, safeHistoricalOos: safeHistoricalOos, historicalOosDetails: historicalOosDetails, gradeLabel: label, researchGradeLabel: label, workflowLabel: workflowLabel, rejectionLabel: rejectionLabel, sectorLabel: sectorLabel, researchTypeLabel: researchTypeLabel, coverageDetails: coverageDetails, researchLimitations: researchLimitations, thesisKillRisks: thesisKillRisks, shadowProgress: shadowProgress, dataLimitation: dataLimitation, portfolioRelationLabel: portfolioRelationLabel, formatScore: formatScore, robustScore: robustScore, robustScoreExplanation: robustScoreExplanation, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, normalizeTicker: normalizeTicker, detailHref: detailHref, compactStrategyStatus: compactStrategyStatus, compactStrategyRows: compactStrategyRows, filterCandidates: filterCandidates, sortCandidates: sortCandidates, render: render, init: init };
+  return { safePayload: safePayload, safeHistoricalOos: safeHistoricalOos, historicalOosDetails: historicalOosDetails, historicalReference: historicalReference, historicalScreenSummary: historicalScreenSummary, gradeLabel: label, researchGradeLabel: label, workflowLabel: workflowLabel, rejectionLabel: rejectionLabel, sectorLabel: sectorLabel, researchTypeLabel: researchTypeLabel, coverageDetails: coverageDetails, researchLimitations: researchLimitations, thesisKillRisks: thesisKillRisks, shadowProgress: shadowProgress, dataLimitation: dataLimitation, portfolioRelationLabel: portfolioRelationLabel, formatScore: formatScore, robustScore: robustScore, robustScoreExplanation: robustScoreExplanation, limitation: limitation, detailSections: detailSections, safeEvidenceLinks: safeEvidenceLinks, normalizeTicker: normalizeTicker, detailHref: detailHref, compactStrategyStatus: compactStrategyStatus, compactStrategyRows: compactStrategyRows, filterCandidates: filterCandidates, sortCandidates: sortCandidates, render: render, init: init };
 });

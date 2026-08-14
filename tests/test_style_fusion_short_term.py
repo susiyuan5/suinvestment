@@ -65,10 +65,23 @@ class StyleFusionShortTermTests(unittest.TestCase):
         }
         strategies = build_strategy_rows(indicator_fixture(), signals, CONFIG_V13, evidence, {"preliminary_review_eligible": True}, [])
         self.assertEqual([row["strategy_id"] for row in strategies], CONFIG_V13["strategy_order"])
-        self.assertEqual(strategies[0]["status"], "preliminary_review")
+        self.assertEqual(strategies[0]["status"], "historical_review")
         self.assertEqual(strategies[1]["status"], "waiting")
         self.assertEqual(strategies[2]["status"], "historical_edge_failed")
         self.assertTrue(all(row["prediction_calibrated"] is False and row["execution_ready"] is False for row in strategies))
+
+    def test_provisional_history_can_surface_for_research_without_shadow_maturity(self):
+        signals = style_signals(indicator_fixture(), CONFIG_V13)
+        evidence = {
+            "oneil_volume_breakout": {"samples": 38, "origin_dates": 20, "passed": False, "evidence_tier": "provisional_positive"},
+            "trend_pullback": {"samples": 90, "passed": False, "evidence_tier": "no_historical_edge"},
+            "vcp_darvas_breakout": {"samples": 11, "passed": False, "evidence_tier": "insufficient"},
+        }
+        strategies = build_strategy_rows(indicator_fixture(), signals, CONFIG_V13, evidence, {"manual_review_eligible": False}, [])
+        self.assertEqual(strategies[0]["status"], "historical_watch")
+        self.assertEqual(strategies[0]["shadow_validation_status"], "monitoring")
+        self.assertTrue(strategies[0]["research_selection_allowed"])
+        self.assertFalse(strategies[0]["execution_ready"])
 
     def test_yellow_regime_halves_position_risk_budget(self):
         full = calculate_position_size(100_000, 10_000, 100, 95, CONFIG, risk_scale=1.0)
@@ -101,6 +114,10 @@ class StyleFusionShortTermTests(unittest.TestCase):
                     "max_adverse_move": -0.02} for index in range(30)]
         self.assertEqual(summarize(records, seed=42), summarize(records, seed=42))
         self.assertFalse(summarize(records, seed=42)["passed"])
+        positive = [{"signal_date": (start + timedelta(days=index * 7)).isoformat(),
+                     "net_relative_return": 0.01,
+                     "max_adverse_move": -0.01} for index in range(30)]
+        self.assertEqual(summarize(positive, seed=42)["evidence_tier"], "provisional_positive")
 
 
 if __name__ == "__main__":
