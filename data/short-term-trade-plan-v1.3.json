@@ -1,5 +1,5 @@
 {
-  "schema_version": "short-term-trade-plan-config-v1.3",
+  "schema_version": "short-term-trade-plan-config-v1.3.1",
   "output_schema_version": "short-term-trade-plan-v1.3",
   "research_only": true,
   "execution_boundary": "manual_research_choice_only",
@@ -53,7 +53,31 @@
     "minimum_evidence_coverage": 66.0,
     "max_data_age_days": 5,
     "earnings_blackout_trading_days": 3,
-    "unknown_event_action": "simulation_only"
+    "unknown_event_action": "simulation_only",
+    "historical_screen_override": {
+      "enabled": true,
+      "eligible_idea_statuses": ["C_SCREEN"],
+      "eligible_historical_screen_statuses": [
+        "HISTORICAL_RESEARCH_CANDIDATE",
+        "HISTORICAL_WATCH_CANDIDATE"
+      ],
+      "eligible_evidence_statuses": [
+        "preliminary_reliable_edge",
+        "positive_skew_unconfirmed"
+      ],
+      "required_primary_reference": "permanent_historical_oos_price_timing",
+      "required_reference_metrics": [
+        "oos_samples",
+        "oos_origin_dates",
+        "mean_oos_net_relative_return",
+        "oos_cost_adjusted_hit_rate"
+      ],
+      "minimum_oos_samples": 1000,
+      "minimum_oos_origin_dates": 52,
+      "require_positive_mean_net_relative_return": true,
+      "maximum_action": "research_scenarios_only",
+      "preserve_research_grade": true
+    }
   },
   "breakout": {
     "close_buffer_atr": 0.05,

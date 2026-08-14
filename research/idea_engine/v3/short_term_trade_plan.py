@@ -176,6 +176,65 @@ def candidate_evidence_coverage(candidate):
     values = [candidate.get("evidence_coverage_score"), (candidate.get("data_quality") or {}).get("score_dimension_coverage", {}).get("percent")]
     return next((value for value in (finite(item) for item in values) if value is not None), 0.0)
 
+def research_eligibility(candidate, config, *, as_of=None):
+    """Separate company-research grade from historical price-timing eligibility."""
+    grade = str(candidate.get("status") or "")
+    historical_status = str(candidate.get("historical_screen_status") or "")
+    reference = candidate.get("historical_oos_reference") or {}
+    blocked_reason = {
+        "VALUATION_GATED": "valuation_gate_not_eligible",
+        "EXPOSURE_UNPROVEN": "exposure_not_proven",
+        "REJECTED": "research_candidate_rejected",
+        "C_SCREEN": "historical_screen_not_eligible",
+    }.get(grade, "idea_status_not_eligible")
+    base = {
+        "allowed": False,
+        "mode": "blocked",
+        "reason_code": blocked_reason,
+        "research_grade": grade,
+        "historical_screen_status": historical_status or "HISTORICAL_UNAVAILABLE",
+        "historical_evidence_status": str(reference.get("evidence_status") or "unavailable"),
+        "preserves_research_grade": True,
+        "maximum_action": "blocked",
+    }
+    if grade in config.get("gates", {}).get("eligible_statuses", []):
+        return {**base, "allowed": True, "mode": "research_grade", "reason_code": None, "maximum_action": "manual_research_review"}
+
+    override = config.get("gates", {}).get("historical_screen_override") or {}
+    if override.get("enabled") is not True or grade not in override.get("eligible_idea_statuses", []):
+        return base
+    if historical_status not in override.get("eligible_historical_screen_statuses", []):
+        return base
+    if base["historical_evidence_status"] not in override.get("eligible_evidence_statuses", []):
+        return base
+    policy = candidate.get("historical_selection_policy") or {}
+    if str(policy.get("primary_reference") or "") != str(override.get("required_primary_reference") or ""):
+        return base
+    required_metrics = override.get("required_reference_metrics", [])
+    if any(finite(reference.get(metric)) is None for metric in required_metrics):
+        return base
+    if finite(reference.get("oos_samples")) < float(override.get("minimum_oos_samples", 0)):
+        return base
+    if finite(reference.get("oos_origin_dates")) < float(override.get("minimum_oos_origin_dates", 0)):
+        return base
+    mean_return = finite(reference.get("mean_oos_net_relative_return"))
+    if override.get("require_positive_mean_net_relative_return") is True and (mean_return is None or mean_return <= 0):
+        return base
+    try:
+        reference_date = date.fromisoformat(str(reference.get("as_of") or "")[:10])
+        evaluation_date = date.fromisoformat(str(as_of or candidate.get("as_of") or "")[:10])
+    except ValueError:
+        return base
+    if reference_date > evaluation_date:
+        return base
+    return {
+        **base,
+        "allowed": True,
+        "mode": "historical_screen_override",
+        "reason_code": None,
+        "maximum_action": str(override.get("maximum_action") or "research_scenarios_only"),
+    }
+
 def _check(code, label, passed, current, required):
     return {"code": code, "label": label, "passed": bool(passed), "current": current, "required": required}
 
@@ -243,9 +302,11 @@ def build_signal(indicators, signals, config, model=None, *, triggered=True):
 def blocked_strategy_rows(config, reasons):
     return [{"strategy_id": model, "label": config.get("strategy_labels", {}).get(model, model), "status": "blocked", "status_label": "研究条件阻断", "triggered": False, "condition_checks": [], "missing_conditions": list(reasons), "entry_plan": None, "historical_oos": {"passed": False, "status": "unavailable"}, "prediction_calibrated": False, "research_selection_allowed": False, "execution_ready": False} for model in config.get("strategy_order", STRATEGY_IDS)]
 
-def build_strategy_rows(indicators, signals, config, historical_oos_by_model, governance, global_blockers):
+def build_strategy_rows(indicators, signals, config, historical_oos_by_model, governance, global_blockers, eligibility=None):
     rows = []
     labels = config.get("strategy_labels", {})
+    eligibility = eligibility or {"mode": "research_grade", "research_grade": ""}
+    historical_override = eligibility.get("mode") == "historical_screen_override"
     for model in config.get("strategy_order", STRATEGY_IDS):
         checks = strategy_condition_checks(indicators, signals, config, model)
         triggered = strategy_triggered(signals, model)
@@ -264,7 +325,7 @@ def build_strategy_rows(indicators, signals, config, historical_oos_by_model, go
             status, status_label = "waiting", "等待全部条件触发"
         elif not oos_passed and not oos_provisional:
             status, status_label = "historical_edge_failed", "已触发但历史优势未通过"
-        elif governance.get("manual_review_eligible") is True:
+        elif governance.get("manual_review_eligible") is True and not historical_override:
             status, status_label = "conditional_review", "正式门禁通过，待人工复核"
         elif oos_passed:
             status, status_label = "historical_review", "历史 OOS 已通过，可人工研究"
@@ -280,15 +341,18 @@ def build_strategy_rows(indicators, signals, config, historical_oos_by_model, go
             "missing_conditions": [item["code"] for item in checks if not item["passed"]] + local_reasons,
             "entry_plan": signal, "historical_oos": {**evidence, "passed": oos_passed, "status": "passed" if oos_passed else "provisional_positive" if oos_provisional else "failed_or_insufficient"},
             "prediction_calibrated": False, "research_selection_allowed": status != "blocked", "execution_ready": False,
-            "shadow_validation_status": "mature" if governance.get("manual_review_eligible") is True else "monitoring",
+            "shadow_validation_status": "monitoring" if historical_override else "mature" if governance.get("manual_review_eligible") is True else "monitoring",
+            "research_eligibility_mode": eligibility.get("mode"),
+            "research_grade": eligibility.get("research_grade"),
         })
     return rows
 
 def evaluate_three_strategy_plan(candidate, rows, benchmark_rows, config, *, as_of=None, historical_oos_by_model=None, governance=None):
     ticker = str(candidate.get("ticker") or "").upper(); governance = governance or {}; historical_oos_by_model = historical_oos_by_model or {}
-    base = {"schema_version": config["output_schema_version"], "ticker": ticker, "research_only": True, "no_trade": True, "status": "blocked", "status_label": "数据阻断", "reason_codes": [], "warnings": [], "signal": None, "strategies": [], "execution": {"order_type": "limit", "regular_hours_only": True, "human_review_required": True}, "style_fusion": config.get("style_fusion")}
-    if str(candidate.get("status")) not in config["gates"]["eligible_statuses"]:
-        base["reason_codes"] = ["idea_status_not_eligible"]; base["strategies"] = blocked_strategy_rows(config, base["reason_codes"]); return base
+    eligibility = research_eligibility(candidate, config, as_of=as_of)
+    base = {"schema_version": config["output_schema_version"], "ticker": ticker, "research_only": True, "no_trade": True, "status": "blocked", "status_label": "数据阻断", "reason_codes": [], "warnings": [], "signal": None, "strategies": [], "research_grade": eligibility["research_grade"], "research_eligibility": eligibility, "execution": {"order_type": "limit", "regular_hours_only": True, "human_review_required": True}, "style_fusion": config.get("style_fusion")}
+    if eligibility["allowed"] is not True:
+        base["reason_codes"] = [eligibility.get("reason_code") or "idea_status_not_eligible"]; base["strategies"] = blocked_strategy_rows(config, base["reason_codes"]); return base
     if candidate_evidence_coverage(candidate) < float(config["gates"]["minimum_evidence_coverage"]):
         base["reason_codes"] = ["evidence_threshold_not_met"]; base["strategies"] = blocked_strategy_rows(config, base["reason_codes"]); return base
     try: indicators = compute_indicators(rows, benchmark_rows, config)
@@ -302,7 +366,7 @@ def evaluate_three_strategy_plan(candidate, rows, benchmark_rows, config, *, as_
     if not regime["passed"]: base["reason_codes"].append("qqq_market_state_blocked")
     if not signals.get("trend_template"): base["reason_codes"].append("trend_template_failed")
     hard_blockers = [code for code in base["reason_codes"] if code in {"future_data_detected", "stale_price_data", "qqq_market_state_blocked", "earnings_blackout_3_trading_days"}]
-    strategies = build_strategy_rows(indicators, signals, config, historical_oos_by_model, governance, hard_blockers)
+    strategies = build_strategy_rows(indicators, signals, config, historical_oos_by_model, governance, hard_blockers, eligibility)
     priority = {"conditional_review": 8, "historical_review": 7, "historical_watch": 6, "preliminary_review": 5, "triggered_simulation": 4, "historical_edge_failed": 3, "waiting": 2, "blocked": 1}
     best = max(strategies, key=lambda row: priority[row["status"]])
     if best["status"] in {"conditional_review", "historical_review", "historical_watch", "preliminary_review"}: status = best["status"]
@@ -318,6 +382,8 @@ def evaluate_three_strategy_plan(candidate, rows, benchmark_rows, config, *, as_
     base.update(status=status, status_label=status_label, indicators=indicators, event_status=event_status, market_regime=regime, trigger_models=signals, strategies=strategies, signal=best.get("entry_plan") if best.get("triggered") else None)
     if not any(row["triggered"] for row in strategies): base["reason_codes"].append("no_trigger")
     base["reason_codes"] = list(dict.fromkeys(base["reason_codes"])); base["warnings"] = ["三种策略均为条件情景，不是上涨概率", "未通过历史 OOS 的策略只能记录模拟结果"]
+    if eligibility["mode"] == "historical_screen_override":
+        base["warnings"].insert(0, f"历史 OOS 候选通道已启用；公司研究等级仍为 {eligibility['research_grade']}，仅可研究观察")
     return base
 
 def evaluate_plan(candidate, rows, benchmark_rows, config, *, as_of=None, portfolio=None, historical_oos=None):
@@ -381,7 +447,7 @@ def generate(candidates_path=DEFAULT_CANDIDATES, prices_path=DEFAULT_PRICES, con
     event_map = event_dates_by_ticker(events); style_oos = json.loads(style_oos_path.read_text(encoding="utf-8")) if style_oos_path.exists() else {}
     is_v13 = config.get("output_schema_version") == "short-term-trade-plan-v1.3"
     oos_mappings = style_oos.get("by_model", {}) if is_v13 else style_oos.get("current_mappings", {}) if style_oos.get("schema_version") == "global-style-short-term-oos-v1" else {}
-    plans = [evaluate_plan({**candidate, "event_dates": event_map.get(str(candidate.get("ticker") or "").upper(), candidate.get("event_dates") or {})}, rows_by_symbol.get(candidate.get("ticker"), {}), benchmark, config, as_of=effective_as_of, portfolio=governance if is_v13 else None, historical_oos=oos_mappings if is_v13 else oos_mappings.get(str(candidate.get("ticker") or "").upper())) for candidate in candidates.get("candidates", [])]
+    plans = [evaluate_plan({**candidate, "historical_selection_policy": candidates.get("selection_policy", {}), "event_dates": event_map.get(str(candidate.get("ticker") or "").upper(), candidate.get("event_dates") or {})}, rows_by_symbol.get(candidate.get("ticker"), {}), benchmark, config, as_of=effective_as_of, portfolio=governance if is_v13 else None, historical_oos=oos_mappings if is_v13 else oos_mappings.get(str(candidate.get("ticker") or "").upper())) for candidate in candidates.get("candidates", [])]
     if not is_v13 and governance.get("manual_review_eligible") is True:
         for plan in plans:
             if plan["status"] == "simulation_only" and plan.get("historical_oos", {}).get("passed") is True:
@@ -395,7 +461,7 @@ def generate(candidates_path=DEFAULT_CANDIDATES, prices_path=DEFAULT_PRICES, con
             if is_v13: plan["strategies"] = blocked_strategy_rows(config, plan["reason_codes"])
     statuses = ("conditional_review", "historical_review", "historical_watch", "preliminary_review", "manual_review_ready", "simulation_only", "waiting_trigger", "waiting_breakout", "waiting_pullback", "chase_blocked", "event_blocked", "invalidated", "blocked")
     governance_keys = ("status", "observation_count", "calendar_week_count", "complete_count", "primary_complete_count", "preliminary_review_requirements", "manual_review_requirements", "reliability_requirements", "preliminary_review_eligible", "manual_review_eligible", "reliability_claim_eligible", "reason")
-    methodology = "global-style-short-term-v1.3.0" if is_v13 else "global-style-short-term-v1.2.0" if config.get("style_fusion") else "short-term-trade-plan-v1.1.0"
+    methodology = "global-style-short-term-v1.3.1" if is_v13 else "global-style-short-term-v1.2.0" if config.get("style_fusion") else "short-term-trade-plan-v1.1.0"
     return {"schema_version": config.get("output_schema_version", "short-term-trade-plan-v1.1"), "methodology_version": methodology, "generated_at": datetime.now(timezone.utc).isoformat(), "as_of": effective_as_of, "price_as_of": prices.get("as_of"), "research_only": True, "no_trade": True, "benchmark": "QQQ", "config_version": config["schema_version"], "style_fusion": config.get("style_fusion"), "historical_oos_status": style_oos.get("status", "unavailable"), "shadow_governance": {key: governance.get(key) for key in governance_keys}, "data_validation": {"valid": validation["valid"], "errors": validation["errors"], "coverage": validation["coverage"], "common_dates": validation.get("common_dates", 0)}, "plans": plans, "summary": {"candidate_count": len(plans), "strategy_count": sum(len(plan.get("strategies", [])) for plan in plans), "status_counts": {status: sum(plan["status"] == status for plan in plans) for status in statuses}, "manual_review_required": True}}
 
 def main():

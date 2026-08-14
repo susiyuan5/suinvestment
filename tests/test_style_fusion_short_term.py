@@ -6,7 +6,9 @@ from pathlib import Path
 from research.idea_engine.v3.short_term_trade_plan import (
     build_strategy_rows,
     calculate_position_size,
+    evaluate_plan,
     market_regime,
+    research_eligibility,
     style_signals,
 )
 from research.idea_engine.v3.style_fusion_oos import simulate_trade, summarize
@@ -36,6 +38,28 @@ def indicator_fixture(**overrides):
 def market_row(day, *, open_price=100.0, high=101.0, low=99.0, close=100.0):
     return {"date": day.isoformat(), "open": open_price, "high": high, "low": low,
             "close": close, "adjusted": close, "volume": 1_000_000}
+
+
+def historical_candidate(**overrides):
+    candidate = {
+        "ticker": "TEST",
+        "status": "C_SCREEN",
+        "as_of": "2026-08-14",
+        "evidence_coverage_score": 83.333333,
+        "historical_screen_status": "HISTORICAL_WATCH_CANDIDATE",
+        "historical_selection_policy": {"primary_reference": "permanent_historical_oos_price_timing"},
+        "historical_oos_reference": {
+            "as_of": "2026-08-14",
+            "evidence_status": "positive_skew_unconfirmed",
+            "oos_samples": 1078,
+            "oos_origin_dates": 63,
+            "mean_oos_net_relative_return": 0.014,
+            "oos_cost_adjusted_hit_rate": 0.481,
+        },
+        "event_dates": {"earnings": "2026-10-15"},
+    }
+    candidate.update(overrides)
+    return candidate
 
 
 class StyleFusionShortTermTests(unittest.TestCase):
@@ -82,6 +106,55 @@ class StyleFusionShortTermTests(unittest.TestCase):
         self.assertEqual(strategies[0]["shadow_validation_status"], "monitoring")
         self.assertTrue(strategies[0]["research_selection_allowed"])
         self.assertFalse(strategies[0]["execution_ready"])
+
+    def test_c_screen_can_use_narrow_historical_screen_override(self):
+        eligibility = research_eligibility(historical_candidate(), CONFIG_V13, as_of="2026-08-14")
+        self.assertTrue(eligibility["allowed"])
+        self.assertEqual(eligibility["mode"], "historical_screen_override")
+        self.assertEqual(eligibility["research_grade"], "C_SCREEN")
+        self.assertEqual(eligibility["maximum_action"], "research_scenarios_only")
+
+    def test_historical_override_rejects_unproven_or_future_references(self):
+        no_edge = historical_candidate(historical_oos_reference={
+            **historical_candidate()["historical_oos_reference"],
+            "evidence_status": "no_historical_edge",
+        })
+        self.assertFalse(research_eligibility(no_edge, CONFIG_V13, as_of="2026-08-14")["allowed"])
+        future = historical_candidate(historical_oos_reference={
+            **historical_candidate()["historical_oos_reference"],
+            "as_of": "2026-08-15",
+        })
+        self.assertFalse(research_eligibility(future, CONFIG_V13, as_of="2026-08-14")["allowed"])
+        undersampled = historical_candidate(historical_oos_reference={
+            **historical_candidate()["historical_oos_reference"],
+            "oos_samples": 999,
+        })
+        self.assertFalse(research_eligibility(undersampled, CONFIG_V13, as_of="2026-08-14")["allowed"])
+        wrong_policy = historical_candidate(historical_selection_policy={"primary_reference": "shadow"})
+        self.assertFalse(research_eligibility(wrong_policy, CONFIG_V13, as_of="2026-08-14")["allowed"])
+        valuation = research_eligibility(historical_candidate(status="VALUATION_GATED"), CONFIG_V13, as_of="2026-08-14")
+        self.assertFalse(valuation["allowed"])
+        self.assertEqual(valuation["reason_code"], "valuation_gate_not_eligible")
+
+    def test_historical_override_computes_scenarios_without_promoting_grade(self):
+        start = date(2025, 12, 16)
+        stock = [market_row(start + timedelta(days=index), open_price=100 + index * 0.2,
+                            high=101 + index * 0.2, low=99 + index * 0.2,
+                            close=100 + index * 0.2) for index in range(242)]
+        benchmark = [market_row(start + timedelta(days=index), open_price=100 + index * 0.1,
+                                high=101 + index * 0.1, low=99 + index * 0.1,
+                                close=100 + index * 0.1) for index in range(242)]
+        evidence = {
+            "oneil_volume_breakout": {"samples": 38, "passed": False, "evidence_tier": "provisional_positive"},
+            "trend_pullback": {"samples": 90, "passed": False, "evidence_tier": "no_historical_edge"},
+            "vcp_darvas_breakout": {"samples": 11, "passed": False, "evidence_tier": "insufficient"},
+        }
+        result = evaluate_plan(historical_candidate(), stock, benchmark, CONFIG_V13, as_of=stock[-1]["date"], portfolio={"manual_review_eligible": True}, historical_oos=evidence)
+        self.assertNotIn("idea_status_not_eligible", result["reason_codes"])
+        self.assertEqual(result["research_grade"], "C_SCREEN")
+        self.assertEqual(result["research_eligibility"]["mode"], "historical_screen_override")
+        self.assertTrue(all(row["execution_ready"] is False for row in result["strategies"]))
+        self.assertTrue(all(row["status"] != "conditional_review" for row in result["strategies"]))
 
     def test_yellow_regime_halves_position_risk_budget(self):
         full = calculate_position_size(100_000, 10_000, 100, 95, CONFIG, risk_scale=1.0)

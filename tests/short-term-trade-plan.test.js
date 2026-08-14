@@ -28,6 +28,13 @@ test('three-strategy labels remain conditional and never imply calibrated predic
   delete global.localStorage;
 });
 
+test('historical screen eligibility remains visibly separate from the research grade', () => {
+  assert.equal(plan.eligibilityLabel({ research_eligibility: { mode: 'historical_screen_override', research_grade: 'C_SCREEN' } }), '历史 OOS 候选通道（原研究等级 C_SCREEN）');
+  assert.equal(plan.eligibilityLabel({ research_eligibility: { mode: 'research_grade', research_grade: 'B_WATCH' } }), '研究等级门禁（B_WATCH）');
+  assert.equal(plan.eligibilityLabel({}), '尚未满足短线筛选资格');
+  assert.equal(plan.reasonLabel('valuation_gate_not_eligible'), '估值／预期门禁未通过，暂不进入短线候选');
+});
+
 test('strategy condition values use readable financial units', () => {
   assert.equal(plan.conditionValue({ code: 'relative_return_20', current: 0.03456 }), '3.46%');
   assert.equal(plan.conditionValue({ code: 'volume_ratio', current: 1.234 }), '1.23x');
