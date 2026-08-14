@@ -1,0 +1,60 @@
+name: Monthly research universe governance
+
+on:
+  schedule:
+    - cron: "15 15 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+
+concurrency:
+  group: govern-research-universe
+  cancel-in-progress: true
+
+jobs:
+  govern:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Generate auditable universe snapshot
+        env:
+          PYTHONPATH: .
+        run: python scripts/govern_research_universe.py
+      - name: Validate universe governance
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m unittest tests.test_research_universe_governance
+          python -m json.tool data/research-universe/v2/current.json > /dev/null
+      - name: Create or update universe PR
+        id: create-pr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/govern-research-universe
+          delete-branch: true
+          commit-message: "Govern research universe snapshot"
+          title: "Govern research universe snapshot"
+          draft: false
+          body: |
+            研究股票池月度治理快照。普通扫描不替换股票池；仅研究用途，不影响本周定投。
+          add-paths: |
+            data/research-universe/v2/**
+            results/research-universe/**
+      - name: Mark validated commit
+        if: steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${{ steps.create-pr.outputs.pull-request-head-sha }}" -f state=success -f context=verify -f description="Research universe governance validation passed"
+      - name: Merge validated PR
+        if: steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --merge --delete-branch

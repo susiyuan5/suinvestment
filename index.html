@@ -353,6 +353,9 @@
       <details id="ideaEnginePanel" class="panel idea-engine-panel" aria-labelledby="ideaEngineTitle">
         <summary class="tool-summary"><span><span class="eyebrow">研究候选</span><strong id="ideaEngineTitle">潜力股短线研究</strong></span><span>展开研究</span></summary>
         <div class="idea-engine-heading">
+          <div class="research-refresh-actions" aria-label="潜力股研究数据刷新"><button id="refreshIdeaTodayBtn" class="secondary-button" type="button">刷新今日数据</button><button id="refreshIdeaUniverseBtn" class="secondary-button" type="button">重新扫描股票池</button><span id="researchRefreshStatus" class="status-line" role="status" aria-live="polite">等待操作</span></div>
+          <div class="research-refresh-meta"><span id="researchUniverseMeta">股票池版本：读取中</span><span id="researchRefreshRunMeta">最近运行：暂无</span><button id="reloadPublishedResearchBtn" class="text-button" type="button">重新加载已发布结果</button></div>
+          <details class="research-refresh-settings"><summary>设置刷新网关</summary><div><label for="researchGatewayUrl">网关地址</label><input id="researchGatewayUrl" type="url" placeholder="部署后填写 Worker 地址" autocomplete="off"><label for="researchRefreshSecret">刷新授权码</label><input id="researchRefreshSecret" type="password" maxlength="256" autocomplete="off"><button id="saveResearchRefreshSettingsBtn" class="secondary-button" type="button">保存刷新设置</button><button id="clearResearchRefreshSettingsBtn" class="text-button" type="button">清除授权码</button><span id="researchRefreshSettingsStatus" role="status" aria-live="polite"></span></div></details>
           <p id="ideaEngineStatus" class="idea-engine-status" role="status">正在加载研究候选。</p>
           <p class="fine-print">短线研究窗口为 1–4 周，以 4 周相对 QQQ 表现为主要验证目标；不代表买入建议，不参与本周定投计算。</p>
         </div>
@@ -748,6 +751,7 @@
     <script src="watchlist.js?v=watchlist-4"></script>
     <script src="short-term-daily-bars.js?v=short-term-daily-bars-v1"></script>
     <script src="short-term-trade-plan.js?v=short-term-trade-plan-v1-3"></script>
+    <script src="research-refresh.js?v=research-refresh-v1"></script>
     <script src="idea-engine.js?v=idea-engine-robust-score-100-1"></script>
     <script src="project-health.js?v=health-2"></script>
     <script src="wealthsimple-execution.js?v=wealthsimple-v1"></script>

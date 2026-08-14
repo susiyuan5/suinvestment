@@ -27,6 +27,9 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Write refresh status
+        run: python scripts/write_refresh_status.py --task today --status fetching --run-id "${GITHUB_RUN_ID}"
+
       - name: Refresh strict daily OHLCV snapshot
         env:
           PYTHONPATH: .
@@ -57,6 +60,13 @@ jobs:
           node --test tests/short-term-trade-plan.test.js
           python scripts/check_static_contracts.py
 
+      - name: Mark refresh ready for publication
+        if: success()
+        run: python scripts/write_refresh_status.py --task today --status waiting_publish --run-id "${GITHUB_RUN_ID}"
+      - name: Mark refresh failure without replacing results
+        if: failure()
+        run: python scripts/write_refresh_status.py --task today --status failed --run-id "${GITHUB_RUN_ID}"
+
       - name: Create validated daily signal pull request
         id: create-pr
         uses: peter-evans/create-pull-request@v8
@@ -76,6 +86,7 @@ jobs:
           add-paths: |
             data/short-term-daily-bars-v1.json
             research/results/v3_1/short-term-trade-plans-v1_3/**
+            data/research-refresh-status.json
 
       - name: Mark validated commit and merge
         if: steps.create-pr.outputs.pull-request-number != ''

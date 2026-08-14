@@ -1,0 +1,39 @@
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.ResearchRefresh = factory();
+})(typeof self !== "undefined" ? self : this, function () {
+  "use strict";
+  var TASKS = { today: "update-short-term-signals.yml", universe: "update-idea-engine.yml" };
+  var STATES = ["queued", "fetching", "validating", "calculating", "waiting_publish", "success", "no_change", "failed"];
+  function createController(options) {
+    options = options || {}; var now = options.now || Date.now; var fetcher = options.fetcher || fetch; var storage = options.storage || (typeof sessionStorage !== "undefined" ? sessionStorage : null); var cooldown = options.cooldownMs || 60000; var state = { task: null, status: "success", runId: null, lastSuccess: null, error: "", disabled: false };
+    function savedKey() { return "su-investment:refresh-authorization"; }
+    function getSecret() { return storage ? storage.getItem(savedKey()) || "" : ""; }
+    function setSecret(value, persistent) { if (!storage) return; if (!value) storage.removeItem(savedKey()); else storage.setItem(savedKey(), String(value).slice(0, 256)); if (persistent && typeof localStorage !== "undefined") localStorage.setItem(savedKey(), String(value).slice(0, 256)); }
+    function clearSecret() { if (storage) storage.removeItem(savedKey()); if (typeof localStorage !== "undefined") localStorage.removeItem(savedKey()); }
+    function canStart(task) { return Boolean(TASKS[task]) && !state.disabled && (!state.lastSuccess || now() - state.lastSuccess >= cooldown); }
+    function request(task) { if (!canStart(task)) return Promise.reject(new Error("refresh_cooldown_or_running")); state.disabled = true; state.task = task; state.status = "queued"; state.error = ""; return fetcher(String(options.gatewayUrl || "").replace(/\/$/, "") + "/refresh/" + (task === "today" ? "today" : "universe"), { method: "POST", headers: { Authorization: "Bearer " + getSecret(), "Content-Type": "application/json" }, body: "{}" }).then(function (response) { if (!response.ok) throw new Error("refresh_request_failed"); return response.json(); }).then(function (result) { state.runId = result.run_id || null; state.status = result.status || "queued"; return result; }).catch(function (error) { state.status = "failed"; state.error = error.message; state.disabled = false; throw error; }); }
+    function status(task) { if (!TASKS[task]) return Promise.reject(new Error("workflow_not_allowed")); return fetcher(String(options.gatewayUrl || "").replace(/\/$/, "") + "/refresh/" + task + "/status", { headers: { Authorization: "Bearer " + getSecret() }, cache: "no-store" }).then(function (response) { if (!response.ok) throw new Error("workflow_status_unavailable"); return response.json(); }).then(mark); }
+    function published(url, version) { var joiner = url.indexOf("?") >= 0 ? "&" : "?"; return fetcher(url + joiner + "v=" + encodeURIComponent(version || now()), { cache: "no-store" }).then(function (response) { if (!response.ok) throw new Error("published_result_unavailable"); return response.json(); }).then(function (result) { state.status = "success"; state.lastSuccess = now(); state.disabled = false; return result; }); }
+    function mark(result) { state.status = result && result.status || state.status; if (["success", "no_change", "failed"].indexOf(state.status) >= 0) state.disabled = false; return state; }
+    return { tasks: TASKS, states: STATES, state: state, request: request, status: status, published: published, mark: mark, canStart: canStart, getSecret: getSecret, setSecret: setSecret, clearSecret: clearSecret };
+  }
+  function initPage() {
+    if (typeof document === "undefined" || typeof fetch !== "function") return;
+    var today = document.getElementById("refreshIdeaTodayBtn"), universe = document.getElementById("refreshIdeaUniverseBtn"), statusNode = document.getElementById("researchRefreshStatus"), runNode = document.getElementById("researchRefreshRunMeta"), metaNode = document.getElementById("researchUniverseMeta"), gatewayInput = document.getElementById("researchGatewayUrl"), secretInput = document.getElementById("researchRefreshSecret"), settingsStatus = document.getElementById("researchRefreshSettingsStatus");
+    if (!today || !universe || !statusNode) return;
+    var gateway = sessionStorage.getItem("su-investment:refresh-gateway") || ""; if (gatewayInput) gatewayInput.value = gateway;
+    var controller = createController({ gatewayUrl: gateway, storage: sessionStorage });
+    function label(value) { return { queued: "排队中", fetching: "抓取中", validating: "验证中", calculating: "计算中", waiting_publish: "等待发布", success: "成功", no_change: "无新数据", failed: "失败" }[value] || "等待操作"; }
+    function draw() { statusNode.textContent = label(controller.state.status) + (controller.state.error ? "：数据未通过安全检查，请人工复核" : ""); if (runNode && controller.state.runId) runNode.textContent = "本次 run ID：" + controller.state.runId; today.disabled = controller.state.disabled; universe.disabled = controller.state.disabled; }
+    fetch("data/research-universe/v2/current.json?v=" + Date.now(), { cache: "no-store" }).then(function (response) { if (!response.ok) throw new Error(); return response.json(); }).then(function (payload) { if (metaNode) metaNode.textContent = (payload.status === "blocked" ? "股票池未通过安全检查 · " : "股票池版本：") + String(payload.universe_version || "未知") + " · 有效股票数量：" + Number(payload.symbols && payload.symbols.length || 0) + " · 数据截至：" + String(payload.as_of || "未知"); }).catch(function () { if (metaNode) metaNode.textContent = "股票池文件未通过安全检查，请人工复核"; });
+    fetch("data/research-refresh-status.json?v=" + Date.now(), { cache: "no-store" }).then(function (response) { return response.ok ? response.json() : null; }).then(function (payload) { var item = payload && payload.universe; if (item && item.status && runNode) runNode.textContent = "最近扫描：" + label(item.status) + (item.run_id ? " · run ID：" + item.run_id : ""); });
+    function start(task) { if (!(gatewayInput && gatewayInput.value.trim())) { statusNode.textContent = "刷新授权未配置，请先设置网关地址和授权码。"; return; } var attempts = 0; controller.request(task).then(draw).catch(draw); draw(); var timer = setInterval(function () { attempts += 1; controller.status(task).then(function (result) { draw(); if (["completed", "success", "failure", "cancelled"].indexOf(result.status) >= 0 || attempts >= 12) { clearInterval(timer); controller.state.disabled = false; draw(); } }).catch(function () { if (attempts >= 12) { clearInterval(timer); controller.state.disabled = false; controller.state.status = "failed"; draw(); } }); }, 5000); }
+    today.addEventListener("click", function () { start("today"); }); universe.addEventListener("click", function () { start("universe"); });
+    var reload = document.getElementById("reloadPublishedResearchBtn"); if (reload) reload.addEventListener("click", function () { window.location.reload(); });
+    var save = document.getElementById("saveResearchRefreshSettingsBtn"); if (save) save.addEventListener("click", function () { var value = gatewayInput && gatewayInput.value.trim(); sessionStorage.setItem("su-investment:refresh-gateway", value || ""); controller = createController({ gatewayUrl: value, storage: sessionStorage }); if (secretInput && secretInput.value) controller.setSecret(secretInput.value, false); if (settingsStatus) settingsStatus.textContent = value ? "刷新设置已保存，仅供本次浏览器会话使用。" : "已清除刷新网关地址。"; });
+    var clear = document.getElementById("clearResearchRefreshSettingsBtn"); if (clear) clear.addEventListener("click", function () { controller.clearSecret(); if (secretInput) secretInput.value = ""; if (settingsStatus) settingsStatus.textContent = "授权码已清除。"; });
+  }
+  if (typeof document !== "undefined") initPage();
+  return { createController: createController, TASKS: TASKS, STATES: STATES, initPage: initPage };
+});
