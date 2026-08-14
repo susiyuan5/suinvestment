@@ -147,5 +147,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          pr_number="${{ steps.create-pr.outputs.pull-request-number }}"
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${{ steps.create-pr.outputs.pull-request-head-sha }}" -f state=success -f context=verify -f description="Idea Engine research validation passed"
-          gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --merge --delete-branch
+          if [ "$(gh pr view "$pr_number" --json isDraft --jq .isDraft)" = "true" ]; then
+            gh pr ready "$pr_number"
+          fi
+          gh pr merge "$pr_number" --merge --delete-branch
