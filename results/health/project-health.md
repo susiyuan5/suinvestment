@@ -1,17 +1,17 @@
 # Project Health
 
 - Status: **WARNING**
-- Generated: `2026-08-14T14:39:49.328050+00:00`
+- Generated: `2026-08-15T13:59:41.741061+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
-- `pending_idea_engine_pr`
+- `workflow_idea_engine_update_failure`
 
 ## Historical Coverage
 
-- QQQ: 271 rows; latest `2026-08-07`; lag `7` days
-- SPY: 271 rows; latest `2026-08-07`; lag `7` days
+- QQQ: 272 rows; latest `2026-08-14`; lag `1` days
+- SPY: 272 rows; latest `2026-08-14`; lag `1` days
 
 ## Workflows
 
@@ -20,13 +20,13 @@
 - quality_checks: `completed` / `success`
 - pages_smoke: `completed` / `success`
 - shadow_update: `completed` / `success`
-- idea_engine_update: `completed` / `success`
+- idea_engine_update: `completed` / `failure`
 
 ## Pending Automated Updates
 
 - historical_prices: none
 - shadow_observation: none
-- idea_engine: PR #52 pending (https://github.com/susiyuan5/suinvestment/pull/52)
+- idea_engine: none
 
 ## Watchlist
 
@@ -53,8 +53,8 @@
 ## Research Pipeline
 
 - DCA-L2 v2 valid: `True`
-- Schedule events: `270`
-- Executed trades: `4860`
+- Schedule events: `271`
+- Executed trades: `4878`
 - Scope: `research_only`
 
 ## Idea Engine
@@ -62,7 +62,7 @@
 - Version: `idea-engine-v3.1`
 - Source: `v3.1-short-term`
 - Primary horizon: `4` weeks
-- Shadow observations: `1`
+- Shadow observations: `2`
 - Mature short-term outcomes: `0`
 - Human review gate: `False`
 - Scope: research only; never enters DCA or automatic trading.
@@ -70,8 +70,8 @@
 ## Historical OOS price-timing calibration
 
 - Status: `preliminary_no_reliable_edge`
-- As of: `2026-08-13`
-- Permanent OOS samples: `5039`
+- As of: `2026-08-14`
+- Permanent OOS samples: `5040`
 - Independent weekly origins: `63`
 - Reliability gate: `False`
 - Scope: price/volume timing only; the composite score remains uncalibrated.
@@ -81,7 +81,7 @@
 - Schema: `short-term-trade-plan-v1.3`
 - Style fusion: `global-style-fusion-v1.3`
 - Candidates / strategies: `10` / `30`
-- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 1, 'waiting_trigger': 5, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 4}`
+- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 0, 'waiting_trigger': 9, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 1}`
 - Historical OOS: `preliminary_no_reliable_edge` / samples `139` / passed models `[]`
 - Shadow preliminary / formal review: `False` / `False`
 - Scope: research-only simulation; no orders or automatic trading.
