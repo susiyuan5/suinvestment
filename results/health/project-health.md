@@ -1,17 +1,18 @@
 # Project Health
 
 - Status: **WARNING**
-- Generated: `2026-08-16T13:59:52.379819+00:00`
+- Generated: `2026-08-17T14:05:09.668928+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
+- `pending_historical_prices_status_unknown`
 - `workflow_idea_engine_update_failure`
 
 ## Historical Coverage
 
-- QQQ: 272 rows; latest `2026-08-14`; lag `2` days
-- SPY: 272 rows; latest `2026-08-14`; lag `2` days
+- QQQ: 272 rows; latest `2026-08-14`; lag `3` days
+- SPY: 272 rows; latest `2026-08-14`; lag `3` days
 
 ## Workflows
 
@@ -24,7 +25,7 @@
 
 ## Pending Automated Updates
 
-- historical_prices: none
+- historical_prices: status unknown
 - shadow_observation: none
 - idea_engine: none
 
