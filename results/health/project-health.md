@@ -1,18 +1,18 @@
 # Project Health
 
 - Status: **WARNING**
-- Generated: `2026-08-17T14:05:09.668928+00:00`
+- Generated: `2026-08-18T14:17:00.982539+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
-- `pending_historical_prices_status_unknown`
+- `pending_idea_engine_pr`
 - `workflow_idea_engine_update_failure`
 
 ## Historical Coverage
 
-- QQQ: 272 rows; latest `2026-08-14`; lag `3` days
-- SPY: 272 rows; latest `2026-08-14`; lag `3` days
+- QQQ: 272 rows; latest `2026-08-14`; lag `4` days
+- SPY: 272 rows; latest `2026-08-14`; lag `4` days
 
 ## Workflows
 
@@ -25,9 +25,9 @@
 
 ## Pending Automated Updates
 
-- historical_prices: status unknown
+- historical_prices: none
 - shadow_observation: none
-- idea_engine: none
+- idea_engine: PR #98 pending (https://github.com/susiyuan5/suinvestment/pull/98)
 
 ## Watchlist
 
