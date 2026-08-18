@@ -1,6 +1,6 @@
 {
   "version": "project-health-v1",
-  "generated_at": "2026-08-17T14:05:09.668928+00:00",
+  "generated_at": "2026-08-18T14:17:00.982539+00:00",
   "status": "warning",
   "status_scope": "Operational data and workflow health only; not strategy validation or trading approval.",
   "manual_decision_only": true,
@@ -19,12 +19,12 @@
     "note": "\u6d4f\u89c8\u5668\u53ea\u6709\u5728\u7528\u6237\u5bfc\u5165\u672c\u5730\u5bc6\u94a5\u540e\u624d\u89e3\u5bc6\uff1b\u5065\u5eb7\u72b6\u6001\u4e0d\u4ee3\u8868\u53ef\u4ea4\u6613\u3002"
   },
   "issues": [
-    "pending_historical_prices_status_unknown",
+    "pending_idea_engine_pr",
     "workflow_idea_engine_update_failure"
   ],
   "market_snapshot": {
-    "generated_at": "2026-08-14T22:50:11.259309Z",
-    "lag_days": 3,
+    "generated_at": "2026-08-17T22:50:32.821755Z",
+    "lag_days": 1,
     "fresh_symbols": 8,
     "stale_symbols": 0
   },
@@ -34,12 +34,12 @@
       "QQQ": {
         "row_count": 272,
         "latest_date": "2026-08-14",
-        "lag_days": 3
+        "lag_days": 4
       },
       "SPY": {
         "row_count": 272,
         "latest_date": "2026-08-14",
-        "lag_days": 3
+        "lag_days": 4
       }
     }
   },
@@ -61,8 +61,8 @@
     "market_update": {
       "status": "completed",
       "conclusion": "success",
-      "updated_at": "2026-08-14T22:50:23Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31848133293"
+      "updated_at": "2026-08-17T22:50:45Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/32077812306"
     },
     "historical_update": {
       "status": "completed",
@@ -79,8 +79,8 @@
     "pages_smoke": {
       "status": "completed",
       "conclusion": "success",
-      "updated_at": "2026-08-16T14:01:57Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31951462922"
+      "updated_at": "2026-08-17T23:42:32Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/32081494131"
     },
     "shadow_update": {
       "status": "completed",
@@ -91,18 +91,19 @@
     "idea_engine_update": {
       "status": "completed",
       "conclusion": "failure",
-      "updated_at": "2026-08-14T15:17:25Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/31813274948"
+      "updated_at": "2026-08-17T14:55:49Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/32040395243"
     }
   },
   "pending_updates": {
-    "historical_prices": {
-      "status": "unknown",
-      "error": "HTTP Error 504: Gateway Timeout",
-      "head": "automation/update-backtest-prices"
-    },
+    "historical_prices": null,
     "shadow_observation": null,
-    "idea_engine": null
+    "idea_engine": {
+      "number": 98,
+      "updated_at": "2026-08-17T14:55:41Z",
+      "url": "https://github.com/susiyuan5/suinvestment/pull/98",
+      "head": "automation/update-idea-engine-shadow"
+    }
   },
   "shadow": {
     "archived_observation_count": 3,
@@ -176,7 +177,7 @@
   },
   "short_term_trade_plan": {
     "schema_version": "short-term-trade-plan-v1.3",
-    "last_successful_run": "2026-08-14T23:40:05.522492+00:00",
+    "last_successful_run": "2026-08-17T23:40:21.982652+00:00",
     "candidate_count": 10,
     "strategy_count": 30,
     "status_counts": {
@@ -212,7 +213,7 @@
     "data_source_response_ms": null
   },
   "versions": {
-    "market_input": "2026-08-14T22:50:11.259309Z",
+    "market_input": "2026-08-17T22:50:32.821755Z",
     "historical_input": "2026-08-15T12:42:05.950430+00:00",
     "shadow_model": "phase6s-candidate-ranking-v1",
     "v2_research": "v2-causal-baseline"
