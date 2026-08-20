@@ -468,7 +468,7 @@
       mount.appendChild(actions);
       actions.querySelector("#settingsRestoreDefaultAllocationBtn").addEventListener("click", function () {
         var presetDefinition = root.CoreSatellitePolicy && root.CoreSatellitePolicy.PRESET, preset = {};
-        if (presetDefinition) { preset[presetDefinition.core.symbol] = presetDefinition.core.target_allocation; (presetDefinition.satellites || []).forEach(function (item) { preset[item.symbol] = item.target_allocation; }); }
+        if (presetDefinition) { (root.CoreSatellitePolicy.rowsForPreset ? root.CoreSatellitePolicy.rowsForPreset(presetDefinition) : [presetDefinition.core].concat(presetDefinition.growth_etfs || [], presetDefinition.satellites || [])).forEach(function (item) { preset[item.symbol] = item.target_allocation; }); }
         draft.allocationMode = "default";
         draft.allocation = preset;
         if (root.__SUINVESTMENT_SETTINGS_API__ && root.__SUINVESTMENT_SETTINGS_API__.setAllocationDraft) root.__SUINVESTMENT_SETTINGS_API__.setAllocationDraft(preset);

@@ -54,9 +54,9 @@ test("sidebar uses a compact current holdings overview instead of a risk dashboa
   assert.doesNotMatch(app, /appendChild\(createRiskList/);
 });
 
-test("weekly decision order contract contains SPY and four satellites", () => {
+test("weekly decision order contract contains SPY, QQQ and four satellites", () => {
   const source = fs.readFileSync("app.js", "utf8");
-  assert.match(source, /const expected = \["SPY", "NVDA", "AAPL", "ASML", "KO"\]/);
-  assert.match(source, /QQQ 仅作为科技风险指标/);
+  assert.match(source, /CoreSatellitePolicy\.rowsForPreset\(activeCoreSatellitePreset\(\) \|\| CoreSatellitePolicy\.PRESET\)/);
+  assert.match(source, /QQQ：纳斯达克成长 ETF/);
   assert.match(source, /数据或计算未通过安全检查，请人工复核/);
 });

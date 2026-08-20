@@ -19,7 +19,7 @@
     panicMultiplier: 1.3,
     panicSymbols: new Set(["MSFT", "NVDA", "AAPL", "ASML"]),
     defaultStocks: CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET),
-    coreSatellitePresetUrl: "data/core-satellite-v4.json"
+    coreSatellitePresetUrl: "data/core-satellite-v5.json"
   };
 
   const STORAGE_KEYS = {
@@ -63,8 +63,8 @@
 
   const WEEKS_PER_MONTH = 52 / 12;
 
-  const CORE_SATELLITE_SYMBOLS = ["SPY", "NVDA", "AAPL", "ASML", "KO"];
-  const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.40, NVDA: 0.15, AAPL: 0.15, ASML: 0.15, KO: 0.15 };
+  const CORE_SATELLITE_SYMBOLS = ["SPY", "QQQ", "NVDA", "AAPL", "ASML", "KO"];
+  const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.40, QQQ: 0.10, NVDA: 0.125, AAPL: 0.125, ASML: 0.125, KO: 0.125 };
   function coreSatelliteAllocations(portfolio) {
     return CORE_SATELLITE_SYMBOLS.reduce(function (map, symbol) {
       const item = (portfolio || []).find(function (row) { return row.symbol === symbol; });
@@ -78,10 +78,19 @@
     const stored = loadJson(STORAGE_KEYS.coreSatelliteState, null);
     const hasPortfolio = Array.isArray(raw) && raw.length > 0;
     const hasLegacyByddy = Array.isArray(raw) && raw.some(function (row) { return row && row.symbol === "BYDDY"; });
+    const oldDefault = { SPY: 0.40, NVDA: 0.15, AAPL: 0.15, ASML: 0.15, KO: 0.15 };
+    const isV4Default = hasPortfolio && CORE_SATELLITE_SYMBOLS.slice(0, 1).concat(["NVDA", "AAPL", "ASML", "KO"]).every(function (symbol) { const row = raw.find(function (item) { return item && item.symbol === symbol; }); return row && Math.abs(Number(row.target_allocation == null ? row.allocation : row.target_allocation) - oldDefault[symbol]) < 1e-9; }) && !raw.some(function (row) { return row && row.symbol === "QQQ"; });
+    if (!hasLegacyByddy && isV4Default && (!stored || stored.preset_version !== CoreSatellitePolicy.PRESET.version)) {
+      const previous = normalizePortfolio(raw, { allowCustom: true });
+      const next = normalizePortfolio(CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET), { allowCustom: true });
+      const nextState = { preset_version: CoreSatellitePolicy.PRESET.version, allocation_mode: "default", migration_completed: true, portfolio_backup: previous, updated_at: new Date().toISOString(), migration_notice: "已将 v4 默认组合迁移为 v5：SPY 40%、QQQ 10%、四只个股各 12.5%；仅调整未来人工定投计划。", allocation_valid: true, allocation_errors: [] };
+      saveJson(STORAGE_KEYS.coreSatelliteBackup, previous); saveJson(STORAGE_KEYS.portfolio, next); persistCoreSatelliteState(nextState);
+      return { portfolio: next, state: nextState, notice: nextState.migration_notice };
+    }
     if (hasLegacyByddy) {
       const previous = normalizePortfolio(raw, { allowCustom: true });
       const next = normalizePortfolio(CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET), { allowCustom: true });
-      const nextState = { preset_version: CoreSatellitePolicy.PRESET.version, allocation_mode: "default", migration_completed: true, portfolio_backup: previous, updated_at: new Date().toISOString(), migration_notice: "已将旧组合迁移为 SPY 40%、NVDA/AAPL/ASML/KO 各 15%；仅影响后续人工定投计划。" };
+      const nextState = { preset_version: CoreSatellitePolicy.PRESET.version, allocation_mode: "default", migration_completed: true, portfolio_backup: previous, updated_at: new Date().toISOString(), migration_notice: "已将旧组合迁移为 v5：SPY 40%、QQQ 10%、四只个股各 12.5%；仅影响后续人工定投计划。" };
       nextState.allocation_valid = true;
       nextState.allocation_errors = [];
       saveJson(STORAGE_KEYS.coreSatelliteBackup, previous);
@@ -101,12 +110,19 @@
     if (stored && stored.migration_completed === true && stored.preset_version === CoreSatellitePolicy.PRESET.version) {
       return { portfolio: normalizePortfolio(raw || CONFIG.defaultStocks, { allowCustom: true }), state: stored, notice: stored.migration_notice || "" };
     }
+    if (hasPortfolio && !isV4Default && !hasLegacyByddy) {
+      const preserved = normalizePortfolio(raw, { allowCustom: true });
+      const validation = CoreSatellitePolicy.validateAllocations(coreSatelliteAllocations(preserved));
+      const preservedState = { preset_version: CoreSatellitePolicy.PRESET.version, allocation_mode: "manual", migration_completed: true, portfolio_backup: preserved, allocation_valid: validation.valid, allocation_errors: validation.errors, updated_at: new Date().toISOString(), migration_notice: validation.valid ? "已保留现有自定义比例；可按确认应用 v5 推荐比例。" : "已保留现有比例，但尚未通过 v5 校验；请先修正或应用 v5 推荐比例。" };
+      persistCoreSatelliteState(preservedState);
+      return { portfolio: preserved, state: preservedState, notice: preservedState.migration_notice };
+    }
     const previous = hasPortfolio ? normalizePortfolio(raw, { allowCustom: true }) : [];
     const next = normalizePortfolio(CoreSatellitePolicy.rowsForPreset(CoreSatellitePolicy.PRESET), { allowCustom: true });
     const nextState = { preset_version: CoreSatellitePolicy.PRESET.version, allocation_mode: "default", migration_completed: true, portfolio_backup: previous, migration_notice: "已默认应用 40% 大盘＋60% 个股组合；仅调整人工计划，不会自动卖出或再平衡。", updated_at: new Date().toISOString() };
     nextState.allocation_valid = true;
     nextState.allocation_errors = [];
-    nextState.migration_notice = "已默认应用 v4 推荐比例：SPY 40%，个股 60%；仅调整未来人工计划，不会自动卖出或再平衡。";
+    nextState.migration_notice = "已默认应用 v5 推荐比例：SPY 40%、QQQ 10%、四只个股各 12.5%；仅调整未来人工计划，不会自动卖出或再平衡。";
     saveJson(STORAGE_KEYS.coreSatelliteBackup, previous);
     saveJson(STORAGE_KEYS.portfolio, next);
     persistCoreSatelliteState(nextState);
@@ -1401,7 +1417,7 @@ amountBreakdown: "金额分解",
     if (!window.EtfLookthrough) return null;
     const direct = CORE_SATELLITE_SYMBOLS.reduce(function (map, symbol) { const position = state.portfolioRiskInput && state.portfolioRiskInput.positions && state.portfolioRiskInput.positions[symbol]; map[symbol] = position ? { allocation: Number(position.current_allocation || 0) } : { allocation: 0 }; return map; }, {});
     state.etfExposure = window.EtfLookthrough.calculate(direct, state.etfHoldings, Date.now(), 30, singleStockExposureModeEl && singleStockExposureModeEl.value || "direct_only");
-    if (etfExposureStatusEl) etfExposureStatusEl.textContent = "SPY内部包含部分个股，穿透比例仅作集中度风险提示，不影响当前直接持仓上限检查。";
+    if (etfExposureStatusEl) etfExposureStatusEl.textContent = "SPY 和 QQQ 内部包含部分个股，穿透比例仅作集中度风险提示，不影响当前直接持仓上限检查。";
     return state.etfExposure;
   }
 
@@ -1465,9 +1481,8 @@ amountBreakdown: "金额分解",
       if (result.symbol === "QQQ") {
         state.qqqSignal = getDecisionChange(result);
         state.qqqSignalLoaded = typeof state.qqqSignal === "number";
-      } else {
-        state.marketRows.set(result.symbol, result);
       }
+      state.marketRows.set(result.symbol, result);
     });
 
     state.panicActive = state.qqqSignalLoaded && state.qqqSignal <= CONFIG.qqqPanicThreshold;
@@ -5017,7 +5032,7 @@ function equalizeAllocations() {
         orderLines.push(row.symbol + "：基础 " + formatCurrency(row.originalBaseAmount) + "；信号调整 " + formatCurrency(row.dcaAdjustedAmount - row.originalBaseAmount + row.crashFundEnhancement) + "；风控调整 " + formatCurrency(row.riskReduction) + "；最终人工计划 " + formatCurrency(row.finalAmount) + "；" + coreSatelliteReason(row));
       });
       orderLines.push("保留现金：" + formatCurrency(state.coreSatellitePlan.cashRetained));
-      orderLines.push("QQQ 仅作为科技风险指标，买入金额为 " + formatCurrency(0) + "。");
+      orderLines.push("QQQ：纳斯达克成长 ETF，同时用于科技风险观察和 10% 定投，不会重复计算。");
     } else {
       entries.forEach(function (entry) { orderLines.push(formatManualTradePlanEntry(entry.signal, entry)); });
     }
@@ -5134,10 +5149,10 @@ function equalizeAllocations() {
     state.coreSatellitePlan = CoreSatellitePolicy.plan({
       preset: activePreset || CoreSatellitePolicy.PRESET, baseBudget: state.deployment.weeklyDeployment, crashFundRemaining: balance,
       actualAllocations: Object.keys(portfolioRisk.positions || {}).reduce(function (map, symbol) { map[symbol] = portfolioRisk.positions[symbol].current_allocation; return map; }, {}),
-      satelliteDecisions: satelliteDecisions, spyDataValid: Boolean(state.rows.get("SPY") && getDcaL2DataStatus(buildSignalObject({ symbol: "SPY" }, state.rows.get("SPY"))) === "fresh"),
+      satelliteDecisions: satelliteDecisions, spyDataValid: Boolean(state.rows.get("SPY") && getDcaL2DataStatus(buildSignalObject({ symbol: "SPY" }, state.rows.get("SPY"))) === "fresh"), qqqDataValid: Boolean(state.rows.get("QQQ") && getDcaL2DataStatus(buildSignalObject({ symbol: "QQQ" }, state.rows.get("QQQ"))) === "fresh"),
       safetyBlocked: !state.coreSatellitePresetReady, cashOnlySymbols: [], spyCrashEnhancement: 0
     });
-    const expectedSymbols = ["SPY", "NVDA", "AAPL", "ASML", "KO"];
+    const expectedSymbols = CoreSatellitePolicy.rowsForPreset(activePreset || CoreSatellitePolicy.PRESET).map(function (row) { return row.symbol; });
     const complete = state.coreSatellitePresetReady && expectedSymbols.every(function (symbol) { return state.portfolio.some(function (item) { return item.symbol === symbol; }); });
     const fresh = inputs.every(function (item) { return getDcaL2DataStatus(item.entry.signal) === "fresh"; });
     const cashGatePassed = !portfolioRisk.available_cash_provided || portfolioRisk.available_cash > 0;
@@ -5166,7 +5181,7 @@ function equalizeAllocations() {
     if (satellitePlanTotalEl) satellitePlanTotalEl.textContent = formatCurrency(plan.items.filter(function (row) { return row.bucket === "satellite"; }).reduce(function (sum, row) { return sum + row.finalAmount; }, 0));
     if (cashRetainedPlanEl) cashRetainedPlanEl.textContent = formatCurrency(plan.cashRetained);
     if (coreSatelliteStatusEl) coreSatelliteStatusEl.textContent = state.coreSatellitePresetReady ? "仅供人工规划" : "需要人工复核";
-    if (coreSatelliteRebalanceNoticeEl) coreSatelliteRebalanceNoticeEl.textContent = plan.summary.spyActualPct >= 65 || plan.summary.satelliteActualPct >= 45 ? "偏离目标超过 5 个百分点，请人工考虑再平衡；不会自动卖出。" : "QQQ 仅作为科技风险指标；不会自动下单。";
+    if (coreSatelliteRebalanceNoticeEl) coreSatelliteRebalanceNoticeEl.textContent = plan.summary.spyActualPct >= 65 || plan.summary.satelliteActualPct >= 45 ? "偏离目标超过 5 个百分点，请人工考虑再平衡；不会自动卖出。" : "QQQ 同时用于科技风险观察和 10% 定投，不会重复计算。";
   }
 
   function createDcaL2SafeFallback(baseAmount, detail) {
@@ -6179,7 +6194,7 @@ function equalizeAllocations() {
     const presetRows = activeCoreSatellitePreset() && CoreSatellitePolicy.rowsForPreset(activeCoreSatellitePreset()) || [];
     const targetBySymbol = presetRows.reduce(function (map, row) { map[row.symbol] = row.target_allocation * 100; return map; }, {});
     const positions = portfolioRisk && portfolioRisk.positions || {};
-    const expected = ["SPY", "NVDA", "AAPL", "ASML", "KO"];
+    const expected = CoreSatellitePolicy.rowsForPreset(activeCoreSatellitePreset() || CoreSatellitePolicy.PRESET).map(function (row) { return row.symbol; });
     const rows = plan && Array.isArray(plan.items) ? plan.items : [];
     const bySymbol = rows.reduce(function (map, row) { map[row.symbol] = row; return map; }, {});
     const safe = Boolean(plan && plan.safe === true && expected.every(function (symbol) { return bySymbol[symbol]; }));
@@ -6213,7 +6228,7 @@ function equalizeAllocations() {
     if (copyBtn) copyBtn.disabled = !safe;
     if (weeklyDecisionReasonEl) weeklyDecisionReasonEl.textContent = safe ? "基础预算先按当前目标比例分配，DCA-L2 信号和组合风控只会调整或阻止新增买入。" + (cashNotice ? " " + cashNotice : "") : formatSafetyGateReasons(safetyReasons, window.__SUINVESTMENT_SIGNALS__ || []);
     if (weeklyDecisionRiskReasonsEl) weeklyDecisionRiskReasonsEl.textContent = safe ? "请核对数据新鲜度、个股集中度、预算和可用现金；偏离目标超过 5 个百分点时仅提示人工再平衡。" : "请先检查上方阻断原因，再点击刷新并重新检查。";
-    if (weeklyDecisionQqqStatusEl) weeklyDecisionQqqStatusEl.textContent = "QQQ：科技风险指标，不参与本周买入。";
+    if (weeklyDecisionQqqStatusEl) weeklyDecisionQqqStatusEl.textContent = "QQQ：纳斯达克成长 ETF，同时用于科技风险观察和 10% 定投，不会重复计算。";
     expected.forEach(function (symbol) {
       const row = bySymbol[symbol] || { symbol: symbol, originalBaseAmount: 0, dcaAdjustedAmount: 0, riskReduction: 0, finalAmount: 0, reasonCodes: ["安全检查未通过"] };
       const position = positions[symbol] || {};
@@ -6667,15 +6682,17 @@ function equalizeAllocations() {
     if (!state.dataQualityEvaluated) return ["MARKET_DATA_NOT_EVALUATED"];
     if (rows.some(function (signal) { return signal.data_freshness === "stale" || signal.data_freshness === "missing" || signal.data_source === "Unavailable"; })) reasons.push("MARKET_SNAPSHOT_STALE");
     if (portfolioRisk && portfolioRisk.available_cash_provided && portfolioRisk.available_cash <= 0) reasons.push("AVAILABLE_CASH_ZERO");
-    const expected = ["SPY", "NVDA", "AAPL", "ASML", "KO"];
+    const expected = CoreSatellitePolicy.rowsForPreset(activeCoreSatellitePreset() || CoreSatellitePolicy.PRESET).map(function (row) { return row.symbol; });
     const active = activeCoreSatellitePreset();
     if (!state.coreSatellitePresetReady || !active || !expected.every(function (symbol) { return state.portfolio.some(function (stock) { return stock.symbol === symbol; }); })) reasons.push("CORE_SATELLITE_INCOMPLETE");
-    const allocationRows = active ? [active.core].concat(active.satellites || []) : [];
+    const allocationRows = active ? CoreSatellitePolicy.rowsForPreset(active) : [];
     if (!active || Math.abs(allocationRows.reduce(function (sum, asset) { return sum + Number(asset.target_allocation || 0); }, 0) - 1) > 0.0001) reasons.push("TARGET_ALLOCATION_INVALID");
     if (!state.dcaL2ConfigReady) reasons.push("DCA_L2_CONFIG_UNAVAILABLE");
     if (plan && (!plan.conservation || plan.conservation.balanced !== true)) reasons.push("CONSERVATION_FAILED");
     const spy = rows.find(function (signal) { return signal.symbol === "SPY"; });
     if (!spy || !isFiniteNumber(spy.latest_price) || ["missing", "stale"].indexOf(spy.data_freshness) >= 0 || spy.data_source === "Unavailable") reasons.push("SPY_DATA_UNAVAILABLE");
+    const qqq = rows.find(function (signal) { return signal.symbol === "QQQ"; });
+    if (active && active.growth_etfs && (!qqq || !isFiniteNumber(qqq.latest_price) || ["missing", "stale"].indexOf(qqq.data_freshness) >= 0 || qqq.data_source === "Unavailable")) reasons.push("QQQ_DATA_UNAVAILABLE");
     return Array.from(new Set(reasons));
   }
 
@@ -6689,7 +6706,8 @@ function equalizeAllocations() {
       TARGET_ALLOCATION_INVALID: "目标比例无效",
       DCA_L2_CONFIG_UNAVAILABLE: "DCA-L2 配置不可用",
       CONSERVATION_FAILED: "资金守恒失败",
-      SPY_DATA_UNAVAILABLE: "SPY 数据不可用"
+      SPY_DATA_UNAVAILABLE: "SPY 数据不可用",
+      QQQ_DATA_UNAVAILABLE: "QQQ 数据不可用"
     };
     return (codes || []).map(function (code) { return details[code] || code; }).join("；") + "。本周资金全部保留为现金，请人工复核。";
   }
