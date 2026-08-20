@@ -22,6 +22,22 @@ test("browser surface does not receive SnapTrade secrets", () => {
   assert.match(browser, /AES-GCM/);
 });
 
+test("browser key lifecycle validates before persistence and never falls back to plaintext", () => {
+  const store = fs.readFileSync(path.join(root, "snaptrade-holdings-store.js"), "utf8");
+  assert.match(store, /validateBase64Key/);
+  assert.match(store, /importNonExtractableKey/);
+  assert.match(store, /decryptAndValidateEnvelope/);
+  assert.match(store, /persistValidatedKey/);
+  assert.match(store, /verifyPersistedKey/);
+  assert.match(store, /extractable.*false/);
+  assert.match(store, /requestPersistentStorage/);
+  assert.match(store, /session_only/);
+  assert.doesNotMatch(store, /localStorage\.setItem\([^)]*(?:key|密钥)/i);
+  assert.doesNotMatch(store, /sessionStorage\.setItem\([^)]*(?:key|密钥)/i);
+  assert.doesNotMatch(store, /catch\s*\(\s*_\s*\)\s*\{\s*\}/);
+  assert.doesNotMatch(store, /base64.*indexeddb|indexeddb.*base64/i);
+});
+
 test("published encrypted envelope contains no plaintext holdings fields", () => {
   const envelope = JSON.parse(fs.readFileSync(path.join(root, "data/private/wealthsimple-holdings.enc.json"), "utf8"));
   assert.equal(envelope.schema_version, "wealthsimple-holdings-encrypted-v1");
