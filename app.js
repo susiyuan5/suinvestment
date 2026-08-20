@@ -2184,7 +2184,9 @@ amountBreakdown: "金额分解",
     const item = state.weeklySnapshot && state.weeklySnapshot.symbols && state.weeklySnapshot.symbols[symbol];
     if (!item || !isFiniteNumber(item.weeklyChange)) return null;
     const generatedAt = state.weeklySnapshot.generatedAt ? Date.parse(state.weeklySnapshot.generatedAt) : Date.now();
-    const quoteTimestamp = item.quoteTimestamp ? Date.parse(item.quoteTimestamp) : null;
+    const quoteTimestamp = window.MarketData && typeof window.MarketData.dailyCloseTimestamp === "function"
+      ? window.MarketData.dailyCloseTimestamp(item.latestDate, item.regularMarketTime, item.source)
+      : (item.quoteTimestamp ? Date.parse(item.quoteTimestamp) : null);
     const fetchTimestamp = item.fetchTimestamp ? Date.parse(item.fetchTimestamp) : generatedAt;
     const sourceTimestamp = Number.isFinite(quoteTimestamp) ? quoteTimestamp : fetchTimestamp;
     const validationStatus = item.validationStatus || (item.stale ? "stale" : "weekly");
@@ -2207,7 +2209,7 @@ amountBreakdown: "金额分解",
       source: sourceName,
       sourceType: item.sourceType || "weekly",
       validationStatus,
-      quoteTimestamp: item.quoteTimestamp || null,
+      quoteTimestamp: Number.isFinite(sourceTimestamp) ? new Date(sourceTimestamp).toISOString() : (item.quoteTimestamp || null),
       marketState: item.marketState || "",
       marketClosedLastClose: validationStatus === "market_closed_last_close",
       stale: item.stale === true || (validationStatus !== "validated" && validationStatus !== "market_closed_last_close"),
@@ -3501,6 +3503,7 @@ el.querySelector(".explanation-reason").textContent = reasons.join(" ");
   function getDataFreshness(row, dataAgeHours) {
     if (!row || row.source === "Unavailable") return "missing";
     if (row.market_closed_last_close === true) return "market_closed";
+    if (row.source_validation_status && row.source_validation_status !== "validated") return "stale";
     if (row.source === "Manual") {
       if (!Number.isFinite(row.override_applied_at)) return "stale";
       const overrideAgeHours = (Date.now() - row.override_applied_at) / (60 * 60 * 1000);
@@ -3808,6 +3811,7 @@ allocWrapper.appendChild(editBtn);
     else if (portfolioRisk.available_cash_provided && portfolioRisk.cash_percentage < 5) warnings.push(t("availableCashBelow5"));
     if (portfolioRisk.available_cash_provided && portfolioRisk.total_planned_buy_amount > portfolioRisk.available_cash) warnings.push(t("plannedExceedsCash"));
     if (portfolioRisk.available_cash_provided && portfolioRisk.available_cash > 0 && portfolioRisk.planned_cash_usage_percentage > 30) warnings.push(t("plannedExceeds30"));
+    if (!portfolioRisk.available_cash_provided) warnings.push("未填写可用现金，未应用现金上限，请人工核对");
     if (portfolioRisk.largest_position.current_allocation > 30) warnings.push(t("tickerAbove30"));
     if (portfolioRisk.equity_exposure_percentage > 95) warnings.push(t("equityAbove95"));
     if (highRiskCount >= 2) warnings.push(t("multipleHighRisk"));
@@ -5136,7 +5140,8 @@ function equalizeAllocations() {
     const expectedSymbols = ["SPY", "NVDA", "AAPL", "ASML", "KO"];
     const complete = state.coreSatellitePresetReady && expectedSymbols.every(function (symbol) { return state.portfolio.some(function (item) { return item.symbol === symbol; }); });
     const fresh = inputs.every(function (item) { return getDcaL2DataStatus(item.entry.signal) === "fresh"; });
-    state.coreSatellitePlan.safe = Boolean(activePreset) && complete && fresh && state.coreSatellitePlan.conservation && state.coreSatellitePlan.conservation.balanced === true;
+    const cashGatePassed = !portfolioRisk.available_cash_provided || portfolioRisk.available_cash > 0;
+    state.coreSatellitePlan.safe = Boolean(activePreset) && complete && fresh && cashGatePassed && state.coreSatellitePlan.conservation && state.coreSatellitePlan.conservation.balanced === true;
     if (!state.coreSatellitePlan.safe) {
       state.coreSatellitePlan.items.forEach(function (item) { item.finalAmount = 0; item.crashFundEnhancement = 0; item.redirectedToSpy = 0; item.cashRetained = 0; item.reasonCodes = Array.from(new Set((item.reasonCodes || []).concat(["安全检查未通过"]))); });
       state.coreSatellitePlan.spyRedirected = 0;
@@ -5844,9 +5849,12 @@ function equalizeAllocations() {
   }
 
   function normalizePortfolioRiskInput(value) {
+    if (window.PortfolioRiskInput && typeof window.PortfolioRiskInput.normalize === "function") {
+      return window.PortfolioRiskInput.normalize(value);
+    }
     const input = value && typeof value === "object" ? value : {};
     const positions = input.positions && typeof input.positions === "object" ? input.positions : {};
-    const hasAvailableCash = Object.prototype.hasOwnProperty.call(input, "available_cash") && String(input.available_cash).trim() !== "";
+    const hasAvailableCash = input.available_cash_provided !== false && Object.prototype.hasOwnProperty.call(input, "available_cash") && String(input.available_cash).trim() !== "" && Number.isFinite(Number(input.available_cash));
     return {
       available_cash: hasAvailableCash ? readPositiveNumber(input.available_cash) : 0,
       available_cash_provided: hasAvailableCash,
@@ -6077,6 +6085,8 @@ function equalizeAllocations() {
     const degradedSignals = signals.filter(function (signal) {
       return signal.data_source === "Unavailable" || signal.data_freshness === "missing" || signal.data_freshness === "stale";
     });
+    const safetyReasons = getSafetyGateReasons(state.coreSatellitePlan, portfolioRisk, signals);
+    state.safetyGateReasons = safetyReasons;
     const fallbackSignals = signals.filter(function (signal) { return isFallbackSource(signal); });
     const cachedSignals = signals.filter(function (signal) { return /cache/i.test(String(signal.data_source || "")); });
     const regime = state.marketRegime || getNeutralMarketRegime("QQQ");
@@ -6095,23 +6105,23 @@ function equalizeAllocations() {
             : (zh ? "实时 / API" : "Real-time / API");
     const action = !evaluated
       ? (zh ? "等待数据" : "Waiting for data")
-      : degradedSignals.length
+      : safetyReasons.length
         ? (zh ? "暂停买入" : "Do not buy")
         : portfolioRisk && portfolioRisk.total_planned_buy_amount > 0
           ? (zh ? "复核手动计划" : "Review manual plan")
           : (zh ? "复核信号" : "Review signals");
     const reason = !evaluated
       ? (zh ? "数据质量尚未评估，不生成增强买入建议。" : "Data quality is not evaluated; no enhanced buy recommendation is generated.")
-      : degradedSignals.length
-        ? (zh ? "存在不可用或过期数据，必须先人工复核。" : "Unavailable or stale data is present; manual review is required before action.")
+      : safetyReasons.length
+        ? formatSafetyGateReasons(safetyReasons, signals)
         : signals.find(function (signal) { return signal.warning && signal.warning !== t("none"); })?.warning
           || (zh ? "数据可用；仅将结果作为人工决策辅助。" : "Data is available; use this only as manual decision support.");
     const review = !evaluated
       ? (zh ? "等待数据" : "Waiting")
-      : degradedSignals.length
+      : safetyReasons.length
         ? (zh ? "允许复核；买入已阻止" : "Review allowed; buying blocked")
         : (zh ? "允许复核；仅人工" : "Review allowed; manual only");
-    const status = !evaluated ? "loading" : degradedSignals.length ? "blocked" : "ready";
+    const status = !evaluated ? "loading" : safetyReasons.length ? "blocked" : "ready";
 
     decisionSummaryStatusEl.textContent = status === "ready" ? (zh ? "可供复核" : "Ready for review") : status === "blocked" ? (zh ? "需先处理数据" : "Data attention") : (zh ? "加载中" : "Loading");
     decisionSummaryStatusEl.dataset.state = status;
@@ -6128,7 +6138,7 @@ function equalizeAllocations() {
       decisionSummaryStatusEl.dataset.state = planSafe ? "ready" : "blocked";
       if (!planSafe) {
         if (decisionActionEl) decisionActionEl.textContent = "暂停买入";
-        if (decisionReasonEl) decisionReasonEl.textContent = "行情数据不可用或已过期；本周资金全部保留为现金。";
+        if (decisionReasonEl) decisionReasonEl.textContent = formatSafetyGateReasons(safetyReasons, signals);
         if (decisionReviewStateEl) decisionReviewStateEl.textContent = "需人工复核";
       }
     }
@@ -6195,11 +6205,14 @@ function equalizeAllocations() {
     if (weeklyTechnologyTotalEl) weeklyTechnologyTotalEl.textContent = formatCurrency(techTotal);
     if (weeklySpyRedirectEl) weeklySpyRedirectEl.textContent = formatCurrency(plan && plan.spyRedirected || 0);
     if (weeklyRiskCashEl) weeklyRiskCashEl.textContent = formatCurrency(plan && plan.cashRetained || 0);
-    weeklyDecisionSafetyEl.textContent = safe ? "本周资金与定投决策已完成，请人工核对后执行；仅供人工决策，不连接券商，不自动交易。" : "暂停买入：数据或计算未通过安全检查；本周资金全部保留为现金。请刷新并重新检查。";
+    const safetyReasons = getSafetyGateReasons(plan, portfolioRisk, window.__SUINVESTMENT_SIGNALS__ || []);
+    state.safetyGateReasons = safetyReasons;
+    const cashNotice = portfolioRisk && !portfolioRisk.available_cash_provided ? "未填写可用现金，未应用现金上限，请人工核对。" : "";
+    weeklyDecisionSafetyEl.textContent = safe ? "本周资金与定投决策已完成，请人工核对后执行；" + cashNotice + "仅供人工决策，不连接券商，不自动交易。" : "暂停买入：" + formatSafetyGateReasons(safetyReasons, window.__SUINVESTMENT_SIGNALS__ || []) + "请刷新并重新检查。";
     weeklyDecisionSafetyEl.dataset.state = safe ? "ready" : "blocked";
     if (copyBtn) copyBtn.disabled = !safe;
-    if (weeklyDecisionReasonEl) weeklyDecisionReasonEl.textContent = safe ? "基础预算先按当前目标比例分配，DCA-L2 信号和组合风控只会调整或阻止新增买入。" : "安全门禁未通过，因此不输出可执行买入金额，资金保留为现金。";
-    if (weeklyDecisionRiskReasonsEl) weeklyDecisionRiskReasonsEl.textContent = safe ? "请核对数据质量、个股集中度、科技集中度、预算和可用现金；偏离目标超过 5 个百分点时仅提示人工再平衡。" : "请检查数据新鲜度、组合完整性、规划器和预算守恒状态。";
+    if (weeklyDecisionReasonEl) weeklyDecisionReasonEl.textContent = safe ? "基础预算先按当前目标比例分配，DCA-L2 信号和组合风控只会调整或阻止新增买入。" + (cashNotice ? " " + cashNotice : "") : formatSafetyGateReasons(safetyReasons, window.__SUINVESTMENT_SIGNALS__ || []);
+    if (weeklyDecisionRiskReasonsEl) weeklyDecisionRiskReasonsEl.textContent = safe ? "请核对数据新鲜度、个股集中度、预算和可用现金；偏离目标超过 5 个百分点时仅提示人工再平衡。" : "请先检查上方阻断原因，再点击刷新并重新检查。";
     if (weeklyDecisionQqqStatusEl) weeklyDecisionQqqStatusEl.textContent = "QQQ：科技风险指标，不参与本周买入。";
     expected.forEach(function (symbol) {
       const row = bySymbol[symbol] || { symbol: symbol, originalBaseAmount: 0, dcaAdjustedAmount: 0, riskReduction: 0, finalAmount: 0, reasonCodes: ["安全检查未通过"] };
@@ -6646,6 +6659,39 @@ function equalizeAllocations() {
       }
     }
     portfolioRiskSummaryEl.appendChild(list);
+  }
+
+  function getSafetyGateReasons(plan, portfolioRisk, signals) {
+    const reasons = [];
+    const rows = Array.isArray(signals) ? signals : [];
+    if (!state.dataQualityEvaluated) return ["MARKET_DATA_NOT_EVALUATED"];
+    if (rows.some(function (signal) { return signal.data_freshness === "stale" || signal.data_freshness === "missing" || signal.data_source === "Unavailable"; })) reasons.push("MARKET_SNAPSHOT_STALE");
+    if (portfolioRisk && portfolioRisk.available_cash_provided && portfolioRisk.available_cash <= 0) reasons.push("AVAILABLE_CASH_ZERO");
+    const expected = ["SPY", "NVDA", "AAPL", "ASML", "KO"];
+    const active = activeCoreSatellitePreset();
+    if (!state.coreSatellitePresetReady || !active || !expected.every(function (symbol) { return state.portfolio.some(function (stock) { return stock.symbol === symbol; }); })) reasons.push("CORE_SATELLITE_INCOMPLETE");
+    const allocationRows = active ? [active.core].concat(active.satellites || []) : [];
+    if (!active || Math.abs(allocationRows.reduce(function (sum, asset) { return sum + Number(asset.target_allocation || 0); }, 0) - 1) > 0.0001) reasons.push("TARGET_ALLOCATION_INVALID");
+    if (!state.dcaL2ConfigReady) reasons.push("DCA_L2_CONFIG_UNAVAILABLE");
+    if (plan && (!plan.conservation || plan.conservation.balanced !== true)) reasons.push("CONSERVATION_FAILED");
+    const spy = rows.find(function (signal) { return signal.symbol === "SPY"; });
+    if (!spy || !isFiniteNumber(spy.latest_price) || ["missing", "stale"].indexOf(spy.data_freshness) >= 0 || spy.data_source === "Unavailable") reasons.push("SPY_DATA_UNAVAILABLE");
+    return Array.from(new Set(reasons));
+  }
+
+  function formatSafetyGateReasons(codes, signals) {
+    const stale = (signals || []).find(function (signal) { return signal.data_freshness === "stale" || signal.data_freshness === "missing" || signal.data_source === "Unavailable"; });
+    const details = {
+      MARKET_DATA_NOT_EVALUATED: "数据质量尚未完成检查",
+      MARKET_SNAPSHOT_STALE: "行情快照过期或不可用" + (stale && (stale.quote_timestamp || stale.fetchedAt) ? "（快照时间 " + formatDateTime(stale.quote_timestamp || stale.fetchedAt) + "，年龄 " + (stale.data_age_hours == null ? "未知" : Number(stale.data_age_hours).toFixed(2) + " 小时") + "）" : ""),
+      AVAILABLE_CASH_ZERO: "可用现金明确为 0",
+      CORE_SATELLITE_INCOMPLETE: "核心/卫星组合缺少必要标的",
+      TARGET_ALLOCATION_INVALID: "目标比例无效",
+      DCA_L2_CONFIG_UNAVAILABLE: "DCA-L2 配置不可用",
+      CONSERVATION_FAILED: "资金守恒失败",
+      SPY_DATA_UNAVAILABLE: "SPY 数据不可用"
+    };
+    return (codes || []).map(function (code) { return details[code] || code; }).join("；") + "。本周资金全部保留为现金，请人工复核。";
   }
 
   function readPositiveNumber(value) {

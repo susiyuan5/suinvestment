@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from scripts import price_sources
 
@@ -25,6 +25,47 @@ def candidate(**overrides):
 
 
 class PriceSourceValidationTests(unittest.TestCase):
+    def test_daily_close_timestamp_uses_new_york_summer_close(self):
+        result = price_sources.latest_close_timestamp(date(2026, 6, 19))
+        self.assertEqual("2026-06-19T20:00:00Z", price_sources.isoformat(result))
+
+    def test_daily_close_timestamp_uses_new_york_winter_close(self):
+        result = price_sources.latest_close_timestamp(date(2026, 1, 5))
+        self.assertEqual("2026-01-05T21:00:00Z", price_sources.isoformat(result))
+
+    def test_matching_regular_market_time_is_preferred(self):
+        regular = datetime(2026, 6, 19, 20, 1, tzinfo=timezone.utc)
+        result = price_sources.latest_close_timestamp(date(2026, 6, 19), regular.timestamp())
+        self.assertEqual(price_sources.isoformat(regular), price_sources.isoformat(result))
+
+    def test_mismatched_regular_market_time_falls_back_to_close(self):
+        regular = datetime(2026, 6, 18, 20, 1, tzinfo=timezone.utc)
+        result = price_sources.latest_close_timestamp(date(2026, 6, 19), regular.timestamp())
+        self.assertEqual("2026-06-19T20:00:00Z", price_sources.isoformat(result))
+
+    def test_daily_open_timestamp_is_not_used_as_quote_timestamp(self):
+        points = [(datetime(2026, 6, 17, 13, 30, tzinfo=timezone.utc), 98),
+                  (datetime(2026, 6, 18, 13, 30, tzinfo=timezone.utc), 99),
+                  (datetime(2026, 6, 19, 13, 30, tzinfo=timezone.utc), 100),
+                  (datetime(2026, 6, 20, 13, 30, tzinfo=timezone.utc), 101),
+                  (datetime(2026, 6, 21, 13, 30, tzinfo=timezone.utc), 102),
+                  (datetime(2026, 6, 22, 13, 30, tzinfo=timezone.utc), 103)]
+        snapshot = price_sources.build_snapshot("AAPL", points, source="Yahoo Finance Chart API", source_type="api", trusted=True)
+        self.assertNotEqual("2026-06-22T13:30:00Z", snapshot["quoteTimestamp"])
+        self.assertEqual("2026-06-22T20:00:00Z", snapshot["quoteTimestamp"])
+
+    def test_previous_close_is_fresh_next_trading_morning(self):
+        result = price_sources.validate_snapshot(candidate(quoteTimestamp="2026-06-22T20:00:00Z"), now=datetime(2026, 6, 23, 13, 30, tzinfo=timezone.utc))
+        self.assertEqual("validated", result["validationStatus"])
+
+    def test_date_mismatched_quote_is_invalid_for_daily_snapshot(self):
+        snapshot = candidate(latestDate="2026-06-21", quoteTimestamp="2026-06-20T20:00:00Z")
+        self.assertEqual("invalid", price_sources.validate_snapshot(snapshot, now=NOW)["validationStatus"])
+
+    def test_invalid_price_and_future_quote_are_rejected(self):
+        self.assertEqual("invalid", price_sources.validate_snapshot(candidate(price=float("nan")), now=NOW)["validationStatus"])
+        self.assertEqual("invalid", price_sources.validate_snapshot(candidate(quoteTimestamp="2026-06-21T13:06:00Z"), now=NOW)["validationStatus"])
+
     def test_fresh_positive_quote_is_validated(self):
         result = price_sources.validate_snapshot(candidate(), now=NOW)
         self.assertEqual("validated", result["validationStatus"])

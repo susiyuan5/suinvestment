@@ -29,6 +29,13 @@ test("portfolio golden fixtures", function () {
   actual.forEach((row, index) => close(row.allocation, fixture.portfolio.expected[index].allocation));
 });
 
+test("Yahoo daily timestamp is normalized to the effective New York close", function () {
+  const summer = market.dailyCloseTimestamp("2026-06-19", NaN, "Yahoo Finance Chart API");
+  const winter = market.dailyCloseTimestamp("2026-01-05", NaN, "Yahoo Finance Chart API");
+  assert.equal(new Date(summer).toISOString(), "2026-06-19T20:00:00.000Z");
+  assert.equal(new Date(winter).toISOString(), "2026-01-05T21:00:00.000Z");
+});
+
 test("v1 Crash Fund ledger records migrate to typed reversible v2 crash entries", function () {
   const ledger = portfolio.normalizeDcaL2Ledger({ month: "2026-07", initial: 100, entries: [{ id: "legacy", date: "2026-07-07", amount: 12.5, note: "legacy use" }] }, "2026-07");
   assert.equal(ledger.version, "dca-l2-v2");

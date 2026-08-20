@@ -8,9 +8,10 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time as datetime_time, timedelta, timezone
 from pathlib import Path
 from typing import Callable
+from zoneinfo import ZoneInfo
 
 
 SYMBOLS = ("BYDDY", "MSFT", "NVDA", "AAPL", "ASML", "KO", "QQQ", "SPY")
@@ -160,6 +161,7 @@ def fetch_yahoo_daily(symbol: str) -> dict:
                 if isinstance(close, (int, float)) and math.isfinite(close) and close > 0
             ]
             regular_market_price = (result.get("meta") or {}).get("regularMarketPrice")
+            regular_market_time = (result.get("meta") or {}).get("regularMarketTime")
             market_state = (result.get("meta") or {}).get("marketState")
             return build_snapshot(
                 symbol,
@@ -168,6 +170,7 @@ def fetch_yahoo_daily(symbol: str) -> dict:
                 source_type="api",
                 trusted=True,
                 regular_market_price=regular_market_price,
+                regular_market_time=regular_market_time,
                 market_state=market_state,
             )
         except Exception as error:
@@ -218,12 +221,14 @@ def build_snapshot(
     source_type: str,
     trusted: bool,
     regular_market_price: object = None,
+    regular_market_time: object = None,
     market_state: object = None,
 ) -> dict:
     if len(points) < 6:
         raise RuntimeError(f"{source} returned fewer than 6 valid closes")
     points = sorted(points, key=lambda item: item[0])
     latest, previous, week_ago = points[-1], points[-2], points[-6]
+    quote_timestamp = latest_close_timestamp(latest[0].date(), regular_market_time)
     market_price = float(regular_market_price) if is_positive_number(regular_market_price) else latest[1]
     daily_change = round2(((latest[1] - previous[1]) / previous[1]) * 100)
     weekly_change = round2(((latest[1] - week_ago[1]) / week_ago[1]) * 100)
@@ -239,13 +244,28 @@ def build_snapshot(
         "dailyChange": daily_change,
         "weeklyChange": weekly_change,
         "decisionChange": min(weekly_change, daily_change),
-        "quoteTimestamp": isoformat(latest[0]),
+        "quoteTimestamp": isoformat(quote_timestamp),
         "fetchTimestamp": isoformat(utc_now()),
         "source": source,
         "sourceType": source_type,
         "trustedSource": trusted,
         "marketState": str(market_state or "").upper() or None,
     }
+
+
+def latest_close_timestamp(latest_date: date, regular_market_time: object = None) -> datetime:
+    """Return the effective close time for a Yahoo daily bar.
+
+    Yahoo's daily ``timestamp`` is normally the session open.  A matching
+    ``regularMarketTime`` is preferred, otherwise the official 16:00 New York
+    close is used, including the correct DST offset.
+    """
+    eastern = ZoneInfo("America/New_York")
+    if isinstance(regular_market_time, (int, float)) and math.isfinite(regular_market_time):
+        candidate = datetime.fromtimestamp(regular_market_time, tz=timezone.utc)
+        if candidate.astimezone(eastern).date() == latest_date:
+            return candidate
+    return datetime.combine(latest_date, datetime_time(16, 0), tzinfo=eastern).astimezone(timezone.utc)
 
 
 def validate_snapshot(snapshot: dict, *, now: datetime | None = None) -> dict:
@@ -258,6 +278,13 @@ def validate_snapshot(snapshot: dict, *, now: datetime | None = None) -> dict:
         return invalid_snapshot(snapshot, "Quote timestamp is missing")
     if quote_time > current_time + FUTURE_TOLERANCE:
         return invalid_snapshot(snapshot, "Quote timestamp is in the future")
+    latest_date = snapshot.get("latestDate")
+    if isinstance(latest_date, str) and latest_date:
+        try:
+            if quote_time.astimezone(ZoneInfo("America/New_York")).date().isoformat() != latest_date:
+                return invalid_snapshot(snapshot, "Quote timestamp date does not match latest close date")
+        except ValueError:
+            return invalid_snapshot(snapshot, "Latest close date is invalid")
 
     age_hours = round2(max(0.0, (current_time - quote_time).total_seconds() / 3600))
     previous_close = snapshot.get("previousClose")
