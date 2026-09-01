@@ -1,20 +1,20 @@
 # Shadow Monthly Review Summary
 
-Generated: `2026-06-19T02:11:45.815730+00:00`
+Generated: `2026-09-01T17:19:22.502665+00:00`
 
 This report is research-only. It does not rerun observations, fetch prices, archive snapshots, promote symbols, trade, or change live/default behavior.
 
 ## Observation Readiness
 
-- Latest observation timestamp: `2026-06-19T02:02:01.345244+00:00`
-- Observation runs available: `2`
+- Latest observation timestamp: `2026-09-01T17:19:22.228540+00:00`
+- Observation runs available: `4`
 - Minimum observation runs required: `8`
 - Minimum calendar weeks required: `8`
-- Calendar weeks available: `0.0`
-- Unique observation date count: `1`
-- Calendar span days: `0`
-- Calendar span weeks: `0.0`
-- Calendar requirement met: `False`
+- Calendar weeks available: `10.5714`
+- Unique observation date count: `3`
+- Calendar span days: `74`
+- Calendar span weeks: `10.5714`
+- Calendar requirement met: `True`
 - Same-day run warning: `True`
 - Cadence status: `same_day_validation_runs_detected`
 - Monitored symbol count: `12`
@@ -26,8 +26,8 @@ This report is research-only. It does not rerun observations, fetch prices, arch
 ## Archive Integrity
 
 - Archive validation status: `valid`
-- Archived observation count: `2`
-- Unique observation timestamp count: `2`
+- Archived observation count: `4`
+- Unique observation timestamp count: `4`
 - Duplicate timestamp count: `0`
 - Missing archive file count: `0`
 
@@ -39,7 +39,7 @@ This report is research-only. It does not rerun observations, fetch prices, arch
 
 ## Blockers
 
-- `not_enough_observation_runs, not_enough_calendar_weeks, same_day_validation_runs_detected, too_soon_observation_runs`
+- `not_enough_observation_runs, same_day_validation_runs_detected, too_soon_observation_runs`
 
 ## Next Required Action
 
