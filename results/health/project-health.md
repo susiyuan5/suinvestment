@@ -1,7 +1,7 @@
 # Project Health
 
 - Status: **HEALTHY**
-- Generated: `2026-08-31T19:41:34.138614+00:00`
+- Generated: `2026-09-01T17:26:58.261242+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
@@ -10,8 +10,8 @@
 
 ## Historical Coverage
 
-- QQQ: 274 rows; latest `2026-08-28`; lag `3` days
-- SPY: 274 rows; latest `2026-08-28`; lag `3` days
+- QQQ: 274 rows; latest `2026-08-28`; lag `4` days
+- SPY: 274 rows; latest `2026-08-28`; lag `4` days
 
 ## Workflows
 
@@ -36,7 +36,7 @@
 
 ## Shadow
 
-- Observation runs: `3`
+- Observation runs: `4`
 - Complete mature outcomes: `0`
 - Human review gate: `False`
 - Live promotion eligible: `false`
@@ -62,7 +62,7 @@
 - Version: `idea-engine-v3.1`
 - Source: `v3.1-short-term`
 - Primary horizon: `4` weeks
-- Shadow observations: `3`
+- Shadow observations: `4`
 - Mature short-term outcomes: `0`
 - Human review gate: `False`
 - Scope: research only; never enters DCA or automatic trading.
@@ -70,9 +70,9 @@
 ## Historical OOS price-timing calibration
 
 - Status: `preliminary_no_reliable_edge`
-- As of: `2026-08-24`
-- Permanent OOS samples: `5120`
-- Independent weekly origins: `64`
+- As of: `2026-08-31`
+- Permanent OOS samples: `5200`
+- Independent weekly origins: `65`
 - Reliability gate: `False`
 - Scope: price/volume timing only; the composite score remains uncalibrated.
 
@@ -81,7 +81,7 @@
 - Schema: `short-term-trade-plan-v1.3`
 - Style fusion: `global-style-fusion-v1.3`
 - Candidates / strategies: `10` / `30`
-- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 0, 'waiting_trigger': 9, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 1}`
-- Historical OOS: `preliminary_no_reliable_edge` / samples `142` / passed models `[]`
+- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 0, 'waiting_trigger': 5, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 5}`
+- Historical OOS: `preliminary_no_reliable_edge` / samples `145` / passed models `[]`
 - Shadow preliminary / formal review: `False` / `False`
 - Scope: research-only simulation; no orders or automatic trading.
