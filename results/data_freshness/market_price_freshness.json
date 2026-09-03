@@ -1,12 +1,14 @@
 {
-  "generatedAt": "2026-09-02T00:24:53.120022Z",
-  "publishStatus": "published",
-  "publishReason": "Validated references and monotonic quote timestamps",
+  "generatedAt": "2026-09-03T00:30:35.651395Z",
+  "publishStatus": "skipped",
+  "publishReason": "QQQ and SPY must both be validated before publishing",
   "totalSymbols": 8,
-  "freshSymbols": 8,
-  "staleSymbols": 0,
+  "freshSymbols": 1,
+  "staleSymbols": 7,
   "freshSymbolNames": [
-    "BYDDY",
+    "BYDDY"
+  ],
+  "staleSymbolNames": [
     "MSFT",
     "NVDA",
     "AAPL",
@@ -15,30 +17,30 @@
     "QQQ",
     "SPY"
   ],
-  "staleSymbolNames": [],
   "sourceCounts": {
-    "Yahoo Finance Chart API": 8
+    "Yahoo Finance Chart API": 4,
+    "Previous weekly snapshot": 4
   },
   "symbols": {
     "BYDDY": {
       "symbol": "BYDDY",
-      "price": 11.04,
-      "latestClose": 11.04,
-      "latestDate": "2026-09-01",
-      "previousClose": 11.03,
-      "previousDate": "2026-08-31",
-      "weekAgoClose": 11.9,
-      "weekAgoDate": "2026-08-25",
-      "dailyChange": 0.09,
-      "weeklyChange": -7.23,
-      "decisionChange": -7.23,
-      "quoteTimestamp": "2026-09-01T19:59:56Z",
-      "fetchTimestamp": "2026-09-02T00:24:53.339919Z",
+      "price": 10.89,
+      "latestClose": 10.89,
+      "latestDate": "2026-09-02",
+      "previousClose": 11.04,
+      "previousDate": "2026-09-01",
+      "weekAgoClose": 11.65,
+      "weekAgoDate": "2026-08-26",
+      "dailyChange": -1.36,
+      "weeklyChange": -6.52,
+      "decisionChange": -6.52,
+      "quoteTimestamp": "2026-09-02T19:59:53Z",
+      "fetchTimestamp": "2026-09-03T00:30:35.896912Z",
       "source": "Yahoo Finance Chart API",
       "sourceType": "api",
       "trustedSource": true,
       "marketState": null,
-      "freshnessAgeHours": 4.42,
+      "freshnessAgeHours": 4.51,
       "validationStatus": "validated",
       "validationReason": "Price and timestamp validated",
       "validationWarnings": [],
@@ -58,21 +60,26 @@
       "weeklyChange": 1.89,
       "decisionChange": -1.24,
       "quoteTimestamp": "2026-09-01T20:00:01Z",
-      "fetchTimestamp": "2026-09-02T00:24:53.631014Z",
-      "source": "Yahoo Finance Chart API",
-      "sourceType": "api",
+      "fetchTimestamp": "2026-09-03T00:30:35.651395Z",
+      "source": "Previous weekly snapshot",
+      "sourceType": "fallback",
       "trustedSource": true,
       "marketState": null,
-      "freshnessAgeHours": 4.41,
-      "validationStatus": "validated",
-      "validationReason": "Price and timestamp validated",
-      "validationWarnings": [],
-      "stale": false,
-      "staleReason": ""
+      "freshnessAgeHours": 28.51,
+      "validationStatus": "stale_fallback",
+      "validationReason": "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "validationWarnings": [
+        "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+        "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+      ],
+      "stale": true,
+      "staleReason": "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "upstreamSource": "Yahoo Finance Chart API",
+      "staleFrom": "2026-09-02T00:24:53.120022Z"
     },
     "NVDA": {
       "symbol": "NVDA",
-      "price": 217.44,
+      "price": 224.41,
       "latestClose": 217.44,
       "latestDate": "2026-09-01",
       "previousClose": 220.78,
@@ -83,17 +90,17 @@
       "weeklyChange": 2.06,
       "decisionChange": -1.51,
       "quoteTimestamp": "2026-09-01T20:00:00Z",
-      "fetchTimestamp": "2026-09-02T00:24:53.911627Z",
+      "fetchTimestamp": "2026-09-03T00:30:37.253985Z",
       "source": "Yahoo Finance Chart API",
       "sourceType": "api",
       "trustedSource": true,
       "marketState": null,
-      "freshnessAgeHours": 4.41,
-      "validationStatus": "validated",
-      "validationReason": "Price and timestamp validated",
+      "freshnessAgeHours": 28.51,
+      "validationStatus": "stale",
+      "validationReason": "Quote age 28.51h exceeds 24h",
       "validationWarnings": [],
-      "stale": false,
-      "staleReason": ""
+      "stale": true,
+      "staleReason": "Quote age 28.51h exceeds 24h"
     },
     "AAPL": {
       "symbol": "AAPL",
@@ -108,17 +115,22 @@
       "weeklyChange": 4.91,
       "decisionChange": 2.61,
       "quoteTimestamp": "2026-09-01T20:00:01Z",
-      "fetchTimestamp": "2026-09-02T00:24:54.142768Z",
-      "source": "Yahoo Finance Chart API",
-      "sourceType": "api",
+      "fetchTimestamp": "2026-09-03T00:30:35.651395Z",
+      "source": "Previous weekly snapshot",
+      "sourceType": "fallback",
       "trustedSource": true,
       "marketState": null,
-      "freshnessAgeHours": 4.41,
-      "validationStatus": "validated",
-      "validationReason": "Price and timestamp validated",
-      "validationWarnings": [],
-      "stale": false,
-      "staleReason": ""
+      "freshnessAgeHours": 28.51,
+      "validationStatus": "stale_fallback",
+      "validationReason": "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "validationWarnings": [
+        "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+        "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+      ],
+      "stale": true,
+      "staleReason": "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "upstreamSource": "Yahoo Finance Chart API",
+      "staleFrom": "2026-09-02T00:24:53.120022Z"
     },
     "ASML": {
       "symbol": "ASML",
@@ -133,17 +145,22 @@
       "weeklyChange": -4.53,
       "decisionChange": -4.53,
       "quoteTimestamp": "2026-09-01T20:00:01Z",
-      "fetchTimestamp": "2026-09-02T00:24:54.429963Z",
-      "source": "Yahoo Finance Chart API",
-      "sourceType": "api",
+      "fetchTimestamp": "2026-09-03T00:30:35.651395Z",
+      "source": "Previous weekly snapshot",
+      "sourceType": "fallback",
       "trustedSource": true,
       "marketState": null,
-      "freshnessAgeHours": 4.41,
-      "validationStatus": "validated",
-      "validationReason": "Price and timestamp validated",
-      "validationWarnings": [],
-      "stale": false,
-      "staleReason": ""
+      "freshnessAgeHours": 28.51,
+      "validationStatus": "stale_fallback",
+      "validationReason": "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "validationWarnings": [
+        "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+        "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+      ],
+      "stale": true,
+      "staleReason": "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "upstreamSource": "Yahoo Finance Chart API",
+      "staleFrom": "2026-09-02T00:24:53.120022Z"
     },
     "KO": {
       "symbol": "KO",
@@ -158,21 +175,26 @@
       "weeklyChange": -3.97,
       "decisionChange": -3.97,
       "quoteTimestamp": "2026-09-01T20:00:02Z",
-      "fetchTimestamp": "2026-09-02T00:24:54.957775Z",
-      "source": "Yahoo Finance Chart API",
-      "sourceType": "api",
+      "fetchTimestamp": "2026-09-03T00:30:35.651395Z",
+      "source": "Previous weekly snapshot",
+      "sourceType": "fallback",
       "trustedSource": true,
       "marketState": null,
-      "freshnessAgeHours": 4.41,
-      "validationStatus": "validated",
-      "validationReason": "Price and timestamp validated",
-      "validationWarnings": [],
-      "stale": false,
-      "staleReason": ""
+      "freshnessAgeHours": 28.51,
+      "validationStatus": "stale_fallback",
+      "validationReason": "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "validationWarnings": [
+        "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+        "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+      ],
+      "stale": true,
+      "staleReason": "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "upstreamSource": "Yahoo Finance Chart API",
+      "staleFrom": "2026-09-02T00:24:53.120022Z"
     },
     "QQQ": {
       "symbol": "QQQ",
-      "price": 707.64,
+      "price": 709.24,
       "latestClose": 707.64,
       "latestDate": "2026-09-01",
       "previousClose": 716.76,
@@ -183,21 +205,21 @@
       "weeklyChange": -0.43,
       "decisionChange": -1.27,
       "quoteTimestamp": "2026-09-01T20:00:00Z",
-      "fetchTimestamp": "2026-09-02T00:24:55.247970Z",
+      "fetchTimestamp": "2026-09-03T00:30:41.122729Z",
       "source": "Yahoo Finance Chart API",
       "sourceType": "api",
       "trustedSource": true,
       "marketState": null,
-      "freshnessAgeHours": 4.41,
-      "validationStatus": "validated",
-      "validationReason": "Price and timestamp validated",
+      "freshnessAgeHours": 28.51,
+      "validationStatus": "stale",
+      "validationReason": "Quote age 28.51h exceeds 24h",
       "validationWarnings": [],
-      "stale": false,
-      "staleReason": ""
+      "stale": true,
+      "staleReason": "Quote age 28.51h exceeds 24h"
     },
     "SPY": {
       "symbol": "SPY",
-      "price": 761.78,
+      "price": 765.16,
       "latestClose": 761.78,
       "latestDate": "2026-09-01",
       "previousClose": 767.05,
@@ -208,18 +230,47 @@
       "weeklyChange": -0.54,
       "decisionChange": -0.69,
       "quoteTimestamp": "2026-09-01T20:00:00Z",
-      "fetchTimestamp": "2026-09-02T00:24:55.575557Z",
+      "fetchTimestamp": "2026-09-03T00:30:41.887541Z",
       "source": "Yahoo Finance Chart API",
       "sourceType": "api",
       "trustedSource": true,
       "marketState": null,
-      "freshnessAgeHours": 4.41,
-      "validationStatus": "validated",
-      "validationReason": "Price and timestamp validated",
+      "freshnessAgeHours": 28.51,
+      "validationStatus": "stale",
+      "validationReason": "Quote age 28.51h exceeds 24h",
       "validationWarnings": [],
-      "stale": false,
-      "staleReason": ""
+      "stale": true,
+      "staleReason": "Quote age 28.51h exceeds 24h"
     }
   },
-  "errors": {}
+  "errors": {
+    "MSFT": [
+      "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "NVDA": [
+      "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "AAPL": [
+      "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "ASML": [
+      "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "KO": [
+      "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "QQQ": [
+      "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "SPY": [
+      "Yahoo Finance Chart API: Quote age 28.51h exceeds 24h",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ]
+  }
 }
