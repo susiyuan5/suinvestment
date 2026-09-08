@@ -1,7 +1,7 @@
 # Project Health
 
 - Status: **HEALTHY**
-- Generated: `2026-09-07T18:24:29.686478+00:00`
+- Generated: `2026-09-08T17:31:51.323083+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
@@ -10,8 +10,8 @@
 
 ## Historical Coverage
 
-- QQQ: 275 rows; latest `2026-09-04`; lag `3` days
-- SPY: 275 rows; latest `2026-09-04`; lag `3` days
+- QQQ: 275 rows; latest `2026-09-04`; lag `4` days
+- SPY: 275 rows; latest `2026-09-04`; lag `4` days
 
 ## Workflows
 
@@ -62,7 +62,7 @@
 - Version: `idea-engine-v3.1`
 - Source: `v3.1-short-term`
 - Primary horizon: `4` weeks
-- Shadow observations: `4`
+- Shadow observations: `5`
 - Mature short-term outcomes: `0`
 - Human review gate: `False`
 - Scope: research only; never enters DCA or automatic trading.
@@ -70,9 +70,9 @@
 ## Historical OOS price-timing calibration
 
 - Status: `preliminary_no_reliable_edge`
-- As of: `2026-08-31`
-- Permanent OOS samples: `5200`
-- Independent weekly origins: `65`
+- As of: `2026-09-07`
+- Permanent OOS samples: `5280`
+- Independent weekly origins: `66`
 - Reliability gate: `False`
 - Scope: price/volume timing only; the composite score remains uncalibrated.
 
@@ -81,7 +81,7 @@
 - Schema: `short-term-trade-plan-v1.3`
 - Style fusion: `global-style-fusion-v1.3`
 - Candidates / strategies: `10` / `30`
-- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 0, 'waiting_trigger': 5, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 5}`
-- Historical OOS: `preliminary_no_reliable_edge` / samples `145` / passed models `[]`
+- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 0, 'waiting_trigger': 10, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 0}`
+- Historical OOS: `preliminary_no_reliable_edge` / samples `147` / passed models `[]`
 - Shadow preliminary / formal review: `False` / `False`
 - Scope: research-only simulation; no orders or automatic trading.
