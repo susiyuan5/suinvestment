@@ -1,6 +1,137 @@
 [
-  {"name":"strict preset total","case":"validate","expected":true},
-  {"name":"normal flow","case":"plan","input":{"base_budget":1000,"crash_fund_remaining":100,"actual_allocations":{},"satellite_decisions":{}},"expected":{"spyBase":400,"totalPlanned":1000,"cashRetained":100}},
-  {"name":"single stock blocked redirects base","case":"plan","input":{"base_budget":1000,"crash_fund_remaining":100,"actual_allocations":{"NVDA":18},"satellite_decisions":{}},"expected":{"spyRedirected":125,"items":0}},
-  {"name":"spy unavailable retains cash","case":"plan","input":{"base_budget":1000,"crash_fund_remaining":100,"actual_allocations":{"NVDA":18},"spy_data_valid":false,"satellite_decisions":{}},"expected":{"spyRedirected":0,"cashRetained":625}}
+  {
+    "name": "strict preset total",
+    "case": "validate",
+    "expected": true
+  },
+  {
+    "name": "normal flow",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "crash_fund_remaining": 100,
+      "actual_allocations": {},
+      "satellite_decisions": {}
+    },
+    "expected": {
+      "spyBase": 400,
+      "totalPlanned": 1000,
+      "cashRetained": 100
+    }
+  },
+  {
+    "name": "single stock blocked redirects base",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "crash_fund_remaining": 100,
+      "actual_allocations": {
+        "NVDA": 18
+      },
+      "satellite_decisions": {}
+    },
+    "expected": {
+      "spyRedirected": 125,
+      "items": 0
+    }
+  },
+  {
+    "name": "spy unavailable retains cash",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "crash_fund_remaining": 100,
+      "actual_allocations": {
+        "NVDA": 18
+      },
+      "spy_data_valid": false,
+      "satellite_decisions": {}
+    },
+    "expected": {
+      "spyRedirected": 0,
+      "cashRetained": 625
+    }
+  },
+  {
+    "name": "cash cap survives final redirection",
+    "case": "plan",
+    "input": {
+      "base_budget": 75,
+      "crash_fund_remaining": 100,
+      "normal_pool_remaining": 300,
+      "portfolio_cash_cap": 3
+    },
+    "expected": {
+      "totalPlanned": 3
+    }
+  },
+  {
+    "name": "monthly exhausted cannot redirect",
+    "case": "plan",
+    "input": {
+      "base_budget": 75,
+      "crash_fund_remaining": 100,
+      "normal_pool_remaining": 0
+    },
+    "expected": {
+      "totalPlanned": 0
+    }
+  },
+  {
+    "name": "explicit zero cash",
+    "case": "plan",
+    "input": {
+      "base_budget": 75,
+      "crash_fund_remaining": 100,
+      "portfolio_cash_cap": 0
+    },
+    "expected": {
+      "totalPlanned": 0
+    }
+  },
+  {
+    "name": "action block retains money",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "crash_fund_remaining": 0,
+      "satellite_decisions": {
+        "NVDA": {
+          "finalAmount": 0,
+          "reasonCodes": [
+            "ACTION_REQUIRES_ZERO_AMOUNT"
+          ]
+        }
+      }
+    },
+    "expected": {
+      "totalPlanned": 875,
+      "spyRedirected": 0
+    }
+  },
+  {
+    "name": "safety block stops all assets",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "crash_fund_remaining": 100,
+      "safety_blocked": true
+    },
+    "expected": {
+      "totalPlanned": 0
+    }
+  },
+  {
+    "name": "cash cap includes commission",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "crash_fund_remaining": 100,
+      "portfolio_cash_cap": 10,
+      "commission_bps": 100
+    },
+    "expected": {
+      "totalPlanned": 9.9
+    }
+  }
 ]

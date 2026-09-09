@@ -609,6 +609,7 @@
     validateL2Config,
     evaluateDcaPolicy,
     evaluateDcaL2Policy,
+    isoWeekId,
     calculateRsi,
     calculateWeeklyVolatilityPct
   };

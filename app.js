@@ -61,7 +61,9 @@
     no_broker_no_auto_trade: true
   });
 
-  const WEEKS_PER_MONTH = 52 / 12;
+  function currentPlanMonthWeeks() {
+    return WeeklyDcaEngine.planWeeksInMonth(new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()));
+  }
 
   const CORE_SATELLITE_SYMBOLS = ["SPY", "QQQ", "NVDA", "AAPL", "ASML", "KO"];
   const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.40, QQQ: 0.10, NVDA: 0.125, AAPL: 0.125, ASML: 0.125, KO: 0.125 };
@@ -130,40 +132,9 @@
   }
   const preparedCoreSatellite = prepareCoreSatellitePortfolio();
 
-  const ALGORITHM_PARAMS = {
-    sensitivity: 4,
-    minMultiplier: 0.3,
-    maxMultiplier: 2.0,
-    strongDropThreshold: -15,
-    strongRiseThreshold: 10,
-    volatilityDailyThreshold: 8,
-    volatilityWeeklyThreshold: 15,
-    extremeWeeklyThreshold: 25,
-    maxDowntrendMultiplier: 1.5,
-    severeDowntrendMultiplier: 1.2,
-    crashBoost: 0.12,
-    volatilityReduction: 0.9,
-    underAllocationScoreBonus: 5,
-    overAllocationScorePenalty: 10,
-    farOverAllocationScorePenalty: 25
-  };
+  const ALGORITHM_PARAMS = WeeklySignalModel.ALGORITHM_PARAMS;
 
-  const LOW_FREQ_ALGO_PARAMS = {
-    marketRegimeEnabled: true,
-    trendFilterEnabled: true,
-    volatilityAdjustmentEnabled: true,
-    drawdownFilterEnabled: true,
-    targetWeeklyVolatility: 0.04,
-    maxBullMultiplier: 2.0,
-    maxNeutralMultiplier: 1.5,
-    maxCorrectionMultiplier: 1.3,
-    maxBearMultiplier: 1.1,
-    maxDrawdown20Multiplier: 1.3,
-    maxDrawdown35Multiplier: 1.1,
-    overTargetReduceThreshold: 0.05,
-    overTargetBlockThreshold: 0.10,
-    overTargetSellWatchThreshold: 0.15
-  };
+  const LOW_FREQ_ALGO_PARAMS = WeeklySignalModel.LOW_FREQ_ALGO_PARAMS;
   const NEWS_FACTOR_PARAMS = {
     enabled: true,
     lookbackDays: 14,
@@ -2505,120 +2476,17 @@ amountBreakdown: "金额分解",
   }
 
   function calculateSmoothMultiplier(decisionChange, dailyChange, weeklyChange) {
-    if (!isFiniteNumber(decisionChange)) {
-      return {
-        multiplier: 1,
-        rawMultiplier: 1,
-        volatilityReduced: false,
-        downtrendCapped: false,
-        severeDowntrend: false,
-        crashBoostApplied: false
-      };
-    }
-
-    let multiplier = 1 - ALGORITHM_PARAMS.sensitivity * decisionChange / 100;
-    const crashBoostApplied = decisionChange <= ALGORITHM_PARAMS.strongDropThreshold;
-    if (crashBoostApplied) multiplier += ALGORITHM_PARAMS.crashBoost;
-
-    const volatilityReduced = (
-      isFiniteNumber(dailyChange) && Math.abs(dailyChange) >= ALGORITHM_PARAMS.volatilityDailyThreshold
-    );
-    if (volatilityReduced) multiplier *= ALGORITHM_PARAMS.volatilityReduction;
-
-    const weeklyAbs = isFiniteNumber(weeklyChange) ? Math.abs(weeklyChange) : 0;
-    const severeDowntrend = isFiniteNumber(weeklyChange) && weeklyChange <= -ALGORITHM_PARAMS.extremeWeeklyThreshold;
-    const downtrendCapped = (
-      isFiniteNumber(weeklyChange) &&
-      isFiniteNumber(dailyChange) &&
-      weeklyChange <= -ALGORITHM_PARAMS.volatilityWeeklyThreshold &&
-      dailyChange < 0
-    );
-
-    if (severeDowntrend) {
-      multiplier = Math.min(multiplier, ALGORITHM_PARAMS.severeDowntrendMultiplier);
-    } else if (downtrendCapped || weeklyAbs >= ALGORITHM_PARAMS.extremeWeeklyThreshold) {
-      multiplier = Math.min(multiplier, ALGORITHM_PARAMS.maxDowntrendMultiplier);
-    }
-
-    return {
-      multiplier: round2(clamp(multiplier, ALGORITHM_PARAMS.minMultiplier, ALGORITHM_PARAMS.maxMultiplier)),
-      rawMultiplier: round2(multiplier),
-      volatilityReduced,
-      downtrendCapped: downtrendCapped || severeDowntrend,
-      severeDowntrend,
-      crashBoostApplied
-    };
+    return WeeklySignalModel.calculateSmoothMultiplier(decisionChange, dailyChange, weeklyChange);
   }
 
   function calculateEnhancedLowFrequencyMultiplier(symbol, decisionChange, dailyChange, weeklyChange, marketRegime) {
-    const smooth = calculateSmoothMultiplier(decisionChange, dailyChange, weeklyChange);
     const history = getHistoricalPriceRows(symbol);
-    const closes = history.map(function (row) { return row.close; });
-    const historyMeta = createHistoricalIndicatorMeta(history, "Historical weekly prices");
-    const trend = analyzeTickerTrend(closes, decisionChange);
-    const realizedVolatility = calculateWeeklyVolatility(closes, 12);
-    const drawdown = calculateRecentDrawdown(closes, 52);
-
-    let multiplier = smooth.multiplier;
-    let volatilityAdjustment = 1;
-    let regimeCap = LOW_FREQ_ALGO_PARAMS.maxBullMultiplier;
-    let trendCap = ALGORITHM_PARAMS.maxMultiplier;
-    let drawdownCap = ALGORITHM_PARAMS.maxMultiplier;
-
-    if (LOW_FREQ_ALGO_PARAMS.volatilityAdjustmentEnabled && isFiniteNumber(realizedVolatility) && realizedVolatility > 0) {
-      volatilityAdjustment = clamp(
-        LOW_FREQ_ALGO_PARAMS.targetWeeklyVolatility / realizedVolatility,
-        0.7,
-        1.1
-      );
-      multiplier *= volatilityAdjustment;
-    }
-
-    if (LOW_FREQ_ALGO_PARAMS.marketRegimeEnabled) {
-      regimeCap = getMarketRegimeMultiplierCap(marketRegime && marketRegime.type);
-      multiplier = Math.min(multiplier, regimeCap);
-    }
-
-    if (LOW_FREQ_ALGO_PARAMS.trendFilterEnabled && trend.status === "strong_downtrend") {
-      trendCap = trend.severe ? ALGORITHM_PARAMS.severeDowntrendMultiplier : ALGORITHM_PARAMS.maxDowntrendMultiplier;
-      multiplier = Math.min(multiplier, trendCap);
-    }
-
-    if (LOW_FREQ_ALGO_PARAMS.drawdownFilterEnabled && isFiniteNumber(drawdown)) {
-      if (drawdown > 35) drawdownCap = LOW_FREQ_ALGO_PARAMS.maxDrawdown35Multiplier;
-      else if (drawdown >= 20) drawdownCap = LOW_FREQ_ALGO_PARAMS.maxDrawdown20Multiplier;
-      multiplier = Math.min(multiplier, drawdownCap);
-    }
-
-    const finalMultiplier = round2(clamp(multiplier, ALGORITHM_PARAMS.minMultiplier, ALGORITHM_PARAMS.maxMultiplier));
-    return {
-      multiplier: finalMultiplier,
-      rawMultiplier: smooth.rawMultiplier,
-      raw_smooth_multiplier: smooth.multiplier,
-      volatility_adjustment: round2(volatilityAdjustment),
-      regime_adjustment: round2(regimeCap),
-      trend_adjustment: round2(trendCap),
-      drawdown_adjustment: round2(drawdownCap),
-      portfolio_adjustment: 1,
-      final_multiplier: finalMultiplier,
-      volatilityReduced: smooth.volatilityReduced || volatilityAdjustment < 0.99,
-      downtrendCapped: smooth.downtrendCapped || trend.status === "strong_downtrend",
-      severeDowntrend: smooth.severeDowntrend || (trend.status === "strong_downtrend" && trend.severe),
-      crashBoostApplied: smooth.crashBoostApplied,
-      trend,
-      market_regime: marketRegime || getNeutralMarketRegime(),
-      realized_weekly_volatility: isFiniteNumber(realizedVolatility) ? round2(realizedVolatility * 100) : null,
-      drawdown: isFiniteNumber(drawdown) ? round2(drawdown) : null,
-      field_meta: {
-        trend: cloneFieldMeta(historyMeta),
-        volatility: cloneFieldMeta(historyMeta),
-        drawdown: cloneFieldMeta(historyMeta),
-        marketRegime: marketRegime && marketRegime.field_meta && marketRegime.field_meta.marketRegime
-          ? cloneFieldMeta(marketRegime.field_meta.marketRegime)
-          : createFieldMeta("Market regime fallback", null, { missing: true })
-      },
-      explanation: ""
-    };
+    const result = WeeklySignalModel.calculateEnhancedLowFrequencyMultiplier(history, decisionChange, dailyChange, weeklyChange, marketRegime);
+    result.trend.label = t(result.trend.status === "strong_downtrend" ? "trendStrongDowntrend" : result.trend.status === "healthy_pullback" ? "trendHealthyPullback" : "trendMixed");
+    const meta = createHistoricalIndicatorMeta(history, "Historical weekly prices");
+    result.field_meta = { trend: cloneFieldMeta(meta), volatility: cloneFieldMeta(meta), drawdown: cloneFieldMeta(meta),
+      marketRegime: marketRegime && marketRegime.field_meta && marketRegime.field_meta.marketRegime || createFieldMeta("Market regime fallback", null, { missing: true }) };
+    return result;
   }
 
   function getHistoricalPriceRows(symbol) {
@@ -2656,10 +2524,7 @@ amountBreakdown: "金额分解",
   }
 
   function getMarketRegimeMultiplierCap(type) {
-    if (type === "Bull") return LOW_FREQ_ALGO_PARAMS.maxBullMultiplier;
-    if (type === "Correction") return LOW_FREQ_ALGO_PARAMS.maxCorrectionMultiplier;
-    if (type === "Bear") return LOW_FREQ_ALGO_PARAMS.maxBearMultiplier;
-    return LOW_FREQ_ALGO_PARAMS.maxNeutralMultiplier;
+    return WeeklySignalModel.getMarketRegimeMultiplierCap(type);
   }
 
   function calculateMarketRegimeFromPrices(rows, proxy) {
@@ -3020,18 +2885,7 @@ amountBreakdown: "金额分解",
   }
 
   function getSuggestedAction(signal) {
-    if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || signal.data_freshness === "stale") return "DO_NOT_BUY";
-    if (!isFiniteNumber(signal.decision_change)) return "DO_NOT_BUY";
-    if (signal.decision_change >= 15) return "CONSIDER_SELL";
-    if (signal.risk_level === "Extreme") return "DO_NOT_BUY";
-    if (signal.algorithm && isFiniteNumber(signal.algorithm.drawdown) && signal.algorithm.drawdown > 35) return "DO_NOT_BUY";
-    if (signal.algorithm && signal.algorithm.trend && signal.algorithm.trend.status === "strong_downtrend" && signal.signal_score <= 60) return "REDUCE_BUY";
-    if (signal.signal_score <= 20) return "DO_NOT_BUY";
-    if (signal.signal_score <= 40) return "REDUCE_BUY";
-    if (signal.signal_score <= 60) return "NORMAL_BUY";
-    if (signal.signal_score <= 80) return "BUY";
-    if (signal.algorithm && signal.algorithm.market_regime && signal.algorithm.market_regime.type === "Bear") return "BUY";
-    return "STRONG_BUY";
+    return WeeklySignalModel.getSuggestedAction(signal);
   }
 
   function getSignalStrength(signal) {
@@ -3044,50 +2898,7 @@ amountBreakdown: "金额分解",
   }
 
   function getActionLabelFromMultiplier(signal) {
-    const m = isFiniteNumber(signal.multiplier) ? signal.multiplier : 1;
-    const sc = isFiniteNumber(signal.signal_score) ? signal.signal_score : 0;
-    const rl = signal.risk_level || "Low";
-    const wc = isFiniteNumber(signal.weekly_change) ? signal.weekly_change : 0;
-
-    if (m >= 0.90 && m < 1.00) return { label: "低于基准投入", cls: "action-light-reduce" };
-
-    // Hard stops
-    if (m < 0.40) return { label: "暂停买入", cls: "action-pause-buy" };
-    if (sc < 20 && wc < 0) return { label: "暂停买入", cls: "action-pause-buy" };
-    if (rl === "Extreme") return { label: "暂停买入", cls: "action-pause-buy" };
-
-    // Base label from multiplier
-    var label, cls;
-    if (m >= 1.60) { label = "强烈买入"; cls = "action-strong-buy"; }
-    else if (m >= 1.20) { label = "买入"; cls = "action-buy"; }
-    else if (m >= 1.00) { label = "小幅买入"; cls = "action-light-buy"; }
-    else if (m >= 0.90) { label = "观望"; cls = "action-watch"; }
-    else if (m >= 0.70) { label = "小幅减少买入"; cls = "action-light-reduce"; }
-    else if (m >= 0.40) { label = "减少买入"; cls = "action-reduce"; }
-    else { label = "暂停买入"; cls = "action-pause-buy"; }
-
-    // Level map: higher number = more cautious
-    var LEVELS = { "action-strong-buy": 1, "action-buy": 2, "action-light-buy": 3, "action-watch": 4, "action-light-reduce": 5, "action-reduce": 6, "action-pause-buy": 7 };
-    var currentLevel = LEVELS[cls] || 7;
-
-    // High risk safety caps
-    if (rl === "High") {
-      var cap = 7;
-      if (sc < 30) cap = 5;
-      else if (sc < 45) cap = 4;
-
-      if (currentLevel < cap) {
-        var capMap = { 4: { label: "观望", cls: "action-watch" }, 5: { label: "小幅减少买入", cls: "action-light-reduce" } };
-        return capMap[cap] || { label: label, cls: cls };
-      }
-
-      // Strong buy downgrade for High risk
-      if (cls === "action-strong-buy" && m >= 1.60 && !(sc >= 80 && wc > 0)) {
-        return { label: "买入", cls: "action-buy" };
-      }
-    }
-
-    return { label: label, cls: cls };
+    return WeeklySignalModel.getActionLabelFromMultiplier(signal);
   }
 
   function ensureActionExplanation(card, signal) {
@@ -3411,34 +3222,7 @@ el.querySelector(".explanation-reason").textContent = reasons.join(" ");
   }
 
   function calculateRiskLevel(signal) {
-    if (signal.data_source === "Unavailable" || signal.data_freshness === "missing" || !isFiniteNumber(signal.decision_change)) return "Extreme";
-    if (signal.data_freshness === "stale") return "High";
-
-    let risk = 0;
-    if (/cache|manual/i.test(signal.data_source) || signal.manual_override_active) risk += 1;
-    if (isFiniteNumber(signal.weekly_change) && Math.abs(signal.weekly_change) >= ALGORITHM_PARAMS.extremeWeeklyThreshold) risk += 3;
-    else if (isFiniteNumber(signal.weekly_change) && Math.abs(signal.weekly_change) >= ALGORITHM_PARAMS.volatilityWeeklyThreshold) risk += 2;
-    if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 15) risk += 2;
-    else if (isFiniteNumber(signal.decision_change) && Math.abs(signal.decision_change) >= 8) risk += 1;
-    if (isFiniteNumber(signal.daily_change) && Math.abs(signal.daily_change) >= ALGORITHM_PARAMS.volatilityDailyThreshold) risk += 1;
-    if (signal.algorithm && signal.algorithm.downtrendCapped) risk += 1;
-    if (signal.algorithm && signal.algorithm.trend && signal.algorithm.trend.status === "strong_downtrend") risk += signal.algorithm.trend.severe ? 2 : 1;
-    if (signal.algorithm && isFiniteNumber(signal.algorithm.realized_weekly_volatility) && signal.algorithm.realized_weekly_volatility >= 6) risk += 1;
-    if (signal.algorithm && isFiniteNumber(signal.algorithm.drawdown)) {
-      if (signal.algorithm.drawdown > 35) risk += 3;
-      else if (signal.algorithm.drawdown >= 20) risk += 2;
-      else if (signal.algorithm.drawdown >= 10) risk += 1;
-    }
-    if (signal.algorithm && signal.algorithm.market_regime && signal.algorithm.market_regime.type === "Correction") risk += 1;
-    if (signal.algorithm && signal.algorithm.market_regime && signal.algorithm.market_regime.type === "Bear") risk += 2;
-    if (signal.panic_active) risk += 1;
-    if (signal.multiplier >= 2) risk += 2;
-    else if (signal.multiplier > 1.5) risk += 1;
-
-    if (risk >= 5) return "Extreme";
-    if (risk >= 3) return "High";
-    if (risk >= 1) return "Medium";
-    return "Low";
+    return WeeklySignalModel.calculateRiskLevel(signal);
   }
 
   function generateSignalReason(signal) {
@@ -4962,6 +4746,7 @@ function equalizeAllocations() {
 
 
   function render() {
+    state.deployment = normalizeDeployment(state.deployment);
     panicBanner.classList.toggle("hidden", !canShowPanicBanner());
     renderDeploymentSummary();
 
@@ -5101,71 +4886,63 @@ function equalizeAllocations() {
         }
       };
     });
-    const provisional = inputs.map(function (item) {
-      return state.dcaL2ConfigReady ? evaluateDcaL2(item.input, ledger) : createDcaL2SafeFallback(item.baseAmount, state.dcaL2ConfigError);
+    const activePreset = activeCoreSatellitePreset();
+    const result = WeeklyDcaEngine.plan({
+      inputs: inputs.map(function (item) { return { symbol: item.entry.signal.symbol, input: item.input,
+        actionBlocked: getActionLabelFromMultiplier(item.entry.signal).cls === "action-pause-buy" || ["HOLD", "DO_NOT_BUY"].includes(item.entry.signal.suggested_action) }; }),
+      policyState: ledger, config: state.dcaL2ConfigReady ? state.dcaL2Config : { ...state.dcaL2Config, configValid: false },
+      preset: activePreset || CoreSatellitePolicy.PRESET, baseBudget: state.deployment.weeklyDeployment,
+      budget: { normalPool: state.deployment.normalPool, normalPoolUsed: normalUsed,
+        crashFund: state.deployment.crashFund, crashFundUsed: crashUsed,
+        highPct: state.dcaL2Config.concentration.highPct, veryHighPct: state.dcaL2Config.concentration.veryHighPct,
+        portfolioCashCap: portfolioRisk.available_cash_provided ? portfolioRisk.available_cash * state.dcaL2Config.cashUsageCap : null },
+      core: { actualAllocations: Object.keys(portfolioRisk.positions || {}).reduce(function (map, symbol) { map[symbol] = portfolioRisk.positions[symbol].current_allocation; return map; }, {}),
+        spyDataValid: inputs.some(function (item) { return item.entry.signal.symbol === "SPY" && item.input.dataStatus === "fresh"; }),
+        qqqDataValid: inputs.some(function (item) { return item.entry.signal.symbol === "QQQ" && item.input.dataStatus === "fresh"; }),
+        safetyBlocked: !state.coreSatellitePresetReady, spyCrashEnhancement: 0 }
     });
-    updateDcaL2DefensiveState(ledger, provisional, inputs);
-    const deepBase = inputs.reduce(function (sum, item, index) {
-      return provisional[index].state === "deep_drawdown" ? sum + item.baseAmount : sum;
-    }, 0);
-    const planned = PortfolioPolicy.allocateDcaL2Plan(inputs.map(function (item, index) {
-      const input = { ...item.input };
-      if (deepBase > 0 && provisional[index].state === "deep_drawdown") input.crashFundWeight = item.baseAmount / deepBase;
-      const decision = state.dcaL2ConfigReady ? evaluateDcaL2(input, ledger) : createDcaL2SafeFallback(item.baseAmount, state.dcaL2ConfigError);
-      return { entry: item.entry, decision, currentAllocationPct: input.currentAllocationPct };
-    }), {
-      normalPool: state.deployment.normalPool,
-      normalPoolUsed: normalUsed,
-      crashFund: state.deployment.crashFund,
-      crashFundUsed: crashUsed,
-      highPct: state.dcaL2Config.concentration.highPct,
-      veryHighPct: state.dcaL2Config.concentration.veryHighPct,
-      portfolioCashCap: portfolioRisk.available_cash_provided ? Math.min(portfolioRisk.available_cash, portfolioRisk.available_cash * state.dcaL2Config.cashUsageCap) : null
-    });
+    Object.assign(ledger, { defensiveLatched: result.policyState.defensiveLatched,
+      recoveryConfirmations: result.policyState.recoveryConfirmations, lastRecoveryWeek: result.policyState.lastRecoveryWeek });
+    const planned = result.budgetReport;
     planned.items.forEach(function (item) {
+      item.entry = inputs.find(function (candidate) { return candidate.entry.signal.symbol === item.symbol; }).entry;
       item.entry.dcaPolicy = item.decision;
-      const multiplierAction = getActionLabelFromMultiplier(item.entry.signal);
-      if (multiplierAction.cls === "action-pause-buy" || item.entry.signal.suggested_action === "HOLD" || item.entry.signal.suggested_action === "DO_NOT_BUY") {
-        item.decision.finalAmount = 0;
-        item.decision.reasonCodes = Array.from(new Set((item.decision.reasonCodes || []).concat(["ACTION_REQUIRES_ZERO_AMOUNT"])));
-      }
-      item.entry.finalManualAmount = round2(item.decision.finalAmount);
+      item.entry.finalManualAmount = item.decision.finalAmount;
     });
     const exposureMode = singleStockExposureModeEl && singleStockExposureModeEl.value || "direct_only";
     const directExposure = Object.keys(portfolioRisk.positions || {}).reduce(function (map, symbol) { map[symbol] = { allocation: Number(portfolioRisk.positions[symbol].current_allocation || 0) }; return map; }, {});
     const exposure = window.EtfLookthrough ? window.EtfLookthrough.calculate(directExposure, state.etfHoldings, Date.now(), 30, exposureMode) : { status: "unknown", effectiveExposure: {} };
     state.etfExposure = exposure;
-    const exposureBlocked = [];
-    planned.items.forEach(function (item) {
-      if (exposureBlocked.indexOf(item.entry.signal.symbol) >= 0) {
-        item.decision.finalAmount = 0;
-        item.decision.reasonCodes = Array.from(new Set((item.decision.reasonCodes || []).concat([exposure.status === "ready" ? "ETF_LOOKTHROUGH_LIMIT" : "ETF_LOOKTHROUGH_DATA_PENDING"])));
-        item.entry.finalManualAmount = 0;
-      }
-    });
-    const satelliteDecisions = {};
-    planned.items.forEach(function (item) { satelliteDecisions[item.entry.signal.symbol] = { finalAmount: item.decision.finalAmount, crashFundAmount: item.decision.crashFundAmount }; });
-    const activePreset = activeCoreSatellitePreset();
-    state.coreSatellitePlan = CoreSatellitePolicy.plan({
-      preset: activePreset || CoreSatellitePolicy.PRESET, baseBudget: state.deployment.weeklyDeployment, crashFundRemaining: balance,
-      actualAllocations: Object.keys(portfolioRisk.positions || {}).reduce(function (map, symbol) { map[symbol] = portfolioRisk.positions[symbol].current_allocation; return map; }, {}),
-      satelliteDecisions: satelliteDecisions, spyDataValid: Boolean(state.rows.get("SPY") && getDcaL2DataStatus(buildSignalObject({ symbol: "SPY" }, state.rows.get("SPY"))) === "fresh"), qqqDataValid: Boolean(state.rows.get("QQQ") && getDcaL2DataStatus(buildSignalObject({ symbol: "QQQ" }, state.rows.get("QQQ"))) === "fresh"),
-      safetyBlocked: !state.coreSatellitePresetReady, cashOnlySymbols: [], spyCrashEnhancement: 0
-    });
+    state.coreSatellitePlan = result.plan;
     const expectedSymbols = CoreSatellitePolicy.rowsForPreset(activePreset || CoreSatellitePolicy.PRESET).map(function (row) { return row.symbol; });
     const complete = state.coreSatellitePresetReady && expectedSymbols.every(function (symbol) { return state.portfolio.some(function (item) { return item.symbol === symbol; }); });
     const fresh = inputs.every(function (item) { return getDcaL2DataStatus(item.entry.signal) === "fresh"; });
     const cashGatePassed = !portfolioRisk.available_cash_provided || portfolioRisk.available_cash > 0;
     state.coreSatellitePlan.safe = Boolean(activePreset) && complete && fresh && cashGatePassed && state.coreSatellitePlan.conservation && state.coreSatellitePlan.conservation.balanced === true;
     if (!state.coreSatellitePlan.safe) {
-      state.coreSatellitePlan.items.forEach(function (item) { item.finalAmount = 0; item.crashFundEnhancement = 0; item.redirectedToSpy = 0; item.cashRetained = 0; item.reasonCodes = Array.from(new Set((item.reasonCodes || []).concat(["安全检查未通过"]))); });
+      state.coreSatellitePlan.items.forEach(function (item) { item.baseAmount = item.extraAmount = item.crashFundAmount = item.finalAmount = 0; item.crashFundEnhancement = 0; item.redirectedToSpy = 0; item.cashRetained = 0; item.reasonCodes = Array.from(new Set((item.reasonCodes || []).concat(["安全检查未通过"]))); });
       state.coreSatellitePlan.spyRedirected = 0;
       state.coreSatellitePlan.crashFundUsed = 0;
       state.coreSatellitePlan.totalPlanned = 0;
+      state.coreSatellitePlan.plannedNormal = state.coreSatellitePlan.plannedCrash = 0;
+      state.coreSatellitePlan.conservation.allocated = 0;
+      state.coreSatellitePlan.conservation.cash = state.coreSatellitePlan.conservation.source;
       state.coreSatellitePlan.cashRetained = state.coreSatellitePlan.conservation.source;
     }
-    state.dcaBudgetReport = planned;
-    state.coreSatellitePlan.items.forEach(function (item) { const entry = inputs.find(function (candidate) { return candidate.entry.signal.symbol === item.symbol; }); if (entry) { entry.entry.coreSatellitePlan = item; entry.entry.finalManualAmount = item.finalAmount; if (!state.coreSatellitePlan.safe) { entry.entry.signal.suggested_buy_amount = 0; entry.entry.signal.final_suggested_buy_amount = 0; entry.entry.signal.suggested_action = "DO_NOT_BUY"; entry.entry.signal.reason = "数据或计算未通过安全检查，请人工复核"; } } });
+    state.dcaBudgetReport = { ...planned, plannedNormal: state.coreSatellitePlan.plannedNormal,
+      plannedCrash: state.coreSatellitePlan.plannedCrash, totalPlanned: state.coreSatellitePlan.totalPlanned,
+      unallocatedCash: round2(planned.normalPoolRemaining + planned.crashFundRemaining - state.coreSatellitePlan.totalPlanned) };
+    state.coreSatellitePlan.items.forEach(function (row) {
+      const original = planned.items.find(function (item) { return item.entry.signal.symbol === row.symbol; });
+      if (original) {
+        Object.assign(original.decision, { baseAmount: row.baseAmount, extraAmount: row.extraAmount,
+          crashFundAmount: row.crashFundAmount, finalAmount: row.finalAmount,
+          multiplier: original.entry.baseManualAmount > 0 ? row.finalAmount / original.entry.baseManualAmount : 0,
+          reasonCodes: Array.from(new Set((original.decision.reasonCodes || []).concat(row.reasonCodes))),
+          factorChain: (original.decision.factorChain || []).concat([{ stage: "final_portfolio_budget", status: "checked", detail: row.finalAmount.toFixed(2) }]) });
+      }
+    });
+    state.coreSatellitePlan.items.forEach(function (item) { const entry = inputs.find(function (candidate) { return candidate.entry.signal.symbol === item.symbol; }); if (entry) { entry.entry.coreSatellitePlan = item; entry.entry.finalManualAmount = item.finalAmount; entry.entry.signal.suggested_buy_amount = item.finalAmount; entry.entry.signal.final_suggested_buy_amount = item.finalAmount; if (!state.coreSatellitePlan.safe) { entry.entry.signal.suggested_buy_amount = 0; entry.entry.signal.final_suggested_buy_amount = 0; entry.entry.signal.suggested_action = "DO_NOT_BUY"; entry.entry.signal.reason = "数据或计算未通过安全检查，请人工复核"; } } });
     renderCoreSatelliteSummary(state.coreSatellitePlan);
     saveDcaL2Ledger();
   }
@@ -5898,7 +5675,7 @@ function equalizeAllocations() {
       monthlyBudget,
       normalPool,
       crashFund,
-      weeklyDeployment: round2(normalPool / WEEKS_PER_MONTH)
+      weeklyDeployment: round2(normalPool / currentPlanMonthWeeks())
     };
   }
 
@@ -5923,7 +5700,7 @@ function equalizeAllocations() {
     } else if (field === "crashFund") {
       crashFund = parsed.value;
     } else if (field === "weeklyDeployment") {
-      normalPool = round2(parsed.value * WEEKS_PER_MONTH);
+      normalPool = round2(parsed.value * currentPlanMonthWeeks());
     }
 
     state.deployment = normalizeDeployment({ normalPool, crashFund });
@@ -6009,7 +5786,7 @@ function equalizeAllocations() {
       normalPool = round2(parsed.monthlyBudget * normalRatio);
       crashFund = round2(parsed.monthlyBudget - normalPool);
     } else if (field === "weeklyDeployment") {
-      normalPool = round2(parsed.weeklyDeployment * WEEKS_PER_MONTH);
+      normalPool = round2(parsed.weeklyDeployment * currentPlanMonthWeeks());
     }
 
     return normalizeDeployment({ normalPool, crashFund });

@@ -68,7 +68,7 @@
     const baseTotal = money(rows.reduce(function (sum, row) { return sum + row.decision.baseAmount; }, 0));
     scale("extraAmount", money(normalRemaining - baseTotal), "NORMAL_POOL_EXTRA_BUDGET_APPLIED");
     let total = money(rows.reduce(function (sum, row) { return sum + row.decision.baseAmount + row.decision.extraAmount + row.decision.crashFundAmount; }, 0));
-    const cashCap = Number.isFinite(Number(opts.portfolioCashCap)) ? money(opts.portfolioCashCap) : null;
+    const cashCap = opts.portfolioCashCap != null && Number.isFinite(Number(opts.portfolioCashCap)) ? money(opts.portfolioCashCap) : null;
     if (cashCap !== null && total > cashCap) {
       let reduction = total - cashCap;
       ["crashFundAmount", "extraAmount", "baseAmount"].forEach(function (field) {

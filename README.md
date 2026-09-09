@@ -2,6 +2,18 @@
 
 Su Investment Pro is a weekly investment calculator, historical backtesting toolkit, and live market decision-support assistant. It is not an automatic trading bot. It never places real orders, never logs in to a brokerage account, and never submits buy or sell instructions through a broker API.
 
+## Weekly DCA repair (2026-09-09)
+
+The current manual weekly plan uses Core-Satellite v5: SPY 40%, QQQ 10%, and NVDA/AAPL/ASML/KO 12.5% each (or the owner's validated custom allocation). The previous six-stock reports are historical research, not validation of this live preset.
+
+`weekly-dca-engine.js` and `weekly-signal-model.js` are shared by the browser and the new price-only research replay. The final planner enforces cash and separate Normal/Crash budgets after any redirection. Data, action, or funding blocks cannot create redirected SPY spending. Amounts, components, and budget summaries use the final plan.
+
+A monthly Normal Pool of 300 now gives 75 per week in a four-Tuesday month and 60 in a five-Tuesday month. Missing price bars never redistribute the missed week's budget in the new replay. Existing monthly ledger reset and reserve carry rules remain unchanged; idle cash is reported explicitly.
+
+Run `npm run backtest:weekly` for the current-preset research replay and fixed-start/cost sensitivity comparisons. Outputs are isolated under `results/weekly_dca_v1/`. Metrics include XIRR, daily time-weighted return/drawdown, costs and average cash fraction. Historical news, fundamentals, manual overrides, portfolio overlays, broker constraints and CAD FX history are unavailable; these are explicitly excluded, so the replay is a **price-only scenario**, not a complete live-trading reconstruction. Candidates remain research-only and cannot change defaults.
+
+Legacy Python L2/Core-Satellite runners, dashboard legacy backtests and their historical metrics are retained for compatibility; use the new runner for this review. See [WEEKLY_DCA_REPAIR_REPORT.md](WEEKLY_DCA_REPAIR_REPORT.md) for changes and validation.
+
 ## DCA-L2 Manual Plan
 
 The Manual Trade Plan uses DCA-L2: Base DCA, optional verified Extra Dip-Buy, and a separately tracked Crash Fund plan. It is manual decision support only. Signal labels and risk levels explain the plan; they do not independently cancel Base DCA except for documented hard data/cash blocks. See [DCA_L2_IMPLEMENTATION_REPORT.md](DCA_L2_IMPLEMENTATION_REPORT.md) for states, safety limits, ledger behavior, and backtest diagnostics.
@@ -40,17 +52,14 @@ Start with [PROJECT_NAVIGATION.md](PROJECT_NAVIGATION.md) for the live dashboard
 - Monthly Budget: CAD 400
 - Normal Pool: CAD 300
 - Crash Fund: CAD 100 reserve
-- Weekly Deployment: CAD 69.23
+- Weekly Deployment: CAD 75 in four-Tuesday months; CAD 60 in five-Tuesday months
 - Execution Schedule: Every Tuesday 12:00 PM
 
 ## Allocations
 
-- BYDDY: 30%
-- MSFT: 22%
-- NVDA: 18%
-- AAPL: 15%
-- ASML: 10%
-- KO: 5%
+- SPY: 40%
+- QQQ: 10%
+- NVDA, AAPL, ASML, KO: 12.5% each
 
 ## Data Source Priority
 
