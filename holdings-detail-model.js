@@ -140,7 +140,7 @@
       var shares = positive(position.shares) || positive(snapshotRow.shares);
       var averageCost = positive(position.average_cost) || finite(snapshotRow.averageCost);
       var currentValue = positive(position.current_value) || finite(snapshotRow.currentValue) || 0;
-      var latestPrice = finite(entry && entry.signal && entry.signal.latest_price) || finite(snapshotRow.latestPrice);
+      var latestPrice = finite(position.latest_price) || finite(entry && entry.signal && entry.signal.latest_price) || finite(snapshotRow.latestPrice);
       var target = planned ? finite(position.target_allocation) : 0;
       if (planned && (target === null || target === 0)) target = positive(entry.stock.allocation) * 100;
       var currentAllocation = planned ? finite(position.current_allocation) : null;
@@ -167,7 +167,7 @@
         dataAsOf: snapshotRow.dataAsOf || input.snapshot && (input.snapshot.positions_as_of || input.snapshot.generated_at) || null,
         accountLabel: snapshotRow.accountLabel || "--",
         exchange: snapshotRow.exchange || "--",
-        currency: snapshotRow.currency || input.planningCurrency || null
+        currency: position.currency || snapshotRow.currency || input.planningCurrency || null
       };
     }).filter(function (row) {
       return row.shares > 0 || row.currentValue > 0 || row.costBasis > 0;

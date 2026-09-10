@@ -21,6 +21,24 @@ test("OTC uses limit orders and never creates a fractional suggestion", () => {
   assert.equal(result.requiredOrderType, "LIMIT");
   assert.equal(result.requiresFractionalOrder, false);
 });
+test("USD all-in budget on a CAD account includes the 1.5 percent FX fee", () => {
+  const base = { symbol: "AAPL", marketType: "listed", price: 50, planningAmount: 100, planningCurrency: "USD", tradingCurrency: "USD", accountCurrency: "CAD", accountType: "NON_REGISTERED", fractionalSupported: true, quoteTimestamp: "2026-08-11T12:00:00Z", fxRate: 1.35, fxAsOf: "2026-08-11T12:00:00Z", fxFeeRate: .015, availableAfterReserve: 135 };
+  const result = policy.execute(base, { now: Date.parse("2026-08-12T12:00:00Z") });
+  assert.equal(result.executable, true);
+  assert.equal(result.executableNotionalTrading, 98.52);
+  assert.equal(result.accountDebit, 135);
+  assert.equal(result.executableAmountPlanning, 100);
+  assert.equal(result.retainedBudgetPlanning, 0);
+  assert.equal(result.fxFeeAccount, 2);
+});
+test("CAD available cash caps a USD plan without contradictory failure", () => {
+  const result = policy.execute({ symbol: "AAPL", marketType: "listed", price: 50, planningAmount: 100, planningCurrency: "USD", tradingCurrency: "USD", accountCurrency: "CAD", accountType: "NON_REGISTERED", fractionalSupported: true, quoteTimestamp: "2026-08-11T12:00:00Z", fxRate: 1.35, fxAsOf: "2026-08-11T12:00:00Z", fxFeeRate: .015, availableAfterReserve: 120 }, { now: Date.parse("2026-08-12T12:00:00Z") });
+  assert.equal(result.executable, true);
+  assert.equal(result.executableNotionalTrading, 87.58);
+  assert.equal(result.accountDebit, 120);
+  assert.equal(result.retainedBudgetPlanning, 11.11);
+  assert.equal(result.reasonCodes.includes("INSUFFICIENT_ACCOUNT_FUNDS"), false);
+});
 test("ETF lookthrough adds SPY exposure and supports direct-only mode", () => {
   const lookthrough = require("../etf-lookthrough.js");
   const data = { schemaVersion: "etf-holdings-v1", asOf: "2026-08-11T00:00:00Z", holdings: [{ etfTicker: "SPY", componentTicker: "AAPL", weight: .072 }, { etfTicker: "SPY", componentTicker: "NVDA", weight: .07 }] };

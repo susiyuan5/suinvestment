@@ -57,6 +57,33 @@ test("normalizer separates cash equivalents and hashes account identifiers", asy
   assert.equal(stableAccountId({ id: "account-number-123" }).includes("account-number-123"), false);
 });
 
+test("normalizer reads the real nested SnapTrade position schema", async () => {
+  const { normalizePosition } = await import("../scripts/snaptrade-normalizer.mjs");
+  const result = normalizePosition({ symbol: { symbol: { symbol: "AAPL", raw_symbol: "AAPL", description: "Apple", currency: { code: "USD" }, exchange: { code: "NASDAQ" }, type: { code: "cs" } } }, units: 2, price: 100, average_purchase_price: 80, currency: { code: "USD" } });
+  assert.equal(result.symbol, "AAPL");
+  assert.equal(result.position_currency, "USD");
+  assert.equal(result.listing_currency, "USD");
+  assert.equal(result.cost_basis, 80);
+  assert.equal(result.market_value, 200);
+  assert.equal(result.included_in_stock_plan, true);
+});
+
+test("portfolio risk converts CAD cash before USD aggregation", async () => {
+  const { portfolioRiskFromSnapshot } = await import("../scripts/snaptrade-normalizer.mjs");
+  const snapshot = { generated_at: "2026-08-12T12:00:00Z", holdings: [{ symbol: "AAPL", included_in_stock_plan: true, units: 1, price: 100, cost_basis: 80, market_value: 100, position_currency: "USD" }], accounts: [{ balances: [{ currency: "CAD", cash: 100 }] }] };
+  const result = portfolioRiskFromSnapshot(snapshot, { fxRate: 1.35, fxAsOf: "2026-08-11T12:00:00Z", now: Date.parse("2026-08-12T12:00:00Z") });
+  assert.equal(result.complete, true);
+  assert.ok(Math.abs(result.total_portfolio_value - 174.074074) < .00001);
+  assert.ok(Math.abs(result.available_cash - 74.074074) < .00001);
+});
+
+test("portfolio risk blocks mixed currencies when FX is unavailable", async () => {
+  const { portfolioRiskFromSnapshot } = await import("../scripts/snaptrade-normalizer.mjs");
+  const result = portfolioRiskFromSnapshot({ holdings: [], accounts: [{ balances: [{ currency: "CAD", cash: 100 }] }] }, {});
+  assert.equal(result.complete, false);
+  assert.equal(result.available_cash_provided, false);
+});
+
 test("AES-256-GCM snapshot round trip authenticates the outer schema", async () => {
   const { encryptSnapshot, decryptSnapshot } = await import("../scripts/encrypted-holdings-snapshot.mjs");
   const key = crypto.randomBytes(32).toString("base64");

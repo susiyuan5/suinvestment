@@ -25,7 +25,7 @@
   function number(value) { var parsed = Number(String(value == null ? "" : value).replace(/,/g, "")); return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) / 100 : null; }
   function escapeHtml(value) { return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[char]; }); }
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
-  function currencySettings() { return root.WealthsimpleCurrency ? root.WealthsimpleCurrency.load(localStorage) : { planningCurrency: "CAD", accountCurrency: "CAD", displayCurrency: "CAD", clientTier: "Core", usdAccountEnabled: false, fxRate: null, fxAsOf: null, fxMaxAgeDays: 3 }; }
+  function currencySettings() { return root.WealthsimpleCurrency ? root.WealthsimpleCurrency.load(localStorage) : { planningCurrency: "USD", accountCurrency: "CAD", displayCurrency: "CAD", clientTier: "Core", usdAccountEnabled: false, fxRate: null, fxAsOf: null, fxMaxAgeDays: 3 }; }
 
   function normalizeAccounts(value) {
     if (value && Array.isArray(value.accounts)) {
@@ -328,6 +328,18 @@
     id("wealthsimpleFxAsOf").value = normalized.asOf;
     var current = currencySettings();
     root.WealthsimpleCurrency.save(Object.assign({}, current, { fxRate: normalized.rate, fxAsOf: normalized.asOf, fxFetchedAt: normalized.fetchedAt, fxSource: normalized.source, fxSourceKind: normalized.sourceKind }), localStorage);
+    var migration = root.WealthsimpleCurrency.migrateStoredPlanningCurrency(localStorage, Date.now());
+    if (migration.migrated) {
+      if (draft) {
+        draft.planningCurrency = "USD";
+        draft.deployment = migration.deployment || draft.deployment;
+        id("planningCurrencySelect").value = "USD";
+        Object.keys(draft.deployment).forEach(function (field) { var input = id(field === "monthlyBudget" ? "monthlyBudgetInput" : field === "normalPool" ? "normalPoolInput" : field === "crashFund" ? "crashFundInput" : "weeklyDeploymentInput"); setValue(input, draft.deployment[field]); });
+        baseline = clone(serializable(draft));
+        renderSummary();
+      }
+      root.dispatchEvent(new CustomEvent("planning-currency:migrated", { detail: migration }));
+    }
     if (draft) { draft.fxRate = normalized.rate; draft.fxAsOf = normalized.asOf; }
     root.dispatchEvent(new CustomEvent("fx-rate:updated", { detail: normalized }));
     renderFx(normalized, "");

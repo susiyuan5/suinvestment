@@ -30,6 +30,16 @@ test("适配器在账户或汇率不完整时不计算数量", () => {
   assert.equal(result.safe, false);
 });
 
+test("适配器以账户币种校验资金并以计划币种汇总", () => {
+  const settings = currency.normalize({ planningCurrency: "USD", accountCurrency: "CAD", displayCurrency: "USD", fxRate: 1.35, fxAsOf: "2026-08-11T12:00:00Z" });
+  const result = adapter.buildChecklist({ items: [{ symbol: "AAPL", finalAmount: 100, price: 50, priceAsOf: "2026-08-11T12:00:00Z", fractional: true }] }, { settings, rules: ruleConfig, now: Date.parse("2026-08-12T12:00:00Z"), accounts: { default: { id: "cad", account_type: "NON_REGISTERED", account_currency: "CAD", available_to_trade: 120, pending_order_reserve: 0 } }, securities: { AAPL: { currency: "USD", otc: false, fractional: true } } });
+  assert.equal(result.rows[0].accountDebit, 120);
+  assert.equal(result.rows[0].executableNotionalTrading, 87.58);
+  assert.equal(result.rows[0].retainedBudgetPlanning, 11.11);
+  assert.equal(result.rows[0].failures.includes("可用资金不足或未填写"), false);
+  assert.equal(result.rows[0].status, "规则校验通过，仍需人工核对");
+});
+
 test("对账拒绝重复订单，部分成交保留剩余信息，持仓需二次确认", () => {
   let ledger = reconciliation.createLedger();
   const first = reconciliation.add(ledger, { id: "1", orderId: "ws-1", symbol: "SPY", status: "PARTIAL", remainingShares: 2 });

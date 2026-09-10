@@ -37,6 +37,10 @@
     ,etfExposureMode: "su-investment-pro:etf-exposure-mode"
   };
 
+  let planningCurrencyMigration = window.WealthsimpleCurrency && window.WealthsimpleCurrency.migrateStoredPlanningCurrency
+    ? window.WealthsimpleCurrency.migrateStoredPlanningCurrency(localStorage, Date.now())
+    : { complete: false, pending: true };
+
   const DEFAULT_DEPLOYMENT = {
     monthlyBudget: 400,
     normalPool: 300,
@@ -175,7 +179,7 @@
       weeklyDeployment: "Weekly Deployment",
       deploymentSettings: "Deployment Settings",
       displayCurrency: "Display currency",
-      currencyUnitNote: "Changes the amount unit only; no exchange-rate conversion is performed. Enter budgets and holdings in the selected currency.",
+      currencyUnitNote: "Budgets and portfolio risk use USD. Display currency is converted with the current USD/CAD rate.",
       currencySaved: "Amount unit changed to {currency}.",
       save: "Save",
       resetDefaults: "Reset",
@@ -531,7 +535,7 @@ amountBreakdown: "Amount Breakdown",
       weeklyDeployment: "每周投入",
       deploymentSettings: "投入设置",
       displayCurrency: "显示货币",
-      currencyUnitNote: "只切换金额单位，不进行汇率换算；请按所选货币填写预算和持仓金额。",
+      currencyUnitNote: "预算与组合风控统一使用 USD；显示币种按当前 USD/CAD 汇率换算。",
       currencySaved: "金额单位已切换为 {currency}。",
       save: "保存投入设置",
       resetDefaults: "恢复默认投入",
@@ -1097,6 +1101,13 @@ amountBreakdown: "金额分解",
     updateCurrencyPlaceholders();
     renderPortfolioRiskInputs();
     render();
+  });
+  window.addEventListener("planning-currency:migrated", function () {
+    planningCurrencyMigration = { complete: true, migrated: true };
+    state.deployment = normalizeDeployment(loadJson(STORAGE_KEYS.deployment, DEFAULT_DEPLOYMENT));
+    state.manualPortfolioRiskInput = normalizePortfolioRiskInput(loadJson(STORAGE_KEYS.portfolioRisk, {}));
+    if (state.portfolioRiskSource !== "snaptrade_automatic") state.portfolioRiskInput = normalizePortfolioRiskInput(state.manualPortfolioRiskInput);
+    renderDeploymentSettings(); renderPortfolioRiskInputs(); render();
   });
 
   if (!state.portfolio.length) {
@@ -4918,9 +4929,11 @@ function equalizeAllocations() {
     const complete = state.coreSatellitePresetReady && expectedSymbols.every(function (symbol) { return state.portfolio.some(function (item) { return item.symbol === symbol; }); });
     const fresh = inputs.every(function (item) { return getDcaL2DataStatus(item.entry.signal) === "fresh"; });
     const cashGatePassed = !portfolioRisk.available_cash_provided || portfolioRisk.available_cash > 0;
-    state.coreSatellitePlan.safe = Boolean(activePreset) && complete && fresh && cashGatePassed && state.coreSatellitePlan.conservation && state.coreSatellitePlan.conservation.balanced === true;
+    var planningSettings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : {};
+    var currencyReady = planningCurrencyMigration.complete !== false && planningSettings.planningCurrency === "USD" && planningSettings.planningMigrationPending !== true;
+    state.coreSatellitePlan.safe = Boolean(activePreset) && complete && fresh && cashGatePassed && currencyReady && state.coreSatellitePlan.conservation && state.coreSatellitePlan.conservation.balanced === true;
     if (!state.coreSatellitePlan.safe) {
-      state.coreSatellitePlan.items.forEach(function (item) { item.baseAmount = item.extraAmount = item.crashFundAmount = item.finalAmount = 0; item.crashFundEnhancement = 0; item.redirectedToSpy = 0; item.cashRetained = 0; item.reasonCodes = Array.from(new Set((item.reasonCodes || []).concat(["安全检查未通过"]))); });
+      state.coreSatellitePlan.items.forEach(function (item) { item.baseAmount = item.extraAmount = item.crashFundAmount = item.finalAmount = 0; item.crashFundEnhancement = 0; item.redirectedToSpy = 0; item.cashRetained = 0; item.reasonCodes = Array.from(new Set((item.reasonCodes || []).concat([currencyReady ? "安全检查未通过" : "USD_BUDGET_MIGRATION_PENDING"]))); });
       state.coreSatellitePlan.spyRedirected = 0;
       state.coreSatellitePlan.crashFundUsed = 0;
       state.coreSatellitePlan.totalPlanned = 0;
@@ -5940,6 +5953,7 @@ function equalizeAllocations() {
     const codes = row && Array.isArray(row.reasonCodes) ? row.reasonCodes : [];
     if (codes.indexOf("ETF_LOOKTHROUGH_LIMIT") >= 0) return "穿透后超过单股上限，请人工调整；金额保留为现金，不转入 SPY";
     if (codes.indexOf("ETF_LOOKTHROUGH_DATA_PENDING") >= 0) return "穿透数据待更新，暂不生成该标的新增金额，金额保留为现金";
+    if (codes.indexOf("USD_BUDGET_MIGRATION_PENDING") >= 0) return "等待有效 USD/CAD 汇率完成 USD 预算迁移，本周计划已停止";
     if (codes.indexOf("安全检查未通过") >= 0 || codes.indexOf("SPY_DATA_OR_SAFETY_BLOCK") >= 0) return "数据或计算未通过安全检查，请人工复核";
     if (codes.indexOf("SATELLITE_RISK_BLOCKED") >= 0) return "个股风控门禁阻止买入，资金保留或转入 SPY";
     if (codes.indexOf("SATELLITE_BASE_REDIRECTED_TO_SPY") >= 0) return "个股基础金额已转入 SPY";
@@ -5957,10 +5971,11 @@ function equalizeAllocations() {
     plan.items.forEach(function (row) {
       if (Number(row.finalAmount || 0) <= 0) return;
       var signal = window.__SUINVESTMENT_SIGNALS__ && window.__SUINVESTMENT_SIGNALS__.find(function (item) { return item.symbol === row.symbol; }) || {};
-      var settings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : {};
-      var result = window.WealthsimpleExecutionPolicy.execute({ symbol: row.symbol, marketType: "listed", price: signal.latest_price || signal.price, suggestedAmount: row.finalAmount, tradingCurrency: "USD", accountCurrency: account.account_currency || settings.accountCurrency, accountType: account.account_type, fractionalSupported: "unknown", minimumFractionalAmount: 1, quoteTimestamp: signal.fetchedAt || signal.asOf, fxRate: settings.fxRate, fxAsOf: settings.fxAsOf, fxFeeRate: settings.fxFeeRate, fxMaxAgeDays: settings.fxMaxAgeDays });
-      summary.executable += Number(result.executableAmount || 0); summary.retained += Number(result.retainedCash || 0); summary.statuses[row.symbol] = result;
-      if (result.executableAmount < row.finalAmount) summary.executionCash += Number(result.retainedCash || 0);
+      var settings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : {}, rowAccount = accounts[row.accountId] || account;
+      var afterReserve = Math.max(0, Number(rowAccount.available_to_trade || 0) - Number(rowAccount.pending_order_reserve || 0));
+      var result = window.WealthsimpleExecutionPolicy.execute({ symbol: row.symbol, marketType: "listed", price: signal.latest_price || signal.price, planningAmount: row.finalAmount, planningCurrency: settings.planningCurrency, availableAfterReserve: afterReserve, tradingCurrency: "USD", accountCurrency: rowAccount.account_currency || settings.accountCurrency, accountType: rowAccount.account_type, fractionalSupported: "unknown", minimumFractionalAmount: 1, quoteTimestamp: signal.fetchedAt || signal.asOf, fxRate: settings.fxRate, fxAsOf: settings.fxAsOf, fxFeeRate: settings.fxFeeRate, fxMaxAgeDays: settings.fxMaxAgeDays });
+      summary.executable += Number(result.executableAmountPlanning || 0); summary.retained += Number(result.retainedBudgetPlanning || 0); summary.statuses[row.symbol] = result;
+      if (result.executableAmountPlanning < row.finalAmount) summary.executionCash += Number(result.retainedBudgetPlanning || 0);
     });
     return summary;
   }

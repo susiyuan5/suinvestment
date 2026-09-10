@@ -6,13 +6,14 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
   var KEY = "su-investment-pro:wealthsimple-currency-v1";
-  var DEFAULTS = { planningCurrency: "CAD", accountCurrency: "CAD", displayCurrency: "CAD", clientTier: "Core", usdAccountEnabled: false, fxRate: null, fxAsOf: null, fxFeeRate: 0.015, fxMaxAgeDays: 3, migrationNoticeShown: false };
+  var USD_MIGRATION_VERSION = "usd-planning-v2";
+  var DEFAULTS = { planningCurrency: "USD", accountCurrency: "CAD", displayCurrency: "CAD", clientTier: "Core", usdAccountEnabled: false, fxRate: null, fxAsOf: null, fxFeeRate: 0.015, fxMaxAgeDays: 3, planningMigrationVersion: null, planningMigrationPending: false, migrationNoticeShown: false };
   function finite(value) { return typeof value === "number" && Number.isFinite(value); }
   function read(storage) { try { var raw = storage && storage.getItem(KEY); return raw ? JSON.parse(raw) : {}; } catch (_) { return {}; } }
   function normalize(input) {
     var value = input && typeof input === "object" ? input : {};
     return Object.assign({}, DEFAULTS, value, {
-      planningCurrency: ["CAD", "USD"].includes(value.planningCurrency) ? value.planningCurrency : "CAD",
+      planningCurrency: ["CAD", "USD"].includes(value.planningCurrency) ? value.planningCurrency : DEFAULTS.planningCurrency,
       accountCurrency: ["CAD", "USD"].includes(value.accountCurrency) ? value.accountCurrency : "CAD",
       displayCurrency: ["CAD", "USD"].includes(value.displayCurrency) ? value.displayCurrency : "CAD",
       clientTier: ["Core", "Premium", "Generation"].includes(value.clientTier) ? value.clientTier : "Core",
@@ -55,5 +56,46 @@
     if (!conversion.ok) return { text: from + " " + Number(amount).toFixed(2), converted: false, warning: "汇率不可用，禁止生成可执行核对清单" };
     return { text: settings.displayCurrency + " " + Number(conversion.amount).toFixed(2), converted: settings.displayCurrency !== from, warning: "" };
   }
-  return Object.freeze({ KEY: KEY, DEFAULTS: DEFAULTS, normalize: normalize, load: load, save: save, rateIsValid: rateIsValid, convert: convert, feeRate: feeRate, estimateFxCost: estimateFxCost, annualUsdCost: annualUsdCost, format: format });
+  function parseJson(storage, key, fallback) { try { var raw = storage && storage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }
+  function divideMoney(value, rate) { var number = Number(value); return finite(number) ? Math.round(number / rate * 100) / 100 : value; }
+  function migrateStoredPlanningCurrency(storage, now) {
+    var raw = read(storage), current = normalize(raw);
+    if (raw.planningMigrationVersion === USD_MIGRATION_VERSION) return { complete: true, migrated: false, settings: current };
+    if (!Object.keys(raw).length || current.planningCurrency === "USD") {
+      var initialized = normalize(Object.assign({}, current, { planningCurrency: "USD", planningMigrationVersion: USD_MIGRATION_VERSION, planningMigrationPending: false }));
+      save(initialized, storage);
+      return { complete: true, migrated: false, settings: initialized };
+    }
+    if (!rateIsValid(current, now)) {
+      var cachedFx = parseJson(storage, "su-investment-pro:fx-rate-cache-v1", null);
+      if (cachedFx) current = normalize(Object.assign({}, current, { fxRate: Number(cachedFx.rate), fxAsOf: cachedFx.asOf, fxFetchedAt: cachedFx.fetchedAt, fxSource: cachedFx.source, fxSourceKind: cachedFx.sourceKind }));
+    }
+    if (!rateIsValid(current, now)) return { complete: false, migrated: false, pending: true, reason: "汇率不可用或已过期", settings: normalize(Object.assign({}, current, { planningMigrationPending: true })) };
+    var deploymentKey = "su-investment-pro:deployment", portfolioKey = "su-investment-pro:portfolio-risk";
+    var deployment = parseJson(storage, deploymentKey, null), portfolio = parseJson(storage, portfolioKey, null), nextDeployment = deployment, nextPortfolio = portfolio;
+    if (deployment && typeof deployment === "object") {
+      nextDeployment = Object.assign({}, deployment);
+      ["monthlyBudget", "normalPool", "crashFund", "weeklyDeployment"].forEach(function (field) { if (Object.prototype.hasOwnProperty.call(nextDeployment, field)) nextDeployment[field] = divideMoney(nextDeployment[field], current.fxRate); });
+    }
+    if (portfolio && typeof portfolio === "object") {
+      nextPortfolio = JSON.parse(JSON.stringify(portfolio));
+      if (Object.prototype.hasOwnProperty.call(nextPortfolio, "available_cash")) nextPortfolio.available_cash = divideMoney(nextPortfolio.available_cash, current.fxRate);
+      Object.keys(nextPortfolio.positions || {}).forEach(function (symbol) {
+        var position = nextPortfolio.positions[symbol] || {};
+        ["average_cost", "current_value"].forEach(function (field) { if (Object.prototype.hasOwnProperty.call(position, field)) position[field] = divideMoney(position[field], current.fxRate); });
+      });
+    }
+    var migrated = normalize(Object.assign({}, current, { planningCurrency: "USD", planningMigrationVersion: USD_MIGRATION_VERSION, planningMigrationPending: false, migrationNoticeShown: false }));
+    var previous = { currency: storage.getItem(KEY), deployment: storage.getItem(deploymentKey), portfolio: storage.getItem(portfolioKey) };
+    try {
+      storage.setItem(KEY, JSON.stringify(migrated));
+      if (nextDeployment) storage.setItem(deploymentKey, JSON.stringify(nextDeployment));
+      if (nextPortfolio) storage.setItem(portfolioKey, JSON.stringify(nextPortfolio));
+    } catch (error) {
+      [[KEY, previous.currency], [deploymentKey, previous.deployment], [portfolioKey, previous.portfolio]].forEach(function (entry) { if (entry[1] === null) storage.removeItem(entry[0]); else storage.setItem(entry[0], entry[1]); });
+      return { complete: false, migrated: false, pending: true, reason: "本地设置写入失败", settings: current };
+    }
+    return { complete: true, migrated: true, settings: migrated, deployment: nextDeployment, portfolioRisk: nextPortfolio };
+  }
+  return Object.freeze({ KEY: KEY, DEFAULTS: DEFAULTS, USD_MIGRATION_VERSION: USD_MIGRATION_VERSION, normalize: normalize, load: load, save: save, rateIsValid: rateIsValid, convert: convert, feeRate: feeRate, estimateFxCost: estimateFxCost, annualUsdCost: annualUsdCost, format: format, migrateStoredPlanningCurrency: migrateStoredPlanningCurrency });
 });

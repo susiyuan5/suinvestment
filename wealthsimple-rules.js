@@ -11,7 +11,7 @@
     var value = input || {}, failures = [], warnings = [], security = value.security || {};
     if (!ACCOUNT_TYPES.includes(value.accountType)) failures.push("账户类型未确认");
     if (!value.accountCurrency || !["CAD", "USD"].includes(value.accountCurrency)) failures.push("账户币种未确认");
-    if (!finite(Number(value.availableAfterReserve)) || Number(value.availableAfterReserve) < Number(value.planningAmount || 0)) failures.push("可用资金不足或未填写");
+    if (!finite(Number(value.availableAfterReserve)) || !finite(Number(value.requiredAccountAmount)) || Number(value.availableAfterReserve) + .005 < Number(value.requiredAccountAmount)) failures.push("可用资金不足或未填写");
     if (!finite(Number(value.price)) || Number(value.price) <= 0) failures.push("行情价格不可用");
     if (!value.priceAsOf) failures.push("行情时间不可用");
     var isOtc = security.otc === true;
