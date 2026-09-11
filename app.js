@@ -6011,7 +6011,7 @@ function equalizeAllocations() {
       const riskAdjustment = Number(row.riskReduction || 0);
       const redirected = Number(row.redirectedToSpy || 0);
       const status = window.DashboardUiPolicy ? window.DashboardUiPolicy.decisionStatus(row.finalAmount, row.action || row.suggested_action) : (Number(row.finalAmount || 0) > 0 ? "可供人工核对" : "已阻止或保留现金");
-      card.innerHTML = "<strong></strong><span class=\"weekly-decision-target\"></span><span class=\"weekly-decision-final\"></span><span class=\"weekly-decision-status\"></span><details><summary>查看详情</summary><div class=\"weekly-decision-detail\"><span></span><span></span><span></span><span></span><p></p></div></details>";
+      card.innerHTML = "<strong></strong><span class=\"weekly-decision-target\"></span><span class=\"weekly-decision-final\"></span><span class=\"weekly-decision-status\"></span><div class=\"weekly-decision-expanded\"><div class=\"weekly-decision-detail\"><span></span><span></span><span></span><span></span><p></p></div></div>";
       card.querySelector("strong").textContent = symbol;
       card.querySelector(".weekly-decision-target").textContent = "目标 " + (targetBySymbol[symbol] || 0).toFixed(2) + "% / 当前 " + current.toFixed(2) + "%";
       card.querySelector(".weekly-decision-final").textContent = "最终人工计划 " + formatCurrency(row.finalAmount);
@@ -6029,7 +6029,7 @@ function equalizeAllocations() {
       const shortReason = document.createElement("p");
       shortReason.className = "weekly-decision-reason";
       shortReason.textContent = coreSatelliteReason(row);
-      card.insertBefore(shortReason, card.querySelector("details"));
+      card.insertBefore(shortReason, card.querySelector(".weekly-decision-expanded"));
       if (execution) {
         const executionDetail = document.createElement("p");
         const quote = (window.__SUINVESTMENT_SIGNALS__ || []).find(function (item) { return item.symbol === symbol; });
