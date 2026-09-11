@@ -75,7 +75,9 @@ async function main() {
   const keyboardContext = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "zh-CN" });
   const keyboardPage = await keyboardContext.newPage();
   await keyboardPage.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  await keyboardPage.locator("#watchlist > summary").focus();
+  await keyboardPage.locator("#moreTools > summary").focus();
+  await keyboardPage.keyboard.press("Enter");
+  await keyboardPage.locator('a[href="#tools-watchlist"]').focus();
   await keyboardPage.keyboard.press("Enter");
   await keyboardPage.locator("#watchlistCards .ws-card-select").first().waitFor({ state: "visible", timeout: 15000 });
   await keyboardPage.locator("#watchlistCards .ws-card-select").first().focus();

@@ -1,20 +1,37 @@
 <!doctype html>
+
 <html lang="zh-CN">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#080d14">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://finnhub.io https://www.bankofcanada.ca https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta charset="utf-8" />
+    <meta
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+      name="viewport"
+    />
+    <meta content="#080d14" name="theme-color" />
+    <meta
+      content="default-src 'self'; connect-src 'self' https://finnhub.io https://www.bankofcanada.ca https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+      http-equiv="Content-Security-Policy"
+    />
     <title>量化定投决策台</title>
-    <link rel="stylesheet" href="style.css?v=holdings-compact-v1">
-    <link rel="stylesheet" href="dip-panel.css?v=independent-dip-v1">
-    <link rel="stylesheet" href="stock-search.css?v=order-row-2">
-    <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
-    <link rel="stylesheet" href="watchlist.css?v=accessibility-3">
-    <link rel="stylesheet" href="idea-engine.css?v=idea-engine-compact-cards-1">
-    <link rel="stylesheet" href="idea-engine-short-term.css?v=short-term-trade-plan-v1-3">
-    <link rel="stylesheet" href="wealthsimple-execution.css?v=wealthsimple-v1">
-    <link rel="stylesheet" href="settings-center.css?v=settings-center-v2">
+    <link href="style.css?v=holdings-compact-v1" rel="stylesheet" />
+    <link href="dip-panel.css?v=independent-dip-v1" rel="stylesheet" />
+    <link href="stock-search.css?v=order-row-2" rel="stylesheet" />
+    <link href="signal-detail.css?v=phase3-i18n-1" rel="stylesheet" />
+    <link href="watchlist.css?v=accessibility-3" rel="stylesheet" />
+    <link
+      href="idea-engine.css?v=idea-engine-compact-cards-1"
+      rel="stylesheet"
+    />
+    <link
+      href="idea-engine-short-term.css?v=short-term-trade-plan-v1-3"
+      rel="stylesheet"
+    />
+    <link
+      href="wealthsimple-execution.css?v=wealthsimple-v1"
+      rel="stylesheet"
+    />
+    <link href="settings-center.css?v=settings-center-v2" rel="stylesheet" />
+    <link href="workspace-navigation.css?v=workspace-v1" rel="stylesheet" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,659 +41,2227 @@
           <h1>量化定投决策台</h1>
           <p class="hero-copy">定投与组合风控决策台</p>
         </div>
-        <div class="hero-status" aria-label="Dashboard status">
+        <div aria-label="Dashboard status" class="hero-status">
           <span class="hero-status-label">数据更新时间</span>
           <strong id="lastUpdated">等待数据</strong>
         </div>
         <div class="hero-tools">
-          <div class="schedule-card" aria-label="Execution schedule">
+          <details class="more-tools" id="moreTools">
+            <summary>更多工具</summary>
+            <nav aria-label="更多工具">
+              <a href="#tools-watchlist">盯盘</a
+              ><a href="#tools-research">研究与回测</a
+              ><a href="#tools-data">数据质量</a>
+            </nav>
+          </details>
+          <div aria-label="Execution schedule" class="schedule-card">
             <span>执行计划</span>
             <strong>每周二 12:00</strong>
           </div>
-          <button id="openSettingsBtn" class="primary-button hero-settings" type="button">设置</button>
+          <button
+            class="primary-button hero-settings"
+            id="openSettingsBtn"
+            type="button"
+          >
+            设置
+          </button>
         </div>
       </header>
-
-      <nav class="dashboard-anchor-nav" aria-label="页面导航">
-        <a href="#decisionSummary">本周决策</a>
-        <a href="#dipOpportunities">抄底机会</a>
-        <a href="#signalsSection">个股信号</a>
-        <a href="#inlineHoldingsSection">当前持仓</a>
-        <a href="#research-panel">研究</a>
-        <a href="#dataQualityPanel">数据质量</a>
+      <nav aria-label="主导航" class="workspace-nav">
+        <a data-view-link="weekly" href="#weekly">本周操作</a
+        ><a data-view-link="holdings" href="#holdings">持仓</a
+        ><a data-view-link="dip" href="#dip">抄底</a>
       </nav>
-
-      <section id="decisionSummary" class="decision-summary" aria-labelledby="decision-summary-title" data-testid="decision-summary">
-        <div class="decision-summary-heading">
-          <div>
-            <p class="eyebrow">本周</p>
-            <h2 id="decision-summary-title">本周资金与定投决策</h2>
-          </div>
-          <span id="decisionSummaryStatus" class="decision-summary-status" data-state="loading">加载中</span>
-        </div>
-        <div class="decision-summary-grid">
-          <article class="decision-summary-item">
-            <span>市场状态</span>
-            <strong id="decisionMarketState">加载中</strong>
-          </article>
-          <article class="decision-summary-item">
-            <span>数据截至</span>
-            <strong id="decisionDataAsOf">等待数据</strong>
-          </article>
-          <article class="decision-summary-item">
-            <span>数据源</span>
-            <strong id="decisionDataSource">等待</strong>
-          </article>
-          <article class="decision-summary-item">
-            <span>人工复核</span>
-            <strong id="decisionReviewState">需要复核</strong>
-          </article>
-          <article class="decision-summary-item decision-summary-action">
-            <span>建议动作</span>
-            <strong id="decisionAction">等待数据</strong>
-            <small id="decisionReason">完成数据质量检查前不会生成买入建议。</small>
-          </article>
-        </div>
-        <p class="decision-summary-note">健康仅表示数据和工作流正常，不代表策略有效或允许交易。研究和回测结果仅供辅助复核。</p>
-        <section id="weeklyDecisionPlan" class="weekly-decision-plan" aria-labelledby="weeklyDecisionPlanTitle">
-          <div class="weekly-decision-heading"><h3 id="weeklyDecisionPlanTitle">本周资金概览与人工计划</h3><strong id="weeklyDecisionTotal">CAD 0.00</strong></div>
-          <div class="weekly-decision-actions"><button id="adjustAllocationBtn" class="secondary-button" type="button">调整目标比例</button><button id="adjustBudgetBtn" class="secondary-button" type="button">调整预算</button><button id="refreshBtn" class="primary-button" type="button">刷新并重新检查</button><button id="copyBtn" class="secondary-button" type="button">复制本周人工计划</button></div>
-          <div id="weeklyDecisionOverview" class="weekly-decision-overview" aria-live="polite">
-            <span>本周基础预算<strong id="weeklyBaseBudget">CAD 0.00</strong></span><span>已批准下跌备用金<strong id="weeklyCrashFund">CAD 0.00</strong></span><span>本周可用资金总额<strong id="weeklyAvailableFunds">CAD 0.00</strong></span><span>本周计划买入总额<strong id="weeklyPlannedTotal">CAD 0.00</strong></span><span>本周保留现金<strong id="weeklyRetainedCash">CAD 0.00</strong></span><span>资金守恒状态<strong id="weeklyConservationStatus">等待计算</strong></span>
-            <span>可执行买入<strong id="weeklyExecutableTotal">CAD 0.00</strong></span><span>碎股/账户限制保留现金<strong id="weeklyExecutionCash">CAD 0.00</strong></span><span>单股上限保留现金<strong id="weeklyExposureCash">CAD 0.00</strong></span><span>风险规则保留现金<strong id="weeklyRiskRuleCash">CAD 0.00</strong></span>
-          </div>
-          <div id="weeklyDecisionAllocationSummary" class="weekly-decision-allocation-summary" aria-live="polite"><span>大盘仓合计<strong id="weeklyCoreTotal">CAD 0.00</strong></span><span>个股仓合计<strong id="weeklySatelliteTotal">CAD 0.00</strong></span><span>科技个股合计<strong id="weeklyTechnologyTotal">CAD 0.00</strong></span><span>转入 SPY<strong id="weeklySpyRedirect">CAD 0.00</strong></span><span>风控保留现金<strong id="weeklyRiskCash">CAD 0.00</strong></span></div>
-          <p id="weeklyDecisionSafety" class="weekly-decision-safety">等待数据或计算安全检查。</p>
-          <div id="weeklyDecisionRows" class="weekly-decision-rows" aria-live="polite"></div>
-          <div id="weeklyDecisionExplanation" class="weekly-decision-explanation" aria-live="polite"><strong>本周决策解释</strong><p id="weeklyDecisionReason">等待规划结果。</p><p id="weeklyDecisionRiskReasons">等待数据质量和安全门禁状态。</p><p id="weeklyDecisionQqqStatus">QQQ：纳斯达克成长 ETF，同时用于科技风险观察和 10% 定投，不会重复计算。</p></div>
-        </section>
-      </section>
-
-      <details id="wealthsimpleChecklistPanel" class="panel wealthsimple-panel">
-        <summary class="section-heading compact"><span><span class="eyebrow">Wealthsimple</span><strong>人工核对清单</strong></span><span id="wealthsimpleChecklistStatus">等待计划</span></summary>
-        <p class="wealthsimple-safety-note">仅供人工核对，不连接券商，不自动下单。数量和金额必须在 Wealthsimple 中人工确认。</p>
-        <p id="wealthsimpleChecklistWarning" class="data-quality-warning" role="status" aria-live="polite">核对信息不完整，请在 Wealthsimple 人工确认。</p>
-        <div id="wealthsimpleChecklistRows" class="wealthsimple-checklist-rows" aria-live="polite"></div>
-        <details id="wealthsimpleAccountsPanel" class="wealthsimple-accounts-legacy" hidden><summary>账户可用资金（不会混用账户或币种）</summary><div id="wealthsimpleAccounts" class="wealthsimple-accounts"></div><button id="wealthsimpleSaveAccountsBtn" class="secondary-button" type="button">保存账户信息</button></details>
-      </details>
-
-      <details id="wealthsimpleReconciliationPanel" class="panel wealthsimple-panel">
-        <summary class="section-heading compact"><span><span class="eyebrow">Wealthsimple</span><strong>人工成交对账</strong></span><span>本地记录</span></summary>
-        <p>计划与实际成交分开保存。只有用户输入实际成交数据并再次确认后，才会更新本地持仓。</p>
-        <form id="wealthsimpleTradeForm" class="wealthsimple-trade-form">
-          <label>成交日期时间<input id="wealthsimpleTradeDateTime" type="datetime-local"></label><label>账户 ID<input id="wealthsimpleTradeAccountId" type="text"></label><label>代码<input id="wealthsimpleTradeSymbol" type="text"></label><label>订单 ID<input id="wealthsimpleTradeOrderId" type="text"></label><label>实际股数<input id="wealthsimpleActualShares" type="number" min="0" step="any"></label><label>实际价格<input id="wealthsimpleActualPrice" type="number" min="0" step="any"></label><label>币种<select id="wealthsimpleTradeCurrency"><option>CAD</option><option>USD</option></select></label><label>状态<select id="wealthsimpleTradeStatus"><option value="FILLED">已成交</option><option value="PARTIAL">部分成交</option><option value="CANCELLED">已取消</option></select></label><label class="wide">备注<input id="wealthsimpleTradeNote" type="text"></label>
-          <button id="wealthsimpleSaveTradeBtn" class="secondary-button" type="submit">保存成交记录</button>
-        </form>
-        <div class="wealthsimple-reconciliation-actions"><button id="wealthsimpleExportBtn" class="secondary-button" type="button">导出对账 JSON</button><label class="secondary-button">导入对账 JSON<input id="wealthsimpleImportInput" type="file" accept="application/json" hidden></label></div>
-        <p id="wealthsimpleReconciliationStatus" role="status" aria-live="polite"></p><div id="wealthsimpleReconciliationRows"></div>
-      </details>
-
-      <details id="wealthsimpleStressPanel" class="panel wealthsimple-panel">
-        <summary class="section-heading compact"><span><span class="eyebrow">风险辅助</span><strong>压力情景估算</strong></span><span>研究用途</span></summary>
-        <p>仅为情景估算，不代表预测；不会自动卖出或改变定投计划。</p><div id="wealthsimpleStressRows"></div>
-      </details>
-
-      <div id="coreSatelliteSummary" class="visually-hidden" aria-hidden="true">
-        <span id="coreSatellitePresetVersion"></span><span id="coreTargetAllocation"></span><span id="satelliteTargetAllocation"></span><span id="techSatelliteAllocation"></span><span id="spyBasePlan"></span><span id="satellitePlanTotal"></span><span id="cashRetainedPlan"></span><span id="coreSatelliteStatus"></span><span id="coreSatelliteRebalanceNotice"></span>
-      </div>
-
-      <section class="overview-panel" aria-labelledby="overview-title">
-        <div class="overview-heading">
-          <div>
-            <p class="eyebrow">总览</p>
-            <h2 id="overview-title">资产与计划总览</h2>
-          </div>
-          <p class="section-supporting-copy">资产、风险与本周人工计划</p>
-        </div>
-        <div class="overview-grid">
-          <article class="overview-card">
-          <span>每周投入</span>
-            <strong id="overviewWeeklyDeployment">CAD 69.23</strong>
-          </article>
-          <article class="overview-card">
-          <span>计划买入总额</span>
-            <strong id="overviewPlannedBuyTotal">CAD 0.00</strong>
-          </article>
-          <article class="overview-card">
-          <span>总体风险</span>
-            <strong id="overviewOverallRisk">加载中</strong>
-          </article>
-          <article class="overview-card">
-          <span>市场状态</span>
-            <strong id="overviewMarketRegime">中性</strong>
-          </article>
-          <article class="overview-card">
-          <span>可用资金</span>
-            <strong id="overviewAvailableCash">未填写</strong>
-          </article>
-        </div>
-      </section>
-
-      <main class="dashboard-layout">
-        <div class="main-column">
-          <section id="panicBanner" class="panic-banner hidden" aria-live="polite">
+      <main id="workspaceViews">
+        <section
+          aria-label="本周操作"
+          data-workspace-view="weekly"
+          id="view-weekly"
+        >
+          <section
+            aria-live="polite"
+            class="panic-banner hidden"
+            id="panicBanner"
+          >
             <span>恐慌模式已开启</span>
             <strong>QQQ 信号小于或等于 -10%</strong>
           </section>
-
-          <section id="signalsSection" class="panel signals-panel" aria-labelledby="holdings-title">
-            <div class="section-heading compact">
+          <section
+            aria-labelledby="decision-summary-title"
+            class="decision-summary"
+            data-testid="decision-summary"
+            id="decisionSummary"
+          >
+            <div class="decision-summary-heading">
               <div>
-              <p class="eyebrow">信号</p>
-                <h2 id="holdings-title">个股信号与持仓</h2>
+                <p class="eyebrow">本周</p>
+                <h2 id="decision-summary-title">本周操作</h2>
               </div>
-              <p class="section-supporting-copy">逐项核对后再作人工决定</p>
+              <span
+                class="decision-summary-status"
+                data-state="loading"
+                id="decisionSummaryStatus"
+                >加载中</span
+              >
+            </div>
+            <div class="decision-summary-grid">
+              <article class="decision-summary-item">
+                <span>市场状态</span>
+                <strong id="decisionMarketState">加载中</strong>
+              </article>
+              <article class="decision-summary-item">
+                <span>数据截至</span>
+                <strong id="decisionDataAsOf">等待数据</strong>
+              </article>
+
+              <article class="decision-summary-item decision-summary-action">
+                <span>建议动作</span>
+                <strong id="decisionAction">等待数据</strong>
+                <small id="decisionReason"
+                  >完成数据质量检查前不会生成买入建议。</small
+                >
+              </article>
             </div>
 
-            <div class="stock-search-panel" aria-label="添加股票">
-              <div class="stock-search-grid">
-                <label for="stockSearchInput">
-                  <span>搜索股票</span>
-                  <input id="stockSearchInput" type="search" autocomplete="off" placeholder="代码或名称，例如 TSLA">
-                </label>
-                <label for="stockAllocationInput">
-                  <span>配置比例 %</span>
-                  <input id="stockAllocationInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
-                </label>
-                  <button id="stockSearchBtn" class="secondary-button" type="button">搜索</button>
-              </div>
-              <div id="portfolioTotal" class="portfolio-total">总配置 100%</div>
-              <div id="stockSearchResults" class="stock-search-results" aria-live="polite"></div>
+            <div aria-label="三个独立资金池" class="fund-pools">
+              <article>
+                <span>定投 · 本周基础预算</span
+                ><strong id="weeklyNormalCompact">等待计算</strong>
+              </article>
+              <article>
+                <span>暴跌备用金 · 本周已批准</span
+                ><strong id="weeklyCrashCompact">等待计算</strong>
+              </article>
+              <article>
+                <span>独立抄底 · 储备余额</span
+                ><strong id="weeklyDipCompact">等待账本</strong
+                ><a href="#dip">查看抄底</a>
+              </article>
             </div>
+            <section
+              aria-labelledby="weeklyDecisionPlanTitle"
+              class="weekly-decision-plan"
+              id="weeklyDecisionPlan"
+            >
+              <div class="weekly-decision-heading">
+                <h3 id="weeklyDecisionPlanTitle">本周定投清单</h3>
+                <strong id="weeklyDecisionTotal">CAD 0.00</strong>
+              </div>
 
-            <div class="stock-list-shell">
-              <div class="stock-list-header" aria-hidden="true">
-                <span>代码</span><span>配置</span><span>建议</span><span>价格</span><span>1D</span><span>5D</span><span>分数</span><span>强度</span><span>风险</span><span>倍数</span><span>建议买入</span><span>来源</span><span>操作</span>
+              <p class="weekly-decision-safety" id="weeklyDecisionSafety">
+                等待数据或计算安全检查。
+              </p>
+              <a class="data-help-link" href="#tools-data">检查数据问题</a>
+              <div
+                aria-live="polite"
+                class="weekly-decision-rows"
+                id="weeklyDecisionRows"
+              ></div>
+              <p class="status-line" id="copyStatus" role="status"></p>
+              <div class="weekly-decision-actions">
+                <button class="primary-button" id="refreshBtn" type="button">
+                  刷新并重新检查</button
+                ><button class="secondary-button" id="copyBtn" type="button">
+                  复制本周人工计划
+                </button>
+                <details class="compact-details" id="weeklyPlanSettings">
+                  <summary>调整计划设置</summary>
+                  <button
+                    class="secondary-button"
+                    id="adjustAllocationBtn"
+                    type="button"
+                  >
+                    调整目标比例</button
+                  ><button
+                    class="secondary-button"
+                    id="adjustBudgetBtn"
+                    type="button"
+                  >
+                    调整预算
+                  </button>
+                </details>
               </div>
-              <div id="cards" class="cards-grid"></div>
-            </div>
+            </section>
           </section>
-
-
-
-
-        </div>
-
-        <aside class="dashboard-sidebar" aria-label="当前持仓与人工计划">
-          <section class="panel portfolio-risk-panel portfolio-holdings-panel" aria-labelledby="portfolio-risk-title">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">持仓概览</p>
-                <h2 id="portfolio-risk-title">当前持仓</h2>
-              </div>
-              <a class="secondary-button compact-holdings-detail-link" href="#inlineHoldingsSection">查看明细</a>
+          <details class="panel compact-details" id="weeklyCalculationDetails">
+            <summary>计算详情与个股信号</summary>
+            <details class="order-copy-details">
+              <summary>查看复制文本</summary>
+              <pre class="order-text copy-buffer" id="orderText"></pre>
+            </details>
+            <div
+              aria-live="polite"
+              class="weekly-decision-overview"
+              id="weeklyDecisionOverview"
+            >
+              <span
+                >本周基础预算<strong id="weeklyBaseBudget"
+                  >CAD 0.00</strong
+                ></span
+              ><span
+                >已批准下跌备用金<strong id="weeklyCrashFund"
+                  >CAD 0.00</strong
+                ></span
+              ><span
+                >本周可用资金总额<strong id="weeklyAvailableFunds"
+                  >CAD 0.00</strong
+                ></span
+              ><span
+                >本周计划买入总额<strong id="weeklyPlannedTotal"
+                  >CAD 0.00</strong
+                ></span
+              ><span
+                >本周保留现金<strong id="weeklyRetainedCash"
+                  >CAD 0.00</strong
+                ></span
+              ><span
+                >资金守恒状态<strong id="weeklyConservationStatus"
+                  >等待计算</strong
+                ></span
+              >
+              <span
+                >可执行买入<strong id="weeklyExecutableTotal"
+                  >CAD 0.00</strong
+                ></span
+              ><span
+                >碎股/账户限制保留现金<strong id="weeklyExecutionCash"
+                  >CAD 0.00</strong
+                ></span
+              ><span
+                >单股上限保留现金<strong id="weeklyExposureCash"
+                  >CAD 0.00</strong
+                ></span
+              ><span
+                >风险规则保留现金<strong id="weeklyRiskRuleCash"
+                  >CAD 0.00</strong
+                ></span
+              >
             </div>
-
-            <p id="portfolioHoldingsSource" class="portfolio-holdings-source">人工持仓 · 本地保存</p>
-            <div id="portfolioRiskSummary" class="portfolio-risk-summary" aria-live="polite"></div>
-
-            <div class="portfolio-risk-form">
-              <label for="availableCashInput">
-                <span>可用资金</span>
-                <input id="availableCashInput" type="text" inputmode="decimal" autocomplete="off" placeholder="CAD available cash">
-              </label>
-              <details class="holdings-details">
-                <summary>编辑人工持仓</summary>
-                <div id="portfolioPositionInputs" class="portfolio-position-inputs" aria-live="polite"></div>
-                <p class="portfolio-holdings-form-note">修改后自动保存；只用于人工核对，不会下单或自动再平衡。</p>
+            <div
+              aria-live="polite"
+              class="weekly-decision-allocation-summary"
+              id="weeklyDecisionAllocationSummary"
+            >
+              <span
+                >大盘仓合计<strong id="weeklyCoreTotal">CAD 0.00</strong></span
+              ><span
+                >个股仓合计<strong id="weeklySatelliteTotal"
+                  >CAD 0.00</strong
+                ></span
+              ><span
+                >科技个股合计<strong id="weeklyTechnologyTotal"
+                  >CAD 0.00</strong
+                ></span
+              ><span
+                >转入 SPY<strong id="weeklySpyRedirect">CAD 0.00</strong></span
+              ><span
+                >风控保留现金<strong id="weeklyRiskCash">CAD 0.00</strong></span
+              >
+            </div>
+            <div
+              aria-live="polite"
+              class="weekly-decision-explanation"
+              id="weeklyDecisionExplanation"
+            >
+              <strong>本周决策解释</strong>
+              <p id="weeklyDecisionReason">等待规划结果。</p>
+              <p id="weeklyDecisionRiskReasons">等待数据质量和安全门禁状态。</p>
+              <p id="weeklyDecisionQqqStatus">
+                QQQ：纳斯达克成长 ETF，同时用于科技风险观察和 10%
+                定投，不会重复计算。
+              </p>
+            </div>
+            <section aria-labelledby="overview-title" class="overview-panel">
+              <div class="overview-heading">
+                <div>
+                  <p class="eyebrow">总览</p>
+                  <h2 id="overview-title">资产与计划总览</h2>
+                </div>
+                <p class="section-supporting-copy">资产、风险与本周人工计划</p>
+              </div>
+              <div class="overview-grid">
+                <article class="overview-card">
+                  <span>每周投入</span>
+                  <strong id="overviewWeeklyDeployment">CAD 69.23</strong>
+                </article>
+                <article class="overview-card">
+                  <span>计划买入总额</span>
+                  <strong id="overviewPlannedBuyTotal">CAD 0.00</strong>
+                </article>
+                <article class="overview-card">
+                  <span>总体风险</span>
+                  <strong id="overviewOverallRisk">加载中</strong>
+                </article>
+                <article class="overview-card">
+                  <span>市场状态</span>
+                  <strong id="overviewMarketRegime">中性</strong>
+                </article>
+                <article class="overview-card">
+                  <span>可用资金</span>
+                  <strong id="overviewAvailableCash">未填写</strong>
+                </article>
+              </div>
+            </section>
+            <section
+              aria-labelledby="holdings-title"
+              class="panel signals-panel"
+              id="signalsSection"
+            >
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">信号</p>
+                  <h2 id="holdings-title">个股信号与持仓</h2>
+                </div>
+                <p class="section-supporting-copy">逐项核对后再作人工决定</p>
+              </div>
+              <div aria-label="添加股票" class="stock-search-panel">
+                <div class="stock-search-grid">
+                  <label for="stockSearchInput">
+                    <span>搜索股票</span>
+                    <input
+                      autocomplete="off"
+                      id="stockSearchInput"
+                      placeholder="代码或名称，例如 TSLA"
+                      type="search"
+                    />
+                  </label>
+                  <label for="stockAllocationInput">
+                    <span>配置比例 %</span>
+                    <input
+                      autocomplete="off"
+                      id="stockAllocationInput"
+                      inputmode="decimal"
+                      placeholder="0"
+                      type="text"
+                    />
+                  </label>
+                  <button
+                    class="secondary-button"
+                    id="stockSearchBtn"
+                    type="button"
+                  >
+                    搜索
+                  </button>
+                </div>
+                <div class="portfolio-total" id="portfolioTotal">
+                  总配置 100%
+                </div>
+                <div
+                  aria-live="polite"
+                  class="stock-search-results"
+                  id="stockSearchResults"
+                ></div>
+              </div>
+              <div class="stock-list-shell">
+                <div aria-hidden="true" class="stock-list-header">
+                  <span>代码</span><span>配置</span><span>建议</span
+                  ><span>价格</span><span>1D</span><span>5D</span
+                  ><span>分数</span><span>强度</span><span>风险</span
+                  ><span>倍数</span><span>建议买入</span><span>来源</span
+                  ><span>操作</span>
+                </div>
+                <div class="cards-grid" id="cards"></div>
+              </div>
+            </section>
+            <details
+              aria-labelledby="settings-title"
+              class="panel settings-panel deployment-overview"
+            >
+              <summary class="deployment-summary">
+                <span
+                  ><span class="eyebrow">预算设置</span
+                  ><strong id="settings-title">完整预算构成</strong></span
+                >
+                <span class="deployment-summary-action">查看明细</span>
+              </summary>
+              <div class="metrics-grid deployment-metrics">
+                <article class="metric">
+                  <span>月度预算</span><strong>CAD 400.00</strong>
+                </article>
+                <article class="metric">
+                  <span>常规资金池</span><strong>CAD 300.00</strong>
+                </article>
+                <article class="metric">
+                  <span>下跌备用金</span><strong>CAD 100.00</strong>
+                </article>
+                <article class="metric">
+                  <span>每周投入</span><strong>CAD 69.23</strong>
+                </article>
+              </div>
+            </details>
+            <article class="decision-summary-item">
+              <span>数据源</span>
+              <strong id="decisionDataSource">等待</strong>
+            </article>
+            <article class="decision-summary-item">
+              <span>人工复核</span>
+              <strong id="decisionReviewState">需要复核</strong>
+            </article>
+            <p class="decision-summary-note">
+              健康仅表示数据和工作流正常，不代表策略有效或允许交易。研究和回测结果仅供辅助复核。
+            </p>
+          </details>
+          <details class="panel compact-details" id="weeklyTransactions">
+            <summary>人工核对与成交记录</summary>
+            <details
+              class="panel wealthsimple-panel"
+              id="wealthsimpleChecklistPanel"
+            >
+              <summary class="section-heading compact">
+                <span
+                  ><span class="eyebrow">Wealthsimple</span
+                  ><strong>人工核对清单</strong></span
+                ><span id="wealthsimpleChecklistStatus">等待计划</span>
+              </summary>
+              <p class="wealthsimple-safety-note">
+                仅供人工核对，不连接券商，不自动下单。数量和金额必须在
+                Wealthsimple 中人工确认。
+              </p>
+              <p
+                aria-live="polite"
+                class="data-quality-warning"
+                id="wealthsimpleChecklistWarning"
+                role="status"
+              >
+                核对信息不完整，请在 Wealthsimple 人工确认。
+              </p>
+              <div
+                aria-live="polite"
+                class="wealthsimple-checklist-rows"
+                id="wealthsimpleChecklistRows"
+              ></div>
+              <details
+                class="wealthsimple-accounts-legacy"
+                hidden=""
+                id="wealthsimpleAccountsPanel"
+              >
+                <summary>账户可用资金（不会混用账户或币种）</summary>
+                <div
+                  class="wealthsimple-accounts"
+                  id="wealthsimpleAccounts"
+                ></div>
+                <button
+                  class="secondary-button"
+                  id="wealthsimpleSaveAccountsBtn"
+                  type="button"
+                >
+                  保存账户信息
+                </button>
               </details>
+            </details>
+            <details
+              class="panel wealthsimple-panel"
+              id="wealthsimpleReconciliationPanel"
+            >
+              <summary class="section-heading compact">
+                <span
+                  ><span class="eyebrow">Wealthsimple</span
+                  ><strong>人工成交对账</strong></span
+                ><span>本地记录</span>
+              </summary>
+              <p>
+                计划与实际成交分开保存。只有用户输入实际成交数据并再次确认后，才会更新本地持仓。
+              </p>
+              <form class="wealthsimple-trade-form" id="wealthsimpleTradeForm">
+                <label
+                  >成交日期时间<input
+                    id="wealthsimpleTradeDateTime"
+                    type="datetime-local" /></label
+                ><label
+                  >账户 ID<input
+                    id="wealthsimpleTradeAccountId"
+                    type="text" /></label
+                ><label
+                  >代码<input id="wealthsimpleTradeSymbol" type="text" /></label
+                ><label
+                  >订单 ID<input
+                    id="wealthsimpleTradeOrderId"
+                    type="text" /></label
+                ><label
+                  >实际股数<input
+                    id="wealthsimpleActualShares"
+                    min="0"
+                    step="any"
+                    type="number" /></label
+                ><label
+                  >实际价格<input
+                    id="wealthsimpleActualPrice"
+                    min="0"
+                    step="any"
+                    type="number" /></label
+                ><label
+                  >币种<select id="wealthsimpleTradeCurrency">
+                    <option>CAD</option>
+                    <option>USD</option>
+                  </select></label
+                ><label
+                  >状态<select id="wealthsimpleTradeStatus">
+                    <option value="FILLED">已成交</option>
+                    <option value="PARTIAL">部分成交</option>
+                    <option value="CANCELLED">已取消</option>
+                  </select></label
+                ><label class="wide"
+                  >备注<input id="wealthsimpleTradeNote" type="text"
+                /></label>
+                <button
+                  class="secondary-button"
+                  id="wealthsimpleSaveTradeBtn"
+                  type="submit"
+                >
+                  保存成交记录
+                </button>
+              </form>
+              <div class="wealthsimple-reconciliation-actions">
+                <button
+                  class="secondary-button"
+                  id="wealthsimpleExportBtn"
+                  type="button"
+                >
+                  导出对账 JSON</button
+                ><label class="secondary-button"
+                  >导入对账 JSON<input
+                    accept="application/json"
+                    hidden=""
+                    id="wealthsimpleImportInput"
+                    type="file"
+                /></label>
+              </div>
+              <p
+                aria-live="polite"
+                id="wealthsimpleReconciliationStatus"
+                role="status"
+              ></p>
+              <div id="wealthsimpleReconciliationRows"></div>
+            </details>
+            <section
+              aria-labelledby="dca-ledger-title"
+              class="dca-ledger-panel"
+            >
+              <div>
+                <h4 id="dca-ledger-title">下跌备用金账本</h4>
+                <p id="dcaLedgerSummary">等待 DCA-L2 数据。</p>
+                <div
+                  aria-live="polite"
+                  class="dca-budget-summary"
+                  id="dcaBudgetSummary"
+                >
+                  等待月度预算数据。
+                </div>
+              </div>
+              <div class="dca-ledger-form">
+                <select aria-label="账本类型" id="dcaLedgerType">
+                  <option value="base">基础</option>
+                  <option value="extra">额外</option>
+                  <option selected="" value="crash">备用金</option>
+                </select>
+                <input
+                  aria-label="账本股票代码"
+                  autocomplete="off"
+                  id="dcaLedgerSymbol"
+                  placeholder="股票代码（可选）"
+                  type="text"
+                />
+                <input
+                  aria-label="已确认下跌备用金使用金额"
+                  autocomplete="off"
+                  id="dcaLedgerAmount"
+                  inputmode="decimal"
+                  placeholder="已确认使用金额 CAD"
+                  type="text"
+                />
+                <input
+                  aria-label="下跌备用金人工备注"
+                  autocomplete="off"
+                  id="dcaLedgerNote"
+                  placeholder="人工备注"
+                  type="text"
+                />
+                <button
+                  class="secondary-button"
+                  id="dcaLedgerRecordBtn"
+                  type="button"
+                >
+                  记录人工确认使用
+                </button>
+              </div>
+              <div
+                aria-live="polite"
+                class="dca-ledger-entries"
+                id="dcaLedgerEntries"
+              ></div>
+              <p class="dca-ledger-disclaimer">
+                仅用于记账，不会提交、下单或执行交易。
+              </p>
+            </section>
+          </details>
+        </section>
+        <section
+          aria-label="持仓"
+          data-workspace-view="holdings"
+          hidden=""
+          id="view-holdings"
+        >
+          <section
+            aria-labelledby="inline-holdings-title"
+            class="inline-holdings-panel"
+            id="inlineHoldingsSection"
+          >
+            <div class="inline-holdings-heading">
+              <div>
+                <p class="eyebrow">持仓</p>
+                <h2 id="inline-holdings-title">当前持仓</h2>
+                <p class="inline-holdings-meta" id="inlineHoldingsMeta">
+                  正在核对持仓来源与同步状态
+                </p>
+              </div>
+              <div class="inline-holdings-actions">
+                <span class="inline-holdings-mode" id="inlineHoldingsSource"
+                  >人工持仓 · 只读数据</span
+                >
+                <button
+                  class="secondary-button"
+                  id="inlineHoldingsSettingsBtn"
+                  type="button"
+                >
+                  账户设置
+                </button>
+                <button
+                  class="secondary-button"
+                  data-open-section="manualHoldingsEditor"
+                  type="button"
+                >
+                  编辑人工持仓</button
+                ><button
+                  class="secondary-button"
+                  data-open-settings="allocation"
+                  type="button"
+                >
+                  调整目标比例
+                </button>
+              </div>
+            </div>
+
+            <div
+              aria-live="polite"
+              class="inline-holdings-stats"
+              id="inlineHoldingsStats"
+            ></div>
+            <details class="compact-details">
+              <summary>账户与数据来源</summary>
+              <div
+                class="inline-holdings-stats"
+                id="inlineHoldingsExtraStats"
+              ></div>
+              <dl
+                aria-live="polite"
+                class="inline-holdings-sync"
+                id="inlineHoldingsSync"
+              >
+                <div>
+                  <dt>同步状态</dt>
+                  <dd id="inlineHoldingsSyncState">等待数据</dd>
+                </div>
+                <div>
+                  <dt>持仓数据时间</dt>
+                  <dd id="inlineHoldingsAsOf">--</dd>
+                </div>
+                <div>
+                  <dt>账户</dt>
+                  <dd id="inlineHoldingsAccounts">--</dd>
+                </div>
+                <div>
+                  <dt>账户币种</dt>
+                  <dd id="inlineHoldingsCurrencies">--</dd>
+                </div>
+              </dl>
+            </details>
+            <div
+              aria-live="polite"
+              class="inline-holdings-rows"
+              id="inlineHoldingsRows"
+            >
+              <p class="inline-holdings-empty">正在加载已保存持仓</p>
             </div>
           </section>
+          <details class="panel compact-details" id="manualHoldingsEditor">
+            <summary>编辑人工持仓与现金</summary>
+            <section
+              aria-labelledby="portfolio-risk-title"
+              class="panel portfolio-risk-panel portfolio-holdings-panel"
+            >
+              <div class="section-heading compact" hidden="">
+                <div>
+                  <p class="eyebrow">持仓概览</p>
+                  <h2 id="portfolio-risk-title">当前持仓</h2>
+                </div>
+                <a
+                  class="secondary-button compact-holdings-detail-link"
+                  href="#inlineHoldingsSection"
+                  >查看明细</a
+                >
+              </div>
+              <p class="portfolio-holdings-source" id="portfolioHoldingsSource">
+                人工持仓 · 本地保存
+              </p>
+              <div
+                aria-live="polite"
+                class="portfolio-risk-summary"
+                hidden=""
+                id="portfolioRiskSummary"
+              ></div>
+              <div class="portfolio-risk-form">
+                <label for="availableCashInput">
+                  <span>可用资金</span>
+                  <input
+                    autocomplete="off"
+                    id="availableCashInput"
+                    inputmode="decimal"
+                    placeholder="CAD available cash"
+                    type="text"
+                  />
+                </label>
+                <details class="holdings-details">
+                  <summary>编辑人工持仓</summary>
+                  <div
+                    aria-live="polite"
+                    class="portfolio-position-inputs"
+                    id="portfolioPositionInputs"
+                  ></div>
+                  <p class="portfolio-holdings-form-note">
+                    修改后自动保存；只用于人工核对，不会下单或自动再平衡。
+                  </p>
+                </details>
+              </div>
+            </section>
+          </details>
+        </section>
+        <section
+          aria-label="抄底"
+          data-workspace-view="dip"
+          hidden=""
+          id="view-dip"
+        >
+          <section aria-labelledby="dipTitle" id="dipOpportunities">
+            <h2 id="dipTitle">抄底</h2>
+            <p>
+              每月总预算 500 USD：定投 300 USD · 暴跌备用金 100 USD ·
+              独立抄底储备 100
+              USD。三个资金池独立，抄底储备无限滚存。预算入账不代表券商实际到账。
+            </p>
+            <p id="dipStatus" role="status">正在读取独立抄底账本</p>
+            <div class="dip-summary" id="dipSummary"></div>
+            <button id="dipRecalculate" type="button">刷新抄底建议</button
+            ><button data-open-section="dipRecordDetails" type="button">
+              记录实际买入
+            </button>
+            <details class="compact-details" id="dipFundsDetails">
+              <summary>资金详情</summary>
+              <div class="dip-summary" id="dipFundsExtra"></div>
+            </details>
+            <div class="dip-rows" id="dipRows"></div>
+            <details class="compact-details" id="dipUntriggered">
+              <summary id="dipUntriggeredTitle">未触发标的</summary>
+              <div class="dip-rows" id="dipUntriggeredRows"></div>
+            </details>
+            <details class="compact-details" id="dipExecutionSettings">
+              <summary>执行设置 · 碎股资格</summary>
+              <div id="dipExecutionRules"></div>
+            </details>
+            <details id="dipRecordDetails">
+              <summary>记录实际买入</summary>
+              <p>
+                仅记录已经手工成交的独立抄底买入。建议不扣款；请填写实际扣款及费用。超额成交仍会留档并暂停后续建议。时间按当前设备时区输入，账本按纽约日期归周。
+              </p>
+              <form id="dipTradeForm">
+                <label
+                  >标的<select name="symbol">
+                    <option>SPY</option>
+                    <option>QQQ</option>
+                    <option>NVDA</option>
+                    <option>AAPL</option>
+                    <option>ASML</option>
+                    <option>KO</option>
+                  </select></label
+                >
+                <label
+                  >实际数量<input
+                    min="0.000001"
+                    name="quantity"
+                    required=""
+                    step="any"
+                    type="number"
+                /></label>
+                <label
+                  >成交价（USD）<input
+                    min="0.000001"
+                    name="price"
+                    required=""
+                    step="any"
+                    type="number"
+                /></label>
+                <label
+                  >实际账户扣款<input
+                    min="0.01"
+                    name="debit"
+                    required=""
+                    step="0.01"
+                    type="number"
+                /></label>
+                <label
+                  >账户币种<select name="currency">
+                    <option>USD</option>
+                    <option>CAD</option>
+                  </select></label
+                >
+                <label
+                  >实际 FX 费用（账户币种）<input
+                    min="0"
+                    name="fee"
+                    required=""
+                    step="0.01"
+                    type="number"
+                    value="0"
+                /></label>
+                <label
+                  >实际 USD/CAD（CAD 账户必填）<input
+                    min="0.000001"
+                    name="fxRate"
+                    step="any"
+                    type="number"
+                /></label>
+                <label
+                  >成交时间<input
+                    name="tradeAt"
+                    required=""
+                    step="1"
+                    type="datetime-local"
+                /></label>
+                <label
+                  >券商成交编号（可选）<input
+                    autocomplete="off"
+                    name="reference"
+                    type="text"
+                /></label>
+                <button type="submit">记录已成交买入</button>
+              </form>
+            </details>
+            <details class="compact-details" id="dipLedgerManagement">
+              <summary>账本管理 · 历史、冲正与备份</summary>
+              <ul id="dipLedgerEntries"></ul>
+              <button id="dipExport" type="button">导出抄底账本</button
+              ><label
+                >恢复抄底账本 JSON<input
+                  accept="application/json,.json"
+                  id="dipImport"
+                  type="file"
+              /></label>
+              <p>
+                账本仅存于本浏览器；定期导出备份。冲正只纠正记录，不代表卖出证券，也不会扩大其他周的冻结额度。
+              </p>
+            </details>
+          </section>
+        </section>
+        <section
+          aria-label="盯盘"
+          data-workspace-view="tools-watchlist"
+          hidden=""
+          id="view-tools-watchlist"
+        >
+          <header class="tool-view-heading">
+            <h2 tabindex="-1">盯盘</h2>
+            <a href="#weekly">返回本周操作</a>
+          </header>
+          <details
+            aria-labelledby="watchlist-title"
+            class="watchlist-panel"
+            id="watchlist"
+          >
+            <summary class="watchlist-summary">
+              <span
+                ><span class="eyebrow">盯盘列表</span
+                ><strong>美股盯盘（辅助工具）</strong></span
+              ><span class="watchlist-summary-action">展开列表</span>
+            </summary>
+            <div class="watchlist-heading">
+              <div>
+                <p class="eyebrow">美股行情监控</p>
+                <h2 id="watchlist-title">美股盯盘</h2>
+                <p>集中查看自选股票、价格走势与 MACD 指标。</p>
+              </div>
+              <form class="watchlist-add-form" id="watchlistAddForm">
+                <label for="watchlistSymbolInput">添加股票代码</label>
+                <div>
+                  <input
+                    aria-describedby="watchlistFormStatus"
+                    autocomplete="off"
+                    id="watchlistSymbolInput"
+                    maxlength="10"
+                    placeholder="例如 TSLA"
+                  /><button type="submit">添加</button>
+                </div>
+                <span id="watchlistFormStatus" role="status"></span>
+              </form>
+            </div>
+            <div
+              aria-label="自选价格条"
+              class="ws-ticker-strip"
+              id="watchlistTickerStrip"
+            ></div>
+            <div class="ws-workspace">
+              <aside aria-label="自选列表" class="ws-rail">
+                <div class="ws-cards" id="watchlistCards"></div>
+              </aside>
+              <div class="ws-center">
+                <article aria-live="polite" class="ws-quote-card">
+                  <div>
+                    <div class="ws-symbol-line">
+                      <h3 id="watchlistActiveSymbol">AAPL</h3>
+                      <span id="watchlistCompanyName">苹果公司</span
+                      ><span class="ws-market-pill">NASDAQ</span>
+                    </div>
+                    <div class="ws-meta-line">
+                      <span id="watchlistQuoteMeta">正在加载行情…</span>
+                    </div>
+                  </div>
+                  <div class="ws-price-bar">
+                    <div class="ws-price-group">
+                      <strong id="watchlistPrice">—</strong><span>USD</span
+                      ><em id="watchlistChange">—</em>
+                    </div>
+                    <div class="ws-refresh-group">
+                      <label
+                        ><input
+                          checked=""
+                          id="watchlistAutoRefresh"
+                          type="checkbox"
+                        />
+                        自动刷新</label
+                      ><select aria-label="刷新间隔" id="watchlistRefreshRate">
+                        <option value="10">10 秒</option>
+                        <option selected="" value="30">30 秒</option>
+                        <option value="60">60 秒</option></select
+                      ><button id="watchlistRefreshBtn" type="button">
+                        刷新
+                      </button>
+                    </div>
+                  </div>
+                </article>
+                <article class="ws-chart-card">
+                  <div class="ws-chart-header">
+                    <div>
+                      <h3>价格 · MACD</h3>
+                      <p id="watchlistChartCaption">
+                        历史价格会随所选股票和周期更新。
+                      </p>
+                    </div>
+                    <div
+                      aria-label="图表周期"
+                      class="ws-periods"
+                      id="watchlistPeriods"
+                      role="group"
+                    >
+                      <button
+                        aria-pressed="false"
+                        data-period="1d"
+                        type="button"
+                      >
+                        1D</button
+                      ><button
+                        aria-pressed="false"
+                        data-period="5d"
+                        type="button"
+                      >
+                        5D</button
+                      ><button
+                        aria-pressed="false"
+                        data-period="3mo"
+                        type="button"
+                      >
+                        3M</button
+                      ><button
+                        aria-pressed="true"
+                        class="active"
+                        data-period="1y"
+                        type="button"
+                      >
+                        1Y</button
+                      ><button
+                        aria-pressed="false"
+                        data-period="5y"
+                        type="button"
+                      >
+                        5Y
+                      </button>
+                    </div>
+                  </div>
+                  <div class="ws-chart-plot" id="watchlistChartPlot">
+                    <div class="ws-chart-loading" id="watchlistChartLoading">
+                      正在加载图表…
+                    </div>
+                    <canvas
+                      aria-describedby="watchlistChartSummary"
+                      aria-label="价格图表"
+                      id="watchlistPriceChart"
+                    ></canvas
+                    ><canvas
+                      aria-describedby="watchlistChartSummary"
+                      aria-label="MACD 图表"
+                      id="watchlistMacdChart"
+                    ></canvas>
+                    <div
+                      aria-live="polite"
+                      class="ws-chart-tooltip"
+                      id="watchlistChartTooltip"
+                      role="status"
+                    ></div>
+                  </div>
+                  <p
+                    aria-live="polite"
+                    class="visually-hidden"
+                    id="watchlistChartSummary"
+                  >
+                    图表正在加载。
+                  </p>
+                  <div class="ws-chart-legend">
+                    <span>价格</span><span>MACD</span><span>信号线</span
+                    ><span>柱状图</span>
+                  </div>
+                </article>
+              </div>
+              <aside aria-label="市场洞察" class="ws-insight">
+                <div class="ws-insight-header">
+                  <h3>市场洞察</h3>
+                  <span>洞察</span>
+                </div>
+                <div class="ws-insight-body" id="watchlistInsight">
+                  <p class="ws-insight-empty">选择股票后显示分析摘要</p>
+                </div>
+              </aside>
+            </div>
+            <p class="watchlist-disclaimer">
+              行情仅供盯盘和辅助决策；交易前请以券商报价为准。
+            </p>
+          </details>
+        </section>
+        <section
+          aria-label="研究与回测"
+          data-workspace-view="tools-research"
+          hidden=""
+          id="view-tools-research"
+        >
+          <details class="dca-preview-panel" id="dcaPolicyPreview">
+            <summary>
+              <span>DCA-L2 调整人工计划</span>
+              <small>仅供人工规划</small>
+            </summary>
+            <div class="dca-preview-safety" role="note">
+              <span>仅供人工规划</span><span>不是订单</span
+              ><span>不会自动交易</span><span>不执行交易</span
+              ><span>不连接券商</span>
+            </div>
+            <p class="dca-preview-intro">
+              DCA-L2
+              保留基础定投，仅加入已验证的回撤或备用金金额，再应用组合风控。买入前必须由用户人工决定。
+            </p>
 
-          <section class="panel order-panel" aria-labelledby="order-title" hidden aria-hidden="true">
+            <div
+              aria-live="polite"
+              class="dca-preview-rows"
+              id="dcaPreviewRows"
+            >
+              <p class="dca-preview-empty">DCA 策略等待数据。</p>
+            </div>
+            <p class="dca-preview-disclaimer">
+              仅供人工决策，不是订单，不连接券商，也不会用于自动执行。
+            </p>
+          </details>
+          <header class="tool-view-heading">
+            <h2 tabindex="-1">研究与回测</h2>
+            <a href="#weekly">返回本周操作</a>
+          </header>
+          <details
+            aria-labelledby="ideaEngineTitle"
+            class="panel idea-engine-panel"
+            id="ideaEnginePanel"
+          >
+            <summary class="tool-summary">
+              <span
+                ><span class="eyebrow">研究候选</span
+                ><strong id="ideaEngineTitle">潜力股短线研究</strong></span
+              ><span>展开研究</span>
+            </summary>
+            <div class="idea-engine-heading">
+              <div
+                aria-label="潜力股研究数据刷新"
+                class="research-refresh-actions"
+              >
+                <button
+                  class="secondary-button"
+                  id="refreshIdeaTodayBtn"
+                  type="button"
+                >
+                  刷新今日数据</button
+                ><button
+                  class="secondary-button"
+                  id="refreshIdeaUniverseBtn"
+                  type="button"
+                >
+                  重新扫描股票池</button
+                ><span
+                  aria-live="polite"
+                  class="status-line"
+                  id="researchRefreshStatus"
+                  role="status"
+                  >等待操作</span
+                >
+              </div>
+              <div class="research-refresh-meta">
+                <span id="researchUniverseMeta">股票池版本：读取中</span
+                ><span id="researchRefreshRunMeta">最近运行：暂无</span
+                ><button
+                  class="text-button"
+                  id="reloadPublishedResearchBtn"
+                  type="button"
+                >
+                  重新加载已发布结果
+                </button>
+              </div>
+              <details class="research-refresh-settings">
+                <summary>设置刷新网关</summary>
+                <div>
+                  <label for="researchGatewayUrl">网关地址</label
+                  ><input
+                    autocomplete="off"
+                    id="researchGatewayUrl"
+                    placeholder="部署后填写 Worker 地址"
+                    type="url"
+                  /><label for="researchRefreshSecret">刷新授权码</label
+                  ><input
+                    autocomplete="off"
+                    id="researchRefreshSecret"
+                    maxlength="256"
+                    type="password"
+                  /><button
+                    class="secondary-button"
+                    id="saveResearchRefreshSettingsBtn"
+                    type="button"
+                  >
+                    保存刷新设置</button
+                  ><button
+                    class="text-button"
+                    id="clearResearchRefreshSettingsBtn"
+                    type="button"
+                  >
+                    清除授权码</button
+                  ><span
+                    aria-live="polite"
+                    id="researchRefreshSettingsStatus"
+                    role="status"
+                  ></span>
+                </div>
+              </details>
+              <p class="idea-engine-status" id="ideaEngineStatus" role="status">
+                正在加载研究候选。
+              </p>
+              <p class="fine-print">
+                短线研究窗口为 1–4 周，以 4 周相对 QQQ
+                表现为主要验证目标；不代表买入建议，不参与本周定投计算。
+              </p>
+            </div>
+            <div class="idea-engine-maturity" id="ideaEngineMaturity">
+              Shadow 状态：等待数据。
+            </div>
+            <div aria-label="研究候选筛选与排序" class="idea-engine-filters">
+              <label
+                >状态<select id="ideaEngineStatusFilter">
+                  <option value="">全部状态</option>
+                  <option value="A_RESEARCH">深入研究</option>
+                  <option value="B_WATCH">等待触发</option>
+                  <option value="VALUATION_GATED">估值受限</option>
+                  <option value="EXPOSURE_UNPROVEN">暴露未证实</option>
+                  <option value="C_SCREEN">初步信号</option>
+                  <option value="BLOCKED">数据阻断</option>
+                  <option value="REJECTED">已拒绝</option>
+                </select></label
+              >
+              <label
+                >行业<input
+                  autocomplete="off"
+                  id="ideaEngineIndustryFilter"
+                  placeholder="例如 半导体"
+                  type="search"
+              /></label>
+              <label
+                >研究类型<select id="ideaEngineTypeFilter">
+                  <option value="">全部类型</option>
+                  <option value="QUALITY_COMPOUNDER">高质量增长</option>
+                  <option value="CYCLICAL_RECOVERY">周期复苏</option>
+                  <option value="VALUATION_DISLOCATION">估值错位</option>
+                  <option value="CATALYST">事件催化</option>
+                  <option value="THEMATIC_BENEFICIARY">主题受益</option>
+                  <option value="RELATIVE_VALUE">同行相对价值</option>
+                  <option value="WATCH_ONLY">仅观察</option>
+                </select></label
+              >
+              <label
+                >组合关系<select id="ideaEngineFitFilter">
+                  <option value="">全部关系</option>
+                  <option value="DIVERSIFIER">分散化</option>
+                  <option value="OVERLAP">存在重叠</option>
+                  <option value="CONCENTRATION_WARNING">集中度警告</option>
+                  <option value="EXISTING_POSITION">已有持仓</option>
+                  <option value="UNKNOWN">待核对</option>
+                </select></label
+              >
+              <label
+                >排序<select id="ideaEngineSort">
+                  <option value="priority">研究优先级</option>
+                  <option value="robust">稳健分</option>
+                  <option value="independence">证据独立度</option>
+                  <option value="coverage">数据完整度</option>
+                  <option value="updated">更新时间</option>
+                </select></label
+              >
+              <button
+                class="secondary-button"
+                id="ideaEngineClearFilters"
+                type="button"
+              >
+                清除筛选
+              </button>
+            </div>
+            <div
+              aria-live="polite"
+              class="idea-engine-rows"
+              id="ideaEngineRows"
+            ></div>
+          </details>
+          <section
+            aria-labelledby="research-title"
+            class="panel research-panel"
+            id="research-panel"
+          >
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">辅助工具</p>
+                <h2 id="research-title">研究与测试</h2>
+              </div>
+            </div>
+            <a
+              aria-label="打开只读研究沙盒"
+              class="research-sandbox-entry"
+              href="research-sandbox.html"
+            >
+              <span class="research-status-pill">仅供研究</span>
+              <span>
+                <strong>打开研究沙盒</strong>
+                <small
+                  >只读 Shadow
+                  观察复核，不是实时策略，不构成交易建议，也没有启用或下单控件。</small
+                >
+              </span>
+            </a>
+            <details class="tool-details algorithm-research-summary-panel">
+              <summary data-label="查看详情" data-open-label="收起详情">
+                <span>
+                  <span class="eyebrow">研究总结</span>
+                  <strong>算法研究总结</strong>
+                </span>
+              </summary>
+              <div class="algorithm-research-content">
+                <p class="algorithm-research-lead">
+                  当前结论：现有验证支持继续研究，但还不支持修改实时或默认策略。
+                </p>
+                <div class="algorithm-research-grid">
+                  <article class="algorithm-research-item">
+                    <span class="research-status-pill">实时信号</span>
+                    <h3>增强信号模型</h3>
+                    <p>保持不变，仅用于人工决策辅助。</p>
+                  </article>
+                  <article class="algorithm-research-item">
+                    <span class="research-status-pill">研究默认</span>
+                    <h3>简单逢低买入</h3>
+                    <p>
+                      继续作为默认；等额投入效率较强，但强上升趋势中可能投入不足。
+                    </p>
+                  </article>
+                  <article class="algorithm-research-item">
+                    <span class="research-status-pill">比较基准</span>
+                    <h3>固定每周 DCA</h3>
+                    <p>最强的资金部署基准，是后续策略必须对比的标尺。</p>
+                  </article>
+                  <article class="algorithm-research-item">
+                    <span class="research-status-pill">可选模式</span>
+                    <h3>风险调整 v2</h3>
+                    <p>可选的尾部风险模式；不作为默认策略。</p>
+                  </article>
+                  <article class="algorithm-research-item">
+                    <span class="research-status-pill">沙盒</span>
+                    <h3>趋势混合 / v3</h3>
+                    <p>能减少现金拖累，但未稳定跑赢固定 DCA；暂不升级。</p>
+                  </article>
+                  <article class="algorithm-research-item decision">
+                    <span class="research-status-pill">结论</span>
+                    <h3>暂不升级</h3>
+                    <p>
+                      暂不修改实时策略，也暂不推广混合或 v3
+                      策略。需要更长历史、更多市场环境和样本外验证。
+                    </p>
+                  </article>
+                </div>
+                <p class="fine-print algorithm-research-link">
+                  完整研究说明：<a href="ALGORITHM_RESEARCH_SUMMARY.md"
+                    >ALGORITHM_RESEARCH_SUMMARY.md</a
+                  >
+                </p>
+              </div>
+            </details>
+            <details class="tool-details algorithm-test-panel">
+              <summary>
+                <span>
+                  <span class="eyebrow">算法测试</span>
+                  <strong id="algorithm-test-title">算法测试面板</strong>
+                </span>
+              </summary>
+              <div class="algorithm-test-controls">
+                <label for="algorithmTestInput">
+                  <span>决策变化值</span>
+                  <input
+                    autocomplete="off"
+                    id="algorithmTestInput"
+                    inputmode="decimal"
+                    type="text"
+                    value="-5"
+                  />
+                </label>
+                <div
+                  aria-label="预设决策变化值"
+                  class="algorithm-test-presets"
+                  id="algorithmTestPresets"
+                ></div>
+              </div>
+              <div
+                aria-live="polite"
+                class="algorithm-test-result"
+                id="algorithmTestResult"
+              ></div>
+              <p class="fine-print algorithm-test-safety">
+                此测试面板仅供人工决策辅助，不会修改真实组合、市场数据、信号或人工计划。
+              </p>
+            </details>
+            <details class="tool-details backtest-panel">
+              <summary>
+                <span>
+                  <span class="eyebrow">回测比较</span>
+                  <strong id="backtest-title">逢低买入与固定 DCA</strong>
+                </span>
+                <button
+                  class="secondary-button"
+                  id="runBacktestBtn"
+                  type="button"
+                >
+                  运行回测
+                </button>
+              </summary>
+              <div
+                aria-live="polite"
+                class="backtest-summary"
+                id="backtestSummary"
+              >
+                <p class="fine-print">
+                  使用当前股票、配置比例和投入设置，对比每周逢低买入与固定 DCA。
+                </p>
+              </div>
+            </details>
+          </section>
+          <details
+            class="panel wealthsimple-panel"
+            id="wealthsimpleStressPanel"
+          >
+            <summary class="section-heading compact">
+              <span
+                ><span class="eyebrow">风险辅助</span
+                ><strong>压力情景估算</strong></span
+              ><span>研究用途</span>
+            </summary>
+            <p>仅为情景估算，不代表预测；不会自动卖出或改变定投计划。</p>
+            <div id="wealthsimpleStressRows"></div>
+          </details>
+        </section>
+        <section
+          aria-label="数据质量"
+          data-workspace-view="tools-data"
+          hidden=""
+          id="view-tools-data"
+        >
+          <header class="tool-view-heading">
+            <h2 tabindex="-1">数据质量</h2>
+            <a href="#weekly">返回本周操作</a>
+          </header>
+          <details class="panel data-quality-panel" id="dataQualityPanel">
+            <summary data-label="查看详情" data-open-label="收起详情">
+              <span
+                ><span class="eyebrow">数据质量</span
+                ><strong id="data-quality-title">数据质量摘要</strong></span
+              >
+            </summary>
+            <div aria-live="polite" class="data-quality-content">
+              <div class="data-quality-grid">
+                <article class="data-quality-metric">
+                  <span id="dataQualityFreshLabel">新鲜数据</span
+                  ><strong id="dataQualityFresh">--</strong>
+                </article>
+                <article class="data-quality-metric">
+                  <span id="dataQualityStaleLabel">过期数据</span
+                  ><strong id="dataQualityStale">--</strong>
+                </article>
+                <article class="data-quality-metric">
+                  <span id="dataQualityManualLabel">手动覆盖</span
+                  ><strong id="dataQualityManual">--</strong>
+                </article>
+                <article class="data-quality-metric">
+                  <span id="dataQualityLegacyLabel">旧版覆盖</span
+                  ><strong id="dataQualityLegacy">--</strong>
+                </article>
+                <article class="data-quality-metric">
+                  <span id="dataQualityFallbackLabel">备用数据</span
+                  ><strong id="dataQualityFallback">--</strong>
+                </article>
+                <article class="data-quality-metric">
+                  <span id="dataQualityCacheLabel">缓存</span
+                  ><strong id="dataQualityCache">--</strong>
+                </article>
+                <article class="data-quality-metric market-regime">
+                  <span id="dataQualityMarketLabel">市场状态</span
+                  ><strong id="dataQualityMarketRegime">加载中</strong>
+                </article>
+                <article class="data-quality-metric project-health">
+                  <span>项目健康</span
+                  ><strong data-status="warning" id="projectHealthStatus"
+                    >加载中</strong
+                  >
+                </article>
+                <article class="data-quality-metric">
+                  <span>盯盘来源</span
+                  ><strong id="watchlistHealthStatus">加载中</strong>
+                </article>
+              </div>
+              <p class="data-quality-warning" id="dataQualityWarning">
+                等待市场数据。
+              </p>
+              <p class="project-health-line">
+                <span id="projectHealthDetails">正在加载项目健康报告。</span>
+                <a href="results/health/project-health.md">查看详细报告</a>
+              </p>
+              <section
+                aria-labelledby="health-history-title"
+                class="health-history"
+              >
+                <div class="health-history-heading">
+                  <strong id="health-history-title">运行趋势</strong
+                  ><span id="healthHistoryWindow">最近 90 天</span>
+                </div>
+                <div
+                  aria-live="polite"
+                  class="health-history-grid"
+                  id="healthHistoryMetrics"
+                >
+                  <span class="health-history-empty">正在加载健康历史。</span>
+                </div>
+                <p
+                  aria-live="polite"
+                  class="health-history-trend"
+                  id="healthHistoryTrend"
+                >
+                  等待历史观察。
+                </p>
+              </section>
+            </div>
+          </details>
+          <details class="panel data-panel">
+            <summary>
+              <span>
+                <span class="eyebrow">数据源优先级</span>
+                <strong id="data-title">市场数据</strong>
+              </span>
+            </summary>
+            <ol class="source-list">
+              <li>Finnhub</li>
+              <li>加拿大央行汇率备用</li>
+              <li>Yahoo Finance 备用</li>
+              <li>缓存</li>
+              <li>手动覆盖</li>
+            </ol>
+            <p class="fine-print">
+              买入信号使用最新 1 日和 5
+              日变化中的较低值；单只股票的手动覆盖始终优先。
+            </p>
+          </details>
+        </section>
+      </main>
+
+      <div aria-hidden="true" class="visually-hidden" id="coreSatelliteSummary">
+        <span id="coreSatellitePresetVersion"></span
+        ><span id="coreTargetAllocation"></span
+        ><span id="satelliteTargetAllocation"></span
+        ><span id="techSatelliteAllocation"></span><span id="spyBasePlan"></span
+        ><span id="satellitePlanTotal"></span><span id="cashRetainedPlan"></span
+        ><span id="coreSatelliteStatus"></span
+        ><span id="coreSatelliteRebalanceNotice"></span>
+      </div>
+
+      <main class="dashboard-layout" hidden="">
+        <div class="main-column"></div>
+        <aside aria-label="当前持仓与人工计划" class="dashboard-sidebar">
+          <section
+            aria-hidden="true"
+            aria-labelledby="order-title"
+            class="panel order-panel"
+            hidden=""
+          >
             <div class="section-heading compact">
               <div>
                 <p class="eyebrow">复制人工计划</p>
                 <h2 id="order-title">人工计划</h2>
               </div>
             </div>
-            <div id="orderRows" class="order-rows" aria-live="polite"></div>
-            <details id="dcaPolicyPreview" class="dca-preview-panel">
-              <summary>
-                <span>DCA-L2 调整人工计划</span>
-                <small>仅供人工规划</small>
-              </summary>
-              <div class="dca-preview-safety" role="note">
-                <span>仅供人工规划</span><span>不是订单</span><span>不会自动交易</span><span>不执行交易</span><span>不连接券商</span>
-              </div>
-              <p class="dca-preview-intro">DCA-L2 保留基础定投，仅加入已验证的回撤或备用金金额，再应用组合风控。买入前必须由用户人工决定。</p>
-              <section class="dca-ledger-panel" aria-labelledby="dca-ledger-title">
-                <div>
-                  <h4 id="dca-ledger-title">下跌备用金账本</h4>
-                  <p id="dcaLedgerSummary">等待 DCA-L2 数据。</p>
-                  <div id="dcaBudgetSummary" class="dca-budget-summary" aria-live="polite">等待月度预算数据。</div>
-                </div>
-                <div class="dca-ledger-form">
-                  <select id="dcaLedgerType" aria-label="账本类型">
-                    <option value="base">基础</option>
-                    <option value="extra">额外</option>
-                    <option value="crash" selected>备用金</option>
-                  </select>
-                  <input id="dcaLedgerSymbol" type="text" autocomplete="off" placeholder="股票代码（可选）" aria-label="账本股票代码">
-                  <input id="dcaLedgerAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="已确认使用金额 CAD" aria-label="已确认下跌备用金使用金额">
-                  <input id="dcaLedgerNote" type="text" autocomplete="off" placeholder="人工备注" aria-label="下跌备用金人工备注">
-                  <button id="dcaLedgerRecordBtn" class="secondary-button" type="button">记录人工确认使用</button>
-                </div>
-                <div id="dcaLedgerEntries" class="dca-ledger-entries" aria-live="polite"></div>
-                <p class="dca-ledger-disclaimer">仅用于记账，不会提交、下单或执行交易。</p>
-              </section>
-              <div id="dcaPreviewRows" class="dca-preview-rows" aria-live="polite">
-                <p class="dca-preview-empty">DCA 策略等待数据。</p>
-              </div>
-              <p class="dca-preview-disclaimer">仅供人工决策，不是订单，不连接券商，也不会用于自动执行。</p>
-            </details>
-            <details class="order-copy-details">
-              <summary>查看复制文本</summary>
-              <pre id="orderText" class="order-text copy-buffer"></pre>
-            </details>
-            <p id="copyStatus" class="status-line" role="status"></p>
+            <div aria-live="polite" class="order-rows" id="orderRows"></div>
           </section>
         </aside>
       </main>
 
-    <section id="dipOpportunities" aria-labelledby="dipTitle">
-      <h2 id="dipTitle">抄底机会</h2>
-      <p>每月总预算 500 USD：定投 300 USD · 暴跌备用金 100 USD · 独立抄底储备 100 USD。三个资金池独立，抄底储备无限滚存。预算入账不代表券商实际到账。</p>
-      <p id="dipStatus" role="status">正在读取独立抄底账本</p>
-      <div id="dipSummary" class="dip-summary"></div>
-      <button id="dipRecalculate" type="button">刷新抄底建议</button>
-      <div id="dipRows" class="dip-rows"></div>
-      <details>
-        <summary>记录实际买入与账本</summary>
-        <p>仅记录已经手工成交的独立抄底买入。建议不扣款；请填写实际扣款及费用。超额成交仍会留档并暂停后续建议。时间按当前设备时区输入，账本按纽约日期归周。</p>
-        <form id="dipTradeForm">
-          <label>标的<select name="symbol"><option>SPY</option><option>QQQ</option><option>NVDA</option><option>AAPL</option><option>ASML</option><option>KO</option></select></label>
-          <label>实际数量<input name="quantity" type="number" min="0.000001" step="any" required></label>
-          <label>成交价（USD）<input name="price" type="number" min="0.000001" step="any" required></label>
-          <label>实际账户扣款<input name="debit" type="number" min="0.01" step="0.01" required></label>
-          <label>账户币种<select name="currency"><option>USD</option><option>CAD</option></select></label>
-          <label>实际 FX 费用（账户币种）<input name="fee" type="number" min="0" step="0.01" value="0" required></label>
-          <label>实际 USD/CAD（CAD 账户必填）<input name="fxRate" type="number" min="0.000001" step="any"></label>
-          <label>成交时间<input name="tradeAt" type="datetime-local" step="1" required></label>
-          <label>券商成交编号（可选）<input name="reference" type="text" autocomplete="off"></label>
-          <button type="submit">记录已成交买入</button>
-        </form>
-        <ul id="dipLedgerEntries"></ul>
-        <button id="dipExport" type="button">导出抄底账本</button>
-        <label>恢复抄底账本 JSON<input id="dipImport" type="file" accept="application/json,.json"></label>
-        <p>账本仅存于本浏览器；定期导出备份。冲正只纠正记录，不代表卖出证券，也不会扩大其他周的冻结额度。</p>
-      </details>
-    </section>
-
-
-      <section id="inlineHoldingsSection" class="inline-holdings-panel" aria-labelledby="inline-holdings-title">
-        <div class="inline-holdings-heading">
-          <div>
-            <p class="eyebrow">持仓</p>
-            <h2 id="inline-holdings-title">当前持仓</h2>
-            <p id="inlineHoldingsMeta" class="inline-holdings-meta">正在核对持仓来源与同步状态</p>
-          </div>
-          <div class="inline-holdings-actions">
-            <span id="inlineHoldingsSource" class="inline-holdings-mode">人工持仓 · 只读数据</span>
-            <button id="inlineHoldingsSettingsBtn" class="secondary-button" type="button">管理同步</button>
-          </div>
-        </div>
-        <dl id="inlineHoldingsSync" class="inline-holdings-sync" aria-live="polite">
-          <div><dt>同步状态</dt><dd id="inlineHoldingsSyncState">等待数据</dd></div>
-          <div><dt>持仓数据时间</dt><dd id="inlineHoldingsAsOf">--</dd></div>
-          <div><dt>账户</dt><dd id="inlineHoldingsAccounts">--</dd></div>
-          <div><dt>账户币种</dt><dd id="inlineHoldingsCurrencies">--</dd></div>
-        </dl>
-        <div id="inlineHoldingsStats" class="inline-holdings-stats" aria-live="polite"></div>
-        <div id="inlineHoldingsRows" class="inline-holdings-rows" aria-live="polite">
-          <p class="inline-holdings-empty">正在加载已保存持仓</p>
-        </div>
-      </section>
-
-      <details id="coreSatelliteAllocationEditor" class="panel allocation-editor" aria-labelledby="allocationEditorTitle">
-        <summary class="allocation-editor-summary"><span><span class="eyebrow">组合设置</span><strong id="allocationEditorTitle">目标比例设置</strong></span><span id="allocationEditorSummaryText">默认推荐比例 · 大盘 40.00% · 个股 60.00% · 科技个股 40.00%</span></summary>
+      <details
+        aria-labelledby="allocationEditorTitle"
+        class="panel allocation-editor"
+        id="coreSatelliteAllocationEditor"
+      >
+        <summary class="allocation-editor-summary">
+          <span
+            ><span class="eyebrow">组合设置</span
+            ><strong id="allocationEditorTitle">目标比例设置</strong></span
+          ><span id="allocationEditorSummaryText"
+            >默认推荐比例 · 大盘 40.00% · 个股 60.00% · 科技个股 40.00%</span
+          >
+        </summary>
         <div class="allocation-editor-content">
-        <div class="section-heading compact"><div><p class="eyebrow">组合设置</p><span class="allocation-editor-heading-label">调整目标比例</span></div><span id="allocationEditorStatus" aria-live="polite"></span></div>
-        <section class="allocation-bucket-control" aria-labelledby="allocationBucketTitle">
-          <div><strong id="allocationBucketTitle">先选择大盘与个股的总比例</strong><p>选择后会将个股仓平均分给 5 只个股；你仍可在下方逐只调整。</p></div>
-          <div class="allocation-preset-buttons" role="group" aria-label="大盘与个股快捷比例">
-            <button type="button" class="secondary-button" data-allocation-preset="recommended" aria-pressed="true"><strong>按推荐比例分配</strong><span>40 / 60</span></button>
-            <button type="button" class="secondary-button" data-allocation-preset="average" aria-pressed="false"><strong>平均分配个股仓</strong><span>按当前大盘仓</span></button>
-            <button type="button" class="secondary-button" data-core-allocation-preset="40" aria-pressed="true"><strong>40 / 60</strong><span>当前默认</span></button>
-            <button type="button" class="secondary-button" data-core-allocation-preset="50" aria-pressed="false"><strong>50 / 50</strong><span>均衡</span></button>
-            <button type="button" class="secondary-button" data-core-allocation-preset="60" aria-pressed="false"><strong>60 / 40</strong><span>偏稳健</span></button>
-          </div>
-          <p class="allocation-risk-note">大盘 40% 意味着个股合计 60%，波动和集中风险更高；这里只调整后续定投资金，不会要求卖出或自动再平衡。</p>
-        </section>
-        <div id="allocationEditorRows" class="allocation-editor-rows"></div>
-        <div class="allocation-editor-metrics"><label for="singleStockExposureMode">单股比例计算口径</label><select id="singleStockExposureMode"><option value="direct_only">仅直接持仓口径（推荐）</option><option value="lookthrough">ETF 穿透口径（仅风险提示）</option></select><span id="etfExposureStatus" role="status" aria-live="polite">ETF 重叠仅作风险提示</span></div>
-        <div class="allocation-editor-metrics" aria-live="polite">
-          <span>已分配 <strong id="allocationEditorAllocated">0.00%</strong></span><span>剩余 <strong id="allocationEditorRemaining">100.00%</strong></span><span>超出 <strong id="allocationEditorOverage">0.00%</strong></span><span>大盘仓 <strong id="allocationEditorCore">0.00%</strong></span><span>个股仓 <strong id="allocationEditorSatellite">0.00%</strong></span><span>科技个股 <strong id="allocationEditorTechnology">0.00%</strong></span>
-        </div>
-        <p id="allocationEditorErrors" class="form-error" aria-live="polite"></p>
-        <div class="allocation-editor-actions"><button id="saveCustomAllocationBtn" class="secondary-button" type="button">保存自定义比例</button><button id="restoreDefaultAllocationBtn" class="secondary-button" type="button">恢复默认 40/60</button><button id="undoAllocationBtn" class="secondary-button" type="button">撤销本次修改</button></div>
-        </div>
-      </details>
-
-      <details class="panel settings-panel deployment-overview" aria-labelledby="settings-title">
-        <summary class="deployment-summary">
-          <span><span class="eyebrow">预算设置</span><strong id="settings-title">完整预算构成</strong></span>
-          <span class="deployment-summary-action">查看明细</span>
-        </summary>
-        <div class="metrics-grid deployment-metrics">
-          <article class="metric"><span>月度预算</span><strong>CAD 400.00</strong></article>
-          <article class="metric"><span>常规资金池</span><strong>CAD 300.00</strong></article>
-          <article class="metric"><span>下跌备用金</span><strong>CAD 100.00</strong></article>
-          <article class="metric"><span>每周投入</span><strong>CAD 69.23</strong></article>
-        </div>
-      </details>
-
-      <details id="watchlist" class="watchlist-panel" aria-labelledby="watchlist-title">
-        <summary class="watchlist-summary"><span><span class="eyebrow">盯盘列表</span><strong>美股盯盘（辅助工具）</strong></span><span class="watchlist-summary-action">展开列表</span></summary>
-        <div class="watchlist-heading">
-          <div><p class="eyebrow">美股行情监控</p><h2 id="watchlist-title">美股盯盘</h2><p>集中查看自选股票、价格走势与 MACD 指标。</p></div>
-          <form id="watchlistAddForm" class="watchlist-add-form"><label for="watchlistSymbolInput">添加股票代码</label><div><input id="watchlistSymbolInput" maxlength="10" autocomplete="off" placeholder="例如 TSLA" aria-describedby="watchlistFormStatus"><button type="submit">添加</button></div><span id="watchlistFormStatus" role="status"></span></form>
-        </div>
-        <div id="watchlistTickerStrip" class="ws-ticker-strip" aria-label="自选价格条"></div>
-        <div class="ws-workspace">
-          <aside class="ws-rail" aria-label="自选列表"><div id="watchlistCards" class="ws-cards"></div></aside>
-          <div class="ws-center">
-            <article class="ws-quote-card" aria-live="polite"><div><div class="ws-symbol-line"><h3 id="watchlistActiveSymbol">AAPL</h3><span id="watchlistCompanyName">苹果公司</span><span class="ws-market-pill">NASDAQ</span></div><div class="ws-meta-line"><span id="watchlistQuoteMeta">正在加载行情…</span></div></div><div class="ws-price-bar"><div class="ws-price-group"><strong id="watchlistPrice">&mdash;</strong><span>USD</span><em id="watchlistChange">&mdash;</em></div><div class="ws-refresh-group"><label><input id="watchlistAutoRefresh" type="checkbox" checked> 自动刷新</label><select id="watchlistRefreshRate" aria-label="刷新间隔"><option value="10">10 秒</option><option value="30" selected>30 秒</option><option value="60">60 秒</option></select><button id="watchlistRefreshBtn" type="button">刷新</button></div></div></article>
-            <article class="ws-chart-card"><div class="ws-chart-header"><div><h3>价格 · MACD</h3><p id="watchlistChartCaption">历史价格会随所选股票和周期更新。</p></div><div id="watchlistPeriods" class="ws-periods" role="group" aria-label="图表周期"><button type="button" data-period="1d" aria-pressed="false">1D</button><button type="button" data-period="5d" aria-pressed="false">5D</button><button type="button" data-period="3mo" aria-pressed="false">3M</button><button type="button" data-period="1y" class="active" aria-pressed="true">1Y</button><button type="button" data-period="5y" aria-pressed="false">5Y</button></div></div><div id="watchlistChartPlot" class="ws-chart-plot"><div id="watchlistChartLoading" class="ws-chart-loading">正在加载图表…</div><canvas id="watchlistPriceChart" aria-label="价格图表" aria-describedby="watchlistChartSummary"></canvas><canvas id="watchlistMacdChart" aria-label="MACD 图表" aria-describedby="watchlistChartSummary"></canvas><div id="watchlistChartTooltip" class="ws-chart-tooltip" role="status" aria-live="polite"></div></div><p id="watchlistChartSummary" class="visually-hidden" aria-live="polite">图表正在加载。</p><div class="ws-chart-legend"><span>价格</span><span>MACD</span><span>信号线</span><span>柱状图</span></div></article>
-          </div>
-          <aside class="ws-insight" aria-label="市场洞察"><div class="ws-insight-header"><h3>市场洞察</h3><span>洞察</span></div><div id="watchlistInsight" class="ws-insight-body"><p class="ws-insight-empty">选择股票后显示分析摘要</p></div></aside>
-        </div>
-        <p class="watchlist-disclaimer">行情仅供盯盘和辅助决策；交易前请以券商报价为准。</p>
-      </details>
-
-      <details id="ideaEnginePanel" class="panel idea-engine-panel" aria-labelledby="ideaEngineTitle">
-        <summary class="tool-summary"><span><span class="eyebrow">研究候选</span><strong id="ideaEngineTitle">潜力股短线研究</strong></span><span>展开研究</span></summary>
-        <div class="idea-engine-heading">
-          <div class="research-refresh-actions" aria-label="潜力股研究数据刷新"><button id="refreshIdeaTodayBtn" class="secondary-button" type="button">刷新今日数据</button><button id="refreshIdeaUniverseBtn" class="secondary-button" type="button">重新扫描股票池</button><span id="researchRefreshStatus" class="status-line" role="status" aria-live="polite">等待操作</span></div>
-          <div class="research-refresh-meta"><span id="researchUniverseMeta">股票池版本：读取中</span><span id="researchRefreshRunMeta">最近运行：暂无</span><button id="reloadPublishedResearchBtn" class="text-button" type="button">重新加载已发布结果</button></div>
-          <details class="research-refresh-settings"><summary>设置刷新网关</summary><div><label for="researchGatewayUrl">网关地址</label><input id="researchGatewayUrl" type="url" placeholder="部署后填写 Worker 地址" autocomplete="off"><label for="researchRefreshSecret">刷新授权码</label><input id="researchRefreshSecret" type="password" maxlength="256" autocomplete="off"><button id="saveResearchRefreshSettingsBtn" class="secondary-button" type="button">保存刷新设置</button><button id="clearResearchRefreshSettingsBtn" class="text-button" type="button">清除授权码</button><span id="researchRefreshSettingsStatus" role="status" aria-live="polite"></span></div></details>
-          <p id="ideaEngineStatus" class="idea-engine-status" role="status">正在加载研究候选。</p>
-          <p class="fine-print">短线研究窗口为 1–4 周，以 4 周相对 QQQ 表现为主要验证目标；不代表买入建议，不参与本周定投计算。</p>
-        </div>
-        <div id="ideaEngineMaturity" class="idea-engine-maturity">Shadow 状态：等待数据。</div>
-        <div class="idea-engine-filters" aria-label="研究候选筛选与排序">
-          <label>状态<select id="ideaEngineStatusFilter"><option value="">全部状态</option><option value="A_RESEARCH">深入研究</option><option value="B_WATCH">等待触发</option><option value="VALUATION_GATED">估值受限</option><option value="EXPOSURE_UNPROVEN">暴露未证实</option><option value="C_SCREEN">初步信号</option><option value="BLOCKED">数据阻断</option><option value="REJECTED">已拒绝</option></select></label>
-          <label>行业<input id="ideaEngineIndustryFilter" type="search" placeholder="例如 半导体" autocomplete="off"></label>
-          <label>研究类型<select id="ideaEngineTypeFilter"><option value="">全部类型</option><option value="QUALITY_COMPOUNDER">高质量增长</option><option value="CYCLICAL_RECOVERY">周期复苏</option><option value="VALUATION_DISLOCATION">估值错位</option><option value="CATALYST">事件催化</option><option value="THEMATIC_BENEFICIARY">主题受益</option><option value="RELATIVE_VALUE">同行相对价值</option><option value="WATCH_ONLY">仅观察</option></select></label>
-          <label>组合关系<select id="ideaEngineFitFilter"><option value="">全部关系</option><option value="DIVERSIFIER">分散化</option><option value="OVERLAP">存在重叠</option><option value="CONCENTRATION_WARNING">集中度警告</option><option value="EXISTING_POSITION">已有持仓</option><option value="UNKNOWN">待核对</option></select></label>
-          <label>排序<select id="ideaEngineSort"><option value="priority">研究优先级</option><option value="robust">稳健分</option><option value="independence">证据独立度</option><option value="coverage">数据完整度</option><option value="updated">更新时间</option></select></label>
-          <button id="ideaEngineClearFilters" class="secondary-button" type="button">清除筛选</button>
-        </div>
-        <div id="ideaEngineRows" class="idea-engine-rows" aria-live="polite"></div>
-      </details>
-
-<section id="research-panel" class="panel research-panel" aria-labelledby="research-title">
-        <div class="section-heading compact">
-          <div>
-            <p class="eyebrow">辅助工具</p>
-            <h2 id="research-title">研究与测试</h2>
-          </div>
-        </div>
-
-        <a class="research-sandbox-entry" href="research-sandbox.html" aria-label="打开只读研究沙盒">
-          <span class="research-status-pill">仅供研究</span>
-          <span>
-            <strong>打开研究沙盒</strong>
-            <small>只读 Shadow 观察复核，不是实时策略，不构成交易建议，也没有启用或下单控件。</small>
-          </span>
-        </a>
-
-        <details class="tool-details algorithm-research-summary-panel">
-          <summary data-label="查看详情" data-open-label="收起详情">
-            <span>
-              <span class="eyebrow">研究总结</span>
-              <strong>算法研究总结</strong>
-            </span>
-          </summary>
-
-          <div class="algorithm-research-content">
-            <p class="algorithm-research-lead">
-              当前结论：现有验证支持继续研究，但还不支持修改实时或默认策略。
-            </p>
-
-            <div class="algorithm-research-grid">
-              <article class="algorithm-research-item">
-                <span class="research-status-pill">实时信号</span><h3>增强信号模型</h3><p>保持不变，仅用于人工决策辅助。</p>
-              </article>
-
-              <article class="algorithm-research-item">
-                <span class="research-status-pill">研究默认</span><h3>简单逢低买入</h3><p>继续作为默认；等额投入效率较强，但强上升趋势中可能投入不足。</p>
-              </article>
-
-              <article class="algorithm-research-item">
-                <span class="research-status-pill">比较基准</span><h3>固定每周 DCA</h3><p>最强的资金部署基准，是后续策略必须对比的标尺。</p>
-              </article>
-
-              <article class="algorithm-research-item">
-                <span class="research-status-pill">可选模式</span><h3>风险调整 v2</h3><p>可选的尾部风险模式；不作为默认策略。</p>
-              </article>
-
-              <article class="algorithm-research-item">
-                <span class="research-status-pill">沙盒</span><h3>趋势混合 / v3</h3><p>能减少现金拖累，但未稳定跑赢固定 DCA；暂不升级。</p>
-              </article>
-
-              <article class="algorithm-research-item decision">
-                <span class="research-status-pill">结论</span><h3>暂不升级</h3><p>暂不修改实时策略，也暂不推广混合或 v3 策略。需要更长历史、更多市场环境和样本外验证。</p>
-              </article>
+          <div class="section-heading compact">
+            <div>
+              <p class="eyebrow">组合设置</p>
+              <span class="allocation-editor-heading-label">调整目标比例</span>
             </div>
-
-            <p class="fine-print algorithm-research-link">
-              完整研究说明：<a href="ALGORITHM_RESEARCH_SUMMARY.md">ALGORITHM_RESEARCH_SUMMARY.md</a>
+            <span aria-live="polite" id="allocationEditorStatus"></span>
+          </div>
+          <section
+            aria-labelledby="allocationBucketTitle"
+            class="allocation-bucket-control"
+          >
+            <div>
+              <strong id="allocationBucketTitle"
+                >先选择大盘与个股的总比例</strong
+              >
+              <p>选择后会将个股仓平均分给 5 只个股；你仍可在下方逐只调整。</p>
+            </div>
+            <div
+              aria-label="大盘与个股快捷比例"
+              class="allocation-preset-buttons"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="secondary-button"
+                data-allocation-preset="recommended"
+                type="button"
+              >
+                <strong>按推荐比例分配</strong><span>40 / 60</span>
+              </button>
+              <button
+                aria-pressed="false"
+                class="secondary-button"
+                data-allocation-preset="average"
+                type="button"
+              >
+                <strong>平均分配个股仓</strong><span>按当前大盘仓</span>
+              </button>
+              <button
+                aria-pressed="true"
+                class="secondary-button"
+                data-core-allocation-preset="40"
+                type="button"
+              >
+                <strong>40 / 60</strong><span>当前默认</span>
+              </button>
+              <button
+                aria-pressed="false"
+                class="secondary-button"
+                data-core-allocation-preset="50"
+                type="button"
+              >
+                <strong>50 / 50</strong><span>均衡</span>
+              </button>
+              <button
+                aria-pressed="false"
+                class="secondary-button"
+                data-core-allocation-preset="60"
+                type="button"
+              >
+                <strong>60 / 40</strong><span>偏稳健</span>
+              </button>
+            </div>
+            <p class="allocation-risk-note">
+              大盘 40% 意味着个股合计
+              60%，波动和集中风险更高；这里只调整后续定投资金，不会要求卖出或自动再平衡。
             </p>
+          </section>
+          <div class="allocation-editor-rows" id="allocationEditorRows"></div>
+          <div class="allocation-editor-metrics">
+            <label for="singleStockExposureMode">单股比例计算口径</label
+            ><select id="singleStockExposureMode">
+              <option value="direct_only">仅直接持仓口径（推荐）</option>
+              <option value="lookthrough">
+                ETF 穿透口径（仅风险提示）
+              </option></select
+            ><span aria-live="polite" id="etfExposureStatus" role="status"
+              >ETF 重叠仅作风险提示</span
+            >
           </div>
-        </details>
-
-        <details class="tool-details algorithm-test-panel">
-          <summary>
-            <span>
-              <span class="eyebrow">算法测试</span>
-              <strong id="algorithm-test-title">算法测试面板</strong>
-            </span>
-          </summary>
-          <div class="algorithm-test-controls">
-            <label for="algorithmTestInput">
-              <span>决策变化值</span>
-              <input id="algorithmTestInput" type="text" inputmode="decimal" autocomplete="off" value="-5">
-            </label>
-            <div id="algorithmTestPresets" class="algorithm-test-presets" aria-label="预设决策变化值"></div>
+          <div aria-live="polite" class="allocation-editor-metrics">
+            <span
+              >已分配
+              <strong id="allocationEditorAllocated">0.00%</strong></span
+            ><span
+              >剩余
+              <strong id="allocationEditorRemaining">100.00%</strong></span
+            ><span
+              >超出 <strong id="allocationEditorOverage">0.00%</strong></span
+            ><span>大盘仓 <strong id="allocationEditorCore">0.00%</strong></span
+            ><span
+              >个股仓
+              <strong id="allocationEditorSatellite">0.00%</strong></span
+            ><span
+              >科技个股
+              <strong id="allocationEditorTechnology">0.00%</strong></span
+            >
           </div>
-          <div id="algorithmTestResult" class="algorithm-test-result" aria-live="polite"></div>
-          <p class="fine-print algorithm-test-safety">
-            此测试面板仅供人工决策辅助，不会修改真实组合、市场数据、信号或人工计划。
-          </p>
-        </details>
-
-        <details class="tool-details backtest-panel">
-          <summary>
-            <span>
-              <span class="eyebrow">回测比较</span>
-              <strong id="backtest-title">逢低买入与固定 DCA</strong>
-            </span>
-            <button id="runBacktestBtn" class="secondary-button" type="button">运行回测</button>
-          </summary>
-          <div id="backtestSummary" class="backtest-summary" aria-live="polite">
-            <p class="fine-print">使用当前股票、配置比例和投入设置，对比每周逢低买入与固定 DCA。</p>
+          <p
+            aria-live="polite"
+            class="form-error"
+            id="allocationEditorErrors"
+          ></p>
+          <div class="allocation-editor-actions">
+            <button
+              class="secondary-button"
+              id="saveCustomAllocationBtn"
+              type="button"
+            >
+              保存自定义比例</button
+            ><button
+              class="secondary-button"
+              id="restoreDefaultAllocationBtn"
+              type="button"
+            >
+              恢复默认 40/60</button
+            ><button
+              class="secondary-button"
+              id="undoAllocationBtn"
+              type="button"
+            >
+              撤销本次修改
+            </button>
           </div>
-        </details>
-      </section>
-
-<details class="panel data-panel">
-        <summary>
-          <span>
-            <span class="eyebrow">数据源优先级</span>
-            <strong id="data-title">市场数据</strong>
-          </span>
-        </summary>
-        <ol class="source-list">
-          <li>Finnhub</li>
-          <li>加拿大央行汇率备用</li><li>Yahoo Finance 备用</li><li>缓存</li><li>手动覆盖</li>
-        </ol>
-        <p class="fine-print">
-          买入信号使用最新 1 日和 5 日变化中的较低值；单只股票的手动覆盖始终优先。
-        </p>
-      </details>
-
-      <details id="dataQualityPanel" class="panel data-quality-panel">
-        <summary data-label="查看详情" data-open-label="收起详情"><span><span class="eyebrow">数据质量</span><strong id="data-quality-title">数据质量摘要</strong></span></summary>
-        <div class="data-quality-content" aria-live="polite">
-          <div class="data-quality-grid">
-            <article class="data-quality-metric"><span id="dataQualityFreshLabel">新鲜数据</span><strong id="dataQualityFresh">--</strong></article><article class="data-quality-metric"><span id="dataQualityStaleLabel">过期数据</span><strong id="dataQualityStale">--</strong></article><article class="data-quality-metric"><span id="dataQualityManualLabel">手动覆盖</span><strong id="dataQualityManual">--</strong></article><article class="data-quality-metric"><span id="dataQualityLegacyLabel">旧版覆盖</span><strong id="dataQualityLegacy">--</strong></article><article class="data-quality-metric"><span id="dataQualityFallbackLabel">备用数据</span><strong id="dataQualityFallback">--</strong></article><article class="data-quality-metric"><span id="dataQualityCacheLabel">缓存</span><strong id="dataQualityCache">--</strong></article><article class="data-quality-metric market-regime"><span id="dataQualityMarketLabel">市场状态</span><strong id="dataQualityMarketRegime">加载中</strong></article><article class="data-quality-metric project-health"><span>项目健康</span><strong id="projectHealthStatus" data-status="warning">加载中</strong></article><article class="data-quality-metric"><span>盯盘来源</span><strong id="watchlistHealthStatus">加载中</strong></article>
-          </div>
-          <p id="dataQualityWarning" class="data-quality-warning">等待市场数据。</p><p class="project-health-line"><span id="projectHealthDetails">正在加载项目健康报告。</span> <a href="results/health/project-health.md">查看详细报告</a></p>
-          <section class="health-history" aria-labelledby="health-history-title"><div class="health-history-heading"><strong id="health-history-title">运行趋势</strong><span id="healthHistoryWindow">最近 90 天</span></div><div id="healthHistoryMetrics" class="health-history-grid" aria-live="polite"><span class="health-history-empty">正在加载健康历史。</span></div><p id="healthHistoryTrend" class="health-history-trend" aria-live="polite">等待历史观察。</p></section>
         </div>
       </details>
     </div>
-
-    <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="price-settings-title" aria-describedby="settingsModalStatus">
+    <div
+      aria-describedby="settingsModalStatus"
+      aria-labelledby="price-settings-title"
+      aria-modal="true"
+      class="modal hidden"
+      id="settingsModal"
+      role="dialog"
+    >
       <div class="modal-card">
         <div class="modal-heading settings-heading">
           <div>
             <h2 id="price-settings-title">设置</h2>
-            <p id="settingsModalStatus" class="settings-summary-status" role="status" aria-live="polite">当前设置完整性：正常</p>
+            <p
+              aria-live="polite"
+              class="settings-summary-status"
+              id="settingsModalStatus"
+              role="status"
+            >
+              当前设置完整性：正常
+            </p>
           </div>
-          <button id="closeSettingsBtn" class="icon-button" type="button" aria-label="关闭设置">×</button>
+          <button
+            aria-label="关闭设置"
+            class="icon-button"
+            id="closeSettingsBtn"
+            type="button"
+          >
+            ×
+          </button>
         </div>
-
         <div class="settings-layout">
-          <nav class="settings-nav" aria-label="设置分类" role="tablist" aria-orientation="horizontal">
-            <button type="button" role="tab" aria-selected="false" aria-controls="settings-common" data-settings-tab="common">常用</button>
-            <button type="button" role="tab" aria-selected="true" aria-controls="settings-accounts" data-settings-tab="accounts">Wealthsimple</button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="settings-deployment" data-settings-tab="deployment">定投</button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="settings-allocation" data-settings-tab="allocation">组合</button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="settings-data" data-settings-tab="data">数据源</button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="settings-advanced" data-settings-tab="advanced">高级</button>
+          <nav
+            aria-label="设置分类"
+            aria-orientation="horizontal"
+            class="settings-nav"
+            role="tablist"
+          >
+            <button
+              aria-controls="settings-common"
+              aria-selected="false"
+              data-settings-tab="common"
+              role="tab"
+              type="button"
+            >
+              常用
+            </button>
+            <button
+              aria-controls="settings-accounts"
+              aria-selected="true"
+              data-settings-tab="accounts"
+              role="tab"
+              type="button"
+            >
+              Wealthsimple
+            </button>
+            <button
+              aria-controls="settings-deployment"
+              aria-selected="false"
+              data-settings-tab="deployment"
+              role="tab"
+              type="button"
+            >
+              定投
+            </button>
+            <button
+              aria-controls="settings-allocation"
+              aria-selected="false"
+              data-settings-tab="allocation"
+              role="tab"
+              type="button"
+            >
+              组合
+            </button>
+            <button
+              aria-controls="settings-data"
+              aria-selected="false"
+              data-settings-tab="data"
+              role="tab"
+              type="button"
+            >
+              数据源
+            </button>
+            <button
+              aria-controls="settings-advanced"
+              aria-selected="false"
+              data-settings-tab="advanced"
+              role="tab"
+              type="button"
+            >
+              高级
+            </button>
           </nav>
           <div class="settings-content">
-            <section id="settings-common" class="settings-category" role="tabpanel" data-settings-panel="common" hidden>
+            <section
+              class="settings-category"
+              data-settings-panel="common"
+              hidden=""
+              id="settings-common"
+              role="tabpanel"
+            >
               <div class="settings-section-heading">
-                <div><h3 class="settings-subheading">常用设置</h3><p>配置界面显示方式和默认人工核对入口。</p></div>
+                <div>
+                  <h3 class="settings-subheading">常用设置</h3>
+                  <p>配置界面显示方式和默认人工核对入口。</p>
+                </div>
               </div>
               <div class="settings-form-row">
-                <label for="displayCurrencySelect"><span>显示货币</span><small>用于页面金额展示；跨币种时使用有效实时汇率换算。</small></label>
-                <select id="displayCurrencySelect" aria-describedby="displayCurrencyNote displayCurrencyStatus"><option value="CAD">加元（CAD）</option><option value="USD">美元（USD）</option></select>
+                <label for="displayCurrencySelect"
+                  ><span>显示货币</span
+                  ><small
+                    >用于页面金额展示；跨币种时使用有效实时汇率换算。</small
+                  ></label
+                >
+                <select
+                  aria-describedby="displayCurrencyNote displayCurrencyStatus"
+                  id="displayCurrencySelect"
+                >
+                  <option value="CAD">加元（CAD）</option>
+                  <option value="USD">美元（USD）</option>
+                </select>
               </div>
-              <p id="displayCurrencyNote" class="status-line">显示货币不改变原始预算、持仓和成交币种。</p><p id="displayCurrencyStatus" class="status-line" role="status" aria-live="polite"></p>
-              <div class="settings-summary-card"><strong>当前设置摘要</strong><p id="settingsCommonSummary" class="settings-natural-summary"></p></div>
+              <p class="status-line" id="displayCurrencyNote">
+                显示货币不改变原始预算、持仓和成交币种。
+              </p>
+              <p
+                aria-live="polite"
+                class="status-line"
+                id="displayCurrencyStatus"
+                role="status"
+              ></p>
+              <div class="settings-summary-card">
+                <strong>当前设置摘要</strong>
+                <p
+                  class="settings-natural-summary"
+                  id="settingsCommonSummary"
+                ></p>
+              </div>
             </section>
-
-            <section id="settings-accounts" class="settings-category" role="tabpanel" data-settings-panel="accounts">
+            <section
+              class="settings-category"
+              data-settings-panel="accounts"
+              id="settings-accounts"
+              role="tabpanel"
+            >
               <div class="settings-section-heading">
-                <div><h3 class="settings-subheading">Wealthsimple</h3><p>配置本地人工核对所需的计划币种、账户与可用资金，不连接券商。</p></div>
+                <div>
+                  <h3 class="settings-subheading">Wealthsimple</h3>
+                  <p>
+                    配置本地人工核对所需的计划币种、账户与可用资金，不连接券商。
+                  </p>
+                </div>
               </div>
               <div class="settings-wealthsimple-summary">
-                <label for="planningCurrencySelect"><span>计划币种</span><select id="planningCurrencySelect" disabled><option value="CAD">CAD（等待迁移）</option><option value="USD">USD（统一基准）</option></select></label>
-                <label for="accountCurrencySelect"><span>默认账户币种</span><select id="accountCurrencySelect"><option value="CAD">CAD</option><option value="USD">USD</option></select></label>
-                <label for="wealthsimpleTierSelect"><span>客户等级</span><select id="wealthsimpleTierSelect"><option>Core</option><option>Premium</option><option>Generation</option></select></label>
+                <label for="planningCurrencySelect"
+                  ><span>计划币种</span
+                  ><select disabled="" id="planningCurrencySelect">
+                    <option value="CAD">CAD（等待迁移）</option>
+                    <option value="USD">USD（统一基准）</option>
+                  </select></label
+                >
+                <label for="accountCurrencySelect"
+                  ><span>默认账户币种</span
+                  ><select id="accountCurrencySelect">
+                    <option value="CAD">CAD</option>
+                    <option value="USD">USD</option>
+                  </select></label
+                >
+                <label for="wealthsimpleTierSelect"
+                  ><span>客户等级</span
+                  ><select id="wealthsimpleTierSelect">
+                    <option>Core</option>
+                    <option>Premium</option>
+                    <option>Generation</option>
+                  </select></label
+                >
               </div>
-
-              <section class="settings-fx-card" aria-labelledby="settingsFxTitle">
+              <section
+                aria-labelledby="settingsFxTitle"
+                class="settings-fx-card"
+              >
                 <div class="settings-fx-main">
-                  <div><span id="settingsFxTitle">当前 USD/CAD 汇率</span><strong id="settingsFxRate">--</strong><small id="settingsFxInverse">1 CAD = -- USD</small></div>
-                  <span id="settingsFxState" class="settings-state-pill" data-state="loading">正在获取</span>
+                  <div>
+                    <span id="settingsFxTitle">当前 USD/CAD 汇率</span
+                    ><strong id="settingsFxRate">--</strong
+                    ><small id="settingsFxInverse">1 CAD = -- USD</small>
+                  </div>
+                  <span
+                    class="settings-state-pill"
+                    data-state="loading"
+                    id="settingsFxState"
+                    >正在获取</span
+                  >
                 </div>
                 <dl class="settings-fx-meta">
-                  <div><dt>数据来源</dt><dd id="settingsFxSource">等待数据</dd></div>
-                  <div><dt>最后更新</dt><dd id="settingsFxUpdatedAt">--</dd></div>
-                  <div><dt>自动刷新</dt><dd>每 60 秒</dd></div>
+                  <div>
+                    <dt>数据来源</dt>
+                    <dd id="settingsFxSource">等待数据</dd>
+                  </div>
+                  <div>
+                    <dt>最后更新</dt>
+                    <dd id="settingsFxUpdatedAt">--</dd>
+                  </div>
+                  <div>
+                    <dt>自动刷新</dt>
+                    <dd>每 60 秒</dd>
+                  </div>
                 </dl>
-                <button id="refreshFxRateBtn" class="secondary-button settings-fx-refresh" type="button">刷新汇率</button>
-                <p id="settingsFxMessage" class="status-line" role="status" aria-live="polite">汇率只用于换算展示与人工计划核对，不代表 Wealthsimple 最终成交汇率。</p>
-                <details class="settings-fx-policy"><summary>查看汇率策略</summary><div class="settings-fx-policy-content"><label for="wealthsimpleFxMaxAge"><span>缓存最长有效天数</span><input id="wealthsimpleFxMaxAge" type="number" min="0" step="1"></label><p>实时源不可用时保留最后有效值并标记来源；超过有效期后停止跨币种换算。</p></div></details>
-                <input id="wealthsimpleFxRate" type="hidden" aria-label="USD/CAD 汇率兼容值"><input id="wealthsimpleFxAsOf" type="hidden" aria-label="汇率更新时间兼容值">
-                <button id="saveWealthsimpleCurrencyBtn" type="button" hidden>保存币种设置</button><p id="wealthsimpleCurrencyStatus" class="status-line" role="status" aria-live="polite"></p>
+                <button
+                  class="secondary-button settings-fx-refresh"
+                  id="refreshFxRateBtn"
+                  type="button"
+                >
+                  刷新汇率
+                </button>
+                <p
+                  aria-live="polite"
+                  class="status-line"
+                  id="settingsFxMessage"
+                  role="status"
+                >
+                  汇率只用于换算展示与人工计划核对，不代表 Wealthsimple
+                  最终成交汇率。
+                </p>
+                <details class="settings-fx-policy">
+                  <summary>查看汇率策略</summary>
+                  <div class="settings-fx-policy-content">
+                    <label for="wealthsimpleFxMaxAge"
+                      ><span>缓存最长有效天数</span
+                      ><input
+                        id="wealthsimpleFxMaxAge"
+                        min="0"
+                        step="1"
+                        type="number"
+                    /></label>
+                    <p>
+                      实时源不可用时保留最后有效值并标记来源；超过有效期后停止跨币种换算。
+                    </p>
+                  </div>
+                </details>
+                <input
+                  aria-label="USD/CAD 汇率兼容值"
+                  id="wealthsimpleFxRate"
+                  type="hidden"
+                /><input
+                  aria-label="汇率更新时间兼容值"
+                  id="wealthsimpleFxAsOf"
+                  type="hidden"
+                />
+                <button
+                  hidden=""
+                  id="saveWealthsimpleCurrencyBtn"
+                  type="button"
+                >
+                  保存币种设置
+                </button>
+                <p
+                  aria-live="polite"
+                  class="status-line"
+                  id="wealthsimpleCurrencyStatus"
+                  role="status"
+                ></p>
               </section>
-
-              <div class="settings-account-heading"><div><h4>账户与资金</h4><p>只显示你添加的本地账户；不会保存 Wealthsimple 登录信息或真实账户号码。</p></div><button id="addWealthsimpleAccountBtn" class="secondary-button" type="button">添加账户</button></div>
-              <section class="snaptrade-sync-card" aria-labelledby="snaptradeSyncTitle">
-                <div class="settings-account-heading"><div><h4 id="snaptradeSyncTitle">Wealthsimple 自动同步</h4><p>SnapTrade Personal 只读连接；不会创建、修改或取消订单。</p></div><span id="snaptradeSyncStatus" class="settings-state-pill" role="status" aria-live="polite">已锁定 · 等待本机解密密钥</span></div>
-                <dl class="settings-fx-meta snaptrade-sync-meta"><div><dt>连接模式</dt><dd id="snaptradeConnectionSummary">未解密</dd></div><div><dt>最近成功同步</dt><dd id="snaptradeSyncLastSuccess">--</dd></div><div><dt>最近自动解密</dt><dd id="snaptradeAutoUnlockAt">--</dd></div><div><dt>数据 as-of</dt><dd id="snaptradeSyncAsOf">--</dd></div><div><dt>账户数量</dt><dd id="snaptradeAccountCount">--</dd></div><div><dt>持仓数量</dt><dd id="snaptradePositionCount">--</dd></div></dl>
-                <label for="snaptradeSnapshotKeyInput"><span>导入本机解密密钥</span><input id="snaptradeSnapshotKeyInput" type="password" autocomplete="off" placeholder="32 字节 Base64 密钥" aria-describedby="snaptradeSyncWarning"></label>
-                <div class="settings-advanced-actions"><button id="snaptradeImportKeyBtn" class="secondary-button" type="button">导入并解密</button><button id="snaptradeForgetKeyBtn" class="danger-button" type="button">忘记本机解密密钥</button></div>
-                <label for="snaptradeHoldingsSourceMode"><span>实际持仓来源</span><select id="snaptradeHoldingsSourceMode"><option value="automatic">使用自动持仓</option><option value="manual">暂时使用人工持仓</option></select></label>
-                <p class="status-line">保存位置：本机浏览器加密密钥库（IndexedDB）</p><p id="snaptradePersistenceStatus" class="status-line" role="status" aria-live="polite">正在检查本机密钥</p>
-                <p id="snaptradeSyncWarning" class="status-line" role="status" aria-live="polite">密钥仅保存在当前浏览器配置文件，不会上传到 GitHub 或发送给 SnapTrade。清除网站数据、使用无痕模式、更换浏览器配置文件或更换 HOLDINGS_SNAPSHOT_KEY 后需要重新导入。</p>
+              <div class="settings-account-heading">
+                <div>
+                  <h4>账户与资金</h4>
+                  <p>
+                    只显示你添加的本地账户；不会保存 Wealthsimple
+                    登录信息或真实账户号码。
+                  </p>
+                </div>
+                <button
+                  class="secondary-button"
+                  id="addWealthsimpleAccountBtn"
+                  type="button"
+                >
+                  添加账户
+                </button>
+              </div>
+              <section
+                aria-labelledby="snaptradeSyncTitle"
+                class="snaptrade-sync-card"
+              >
+                <div class="settings-account-heading">
+                  <div>
+                    <h4 id="snaptradeSyncTitle">Wealthsimple 自动同步</h4>
+                    <p>
+                      SnapTrade Personal 只读连接；不会创建、修改或取消订单。
+                    </p>
+                  </div>
+                  <span
+                    aria-live="polite"
+                    class="settings-state-pill"
+                    id="snaptradeSyncStatus"
+                    role="status"
+                    >已锁定 · 等待本机解密密钥</span
+                  >
+                </div>
+                <dl class="settings-fx-meta snaptrade-sync-meta">
+                  <div>
+                    <dt>连接模式</dt>
+                    <dd id="snaptradeConnectionSummary">未解密</dd>
+                  </div>
+                  <div>
+                    <dt>最近成功同步</dt>
+                    <dd id="snaptradeSyncLastSuccess">--</dd>
+                  </div>
+                  <div>
+                    <dt>最近自动解密</dt>
+                    <dd id="snaptradeAutoUnlockAt">--</dd>
+                  </div>
+                  <div>
+                    <dt>数据 as-of</dt>
+                    <dd id="snaptradeSyncAsOf">--</dd>
+                  </div>
+                  <div>
+                    <dt>账户数量</dt>
+                    <dd id="snaptradeAccountCount">--</dd>
+                  </div>
+                  <div>
+                    <dt>持仓数量</dt>
+                    <dd id="snaptradePositionCount">--</dd>
+                  </div>
+                </dl>
+                <label for="snaptradeSnapshotKeyInput"
+                  ><span>导入本机解密密钥</span
+                  ><input
+                    aria-describedby="snaptradeSyncWarning"
+                    autocomplete="off"
+                    id="snaptradeSnapshotKeyInput"
+                    placeholder="32 字节 Base64 密钥"
+                    type="password"
+                /></label>
+                <div class="settings-advanced-actions">
+                  <button
+                    class="secondary-button"
+                    id="snaptradeImportKeyBtn"
+                    type="button"
+                  >
+                    导入并解密</button
+                  ><button
+                    class="danger-button"
+                    id="snaptradeForgetKeyBtn"
+                    type="button"
+                  >
+                    忘记本机解密密钥
+                  </button>
+                </div>
+                <label for="snaptradeHoldingsSourceMode"
+                  ><span>实际持仓来源</span
+                  ><select id="snaptradeHoldingsSourceMode">
+                    <option value="automatic">使用自动持仓</option>
+                    <option value="manual">暂时使用人工持仓</option>
+                  </select></label
+                >
+                <p class="status-line">
+                  保存位置：本机浏览器加密密钥库（IndexedDB）
+                </p>
+                <p
+                  aria-live="polite"
+                  class="status-line"
+                  id="snaptradePersistenceStatus"
+                  role="status"
+                >
+                  正在检查本机密钥
+                </p>
+                <p
+                  aria-live="polite"
+                  class="status-line"
+                  id="snaptradeSyncWarning"
+                  role="status"
+                >
+                  密钥仅保存在当前浏览器配置文件，不会上传到 GitHub 或发送给
+                  SnapTrade。清除网站数据、使用无痕模式、更换浏览器配置文件或更换
+                  HOLDINGS_SNAPSHOT_KEY 后需要重新导入。
+                </p>
               </section>
-              <div id="wealthsimpleSettingsAccountCards" class="settings-account-cards" aria-live="polite"></div>
-              <p id="wealthsimpleAccountsEmpty" class="settings-empty-state" hidden>尚未添加账户。添加一个本地账户后，人工计划才能按账户币种和可交易资金进行核对。</p>
-              <p id="wealthsimpleAccountStatus" class="status-line" role="status" aria-live="polite"></p>
+              <div
+                aria-live="polite"
+                class="settings-account-cards"
+                id="wealthsimpleSettingsAccountCards"
+              ></div>
+              <p
+                class="settings-empty-state"
+                hidden=""
+                id="wealthsimpleAccountsEmpty"
+              >
+                尚未添加账户。添加一个本地账户后，人工计划才能按账户币种和可交易资金进行核对。
+              </p>
+              <p
+                aria-live="polite"
+                class="status-line"
+                id="wealthsimpleAccountStatus"
+                role="status"
+              ></p>
             </section>
-
-            <section id="settings-deployment" class="settings-category" role="tabpanel" data-settings-panel="deployment" hidden>
+            <section
+              class="settings-category"
+              data-settings-panel="deployment"
+              hidden=""
+              id="settings-deployment"
+              role="tabpanel"
+            >
               <h3 class="settings-subheading">定投资金</h3>
-
-        <section class="deployment-form settings-section" aria-labelledby="deployment-settings-title">
-          <div class="modal-subheading">
-            <h3 id="deployment-settings-title">投入设置</h3>
-            <div class="deployment-actions">
-              <button id="saveDeploymentBtn" class="secondary-button" type="button">保存投入设置</button>
-              <button id="resetDeploymentBtn" class="secondary-button" type="button">恢复默认投入</button>
-            </div>
-          </div>
-          <div class="deployment-input-grid">
-            <label for="monthlyBudgetInput">
-              <span>月度预算</span>
-              <input id="monthlyBudgetInput" data-deployment-field="monthlyBudget" type="text" inputmode="decimal" autocomplete="off">
-            </label>
-            <label for="normalPoolInput">
-              <span>常规资金池</span>
-              <input id="normalPoolInput" data-deployment-field="normalPool" type="text" inputmode="decimal" autocomplete="off">
-            </label>
-            <label for="crashFundInput">
-              <span>下跌备用金</span>
-              <input id="crashFundInput" data-deployment-field="crashFund" type="text" inputmode="decimal" autocomplete="off">
-            </label>
-            <label for="weeklyDeploymentInput">
-              <span>每周投入</span>
-              <input id="weeklyDeploymentInput" data-deployment-field="weeklyDeployment" type="text" inputmode="decimal" autocomplete="off">
-            </label>
-          </div>
-          <p id="deploymentStatus" class="status-line deployment-status" role="status"></p>
-        </section>
-
-              <p id="settingsDeploymentImpact" class="settings-impact" role="status" aria-live="polite"></p>
+              <section
+                aria-labelledby="deployment-settings-title"
+                class="deployment-form settings-section"
+              >
+                <div class="modal-subheading">
+                  <h3 id="deployment-settings-title">投入设置</h3>
+                  <div class="deployment-actions">
+                    <button
+                      class="secondary-button"
+                      id="saveDeploymentBtn"
+                      type="button"
+                    >
+                      保存投入设置
+                    </button>
+                    <button
+                      class="secondary-button"
+                      id="resetDeploymentBtn"
+                      type="button"
+                    >
+                      恢复默认投入
+                    </button>
+                  </div>
+                </div>
+                <div class="deployment-input-grid">
+                  <label for="monthlyBudgetInput">
+                    <span>月度预算</span>
+                    <input
+                      autocomplete="off"
+                      data-deployment-field="monthlyBudget"
+                      id="monthlyBudgetInput"
+                      inputmode="decimal"
+                      type="text"
+                    />
+                  </label>
+                  <label for="normalPoolInput">
+                    <span>常规资金池</span>
+                    <input
+                      autocomplete="off"
+                      data-deployment-field="normalPool"
+                      id="normalPoolInput"
+                      inputmode="decimal"
+                      type="text"
+                    />
+                  </label>
+                  <label for="crashFundInput">
+                    <span>下跌备用金</span>
+                    <input
+                      autocomplete="off"
+                      data-deployment-field="crashFund"
+                      id="crashFundInput"
+                      inputmode="decimal"
+                      type="text"
+                    />
+                  </label>
+                  <label for="weeklyDeploymentInput">
+                    <span>每周投入</span>
+                    <input
+                      autocomplete="off"
+                      data-deployment-field="weeklyDeployment"
+                      id="weeklyDeploymentInput"
+                      inputmode="decimal"
+                      type="text"
+                    />
+                  </label>
+                </div>
+                <p
+                  class="status-line deployment-status"
+                  id="deploymentStatus"
+                  role="status"
+                ></p>
+              </section>
+              <p
+                aria-live="polite"
+                class="settings-impact"
+                id="settingsDeploymentImpact"
+                role="status"
+              ></p>
             </section>
-
-            <section id="settings-allocation" class="settings-category" role="tabpanel" data-settings-panel="allocation" hidden>
+            <section
+              class="settings-category"
+              data-settings-panel="allocation"
+              hidden=""
+              id="settings-allocation"
+              role="tabpanel"
+            >
               <h3 class="settings-subheading">组合比例</h3>
               <p>只影响未来人工定投目标，不修改真实持仓，不生成卖出建议。</p>
               <div id="settingsAllocationMount"></div>
             </section>
-
-            <section id="settings-data" class="settings-category" role="tabpanel" data-settings-panel="data" hidden>
+            <section
+              class="settings-category"
+              data-settings-panel="data"
+              hidden=""
+              id="settings-data"
+              role="tabpanel"
+            >
               <h3 class="settings-subheading">数据源</h3>
-
-        <h3 class="settings-subheading">行情数据</h3>
-        <label class="api-key-row" for="apiKey">
-          <span>Finnhub API 密钥</span>
-          <input id="apiKey" type="password" autocomplete="off" placeholder="输入 Finnhub API 密钥" aria-describedby="apiKeyStorageNote">
-        </label>
-        <p id="apiKeyStorageNote" class="status-line">密钥会永久保存在此浏览器；清空输入框即可删除。</p>
-
-
-        <button id="deleteApiKeyBtn" class="danger-button" type="button">删除 Finnhub API 密钥</button>
-
-        <div class="modal-note">
-          <strong>数据源优先级</strong>
-          <span>Finnhub → 加拿大央行 → Yahoo 备用 → 缓存 → 手动覆盖</span>
-        </div>
-              <p id="dataSourceLastSuccess" class="status-line"></p>
+              <h3 class="settings-subheading">行情数据</h3>
+              <label class="api-key-row" for="apiKey">
+                <span>Finnhub API 密钥</span>
+                <input
+                  aria-describedby="apiKeyStorageNote"
+                  autocomplete="off"
+                  id="apiKey"
+                  placeholder="输入 Finnhub API 密钥"
+                  type="password"
+                />
+              </label>
+              <p class="status-line" id="apiKeyStorageNote">
+                密钥会永久保存在此浏览器；清空输入框即可删除。
+              </p>
+              <button class="danger-button" id="deleteApiKeyBtn" type="button">
+                删除 Finnhub API 密钥
+              </button>
+              <div class="modal-note">
+                <strong>数据源优先级</strong>
+                <span>Finnhub → 加拿大央行 → Yahoo 备用 → 缓存 → 手动覆盖</span>
+              </div>
+              <p class="status-line" id="dataSourceLastSuccess"></p>
             </section>
-
-            <section id="settings-advanced" class="settings-category" role="tabpanel" data-settings-panel="advanced" hidden>
+            <section
+              class="settings-category"
+              data-settings-panel="advanced"
+              hidden=""
+              id="settings-advanced"
+              role="tabpanel"
+            >
               <h3 class="settings-subheading">高级设置</h3>
               <p>以下设置用于本地人工核对，不代表交易许可。</p>
-              <p>Wealthsimple 规则版本：<strong id="wealthsimpleRulesVersion">wealthsimple-rules-v1</strong></p>
-              <p>最近规则核对日期：<strong id="wealthsimpleRulesVerifiedAt">2026-08-11</strong></p>
-              <p>换汇字段说明：显示货币只改变展示；计划货币是预算货币；账户货币是资金所在账户货币。实时源不可用时不会编造汇率。</p>
-              <div class="settings-advanced-actions"><button id="exportSettingsBtn" class="secondary-button" type="button">导出本地设置</button><label class="secondary-button">导入本地设置<input id="importSettingsInput" type="file" accept="application/json" hidden></label><button id="resetAdvancedSettingsBtn" class="secondary-button" type="button">恢复本分类默认</button></div>
+              <p>
+                Wealthsimple 规则版本：<strong id="wealthsimpleRulesVersion"
+                  >wealthsimple-rules-v1</strong
+                >
+              </p>
+              <p>
+                最近规则核对日期：<strong id="wealthsimpleRulesVerifiedAt"
+                  >2026-08-11</strong
+                >
+              </p>
+              <p>
+                换汇字段说明：显示货币只改变展示；计划货币是预算货币；账户货币是资金所在账户货币。实时源不可用时不会编造汇率。
+              </p>
+              <div class="settings-advanced-actions">
+                <button
+                  class="secondary-button"
+                  id="exportSettingsBtn"
+                  type="button"
+                >
+                  导出本地设置</button
+                ><label class="secondary-button"
+                  >导入本地设置<input
+                    accept="application/json"
+                    hidden=""
+                    id="importSettingsInput"
+                    type="file" /></label
+                ><button
+                  class="secondary-button"
+                  id="resetAdvancedSettingsBtn"
+                  type="button"
+                >
+                  恢复本分类默认
+                </button>
+              </div>
             </section>
           </div>
         </div>
-        <div class="settings-footer"><span id="settingsDirtyState" role="status" aria-live="polite">没有未保存的更改</span><div><button id="cancelSettingsBtn" class="secondary-button" type="button">取消</button><button id="saveSettingsChangesBtn" class="primary-button" type="button">保存更改</button></div></div>
+        <div class="settings-footer">
+          <span aria-live="polite" id="settingsDirtyState" role="status"
+            >没有未保存的更改</span
+          >
+          <div>
+            <button
+              class="secondary-button"
+              id="cancelSettingsBtn"
+              type="button"
+            >
+              取消</button
+            ><button
+              class="primary-button"
+              id="saveSettingsChangesBtn"
+              type="button"
+            >
+              保存更改
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-
     <template id="stockCardTemplate">
       <article class="stock-card">
         <div class="stock-topline stock-row-header">
@@ -685,14 +2270,13 @@
             <span class="allocation"></span>
           </div>
           <span class="action-badge"></span>
-          <span class="primary-buy-amount" aria-label="最终建议金额"></span>
+          <span aria-label="最终建议金额" class="primary-buy-amount"></span>
           <div class="price-row">
             <span class="price"></span>
             <span class="note"></span>
           </div>
           <span class="source-badge"></span>
         </div>
-
         <div class="stock-values">
           <div>
             <span>1D</span>
@@ -723,10 +2307,17 @@
             <strong class="buy-amount"></strong>
           </div>
         </div>
-
         <details class="stock-details-row expanded-detail-panel">
           <summary>查看详情</summary>
-          <div class="stock-danger-zone"><button class="remove-stock stock-action-button" type="button" aria-label="移除股票">移除股票</button></div>
+          <div class="stock-danger-zone">
+            <button
+              aria-label="移除股票"
+              class="remove-stock stock-action-button"
+              type="button"
+            >
+              移除股票
+            </button>
+          </div>
           <details class="decision-context">
             <summary>reason / warning</summary>
             <div>
@@ -743,15 +2334,26 @@
             <div class="algorithm-grid">
               <div><span></span><strong data-algo-field="market"></strong></div>
               <div><span></span><strong data-algo-field="trend"></strong></div>
-              <div><span></span><strong data-algo-field="volatility"></strong></div>
-              <div><span></span><strong data-algo-field="drawdown"></strong></div>
+              <div>
+                <span></span><strong data-algo-field="volatility"></strong>
+              </div>
+              <div>
+                <span></span><strong data-algo-field="drawdown"></strong>
+              </div>
               <div><span></span><strong data-algo-field="final"></strong></div>
             </div>
             <p class="algorithm-explanation"></p>
           </details>
           <details class="override-row">
             <summary>手动输入</summary>
-            <input class="override-input" type="text" inputmode="decimal" autocomplete="off" placeholder="手动周涨跌%，例如 -9.2" aria-label="手动周涨跌百分比">
+            <input
+              aria-label="手动周涨跌百分比"
+              autocomplete="off"
+              class="override-input"
+              inputmode="decimal"
+              placeholder="手动周涨跌%，例如 -9.2"
+              type="text"
+            />
             <div class="override-actions">
               <button class="apply-override" type="button">应用手动输入</button>
               <button class="clear-override" type="button">清除手动输入</button>
@@ -760,7 +2362,6 @@
         </details>
       </article>
     </template>
-
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
     <script src="dca-policy.js?v=weekly-dca-v1"></script>
     <script src="market-data.js?v=contracts-1"></script>
@@ -783,7 +2384,7 @@
     <script src="portfolio-risk-input.js?v=explicit-cash-v1"></script>
     <script src="weekly-dca-engine.js?v=weekly-dca-v1"></script>
     <script src="weekly-signal-model.js?v=weekly-dca-v1"></script>
-    <script src="app.js?v=usd-planning-v2"></script>
+    <script src="app.js?v=workspace-v1-usd-planning-v2"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>
@@ -798,6 +2399,7 @@
     <script src="snaptrade-holdings-view.js?v=usd-planning-v2"></script>
     <script src="dip-strategy.js?v=independent-dip-v1"></script>
     <script src="dip-ledger.js?v=independent-dip-v1"></script>
-    <script src="dip-panel.js?v=independent-dip-v1"></script>
+    <script src="dip-panel.js?v=workspace-v1-independent-dip-v1"></script>
+    <script src="workspace-navigation.js?v=workspace-v1"></script>
   </body>
 </html>

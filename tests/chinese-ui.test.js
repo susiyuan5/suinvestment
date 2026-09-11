@@ -8,7 +8,7 @@ test("homepage uses simplified Chinese and has no language switcher", () => {
   assert.match(html, /<html lang="zh-CN">/);
   assert.doesNotMatch(html, /id="languageToggle"/);
   assert.doesNotMatch(html, /当前尚未应用 40% 大盘/);
-  assert.equal((html.match(/本周资金与定投决策/g) || []).length, 1);
+  assert.equal((html.match(/<h2 id="decision-summary-title">本周操作<\/h2>/g) || []).length, 1);
   assert.doesNotMatch(html, /本周资金计划/);
   assert.match(html, /<h2 id="holdings-title">个股信号与持仓<\/h2>/);
   assert.doesNotMatch(app, /thisTuesday:\s*"本周定投决策"/);
@@ -29,16 +29,12 @@ test("weekly decision is the single visible planning surface", () => {
 test("desktop hierarchy follows the static DOM order", () => {
   const html = fs.readFileSync("index.html", "utf8");
   const app = fs.readFileSync("app.js", "utf8");
-  const ordered = ["id=\"decisionSummary\"", "class=\"overview-panel\"", "class=\"dashboard-layout\"", "class=\"inline-holdings-panel\"", "id=\"coreSatelliteAllocationEditor\"", "deployment-overview", "id=\"watchlist\"", "class=\"panel research-panel\"", "id=\"dataQualityPanel\""];
+  const ordered = ['id="view-weekly"', 'id="view-holdings"', 'id="view-dip"', 'id="view-tools-watchlist"', 'id="view-tools-research"', 'id="view-tools-data"'];
   let previous = -1;
-  ordered.forEach((marker) => { const index = html.indexOf(marker); assert.ok(index > previous, `${marker} is out of order`); previous = index; });
-  assert.match(html, /id="coreSatelliteSummary" class="visually-hidden"/);
-  assert.match(html, /<details id="coreSatelliteAllocationEditor"/);
-  assert.equal((html.match(/恢复默认 40\/60/g) || []).length, 1);
-  assert.match(html, /data-core-allocation-preset="40"/);
-  assert.match(html, /大盘 40% 意味着个股合计 60%/);
-  for (const href of ["#decisionSummary", "#signalsSection", "#inlineHoldingsSection", "#research-panel", "#dataQualityPanel"]) assert.match(html, new RegExp(`href="${href}"`));
-  assert.match(html, /id="research-panel" class="panel research-panel"/);
+  for (const marker of ordered) { const index = html.indexOf(marker); assert.ok(index > previous, marker); previous = index; }
+  for (const route of ["weekly", "holdings", "dip"]) assert.match(html, new RegExp(`href="#${route}"`));
+  for (const id of ["weeklyCalculationDetails", "weeklyTransactions", "dipExecutionSettings", "dipLedgerManagement"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.match(html, /workspace-navigation.js/);
   assert.match(app, /确认移除 /);
 });
 

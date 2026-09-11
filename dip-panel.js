@@ -53,7 +53,8 @@
     INVALID_TARGET: "目标权重无效",
     OVERWEIGHT: "已达到目标权重加2个百分点",
     ACCOUNT_CASH_UNKNOWN: "账户可交易现金尚未填写",
-    SECURITY_CURRENCY_UNKNOWN_OR_MISMATCH: "证券币种需确认为所选美股代码的USD报价",
+    SECURITY_CURRENCY_UNKNOWN_OR_MISMATCH:
+      "证券币种需确认为所选美股代码的USD报价",
     POST_BUY_WEIGHT_LIMIT: "买入后权重上限限制",
     ZERO_SUGGESTION: "本次未分配金额",
     INVALID_PRICE: "证券价格无效",
@@ -154,66 +155,102 @@
     };
   }
   function render(plan, snapshot) {
+    const extra = document.getElementById("dipFundsExtra"),
+      untriggered = document.getElementById("dipUntriggeredRows"),
+      rules = document.getElementById("dipExecutionRules");
     summaryEl.replaceChildren();
-    for (const [label, value] of [
-      ["储备余额", currency(snapshot.balance)],
-      ["本月新增", currency(snapshot.monthAdded)],
-      ["本周上限", currency(snapshot.weekLimit)],
-      ["本周已记录", currency(snapshot.weekSpent)],
-      ["本次建议", currency(plan.allocated)],
-      ["建议后周额度", currency(plan.remainingWeek)],
-      ["建议后储备", currency(plan.remainingReserve)],
+    extra.replaceChildren();
+    untriggered.replaceChildren();
+    rules.replaceChildren();
+    for (const [key, label, value, primary] of [
+      ["balance", "储备余额", currency(snapshot.balance), true],
+      [
+        "remaining",
+        "本周剩余额度",
+        currency(Math.max(0, snapshot.weekLimit - snapshot.weekSpent)),
+        true,
+      ],
+      ["suggested", "本次建议", currency(plan.allocated), true],
+      ["month", "本月新增", currency(snapshot.monthAdded), false],
+      ["limit", "本周上限", currency(snapshot.weekLimit), false],
+      ["spent", "本周已记录", currency(snapshot.weekSpent), false],
+      ["afterWeek", "建议后周额度", currency(plan.remainingWeek), false],
+      ["afterReserve", "建议后储备", currency(plan.remainingReserve), false],
     ]) {
       const box = node("div");
+      box.dataset.metric = key;
       box.append(node("span", label), node("strong", value));
-      summaryEl.append(box);
+      (primary ? summaryEl : extra).append(box);
     }
+    const blockers = [
+      ...new Set(
+        plan.rows
+          .flatMap((row) => row.reasons)
+          .filter((code) => code !== "ZERO_SUGGESTION"),
+      ),
+    ];
     status.textContent = snapshot.blocked
       ? "存在超额成交记录，新增建议已暂停"
       : plan.allocated > 0
         ? "已生成建议；请人工核对，建议不会扣款"
-        : "本次保留现金；请查看各标的原因";
+        : "本周保留现金：" +
+          blockers
+            .slice(0, 3)
+            .map((c) => reasonNames[c] || c)
+            .join("；");
     rowsEl.replaceChildren();
-    for (const row of plan.rows) {
+    let inactive = 0;
+    for (const row of [...plan.rows].sort(
+      (a, b) => (b.amountUSD > 0) - (a.amountUSD > 0) || b.score - a.score,
+    )) {
       const card = node("article");
       card.className = "dip-candidate";
+      card.dataset.symbol = row.symbol;
       card.append(
-        node("h3", row.symbol + " · 独立抄底"),
+        node("h3", row.symbol),
         node(
           "p",
-          `${names[row.tier]} · ${names[row.stabilization]} · 得分 ${row.score.toFixed(1)}`,
+          `回撤 ${row.drawdown === null ? "未知" : row.drawdown.toFixed(2) + "%"} · ${names[row.stabilization]}`,
         ),
       );
+      const amount = node(
+        "p",
+        row.amountUSD > 0 ? "建议 " + currency(row.amountUSD) : "本次不买入",
+      );
+      amount.className = "dip-main-amount";
+      card.append(amount);
       card.append(
         node(
           "p",
-          `回撤 ${row.drawdown === null ? "未知" : row.drawdown.toFixed(2) + "%"} · 周波动率 ${row.volatility === null ? "未知" : row.volatility.toFixed(2) + "%"} · 建议 ${row.quantity.toFixed(6)} 股`,
+          row.reasons
+            .filter((c) => c !== "ZERO_SUGGESTION")
+            .map((c) => reasonNames[c] || c)
+            .join("；") || "可供人工核对",
         ),
       );
-      card.append(
+      const details = node("details");
+      details.append(
+        node("summary", "评分与执行明细"),
         node(
           "p",
-          `证券成交额 ${currency(row.notional, row.securityCurrency || "")} · 账户扣款 ${currency(row.accountDebit, row.accountCurrency || "")} · FX ${currency(row.fxFee, row.accountCurrency || "")}`,
+          `层级 ${names[row.tier]} · 得分 ${row.score.toFixed(1)} · 周波动率 ${row.volatility === null ? "未知" : row.volatility.toFixed(2) + "%"}`,
         ),
-      );
-      const scoreDetail = node("details");
-      scoreDetail.append(
-        node("summary", "评分明细"),
         node(
           "p",
           `回撤 ${(0.5 * row.scoreParts.depth * 100).toFixed(1)}/50 · 止跌 ${(0.3 * row.scoreParts.stabilization * 100).toFixed(1)}/30 · 低配 ${(0.2 * row.scoreParts.underweight * 100).toFixed(1)}/20`,
         ),
-      );
-      card.append(scoreDetail);
-      card.append(
         node(
           "p",
-          row.reasons.length
-            ? row.reasons.map((c) => reasonNames[c] || c).join("；")
-            : "止跌及资金条件满足，请核对碎股资格和成交价格",
+          `数量 ${row.quantity.toFixed(6)} 股 · 证券成交额 ${currency(row.notional, row.securityCurrency || "")} · 账户扣款 ${currency(row.accountDebit, row.accountCurrency || "")} · FX ${currency(row.fxFee, row.accountCurrency || "")}`,
         ),
       );
-      const label = node("label", row.symbol + " 碎股资格 "),
+      card.append(details);
+      if (row.amountUSD > 0) rowsEl.append(card);
+      else {
+        untriggered.append(card);
+        inactive++;
+      }
+      const label = node("label", row.symbol + " 碎股资格"),
         select = node("select");
       select.setAttribute("aria-label", row.symbol + " 碎股资格");
       for (const [value, text] of [
@@ -221,9 +258,9 @@
         ["true", "支持碎股"],
         ["false", "仅整股"],
       ]) {
-        const opt = node("option", text);
-        opt.value = value;
-        select.append(opt);
+        const option = node("option", text);
+        option.value = value;
+        select.append(option);
       }
       const prefs = json("su-investment-pro:dip-security-rules-v1", {});
       select.value = String(prefs[row.accountId]?.[row.symbol] ?? "unknown");
@@ -239,9 +276,10 @@
         refresh();
       });
       label.append(select);
-      card.append(label);
-      rowsEl.append(card);
+      rules.append(label);
     }
+    document.getElementById("dipUntriggeredTitle").textContent =
+      "未触发标的（" + inactive + "）";
     const log = document.getElementById("dipLedgerEntries");
     log.replaceChildren();
     const reversed = new Set(
@@ -294,6 +332,8 @@
     };
     status.textContent = "抄底建议已停止：" + (reasons[e.message] || e.message);
     rowsEl.replaceChildren();
+    document.getElementById("dipUntriggeredRows").replaceChildren();
+    summaryEl.replaceChildren();
     latest = null;
   }
   async function refresh() {

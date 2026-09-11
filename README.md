@@ -2,6 +2,12 @@
 
 Su Investment Pro is a weekly investment calculator, historical backtesting toolkit, and live market decision-support assistant. It is not an automatic trading bot. It never places real orders, never logs in to a brokerage account, and never submits buy or sell instructions through a broker API.
 
+## Workspace navigation (2026-09-11)
+
+The homepage now opens **本周操作**, with **持仓** and **抄底** as the other two main views. **更多工具** contains watchlist, research/backtesting and data quality. URL hashes preserve the view and support legacy anchors, refresh and browser history. Settings and manual transaction forms retain their existing storage and handlers.
+
+Weekly funding, holdings and dip candidates use compact summaries with expandable details. The three funding pools remain separate. Navigation only changes visibility/focus and redraws charts; it never records a fill or changes holdings. Run `npm run audit:workspace` with `BASE_URL` alongside the existing Pages and dip audits. See [UI validation notes](WORKSPACE_UI_REPORT.md).
+
 ## Independent dip reserve (2026-09-11)
 
 The “抄底机会” panel adds an independent USD 100 monthly reserve. Total monthly budget is USD 500: existing Normal 300, existing Crash 100, independent Dip 100. The old pools cannot use the new reserve. Suggestions are manual only and do not debit the ledger. Record actual fills to debit; reverse records with an append-only correction. Identical fills (or the same supplied broker fill reference) are deduplicated across tabs.

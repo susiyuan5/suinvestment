@@ -17,9 +17,9 @@ try {
   const page = await context.newPage(),
     errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  await page.locator("#dipRows article").first().waitFor();
-  assert.equal(await page.locator("#dipRows article").count(), 6);
+  await page.goto(baseUrl.replace(/#.*$/, "") + "#dip", { waitUntil: "domcontentloaded" });
+  await page.locator("#dipRows article, #dipUntriggeredRows article").first().waitFor({ state: "attached" });
+  assert.equal(await page.locator("#dipRows article, #dipUntriggeredRows article").count(), 6);
   const snapshot = (p) =>
     p.evaluate(async () => {
       const b = await DipLedger.transact(indexedDB, (x) => x);
@@ -30,9 +30,9 @@ try {
   assert.equal(initial.summary.weekLimit, 25);
   await page.locator("#dipRecalculate").click();
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.locator("#dipRows article").first().waitFor();
+  await page.locator("#dipRows article, #dipUntriggeredRows article").first().waitFor({ state: "attached" });
   assert.equal((await snapshot(page)).summary.balance, 100);
-  await page.locator("#dipOpportunities > details > summary").click();
+  await page.locator("#dipRecordDetails > summary").click();
   const form = page.locator("#dipTradeForm");
   await form.locator("[name=quantity]").fill("0.02");
   await form.locator("[name=price]").fill("50");
@@ -52,9 +52,9 @@ try {
       ).balance === 99,
   );
   const second = await context.newPage();
-  await second.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  await second.locator("#dipRows article").first().waitFor();
-  await second.locator("#dipOpportunities > details > summary").click();
+  await second.goto(baseUrl.replace(/#.*$/, "") + "#dip", { waitUntil: "domcontentloaded" });
+  await second.locator("#dipRows article, #dipUntriggeredRows article").first().waitFor({ state: "attached" });
+  await second.locator("#dipRecordDetails > summary").click();
   const duplicateForm = second.locator("#dipTradeForm");
   await duplicateForm.locator("[name=quantity]").fill("0.02");
   await duplicateForm.locator("[name=price]").fill("50");
@@ -115,6 +115,7 @@ try {
   await page.waitForFunction(
     () => document.querySelectorAll("#dipLedgerEntries button").length === 3,
   );
+  await page.locator("#dipLedgerManagement > summary").click();
   await page.locator("#dipLedgerEntries button").first().click();
   await page.waitForFunction(
     async () =>
@@ -144,7 +145,7 @@ try {
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(backup)),
   });
-  await page.locator("#dipRows article").first().waitFor();
+  await page.locator("#dipRows article, #dipUntriggeredRows article").first().waitFor({ state: "attached" });
   assert.equal((await snapshot(page)).summary.balance, 98);
   await fs.mkdir("output/playwright", { recursive: true });
   await page

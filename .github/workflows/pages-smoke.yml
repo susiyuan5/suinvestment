@@ -42,6 +42,8 @@ jobs:
             fi
           done
           exit 1
+      - name: Run workspace navigation smoke
+        run: npm run audit:workspace
       - name: Run independent dip ledger and panel smoke
         run: node scripts/dip-smoke.mjs
       - name: Run accessibility and mobile audit

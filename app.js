@@ -1231,28 +1231,6 @@ amountBreakdown: "金额分解",
   const adjustBudgetBtn = document.getElementById("adjustBudgetBtn");
   if (adjustBudgetBtn) adjustBudgetBtn.addEventListener("click", function () { window.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "deployment" } })); });
   if (inlineHoldingsSettingsBtn) inlineHoldingsSettingsBtn.addEventListener("click", function () { window.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "accounts" } })); });
-  const dashboardAnchorNav = document.querySelector(".dashboard-anchor-nav");
-  if (dashboardAnchorNav) {
-    dashboardAnchorNav.querySelectorAll("a[href^='#']").forEach(function (link) {
-      link.addEventListener("click", function (event) {
-        const target = document.querySelector(link.getAttribute("href"));
-        if (!target) return;
-        event.preventDefault();
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    });
-    if (window.IntersectionObserver) {
-      const observed = Array.from(dashboardAnchorNav.querySelectorAll("a[href^='#']")).map(function (link) { return document.querySelector(link.getAttribute("href")); }).filter(Boolean);
-      const observer = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (!entry.isIntersecting) return;
-          dashboardAnchorNav.querySelectorAll("a").forEach(function (link) { link.classList.toggle("is-active", link.getAttribute("href") === "#" + entry.target.id); });
-        });
-      }, { rootMargin: "-18% 0px -65% 0px", threshold: 0 });
-      observed.forEach(function (target) { observer.observe(target); });
-    }
-  }
-
   // This dashboard runs on the user's private device, so keep the Finnhub key
   // across browser restarts. Migrate an active session key once for a seamless
   // transition from the previous session-only behavior.
@@ -6043,6 +6021,22 @@ function equalizeAllocations() {
       card.querySelectorAll(".weekly-decision-detail span")[2].textContent = "风控调整 " + formatCurrency(riskAdjustment);
       card.querySelectorAll(".weekly-decision-detail span")[3].textContent = "SPY 重定向 " + formatCurrency(redirected);
       card.querySelector(".weekly-decision-detail p").textContent = coreSatelliteReason(row) + "；安全门禁状态：" + (safe ? "已通过" : "未通过");
+      const execution = executionSummary.statuses[symbol];
+      const detail = card.querySelector(".weekly-decision-detail");
+      detail.prepend(card.querySelector(".weekly-decision-target"));
+      card.querySelector(".weekly-decision-final").textContent = "建议 " + formatCurrency(row.finalAmount);
+      if (execution && Number(row.finalAmount) > 0) card.querySelector(".weekly-decision-status").textContent = execution.executionStatus;
+      const shortReason = document.createElement("p");
+      shortReason.className = "weekly-decision-reason";
+      shortReason.textContent = coreSatelliteReason(row);
+      card.insertBefore(shortReason, card.querySelector("details"));
+      if (execution) {
+        const executionDetail = document.createElement("p");
+        const quote = (window.__SUINVESTMENT_SIGNALS__ || []).find(function (item) { return item.symbol === symbol; });
+        const quantity = execution.executable && quote && quote.latest_price > 0 ? (execution.executableNotionalTrading / quote.latest_price).toFixed(6) : "待核对";
+        executionDetail.textContent = "可执行数量 " + quantity + "；FX 估算 " + Number(execution.estimatedFxFee || 0).toFixed(2) + " " + execution.planningCurrency + "；" + (execution.executionStatus || "等待账户核对");
+        detail.appendChild(executionDetail);
+      }
       weeklyDecisionRowsEl.appendChild(card);
     });
     const cash = document.createElement("article");
@@ -6121,23 +6115,26 @@ function equalizeAllocations() {
         : "人工录入用于本周计划核对；不会连接券商或自动执行";
     }
 
-    const pnlSummary = model.summary.positionCount === 0 ? "--" : model.summary.pnlComplete ? formatCurrency(model.summary.unrealizedPnl) : "成本待补齐";
+    const pnlSummary = model.summary.positionCount === 0 ? "未知" : model.summary.pnlComplete ? formatCurrency(model.summary.unrealizedPnl) : "成本待补齐";
     inlineHoldingsStatsEl.innerHTML = "";
+    const extraStats = document.getElementById("inlineHoldingsExtraStats");
+    extraStats.replaceChildren();
+    const valuesKnown = model.rows.length > 0 || model.meta.status === "ready";
     [
-      ["计划内持仓市值", formatCurrency(model.summary.stockValue)],
-      ["计划总资产", formatCurrency(model.summary.totalValue)],
-      ["可用现金", model.summary.cashProvided ? formatCurrency(model.summary.availableCash) : "未填写"],
+      ["计划内证券市值", valuesKnown ? formatCurrency(model.summary.stockValue) : "未知"],
+      ["可用现金", model.summary.cashProvided ? formatCurrency(model.summary.availableCash) : "未知"],
       ["计划内浮盈亏", pnlSummary],
-      ["股票仓位", model.summary.equityExposure === null ? "--" : model.summary.equityExposure.toFixed(2) + "%"],
-      ["持仓明细数", String(model.summary.positionCount)]
-    ].forEach(function (item) {
+      ["计划总资产", valuesKnown && model.summary.cashProvided ? formatCurrency(model.summary.totalValue) : "未知"],
+      ["股票仓位", valuesKnown && model.summary.equityExposure !== null ? model.summary.equityExposure.toFixed(2) + "%" : "未知"],
+      ["持仓明细数", valuesKnown ? String(model.summary.positionCount) : "未知"]
+    ].forEach(function (item, index) {
       const metric = document.createElement("div");
       const label = document.createElement("span");
       const value = document.createElement("strong");
       label.textContent = item[0];
       value.textContent = item[1];
       metric.append(label, value);
-      inlineHoldingsStatsEl.appendChild(metric);
+      (index < 3 ? inlineHoldingsStatsEl : extraStats).appendChild(metric);
     });
 
     inlineHoldingsRowsEl.innerHTML = "";
@@ -6199,6 +6196,14 @@ function equalizeAllocations() {
         "<footer class=\"inline-holding-row-meta\"><span>账户：" + escapeHtml(holding.accountLabel) + "</span><span>持仓数据：" + escapeHtml(formatHoldingTimestamp(holding.dataAsOf)) + "</span>" + (holding.planned ? "" : "<span>仅展示，不进入本周定投算法</span>") + "</footer>";
       const bar = row.querySelector(".inline-holding-allocation-track span");
       if (bar) bar.style.width = holding.currentAllocation === null ? "0%" : Math.max(0, Math.min(100, holding.currentAllocation)) + "%";
+      const expanded = document.createElement("details");
+      expanded.innerHTML = "<summary>数量、成本与来源</summary>";
+      const compact = document.createElement("div");
+      compact.className = "inline-holding-compact";
+      const metrics = row.querySelector(".inline-holding-metrics");
+      Array.from(metrics.children).slice(4).forEach(function (metric) { compact.appendChild(metric); });
+      expanded.append(metrics, row.querySelector(".inline-holding-allocation"), row.querySelector(".inline-holding-row-meta"));
+      row.append(compact, expanded);
       inlineHoldingsRowsEl.appendChild(row);
     });
   }

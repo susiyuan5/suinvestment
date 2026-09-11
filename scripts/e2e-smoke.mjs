@@ -62,7 +62,7 @@ async function main() {
   await waitForDashboard(page);
   assert.equal((await page.title()).length > 0, true, "homepage title should be present");
   assert.equal(await page.locator("#decisionSummary").isVisible(), true, "decision summary should be visible");
-  assert.equal((await page.locator("#decision-summary-title").textContent()).trim(), "本周资金与定投决策", "weekly funding and DCA must use one merged heading");
+  assert.equal((await page.locator("#decision-summary-title").textContent()).trim(), "本周操作", "weekly funding and DCA must use one merged heading");
   assert.equal((await page.locator("#holdings-title").textContent()).trim(), "个股信号与持仓", "stock signals must not recreate a second weekly decision heading");
   assert.equal(await page.getByText("本周定投决策", { exact: true }).count(), 0, "legacy standalone weekly decision heading must be absent");
   assert.equal(await page.getByText("本周资金计划", { exact: true }).count(), 0, "legacy standalone weekly funding heading must be absent");
@@ -115,6 +115,7 @@ async function main() {
     ]));
   });
   await page.reload({ waitUntil: "domcontentloaded" });
+  await page.locator("#weeklyPlanSettings > summary").click();
   await page.locator("#adjustAllocationBtn").click();
   assert.equal(await page.locator("#settingsModal").isVisible(), true, "allocation entry should open settings center");
   assert.equal(await page.locator("#settings-allocation").isVisible(), true, "allocation entry should select allocation category");
@@ -134,7 +135,8 @@ async function main() {
   await page.locator("#cancelSettingsBtn").click();
 
   const watchlist = page.locator("#watchlist");
-  await watchlist.locator(":scope > summary").click();
+  await page.locator("#moreTools > summary").click();
+  await page.locator('a[href="#tools-watchlist"]').click();
   await page.locator("#watchlistCards .ws-card-select").first().waitFor({ state: "visible" });
   const symbols = await page.locator("#watchlistCards .ws-card-select").evaluateAll((buttons) => buttons.map((button) => button.dataset.symbol));
   assert.ok(symbols.length >= 2, "watchlist should expose at least two symbols");
@@ -143,6 +145,8 @@ async function main() {
   assert.ok((await page.locator("#watchlistChartSummary").textContent()).trim().length > 0, "canvas chart should have accessible alternative text");
 
   const decisionBeforeIdea = await page.locator("#decisionSummary").textContent();
+  await page.locator("#moreTools > summary").click();
+  await page.locator('a[href="#tools-research"]').click();
   const ideaPanel = page.locator("#ideaEnginePanel");
   await ideaPanel.locator(":scope > summary").click();
   const ideaCard = ideaPanel.locator(".idea-engine-card").first();
@@ -240,7 +244,8 @@ async function main() {
   const mobile = await mobileContext.newPage();
   await waitForDashboard(mobile);
   assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), true, "mobile page should not overflow horizontally");
-  await mobile.locator("#watchlist > summary").click();
+  await mobile.locator("#moreTools > summary").click();
+  await mobile.locator('a[href="#tools-watchlist"]').click();
   await mobile.locator("#watchlistCards .ws-card-select").first().click();
   assert.ok((await mobile.locator("#watchlistChartSummary").textContent()).trim().length > 0, "mobile chart alternative should remain available");
   await mobile.close();
