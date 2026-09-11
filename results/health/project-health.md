@@ -1,7 +1,7 @@
 # Project Health
 
 - Status: **BLOCKED**
-- Generated: `2026-09-10T17:13:47.511777+00:00`
+- Generated: `2026-09-11T17:15:50.868233+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
@@ -10,8 +10,8 @@
 
 ## Historical Coverage
 
-- QQQ: 275 rows; latest `2026-09-04`; lag `6` days
-- SPY: 275 rows; latest `2026-09-04`; lag `6` days
+- QQQ: 275 rows; latest `2026-09-04`; lag `7` days
+- SPY: 275 rows; latest `2026-09-04`; lag `7` days
 
 ## Workflows
 
