@@ -4839,6 +4839,7 @@ function equalizeAllocations() {
     window.__SUINVESTMENT_PORTFOLIO_RISK__ = portfolioRisk;
     window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__ = {
       plan: state.coreSatellitePlan || null,
+      panicActive: state.panicActive,
       signals: window.__SUINVESTMENT_SIGNALS__,
       generatedAt: new Date().toISOString()
     };

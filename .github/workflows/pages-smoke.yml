@@ -42,6 +42,8 @@ jobs:
             fi
           done
           exit 1
+      - name: Run independent dip ledger and panel smoke
+        run: node scripts/dip-smoke.mjs
       - name: Run accessibility and mobile audit
         run: |
           for attempt in 1 2 3; do

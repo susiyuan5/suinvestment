@@ -2,6 +2,16 @@
 
 Su Investment Pro is a weekly investment calculator, historical backtesting toolkit, and live market decision-support assistant. It is not an automatic trading bot. It never places real orders, never logs in to a brokerage account, and never submits buy or sell instructions through a broker API.
 
+## Independent dip reserve (2026-09-11)
+
+The “抄底机会” panel adds an independent USD 100 monthly reserve. Total monthly budget is USD 500: existing Normal 300, existing Crash 100, independent Dip 100. The old pools cannot use the new reserve. Suggestions are manual only and do not debit the ledger. Record actual fills to debit; reverse records with an append-only correction. Identical fills (or the same supplied broker fill reference) are deduplicated across tabs.
+
+`dip-strategy.js` is shared by the browser and `npm run backtest:dip`. Completed adjusted weeks, 52-week history, stabilization gates, volatility limits, post-buy weights and fee-inclusive execution caps are enforced. The browser uses the configured default account, reserves existing-plan cash first, and requires explicit fractional eligibility for that account. The six selected US listings require USD security prices. Missing account cash or data blocks execution.
+
+The versioned IndexedDB ledger backfills USD 100 for every month since first activation, freezes each week's allowance at `min(50, reserve × 25%)`, and persists independently of the old ledger. Export it regularly; it does not synchronize across browsers. Actual-fill anomalies remain visible and pause new suggestions. Import validates ledger conservation and cannot remove existing fills. A fresh browser with only automatic setup entries can restore an older backup.
+
+Run `npm run backtest:dip` for the 2021-06-01 through 2026-09-04 USD and constant-CAD scenarios. Isolated warmup is fetched with `python scripts/update_dip_warmup.py`; the replay does not modify live prices or personal records. See [the implementation and backtest report](INDEPENDENT_DIP_REPORT.md) for results, the cold-start weight constraint, and research limitations. Browser validation: set `BASE_URL`, then run `npm run audit:dip` and `npm run audit:pages`.
+
 ## Weekly DCA repair (2026-09-09)
 
 The current manual weekly plan uses Core-Satellite v5: SPY 40%, QQQ 10%, and NVDA/AAPL/ASML/KO 12.5% each (or the owner's validated custom allocation). The previous six-stock reports are historical research, not validation of this live preset.
@@ -49,10 +59,11 @@ Start with [PROJECT_NAVIGATION.md](PROJECT_NAVIGATION.md) for the live dashboard
 
 ## Settings
 
-- Monthly Budget: CAD 400
-- Normal Pool: CAD 300
-- Crash Fund: CAD 100 reserve
-- Weekly Deployment: CAD 75 in four-Tuesday months; CAD 60 in five-Tuesday months
+- Monthly Budget: USD 500 (account/display currency is separate)
+- Normal Pool: USD 300
+- Crash Fund: USD 100 reserve
+- Independent Dip Reserve: USD 100, unlimited carry
+- Weekly Normal Deployment: USD 75 in four-Tuesday months; USD 60 in five-Tuesday months
 - Execution Schedule: Every Tuesday 12:00 PM
 
 ## Allocations

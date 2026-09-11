@@ -154,7 +154,7 @@ function run(payload, options = {}) {
       exclusions: ['historical news and fundamentals overlays', 'manual panic/overrides', 'broker execution restrictions', 'live portfolio overlay history'],
       promotionAllowed: false }, strategies };
 }
-if (require.main === module) {
+if (require.main === module && !process.argv.includes('--dip')) {
   const args = process.argv.slice(2), option = (name, fallback) => args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
   const prices = option('--prices', 'data/v2/backtest-adjusted-daily.json');
   const output = option('--output', 'results/weekly_dca_v1');
@@ -182,4 +182,5 @@ if (require.main === module) {
   console.log(JSON.stringify(summary, null, 2));
   if (!result.valid) process.exitCode = 1;
 }
-module.exports = { run, weeklyRows };
+module.exports = { run, weeklyRows, signal };
+if (require.main === module && process.argv.includes('--dip')) require('./independent-dip-backtest').main();

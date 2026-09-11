@@ -7,6 +7,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://finnhub.io https://www.bankofcanada.ca https://query1.finance.yahoo.com; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <title>量化定投决策台</title>
     <link rel="stylesheet" href="style.css?v=holdings-compact-v1">
+    <link rel="stylesheet" href="dip-panel.css?v=independent-dip-v1">
     <link rel="stylesheet" href="stock-search.css?v=order-row-2">
     <link rel="stylesheet" href="signal-detail.css?v=phase3-i18n-1">
     <link rel="stylesheet" href="watchlist.css?v=accessibility-3">
@@ -38,6 +39,7 @@
 
       <nav class="dashboard-anchor-nav" aria-label="页面导航">
         <a href="#decisionSummary">本周决策</a>
+        <a href="#dipOpportunities">抄底机会</a>
         <a href="#signalsSection">个股信号</a>
         <a href="#inlineHoldingsSection">当前持仓</a>
         <a href="#research-panel">研究</a>
@@ -271,6 +273,36 @@
           </section>
         </aside>
       </main>
+
+    <section id="dipOpportunities" aria-labelledby="dipTitle">
+      <h2 id="dipTitle">抄底机会</h2>
+      <p>每月总预算 500 USD：定投 300 USD · 暴跌备用金 100 USD · 独立抄底储备 100 USD。三个资金池独立，抄底储备无限滚存。预算入账不代表券商实际到账。</p>
+      <p id="dipStatus" role="status">正在读取独立抄底账本</p>
+      <div id="dipSummary" class="dip-summary"></div>
+      <button id="dipRecalculate" type="button">刷新抄底建议</button>
+      <div id="dipRows" class="dip-rows"></div>
+      <details>
+        <summary>记录实际买入与账本</summary>
+        <p>仅记录已经手工成交的独立抄底买入。建议不扣款；请填写实际扣款及费用。超额成交仍会留档并暂停后续建议。时间按当前设备时区输入，账本按纽约日期归周。</p>
+        <form id="dipTradeForm">
+          <label>标的<select name="symbol"><option>SPY</option><option>QQQ</option><option>NVDA</option><option>AAPL</option><option>ASML</option><option>KO</option></select></label>
+          <label>实际数量<input name="quantity" type="number" min="0.000001" step="any" required></label>
+          <label>成交价（USD）<input name="price" type="number" min="0.000001" step="any" required></label>
+          <label>实际账户扣款<input name="debit" type="number" min="0.01" step="0.01" required></label>
+          <label>账户币种<select name="currency"><option>USD</option><option>CAD</option></select></label>
+          <label>实际 FX 费用（账户币种）<input name="fee" type="number" min="0" step="0.01" value="0" required></label>
+          <label>实际 USD/CAD（CAD 账户必填）<input name="fxRate" type="number" min="0.000001" step="any"></label>
+          <label>成交时间<input name="tradeAt" type="datetime-local" step="1" required></label>
+          <label>券商成交编号（可选）<input name="reference" type="text" autocomplete="off"></label>
+          <button type="submit">记录已成交买入</button>
+        </form>
+        <ul id="dipLedgerEntries"></ul>
+        <button id="dipExport" type="button">导出抄底账本</button>
+        <label>恢复抄底账本 JSON<input id="dipImport" type="file" accept="application/json,.json"></label>
+        <p>账本仅存于本浏览器；定期导出备份。冲正只纠正记录，不代表卖出证券，也不会扩大其他周的冻结额度。</p>
+      </details>
+    </section>
+
 
       <section id="inlineHoldingsSection" class="inline-holdings-panel" aria-labelledby="inline-holdings-title">
         <div class="inline-holdings-heading">
@@ -764,5 +796,8 @@
     <script src="settings-center.js?v=usd-planning-v2"></script>
     <script src="snaptrade-holdings-store.js?v=snaptrade-readonly-v2"></script>
     <script src="snaptrade-holdings-view.js?v=usd-planning-v2"></script>
+    <script src="dip-strategy.js?v=independent-dip-v1"></script>
+    <script src="dip-ledger.js?v=independent-dip-v1"></script>
+    <script src="dip-panel.js?v=independent-dip-v1"></script>
   </body>
 </html>
