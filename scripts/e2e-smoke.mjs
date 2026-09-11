@@ -144,7 +144,7 @@ async function main() {
   await page.waitForFunction((symbol) => document.querySelector("#watchlistActiveSymbol")?.textContent === symbol, symbols[1]);
   assert.ok((await page.locator("#watchlistChartSummary").textContent()).trim().length > 0, "canvas chart should have accessible alternative text");
 
-  const decisionBeforeIdea = await page.locator("#decisionSummary").textContent();
+  const decisionBeforeIdea = await page.locator("#weeklyDecisionPlan").textContent();
   await page.locator("#moreTools > summary").click();
   await page.locator('a[href="#tools-research"]').click();
   const ideaPanel = page.locator("#ideaEnginePanel");
@@ -188,7 +188,7 @@ async function main() {
     assert.equal(storedSymbols.filter((symbol) => symbol === addedSymbol.trim()).length, 1, "idea card should add exactly one watchlist entry");
     await addButton.click();
     await page.waitForFunction((element) => element.textContent.includes("已在盯盘列表"), await ideaActionStatus.elementHandle());
-    assert.equal(await page.locator("#decisionSummary").textContent(), decisionBeforeIdea, "idea card interaction must not change weekly decision output");
+    assert.equal(await page.locator("#weeklyDecisionPlan").textContent(), decisionBeforeIdea, "idea card interaction must not change weekly decision output");
   }
 
   const runtimeEvidence = {
