@@ -31,15 +31,16 @@
       rel="stylesheet"
     />
     <link href="settings-center.css?v=settings-center-v2" rel="stylesheet" />
-    <link href="workspace-navigation.css?v=weekly-expanded-v1" rel="stylesheet" />
+    <link
+      href="workspace-navigation.css?v=terminal-layout-v1"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div class="app-shell">
       <header class="hero">
         <div class="hero-brand">
-          <p class="eyebrow">投资工作台</p>
-          <h1>量化定投决策台</h1>
-          <p class="hero-copy">定投与组合风控决策台</p>
+          <h1>投资工作台</h1>
         </div>
         <div aria-label="Dashboard status" class="hero-status">
           <span class="hero-status-label">数据更新时间</span>
@@ -67,11 +68,28 @@
           </button>
         </div>
       </header>
-      <nav aria-label="主导航" class="workspace-nav">
-        <a data-view-link="weekly" href="#weekly">本周操作</a
-        ><a data-view-link="holdings" href="#holdings">持仓</a
-        ><a data-view-link="dip" href="#dip">抄底</a>
-      </nav>
+      <aside aria-label="工作台导航" class="workspace-sidebar">
+        <p class="sidebar-label">工作台</p>
+        <nav aria-label="主导航" class="workspace-nav">
+          <a data-view-link="weekly" href="#weekly">本周操作</a
+          ><a data-view-link="holdings" href="#holdings">持仓</a
+          ><a data-view-link="dip" href="#dip">抄底</a>
+        </nav>
+        <div class="sidebar-tools">
+          <p class="sidebar-label">研究工具</p>
+          <nav aria-label="研究工具">
+            <a data-view-link="tools-watchlist" href="#tools-watchlist">盯盘</a
+            ><a data-view-link="tools-research" href="#tools-research"
+              >研究与回测</a
+            ><a data-view-link="tools-data" href="#tools-data">数据质量</a>
+          </nav>
+        </div>
+        <div class="sidebar-note">
+          <span>手动执行</span>
+          <p>核对计划后自行交易</p>
+          <span>三个资金池独立记账</span>
+        </div>
+      </aside>
       <main id="workspaceViews">
         <section
           aria-label="本周操作"
@@ -113,7 +131,6 @@
                 <span>数据截至</span>
                 <strong id="decisionDataAsOf">等待数据</strong>
               </article>
-
               <article class="decision-summary-item decision-summary-action">
                 <span>建议动作</span>
                 <strong id="decisionAction">等待数据</strong>
@@ -122,7 +139,6 @@
                 >
               </article>
             </div>
-
             <div aria-label="三个独立资金池" class="fund-pools">
               <article>
                 <span>定投 · 本周基础预算</span
@@ -147,17 +163,6 @@
                 <h3 id="weeklyDecisionPlanTitle">本周定投清单</h3>
                 <strong id="weeklyDecisionTotal">CAD 0.00</strong>
               </div>
-
-              <p class="weekly-decision-safety" id="weeklyDecisionSafety">
-                等待数据或计算安全检查。
-              </p>
-              <a class="data-help-link" href="#tools-data">检查数据问题</a>
-              <div
-                aria-live="polite"
-                class="weekly-decision-rows"
-                id="weeklyDecisionRows"
-              ></div>
-              <p class="status-line" id="copyStatus" role="status"></p>
               <div class="weekly-decision-actions">
                 <button class="primary-button" id="refreshBtn" type="button">
                   刷新并重新检查</button
@@ -181,6 +186,16 @@
                   </button>
                 </details>
               </div>
+              <p class="weekly-decision-safety" id="weeklyDecisionSafety">
+                等待数据或计算安全检查。
+              </p>
+              <a class="data-help-link" href="#tools-data">检查数据问题</a>
+              <div
+                aria-live="polite"
+                class="weekly-decision-rows"
+                id="weeklyDecisionRows"
+              ></div>
+              <p class="status-line" id="copyStatus" role="status"></p>
             </section>
           </section>
           <details class="panel compact-details" id="weeklyCalculationDetails">
@@ -640,7 +655,6 @@
                 </button>
               </div>
             </div>
-
             <div
               aria-live="polite"
               class="inline-holdings-stats"
@@ -1063,7 +1077,6 @@
               DCA-L2
               保留基础定投，仅加入已验证的回撤或备用金金额，再应用组合风控。买入前必须由用户人工决定。
             </p>
-
             <div
               aria-live="polite"
               class="dca-preview-rows"
@@ -1499,7 +1512,6 @@
           </details>
         </section>
       </main>
-
       <div aria-hidden="true" class="visually-hidden" id="coreSatelliteSummary">
         <span id="coreSatellitePresetVersion"></span
         ><span id="coreTargetAllocation"></span
@@ -1509,7 +1521,6 @@
         ><span id="coreSatelliteStatus"></span
         ><span id="coreSatelliteRebalanceNotice"></span>
       </div>
-
       <main class="dashboard-layout" hidden="">
         <div class="main-column"></div>
         <aside aria-label="当前持仓与人工计划" class="dashboard-sidebar">
@@ -1529,7 +1540,6 @@
           </section>
         </aside>
       </main>
-
       <details
         aria-labelledby="allocationEditorTitle"
         class="panel allocation-editor"

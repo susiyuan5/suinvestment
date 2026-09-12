@@ -2,6 +2,7 @@
 #workspaceViews [hidden] {
   display: none !important;
 }
+
 .workspace-nav {
   display: flex;
   gap: 8px;
@@ -253,5 +254,461 @@
   #inlineHoldingsStats,
   #inlineHoldingsExtraStats {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Terminal workspace: persistent navigation and independent data panels. */
+body {
+  background: #0b0e15;
+}
+.app-shell {
+  width: 100%;
+  max-width: none;
+  padding: 72px 16px 32px 196px;
+}
+.hero {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 40;
+  height: 56px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: #11151e;
+  border-bottom: 1px solid #29313e;
+}
+.hero .hero-brand {
+  margin: 0;
+  flex: 0 0 auto;
+}
+.hero h1 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  color: var(--accent);
+}
+.hero .hero-status {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  font-size: 11px;
+}
+.hero .hero-status strong {
+  font-size: 12px;
+}
+.hero .hero-tools {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hero .schedule-card {
+  padding: 0 12px;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font-size: 11px;
+}
+.hero .schedule-card strong {
+  font-size: 12px;
+}
+.hero .hero-settings {
+  min-height: 32px;
+  padding: 6px 14px;
+  font-size: 12px;
+}
+.workspace-sidebar {
+  position: fixed;
+  inset: 56px auto 0 0;
+  width: 180px;
+  padding: 22px 12px;
+  background: #11151e;
+  border-right: 1px solid #29313e;
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  overflow-y: auto;
+}
+.sidebar-label {
+  color: #78869b;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  margin: 0 10px 10px;
+}
+.workspace-sidebar .workspace-nav {
+  position: static;
+  display: grid;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  gap: 4px;
+}
+.workspace-sidebar .workspace-nav a,
+.sidebar-tools a {
+  display: block;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 12px;
+  border-radius: 5px;
+  text-decoration: none;
+  color: #b8c3d3;
+}
+.workspace-sidebar a.is-active {
+  color: #eaf3ff;
+  background: #1b283d;
+  box-shadow: inset 3px 0 #599bff;
+}
+.workspace-sidebar a:hover {
+  color: white;
+  background-color: #1a2230;
+}
+.sidebar-tools {
+  border-top: 1px solid #242d3a;
+  margin-top: 24px;
+  padding-top: 20px;
+}
+.sidebar-note {
+  margin-top: auto;
+  padding: 30px 10px 0;
+  font-size: 10px;
+  color: #78869b;
+  line-height: 1.7;
+}
+.sidebar-note > span:first-child {
+  color: var(--accent);
+}
+.sidebar-note p {
+  margin: 3px 0 12px;
+}
+#workspaceViews {
+  min-width: 0;
+}
+#view-weekly #decisionSummary {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 220px;
+  grid-template-areas: "heading heading heading" "state orders funds";
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+#decisionSummary > .decision-summary-heading {
+  grid-area: heading;
+  margin: 0;
+  padding: 0 0 12px;
+  border-bottom: 1px solid #29313e;
+}
+#decisionSummary .decision-summary-heading .eyebrow {
+  display: none;
+}
+#decisionSummary .decision-summary-heading h2 {
+  font-size: 18px;
+}
+#decisionSummary > .decision-summary-grid {
+  grid-area: state;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  padding: 0;
+  gap: 0;
+  margin: 0;
+  border: 1px solid #29384b;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #111721;
+}
+#decisionSummary .decision-summary-item {
+  border: 0;
+  border-bottom: 1px solid #29313e;
+  border-radius: 0;
+  padding: 14px;
+  background: none;
+  min-height: 0;
+}
+#decisionSummary .decision-summary-item:last-child {
+  border-bottom: 0;
+}
+#decisionSummary .decision-summary-item > span {
+  font-size: 11px;
+}
+#decisionSummary .decision-summary-item > strong {
+  font-size: 17px;
+}
+#decisionSummary .decision-summary-item small {
+  font-size: 12px;
+  line-height: 1.7;
+}
+#decisionSummary > .fund-pools {
+  grid-area: funds;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  align-self: start;
+  background: #111721;
+  border: 1px solid #29384b;
+  border-radius: 7px;
+  overflow: hidden;
+}
+#decisionSummary .fund-pools article {
+  padding: 16px 14px;
+  border-radius: 0;
+  border-bottom: 1px solid #29313e;
+  background: none;
+}
+#decisionSummary .fund-pools article:last-child {
+  border-bottom: 0;
+}
+#decisionSummary .fund-pools span {
+  font-size: 11px;
+}
+#decisionSummary .fund-pools strong {
+  font-size: 21px;
+  font-variant-numeric: tabular-nums;
+}
+#decisionSummary .fund-pools a {
+  font-size: 12px;
+}
+#decisionSummary > #weeklyDecisionPlan {
+  grid-area: orders;
+  margin: 0;
+  padding: 14px;
+  min-width: 0;
+  border: 1px solid #29384b;
+  border-radius: 7px;
+  background: #111721;
+}
+#weeklyDecisionPlan .weekly-decision-heading {
+  margin: 0 0 10px;
+}
+#weeklyDecisionPlan h3 {
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+#weeklyDecisionPlan .weekly-decision-actions {
+  margin: 0 0 12px;
+  gap: 6px;
+  align-items: start;
+}
+#weeklyDecisionPlan .weekly-decision-actions button {
+  font-size: 11px;
+  min-height: 32px;
+  padding: 7px 10px;
+}
+#weeklyDecisionPlan #weeklyPlanSettings {
+  font-size: 11px;
+}
+#weeklyDecisionPlan #weeklyPlanSettings > summary {
+  padding: 7px 0;
+}
+#weeklyDecisionPlan .weekly-decision-safety {
+  font-size: 12px;
+  line-height: 1.65;
+  margin: 8px 0;
+}
+#weeklyDecisionPlan .data-help-link {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: 11px;
+}
+#weeklyDecisionRows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+#weeklyDecisionRows .weekly-decision-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  border: 1px solid #28374a;
+  border-radius: 5px;
+  padding: 12px;
+  gap: 7px;
+  background: #141c29;
+  min-width: 0;
+}
+#weeklyDecisionRows .weekly-decision-row > strong {
+  font-size: 14px;
+  color: #7db1ff;
+}
+#weeklyDecisionRows .weekly-decision-final {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+#weeklyDecisionRows .weekly-decision-status {
+  grid-column: 1/-1;
+  font-size: 11px;
+}
+#weeklyDecisionRows .weekly-decision-reason {
+  font-size: 11px;
+  line-height: 1.6;
+}
+#weeklyDecisionRows .weekly-decision-detail {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
+  padding-top: 8px;
+  margin: 0;
+  border-top: 1px solid #28374a;
+  font-size: 11px;
+  line-height: 1.6;
+}
+#weeklyDecisionRows .weekly-decision-detail p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+#view-weekly > .compact-details {
+  background: #111721;
+  border: 1px solid #29313e;
+  border-radius: 6px;
+  margin: 12px 0;
+  padding: 12px 16px;
+}
+#view-weekly > .compact-details > summary {
+  font-size: 12px;
+  min-height: 24px;
+}
+@media (max-width: 1279px) and (min-width: 761px) {
+  #view-weekly #decisionSummary {
+    grid-template-columns: 200px minmax(0, 1fr);
+    grid-template-areas: "heading heading" "state orders" "funds orders";
+    align-items: start;
+  }
+  #weeklyDecisionRows {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .app-shell {
+    padding: 118px 10px 24px;
+  }
+  .hero {
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .hero h1 {
+    font-size: 16px;
+  }
+  .hero .hero-status,
+  .hero .schedule-card {
+    display: none;
+  }
+  .hero .hero-tools {
+    gap: 6px;
+  }
+  .workspace-sidebar {
+    inset: 56px 0 auto;
+    width: auto;
+    padding: 6px 10px;
+    border-right: 0;
+    border-bottom: 1px solid #29313e;
+  }
+  .workspace-sidebar > .sidebar-label,
+  .sidebar-tools,
+  .sidebar-note {
+    display: none;
+  }
+  .workspace-sidebar .workspace-nav {
+    display: flex;
+    gap: 4px;
+  }
+  .workspace-sidebar .workspace-nav a {
+    text-align: center;
+    padding: 10px 4px;
+    font-size: 13px;
+  }
+  .workspace-sidebar a.is-active {
+    box-shadow: inset 0 -2px #599bff;
+  }
+  #view-weekly #decisionSummary {
+    grid-template-columns: 1fr;
+    grid-template-areas: "heading" "state" "funds" "orders";
+    gap: 10px;
+  }
+  #decisionSummary > .decision-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  #decisionSummary .decision-summary-action {
+    grid-column: 1/-1;
+  }
+  #decisionSummary > .fund-pools {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  #decisionSummary .fund-pools article {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    padding: 10px 12px;
+  }
+  #weeklyDecisionRows {
+    grid-template-columns: 1fr;
+  }
+  #workspaceViews h2,
+  #workspaceViews details {
+    scroll-margin-top: 120px;
+  }
+}
+
+/* Override legacy header sizing and compact-summary suppression. */
+.hero {
+  min-height: 56px;
+}
+.hero::after {
+  display: none;
+}
+#decisionSummary .decision-summary-grid .decision-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#weeklyDecisionRows .weekly-decision-detail {
+  padding: 8px 0 0;
+  border-radius: 0;
+  background: none;
+}
+#weeklyDecisionRows .weekly-decision-detail span,
+#weeklyDecisionRows .weekly-decision-detail p {
+  font-size: 11px;
+}
+
+.hero .hero-tools {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+.hero .more-tools > summary {
+  min-height: 32px;
+  padding: 7px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .hero .hero-brand {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .hero h1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .hero .hero-tools {
+    margin-left: 0;
+  }
+  .hero .hero-settings {
+    padding: 6px 8px;
+  }
+  .workspace-sidebar .workspace-nav a {
+    font-size: 12px;
+    white-space: nowrap;
   }
 }

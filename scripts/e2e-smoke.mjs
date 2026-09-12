@@ -136,7 +136,7 @@ async function main() {
 
   const watchlist = page.locator("#watchlist");
   await page.locator("#moreTools > summary").click();
-  await page.locator('a[href="#tools-watchlist"]').click();
+  await page.locator('#moreTools a[href="#tools-watchlist"]').click();
   await page.locator("#watchlistCards .ws-card-select").first().waitFor({ state: "visible" });
   const symbols = await page.locator("#watchlistCards .ws-card-select").evaluateAll((buttons) => buttons.map((button) => button.dataset.symbol));
   assert.ok(symbols.length >= 2, "watchlist should expose at least two symbols");
@@ -146,7 +146,7 @@ async function main() {
 
   const decisionBeforeIdea = await page.locator("#weeklyDecisionPlan").textContent();
   await page.locator("#moreTools > summary").click();
-  await page.locator('a[href="#tools-research"]').click();
+  await page.locator('#moreTools a[href="#tools-research"]').click();
   const ideaPanel = page.locator("#ideaEnginePanel");
   await ideaPanel.locator(":scope > summary").click();
   const ideaCard = ideaPanel.locator(".idea-engine-card").first();
@@ -245,7 +245,7 @@ async function main() {
   await waitForDashboard(mobile);
   assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), true, "mobile page should not overflow horizontally");
   await mobile.locator("#moreTools > summary").click();
-  await mobile.locator('a[href="#tools-watchlist"]').click();
+  await mobile.locator('#moreTools a[href="#tools-watchlist"]').click();
   await mobile.locator("#watchlistCards .ws-card-select").first().click();
   assert.ok((await mobile.locator("#watchlistChartSummary").textContent()).trim().length > 0, "mobile chart alternative should remain available");
   await mobile.close();

@@ -22,13 +22,56 @@ try {
       .locator("[data-workspace-view]:visible")
       .evaluateAll((x) => x.map((e) => e.dataset.workspaceView));
   assert.deepEqual(await visible(), ["weekly"]);
-  await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async text => { window.copiedPlan = text; } } }));
+  const panels = await page.evaluate(() => {
+    const rect = (selector) =>
+      document.querySelector(selector).getBoundingClientRect().toJSON();
+    return {
+      nav: rect(".workspace-sidebar"),
+      state: rect(".decision-summary-grid"),
+      orders: rect("#weeklyDecisionPlan"),
+      funds: rect(".fund-pools"),
+    };
+  });
+  assert.ok(
+    panels.nav.right <= panels.state.left,
+    "desktop navigation stays left of data",
+  );
+  assert.ok(
+    panels.state.right <= panels.orders.left &&
+      panels.orders.right <= panels.funds.left,
+    "weekly panels use three separate columns",
+  );
+  assert.equal(
+    await page
+      .locator("#weeklyDecisionRows .weekly-decision-detail:visible")
+      .count(),
+    6,
+    "all six order details are visible without expanding",
+  );
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text) => {
+          window.copiedPlan = text;
+        },
+      },
+    }),
+  );
   if (await page.locator("#copyBtn").isEnabled()) {
     await page.locator("#copyBtn").click();
-    await page.waitForFunction(() => document.querySelector("#copyStatus").textContent.length > 0);
-    assert.equal(await page.evaluate(() => window.copiedPlan), await page.locator("#orderText").textContent());
+    await page.waitForFunction(
+      () => document.querySelector("#copyStatus").textContent.length > 0,
+    );
+    assert.equal(
+      await page.evaluate(() => window.copiedPlan),
+      await page.locator("#orderText").textContent(),
+    );
   } else {
-    assert.match(await page.locator("#weeklyDecisionSafety").textContent(), /暂停|核对|检查/);
+    assert.match(
+      await page.locator("#weeklyDecisionSafety").textContent(),
+      /暂停|核对|检查/,
+    );
   }
   assert.equal(await page.locator("#copyStatus").isVisible(), true);
   const book = () =>
