@@ -1,7 +1,7 @@
 # Project Health
 
 - Status: **BLOCKED**
-- Generated: `2026-09-11T17:15:50.868233+00:00`
+- Generated: `2026-09-12T16:30:09.874771+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
@@ -10,8 +10,8 @@
 
 ## Historical Coverage
 
-- QQQ: 275 rows; latest `2026-09-04`; lag `7` days
-- SPY: 275 rows; latest `2026-09-04`; lag `7` days
+- QQQ: 276 rows; latest `2026-09-11`; lag `1` days
+- SPY: 276 rows; latest `2026-09-11`; lag `1` days
 
 ## Workflows
 
@@ -53,8 +53,8 @@
 ## Research Pipeline
 
 - DCA-L2 v2 valid: `True`
-- Schedule events: `274`
-- Executed trades: `4932`
+- Schedule events: `275`
+- Executed trades: `4950`
 - Scope: `research_only`
 
 ## Idea Engine
