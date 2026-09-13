@@ -1,12 +1,12 @@
 # Project Health
 
-- Status: **BLOCKED**
-- Generated: `2026-09-13T17:03:56.523159+00:00`
+- Status: **HEALTHY**
+- Generated: `2026-09-13T23:52:20.217087+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
-- `market_snapshot_stale`
+- `none`
 
 ## Historical Coverage
 

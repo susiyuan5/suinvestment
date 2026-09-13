@@ -43,5 +43,18 @@
     return Date.parse(parsedDate + "T16:00:00Z") - offsetMinutes * 60000;
   }
 
-  return Object.freeze({ freshness, fieldMeta, dailyCloseTimestamp });
+  function isWeekendClose(timestamp, nowMs = Date.now()) {
+    if (!Number.isFinite(timestamp) || timestamp > nowMs) return false;
+    const parts = value => Object.fromEntries(new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23'
+    }).formatToParts(new Date(value)).map(p => [p.type, p.value]));
+    const now = parts(nowMs), quote = parts(timestamp);
+    const day = Date.UTC(+now.year, +now.month - 1, +now.day);
+    const weekday = new Date(day).getUTCDay();
+    if (weekday !== 0 && weekday !== 6) return false;
+    const friday = day - (weekday === 6 ? 1 : 2) * 86400000;
+    return Date.UTC(+quote.year, +quote.month - 1, +quote.day) === friday && +quote.hour >= 16;
+  }
+
+  return Object.freeze({ freshness, fieldMeta, dailyCloseTimestamp, isWeekendClose });
 });

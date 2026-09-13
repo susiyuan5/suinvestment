@@ -115,7 +115,7 @@ def fetch_best_snapshot(
         source_name = getattr(provider, "source_name", provider.__name__)
         try:
             candidate = validate_snapshot(provider(symbol), now=current_time)
-            if candidate["validationStatus"] == "validated":
+            if candidate["validationStatus"] in {"validated", "market_closed_last_close"}:
                 return candidate, errors
             stale_candidates.append(candidate)
             errors.append(f"{source_name}: {candidate['validationReason']}")
@@ -144,6 +144,7 @@ def fetch_best_snapshot(
 def fetch_yahoo_daily(symbol: str) -> dict:
     encoded = urllib.parse.quote(symbol.upper())
     errors = []
+    candidates = []
     for host in ("query1.finance.yahoo.com", "query2.finance.yahoo.com"):
         url = f"https://{host}/v8/finance/chart/{encoded}?range=1mo&interval=1d"
         try:
@@ -163,7 +164,7 @@ def fetch_yahoo_daily(symbol: str) -> dict:
             regular_market_price = (result.get("meta") or {}).get("regularMarketPrice")
             regular_market_time = (result.get("meta") or {}).get("regularMarketTime")
             market_state = (result.get("meta") or {}).get("marketState")
-            return build_snapshot(
+            snapshot = build_snapshot(
                 symbol,
                 points,
                 source="Yahoo Finance Chart API",
@@ -173,8 +174,13 @@ def fetch_yahoo_daily(symbol: str) -> dict:
                 regular_market_time=regular_market_time,
                 market_state=market_state,
             )
+            candidates.append(snapshot)
+            if validate_snapshot(snapshot)["validationStatus"] in {"validated", "market_closed_last_close"}:
+                return snapshot
         except Exception as error:
             errors.append(f"{host}: {error}")
+    if candidates:
+        return max(candidates, key=lambda item: parse_timestamp(item["quoteTimestamp"]))
     raise RuntimeError(" | ".join(errors))
 
 
@@ -301,12 +307,21 @@ def validate_snapshot(snapshot: dict, *, now: datetime | None = None) -> dict:
         move_pct is not None and move_pct > 40 and snapshot.get("trustedSource") is not True
     )
     stale = age_hours > MAX_FRESH_AGE_HOURS
-    market_closed = str(snapshot.get("marketState") or "").upper() == "CLOSED"
+    eastern = ZoneInfo("America/New_York")
+    local_now = current_time.astimezone(eastern)
+    local_quote = quote_time.astimezone(eastern)
+    weekend_close = (
+        local_now.weekday() in {5, 6}
+        and local_quote.date() == local_now.date() - timedelta(days=local_now.weekday() - 4)
+        and local_quote.hour >= 16
+        and snapshot.get("trustedSource") is True
+    )
+    market_closed = str(snapshot.get("marketState") or "").upper() == "CLOSED" or weekend_close
     if implausible_move:
         status, reason = "manual_review", "Implausible price move requires manual review"
     elif untrusted_large_move:
         status, reason = "manual_review", "Large move from an untrusted source requires manual review"
-    elif stale and market_closed and age_hours <= MAX_MARKET_CLOSED_AGE_HOURS:
+    elif (weekend_close or (stale and market_closed)) and age_hours <= MAX_MARKET_CLOSED_AGE_HOURS:
         status, reason = "market_closed_last_close", "Latest official close retained while the market is closed"
     elif stale:
         status, reason = "stale", f"Quote age {age_hours}h exceeds 24h"
@@ -414,7 +429,7 @@ def unavailable_snapshot(symbol: str, errors: list[str], *, now: datetime | None
 
 def summarize_snapshot(result: dict) -> dict:
     items = list(result.get("symbols", {}).values())
-    fresh = [item for item in items if item.get("validationStatus") == "validated"]
+    fresh = [item for item in items if item.get("validationStatus") in {"validated", "market_closed_last_close"}]
     counts: dict[str, int] = {}
     for item in items:
         source = item.get("source") or "Unknown"
@@ -425,7 +440,7 @@ def summarize_snapshot(result: dict) -> dict:
         "staleSymbols": len(items) - len(fresh),
         "freshSymbolNames": [item.get("symbol") for item in fresh],
         "staleSymbolNames": [
-            item.get("symbol") for item in items if item.get("validationStatus") != "validated"
+            item.get("symbol") for item in items if item.get("validationStatus") not in {"validated", "market_closed_last_close"}
         ],
         "sourceCounts": counts,
     }

@@ -2164,11 +2164,13 @@ amountBreakdown: "金额分解",
       : (item.quoteTimestamp ? Date.parse(item.quoteTimestamp) : null);
     const fetchTimestamp = item.fetchTimestamp ? Date.parse(item.fetchTimestamp) : generatedAt;
     const sourceTimestamp = Number.isFinite(quoteTimestamp) ? quoteTimestamp : fetchTimestamp;
-    const validationStatus = item.validationStatus || (item.stale ? "stale" : "weekly");
+    let validationStatus = item.validationStatus || (item.stale ? "stale" : "weekly");
+    if (["validated", "market_closed_last_close"].includes(validationStatus) && item.trustedSource === true && window.MarketData.isWeekendClose(sourceTimestamp)) validationStatus = "market_closed_last_close";
+    else if (validationStatus === "market_closed_last_close" && Date.now() - sourceTimestamp > CONFIG.cacheHours * 3600000) validationStatus = "stale";
     const freshnessOptions = {
       stale: item.stale === true || (validationStatus !== "validated" && validationStatus !== "market_closed_last_close"),
       staleReason: item.staleReason || "",
-      maxAgeHours: CONFIG.cacheHours
+      maxAgeHours: validationStatus === "market_closed_last_close" ? 96 : CONFIG.cacheHours
     };
     const sourceName = item.source || "Weekly";
     const weeklyMeta = createFieldMeta(sourceName, sourceTimestamp, freshnessOptions);
@@ -3290,7 +3292,7 @@ el.querySelector(".explanation-reason").textContent = reasons.join(" ");
 
   function getDataFreshness(row, dataAgeHours) {
     if (!row || row.source === "Unavailable") return "missing";
-    if (row.market_closed_last_close === true) return "market_closed";
+    if (row.market_closed_last_close === true) return window.MarketData.isWeekendClose(row.fetchedAt) || (isFiniteNumber(dataAgeHours) && dataAgeHours <= CONFIG.cacheHours) ? "market_closed" : "stale";
     if (row.source_validation_status && row.source_validation_status !== "validated") return "stale";
     if (row.source === "Manual") {
       if (!Number.isFinite(row.override_applied_at)) return "stale";
@@ -5852,7 +5854,7 @@ function equalizeAllocations() {
     if (overviewPlannedBuyTotalEl) overviewPlannedBuyTotalEl.textContent = formatCurrency(portfolioRisk.total_planned_buy_amount);
     if (overviewOverallRiskEl) {
       const blockedByData = state.coreSatellitePlan && state.coreSatellitePlan.safe === false;
-      const riskReason = blockedByData ? "行情数据缺失或已过期" : (portfolioRisk.risk_warnings && portfolioRisk.risk_warnings.length ? "持仓集中度超限" : "组合风险门禁");
+      const riskReason = blockedByData ? ((window.__SUINVESTMENT_SIGNALS__ || []).some(function (signal) { return signal.data_freshness === "market_closed"; }) ? "休市收盘数据，等待开市核对" : "行情数据缺失或已过期") : (portfolioRisk.risk_warnings && portfolioRisk.risk_warnings.length ? "持仓集中度超限" : "组合风险门禁");
       overviewOverallRiskEl.textContent = blockedByData ? "极高：" + riskReason : displayRiskLevel(portfolioRisk.portfolio_risk_level) + "：" + riskReason;
       overviewOverallRiskEl.className = "risk-" + String(portfolioRisk.portfolio_risk_level || "").toLowerCase();
     }
@@ -6479,6 +6481,7 @@ function equalizeAllocations() {
     const rows = Array.isArray(signals) ? signals : [];
     if (!state.dataQualityEvaluated) return ["MARKET_DATA_NOT_EVALUATED"];
     if (rows.some(function (signal) { return signal.data_freshness === "stale" || signal.data_freshness === "missing" || signal.data_source === "Unavailable"; })) reasons.push("MARKET_SNAPSHOT_STALE");
+    if (rows.some(function (signal) { return signal.data_freshness === "market_closed"; })) reasons.push("MARKET_CLOSED");
     if (portfolioRisk && portfolioRisk.available_cash_provided && portfolioRisk.available_cash <= 0) reasons.push("AVAILABLE_CASH_ZERO");
     const expected = CoreSatellitePolicy.rowsForPreset(activeCoreSatellitePreset() || CoreSatellitePolicy.PRESET).map(function (row) { return row.symbol; });
     const active = activeCoreSatellitePreset();
@@ -6499,6 +6502,7 @@ function equalizeAllocations() {
     const details = {
       MARKET_DATA_NOT_EVALUATED: "数据质量尚未完成检查",
       MARKET_SNAPSHOT_STALE: "行情快照过期或不可用" + (stale && (stale.quote_timestamp || stale.fetchedAt) ? "（快照时间 " + formatDateTime(stale.quote_timestamp || stale.fetchedAt) + "，年龄 " + (stale.data_age_hours == null ? "未知" : Number(stale.data_age_hours).toFixed(2) + " 小时") + "）" : ""),
+      MARKET_CLOSED: "市场休市，当前为最近收盘价；按现有规则暂停买入，开市后刷新核对",
       AVAILABLE_CASH_ZERO: "可用现金明确为 0",
       CORE_SATELLITE_INCOMPLETE: "核心/卫星组合缺少必要标的",
       TARGET_ALLOCATION_INVALID: "目标比例无效",

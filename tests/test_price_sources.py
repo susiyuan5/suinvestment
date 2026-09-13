@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 from datetime import date, datetime, timezone
 
 from scripts import price_sources
@@ -25,6 +26,35 @@ def candidate(**overrides):
 
 
 class PriceSourceValidationTests(unittest.TestCase):
+    def test_weekend_accepts_only_latest_friday_close_without_market_state(self):
+        now = datetime(2026, 9, 13, 18, tzinfo=timezone.utc)
+        for timestamp, status in [("2026-09-11T20:00:00Z", "market_closed_last_close"),
+                                  ("2026-09-10T20:00:00Z", "stale"),
+                                  ("2026-09-11T13:30:00Z", "stale")]:
+            result = price_sources.validate_snapshot(candidate(quoteTimestamp=timestamp), now=now)
+            self.assertEqual(status, result["validationStatus"])
+        result = price_sources.validate_snapshot(candidate(quoteTimestamp="2026-09-11T20:00:00Z"), now=datetime(2026, 9, 14, 18, tzinfo=timezone.utc))
+        self.assertEqual("stale", result["validationStatus"])
+
+    def test_closed_quote_stops_provider_fallback_and_counts_as_usable(self):
+        now = datetime(2026, 9, 13, 18, tzinfo=timezone.utc)
+        def first(symbol):
+            return candidate(quoteTimestamp="2026-09-11T20:00:00Z")
+        def second(symbol):
+            self.fail("Valid Friday close must not require another provider")
+        snapshot, errors = price_sources.fetch_best_snapshot("SPY", None, None, now=now, providers=(first, second))
+        self.assertEqual([], errors)
+        self.assertEqual(1, price_sources.summarize_snapshot({"symbols": {"SPY": snapshot}})["freshSymbols"])
+
+    def test_yahoo_retries_second_host_when_first_is_stale(self):
+        old = candidate(quoteTimestamp="2026-06-18T20:00:00Z")
+        fresh = candidate()
+        payload = {"chart": {"result": [{"timestamp": [], "meta": {}, "indicators": {}}]}}
+        with patch.object(price_sources, "utc_now", return_value=NOW), patch.object(price_sources, "fetch_json", return_value=payload) as fetch, patch.object(price_sources, "build_snapshot", side_effect=[old, fresh]):
+            self.assertEqual(fresh, price_sources.fetch_yahoo_daily("SPY"))
+        self.assertEqual(2, fetch.call_count)
+        self.assertIn("query2", fetch.call_args_list[1].args[0])
+
     def test_daily_close_timestamp_uses_new_york_summer_close(self):
         result = price_sources.latest_close_timestamp(date(2026, 6, 19))
         self.assertEqual("2026-06-19T20:00:00Z", price_sources.isoformat(result))
