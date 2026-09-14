@@ -1,0 +1,1118 @@
+{
+  "schema_version": "short-term-trade-plan-v1.2",
+  "methodology_version": "global-style-short-term-v1.2.0",
+  "generated_at": "2026-08-14T00:06:51.356104+00:00",
+  "as_of": "2026-08-13T22:45:00+00:00",
+  "research_only": true,
+  "no_trade": true,
+  "benchmark": "QQQ",
+  "config_version": "short-term-trade-plan-config-v1.2",
+  "style_fusion": {
+    "version": "global-style-fusion-v1",
+    "principle": "each_style_owns_one_gate_no_blended_probability",
+    "influences": [
+      {
+        "style": "Weinstein-Minervini",
+        "role": "market_and_trend_template"
+      },
+      {
+        "style": "ONeil-CANSLIM",
+        "role": "evidence_and_breakout_volume"
+      },
+      {
+        "style": "Minervini-VCP-Darvas",
+        "role": "contraction_and_price_structure"
+      },
+      {
+        "style": "Turtle-institutional-trend",
+        "role": "atr_risk_and_exit_discipline"
+      }
+    ],
+    "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+  },
+  "historical_oos_status": "preliminary_no_reliable_edge",
+  "shadow_governance": {
+    "status": "not_mature",
+    "observation_count": 1,
+    "calendar_week_count": 1,
+    "complete_count": 0,
+    "primary_complete_count": 0,
+    "manual_review_requirements": {
+      "observation_count": 26,
+      "calendar_week_count": 26,
+      "primary_complete_count": 12
+    },
+    "reliability_requirements": {
+      "observation_count": 52,
+      "calendar_week_count": 52,
+      "primary_complete_count": 26
+    },
+    "manual_review_eligible": false,
+    "reliability_claim_eligible": false,
+    "reason": "短线样本尚未满足人工复核门槛"
+  },
+  "data_validation": {
+    "valid": true,
+    "errors": [],
+    "coverage": {
+      "TSM": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      },
+      "LRCX": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      },
+      "TXN": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      },
+      "ASML": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      },
+      "AMD": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      },
+      "COP": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      },
+      "CVX": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      },
+      "V": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      },
+      "BLK": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      },
+      "MSFT": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      },
+      "QQQ": {
+        "rows": 345,
+        "latest_date": "2026-08-13",
+        "valid": true
+      }
+    },
+    "common_dates": 345
+  },
+  "plans": [
+    {
+      "schema_version": "short-term-trade-plan-v1.2",
+      "ticker": "TSM",
+      "research_only": true,
+      "no_trade": true,
+      "status": "waiting_trigger",
+      "status_label": "趋势模板尚未通过",
+      "reason_codes": [
+        "event_date_unknown",
+        "trend_template_failed",
+        "no_trigger"
+      ],
+      "warnings": [],
+      "signal": null,
+      "execution": {
+        "order_type": "limit",
+        "regular_hours_only": true,
+        "human_review_required": true
+      },
+      "style_fusion": {
+        "version": "global-style-fusion-v1",
+        "principle": "each_style_owns_one_gate_no_blended_probability",
+        "influences": [
+          {
+            "style": "Weinstein-Minervini",
+            "role": "market_and_trend_template"
+          },
+          {
+            "style": "ONeil-CANSLIM",
+            "role": "evidence_and_breakout_volume"
+          },
+          {
+            "style": "Minervini-VCP-Darvas",
+            "role": "contraction_and_price_structure"
+          },
+          {
+            "style": "Turtle-institutional-trend",
+            "role": "atr_risk_and_exit_discipline"
+          }
+        ],
+        "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+      },
+      "historical_oos": {
+        "as_of": "2026-08-13",
+        "current_model": null,
+        "market_regime": "green",
+        "trend_template": false,
+        "vcp_contraction": false,
+        "passed": false,
+        "model_oos": null,
+        "status": "no_current_trigger"
+      },
+      "indicators": {
+        "signal_date": "2026-08-13",
+        "current_close": 430.489990234375,
+        "current_low": 428.3922119140625,
+        "previous_high": 433.2799987792969,
+        "atr14": 14.932700020926339,
+        "sma10": 417.99400024414064,
+        "sma20": 410.73999786376953,
+        "sma50": 425.3688000488281,
+        "sma200": 362.8531498718262,
+        "sma200_slope_20": 11.733899688720726,
+        "ema10": 419.5434032544996,
+        "ema20": 417.2997088945944,
+        "ema50": 416.4756286895668,
+        "prior20_high": 433.2799987792969,
+        "recent10_low": 398.20001220703125,
+        "stock_return_5": 0.029387799303218554,
+        "stock_return_20": 0.050641871661418314,
+        "qqq_return_5": 0.02437554371377626,
+        "qqq_return_20": 0.03701448393977547,
+        "relative_return_5": 0.005012255589442294,
+        "relative_return_20": 0.013627387721642847,
+        "volume_ratio": 0.5698966980855104,
+        "contraction_volume_ratio": 0.7102429531289757,
+        "recent_contraction_range_pct": 0.06198683582995188,
+        "prior_contraction_range_pct": 0.14375398797162664,
+        "distance_sma20_atr": 1.3226002225269569,
+        "distance_prior_high_atr": 0.18683885305484085,
+        "qqq_close": 732.0700073242188,
+        "qqq_sma20": 702.3384979248046,
+        "qqq_sma50": 713.2130017089844,
+        "qqq_sma200": 650.1052996826172,
+        "qqq_sma200_slope_20": 9.747050170898433,
+        "qqq_close_vs_sma20": 29.731509399414108
+      },
+      "event_status": "unknown",
+      "market_regime": {
+        "state": "green",
+        "risk_scale": 1.0,
+        "passed": true
+      },
+      "trigger_models": {
+        "market_regime": {
+          "state": "green",
+          "risk_scale": 1.0,
+          "passed": true
+        },
+        "trend_template": false,
+        "vcp_contraction": false,
+        "volume_breakout": false,
+        "trend_pullback": false,
+        "triggered_model": null
+      }
+    },
+    {
+      "schema_version": "short-term-trade-plan-v1.2",
+      "ticker": "LRCX",
+      "research_only": true,
+      "no_trade": true,
+      "status": "waiting_trigger",
+      "status_label": "趋势模板尚未通过",
+      "reason_codes": [
+        "event_date_unknown",
+        "trend_template_failed",
+        "no_trigger"
+      ],
+      "warnings": [],
+      "signal": null,
+      "execution": {
+        "order_type": "limit",
+        "regular_hours_only": true,
+        "human_review_required": true
+      },
+      "style_fusion": {
+        "version": "global-style-fusion-v1",
+        "principle": "each_style_owns_one_gate_no_blended_probability",
+        "influences": [
+          {
+            "style": "Weinstein-Minervini",
+            "role": "market_and_trend_template"
+          },
+          {
+            "style": "ONeil-CANSLIM",
+            "role": "evidence_and_breakout_volume"
+          },
+          {
+            "style": "Minervini-VCP-Darvas",
+            "role": "contraction_and_price_structure"
+          },
+          {
+            "style": "Turtle-institutional-trend",
+            "role": "atr_risk_and_exit_discipline"
+          }
+        ],
+        "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+      },
+      "historical_oos": {
+        "as_of": "2026-08-13",
+        "current_model": null,
+        "market_regime": "green",
+        "trend_template": false,
+        "vcp_contraction": false,
+        "passed": false,
+        "model_oos": null,
+        "status": "no_current_trigger"
+      },
+      "indicators": {
+        "signal_date": "2026-08-13",
+        "current_close": 337.010009765625,
+        "current_low": 324.010009765625,
+        "previous_high": 329.489990234375,
+        "atr14": 24.22356959751674,
+        "sma10": 311.08399658203126,
+        "sma20": 305.42349700927736,
+        "sma50": 337.69939880371095,
+        "sma200": 248.6799991607666,
+        "sma200_slope_20": 16.34569999694824,
+        "ema10": 314.51157876121687,
+        "ema20": 314.66931013612555,
+        "ema50": 318.48290051024617,
+        "prior20_high": 336.67999267578125,
+        "recent10_low": 276.8399963378906,
+        "stock_return_5": 0.10216836797072415,
+        "stock_return_20": 0.050006289686710836,
+        "qqq_return_5": 0.02437554371377626,
+        "qqq_return_20": 0.03701448393977547,
+        "relative_return_5": 0.07779282425694789,
+        "relative_return_20": 0.01299180574693537,
+        "volume_ratio": 0.8071475839002684,
+        "contraction_volume_ratio": 0.6705989914390864,
+        "recent_contraction_range_pct": 0.12205004966056533,
+        "prior_contraction_range_pct": 0.30091818316492014,
+        "distance_sma20_atr": 1.3039578097352635,
+        "distance_prior_high_atr": -0.01362380092311339,
+        "qqq_close": 732.0700073242188,
+        "qqq_sma20": 702.3384979248046,
+        "qqq_sma50": 713.2130017089844,
+        "qqq_sma200": 650.1052996826172,
+        "qqq_sma200_slope_20": 9.747050170898433,
+        "qqq_close_vs_sma20": 29.731509399414108
+      },
+      "event_status": "unknown",
+      "market_regime": {
+        "state": "green",
+        "risk_scale": 1.0,
+        "passed": true
+      },
+      "trigger_models": {
+        "market_regime": {
+          "state": "green",
+          "risk_scale": 1.0,
+          "passed": true
+        },
+        "trend_template": false,
+        "vcp_contraction": false,
+        "volume_breakout": false,
+        "trend_pullback": false,
+        "triggered_model": null
+      }
+    },
+    {
+      "schema_version": "short-term-trade-plan-v1.2",
+      "ticker": "TXN",
+      "research_only": true,
+      "no_trade": true,
+      "status": "blocked",
+      "status_label": "数据阻断",
+      "reason_codes": [
+        "relative_qqq_gate_failed",
+        "event_date_unknown"
+      ],
+      "warnings": [],
+      "signal": null,
+      "execution": {
+        "order_type": "limit",
+        "regular_hours_only": true,
+        "human_review_required": true
+      },
+      "style_fusion": {
+        "version": "global-style-fusion-v1",
+        "principle": "each_style_owns_one_gate_no_blended_probability",
+        "influences": [
+          {
+            "style": "Weinstein-Minervini",
+            "role": "market_and_trend_template"
+          },
+          {
+            "style": "ONeil-CANSLIM",
+            "role": "evidence_and_breakout_volume"
+          },
+          {
+            "style": "Minervini-VCP-Darvas",
+            "role": "contraction_and_price_structure"
+          },
+          {
+            "style": "Turtle-institutional-trend",
+            "role": "atr_risk_and_exit_discipline"
+          }
+        ],
+        "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+      },
+      "historical_oos": {
+        "as_of": "2026-08-13",
+        "current_model": null,
+        "market_regime": "green",
+        "trend_template": false,
+        "vcp_contraction": false,
+        "passed": false,
+        "model_oos": null,
+        "status": "no_current_trigger"
+      },
+      "indicators": {
+        "signal_date": "2026-08-13",
+        "current_close": 273.42999267578125,
+        "current_low": 272.7799987792969,
+        "previous_high": 289.6199951171875,
+        "atr14": 10.470711844308036,
+        "sma10": 278.2309967041016,
+        "sma20": 280.34999694824216,
+        "sma50": 292.72479736328125,
+        "sma200": 231.2065502166748,
+        "sma200_slope_20": 10.28524955749512,
+        "ema10": 278.7469205163761,
+        "ema20": 281.9848089736456,
+        "ema50": 284.91819102346045,
+        "prior20_high": 297.5899963378906,
+        "recent10_low": 264.739990234375,
+        "stock_return_5": -0.01785201627034194,
+        "stock_return_20": -0.06108786645955544,
+        "qqq_return_5": 0.02437554371377626,
+        "qqq_return_20": 0.03701448393977547,
+        "relative_return_5": -0.0422275599841182,
+        "relative_return_20": -0.0981023503993309,
+        "volume_ratio": 0.6691818583185851,
+        "contraction_volume_ratio": 0.6816098937244736,
+        "recent_contraction_range_pct": 0.06224097414484461,
+        "prior_contraction_range_pct": 0.08910628242074928,
+        "distance_sma20_atr": -0.6608914823897751,
+        "distance_prior_high_atr": 2.3073888405441076,
+        "qqq_close": 732.0700073242188,
+        "qqq_sma20": 702.3384979248046,
+        "qqq_sma50": 713.2130017089844,
+        "qqq_sma200": 650.1052996826172,
+        "qqq_sma200_slope_20": 9.747050170898433,
+        "qqq_close_vs_sma20": 29.731509399414108
+      },
+      "event_status": "unknown",
+      "market_regime": {
+        "state": "green",
+        "risk_scale": 1.0,
+        "passed": true
+      },
+      "trigger_models": {
+        "market_regime": {
+          "state": "green",
+          "risk_scale": 1.0,
+          "passed": true
+        },
+        "trend_template": false,
+        "vcp_contraction": false,
+        "volume_breakout": false,
+        "trend_pullback": false,
+        "triggered_model": null
+      }
+    },
+    {
+      "schema_version": "short-term-trade-plan-v1.2",
+      "ticker": "ASML",
+      "research_only": true,
+      "no_trade": true,
+      "status": "blocked",
+      "status_label": "数据阻断",
+      "reason_codes": [
+        "relative_qqq_gate_failed",
+        "event_date_unknown"
+      ],
+      "warnings": [],
+      "signal": null,
+      "execution": {
+        "order_type": "limit",
+        "regular_hours_only": true,
+        "human_review_required": true
+      },
+      "style_fusion": {
+        "version": "global-style-fusion-v1",
+        "principle": "each_style_owns_one_gate_no_blended_probability",
+        "influences": [
+          {
+            "style": "Weinstein-Minervini",
+            "role": "market_and_trend_template"
+          },
+          {
+            "style": "ONeil-CANSLIM",
+            "role": "evidence_and_breakout_volume"
+          },
+          {
+            "style": "Minervini-VCP-Darvas",
+            "role": "contraction_and_price_structure"
+          },
+          {
+            "style": "Turtle-institutional-trend",
+            "role": "atr_risk_and_exit_discipline"
+          }
+        ],
+        "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+      },
+      "historical_oos": {
+        "as_of": "2026-08-13",
+        "current_model": null,
+        "market_regime": "green",
+        "trend_template": false,
+        "vcp_contraction": false,
+        "passed": false,
+        "model_oos": null,
+        "status": "no_current_trigger"
+      },
+      "indicators": {
+        "signal_date": "2026-08-13",
+        "current_close": 1847.9000244140625,
+        "current_low": 1813.300048828125,
+        "previous_high": 1845.0,
+        "atr14": 79.47823660714286,
+        "sma10": 1729.7819946289062,
+        "sma20": 1719.410986328125,
+        "sma50": 1773.3491943359375,
+        "sma200": 1424.475046081543,
+        "sma200_slope_20": 71.33479797363293,
+        "ema10": 1755.7242676707351,
+        "ema20": 1740.772936668752,
+        "ema50": 1719.058158540608,
+        "prior20_high": 1853.449951171875,
+        "recent10_low": 1582.0,
+        "stock_return_5": 0.08421295241530369,
+        "stock_return_20": 0.03531351273162997,
+        "qqq_return_5": 0.02437554371377626,
+        "qqq_return_20": 0.03701448393977547,
+        "relative_return_5": 0.05983740870152743,
+        "relative_return_20": -0.0017009712081454964,
+        "volume_ratio": 0.7160754314282152,
+        "contraction_volume_ratio": 0.7090647048076951,
+        "recent_contraction_range_pct": 0.10339631732543432,
+        "prior_contraction_range_pct": 0.19138395612474135,
+        "distance_sma20_atr": 1.6166568808144626,
+        "distance_prior_high_atr": 0.06982951553449183,
+        "qqq_close": 732.0700073242188,
+        "qqq_sma20": 702.3384979248046,
+        "qqq_sma50": 713.2130017089844,
+        "qqq_sma200": 650.1052996826172,
+        "qqq_sma200_slope_20": 9.747050170898433,
+        "qqq_close_vs_sma20": 29.731509399414108
+      },
+      "event_status": "unknown",
+      "market_regime": {
+        "state": "green",
+        "risk_scale": 1.0,
+        "passed": true
+      },
+      "trigger_models": {
+        "market_regime": {
+          "state": "green",
+          "risk_scale": 1.0,
+          "passed": true
+        },
+        "trend_template": false,
+        "vcp_contraction": false,
+        "volume_breakout": false,
+        "trend_pullback": false,
+        "triggered_model": null
+      }
+    },
+    {
+      "schema_version": "short-term-trade-plan-v1.2",
+      "ticker": "AMD",
+      "research_only": true,
+      "no_trade": true,
+      "status": "blocked",
+      "status_label": "数据阻断",
+      "reason_codes": [
+        "relative_qqq_gate_failed",
+        "event_date_unknown"
+      ],
+      "warnings": [],
+      "signal": null,
+      "execution": {
+        "order_type": "limit",
+        "regular_hours_only": true,
+        "human_review_required": true
+      },
+      "style_fusion": {
+        "version": "global-style-fusion-v1",
+        "principle": "each_style_owns_one_gate_no_blended_probability",
+        "influences": [
+          {
+            "style": "Weinstein-Minervini",
+            "role": "market_and_trend_template"
+          },
+          {
+            "style": "ONeil-CANSLIM",
+            "role": "evidence_and_breakout_volume"
+          },
+          {
+            "style": "Minervini-VCP-Darvas",
+            "role": "contraction_and_price_structure"
+          },
+          {
+            "style": "Turtle-institutional-trend",
+            "role": "atr_risk_and_exit_discipline"
+          }
+        ],
+        "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+      },
+      "historical_oos": {
+        "as_of": "2026-08-13",
+        "current_model": null,
+        "market_regime": "green",
+        "trend_template": false,
+        "vcp_contraction": false,
+        "passed": false,
+        "model_oos": null,
+        "status": "no_current_trigger"
+      },
+      "indicators": {
+        "signal_date": "2026-08-13",
+        "current_close": 483.010009765625,
+        "current_low": 481.0,
+        "previous_high": 491.69000244140625,
+        "atr14": 34.16500200544085,
+        "sma10": 484.38800048828125,
+        "sma20": 493.30650329589844,
+        "sma50": 510.9628009033203,
+        "sma200": 323.0568002319336,
+        "sma200_slope_20": 28.04260047912601,
+        "ema10": 483.9437189533797,
+        "ema20": 491.9715273338284,
+        "ema50": 485.78466603959356,
+        "prior20_high": 561.469970703125,
+        "recent10_low": 455.29998779296875,
+        "stock_return_5": -0.012814725779338731,
+        "stock_return_20": -0.035792694910361966,
+        "qqq_return_5": 0.02437554371377626,
+        "qqq_return_20": 0.03701448393977547,
+        "relative_return_5": -0.03719026949311499,
+        "relative_return_20": -0.07280717885013743,
+        "volume_ratio": 0.6221103197779032,
+        "contraction_volume_ratio": 0.7360247932202961,
+        "recent_contraction_range_pct": 0.07724358161381932,
+        "prior_contraction_range_pct": 0.31238353851474115,
+        "distance_sma20_atr": -0.30137546980485175,
+        "distance_prior_high_atr": 2.296500990253274,
+        "qqq_close": 732.0700073242188,
+        "qqq_sma20": 702.3384979248046,
+        "qqq_sma50": 713.2130017089844,
+        "qqq_sma200": 650.1052996826172,
+        "qqq_sma200_slope_20": 9.747050170898433,
+        "qqq_close_vs_sma20": 29.731509399414108
+      },
+      "event_status": "unknown",
+      "market_regime": {
+        "state": "green",
+        "risk_scale": 1.0,
+        "passed": true
+      },
+      "trigger_models": {
+        "market_regime": {
+          "state": "green",
+          "risk_scale": 1.0,
+          "passed": true
+        },
+        "trend_template": false,
+        "vcp_contraction": false,
+        "volume_breakout": false,
+        "trend_pullback": false,
+        "triggered_model": null
+      }
+    },
+    {
+      "schema_version": "short-term-trade-plan-v1.2",
+      "ticker": "COP",
+      "research_only": true,
+      "no_trade": true,
+      "status": "waiting_pullback",
+      "status_label": "趋势通过，等待回踩或突破",
+      "reason_codes": [
+        "event_date_unknown",
+        "no_trigger"
+      ],
+      "warnings": [],
+      "signal": null,
+      "execution": {
+        "order_type": "limit",
+        "regular_hours_only": true,
+        "human_review_required": true
+      },
+      "style_fusion": {
+        "version": "global-style-fusion-v1",
+        "principle": "each_style_owns_one_gate_no_blended_probability",
+        "influences": [
+          {
+            "style": "Weinstein-Minervini",
+            "role": "market_and_trend_template"
+          },
+          {
+            "style": "ONeil-CANSLIM",
+            "role": "evidence_and_breakout_volume"
+          },
+          {
+            "style": "Minervini-VCP-Darvas",
+            "role": "contraction_and_price_structure"
+          },
+          {
+            "style": "Turtle-institutional-trend",
+            "role": "atr_risk_and_exit_discipline"
+          }
+        ],
+        "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+      },
+      "historical_oos": {
+        "as_of": "2026-08-13",
+        "current_model": null,
+        "market_regime": "green",
+        "trend_template": true,
+        "vcp_contraction": false,
+        "passed": false,
+        "model_oos": null,
+        "status": "no_current_trigger"
+      },
+      "indicators": {
+        "signal_date": "2026-08-13",
+        "current_close": 124.5199966430664,
+        "current_low": 124.125,
+        "previous_high": 127.33999633789062,
+        "atr14": 3.853215898786272,
+        "sma10": 120.7760009765625,
+        "sma20": 119.083500289917,
+        "sma50": 114.22940017700195,
+        "sma200": 109.23125038146972,
+        "sma200_slope_20": 2.8384000015258692,
+        "ema10": 121.68360498132188,
+        "ema20": 119.10849003140046,
+        "ema50": 116.60094952453757,
+        "prior20_high": 127.33999633789062,
+        "recent10_low": 114.70999908447266,
+        "stock_return_5": 0.06646106855823719,
+        "stock_return_20": 0.10350939989576857,
+        "qqq_return_5": 0.02437554371377626,
+        "qqq_return_20": 0.03701448393977547,
+        "relative_return_5": 0.04208552484446093,
+        "relative_return_20": 0.0664949159559931,
+        "volume_ratio": 0.7256216962115786,
+        "contraction_volume_ratio": 1.1066478759067289,
+        "recent_contraction_range_pct": 0.10836449660007509,
+        "prior_contraction_range_pct": 0.08099989614965933,
+        "distance_sma20_atr": 1.4108984536428013,
+        "distance_prior_high_atr": 0.7318561349527528,
+        "qqq_close": 732.0700073242188,
+        "qqq_sma20": 702.3384979248046,
+        "qqq_sma50": 713.2130017089844,
+        "qqq_sma200": 650.1052996826172,
+        "qqq_sma200_slope_20": 9.747050170898433,
+        "qqq_close_vs_sma20": 29.731509399414108
+      },
+      "event_status": "unknown",
+      "market_regime": {
+        "state": "green",
+        "risk_scale": 1.0,
+        "passed": true
+      },
+      "trigger_models": {
+        "market_regime": {
+          "state": "green",
+          "risk_scale": 1.0,
+          "passed": true
+        },
+        "trend_template": true,
+        "vcp_contraction": false,
+        "volume_breakout": false,
+        "trend_pullback": false,
+        "triggered_model": null
+      }
+    },
+    {
+      "schema_version": "short-term-trade-plan-v1.2",
+      "ticker": "CVX",
+      "research_only": true,
+      "no_trade": true,
+      "status": "simulation_only",
+      "status_label": "仅研究演练",
+      "reason_codes": [
+        "event_date_unknown"
+      ],
+      "warnings": [
+        "全球风格融合模型尚未通过历史OOS门禁",
+        "Shadow治理尚未成熟，仅供研究演练"
+      ],
+      "signal": {
+        "signal_date": "2026-08-13",
+        "earliest_execution_date": "2026-08-14",
+        "entry_reference": 197.6999969482422,
+        "entry_range": [
+          196.95417534964426,
+          198.9430329459054
+        ],
+        "chase_limit": 200.18606894356864,
+        "stop": 190.24178096226282,
+        "targets": [
+          208.88732092721125,
+          216.34553691319059
+        ],
+        "risk_per_share": 7.458215985979365,
+        "model": "trend_pullback",
+        "holding_window_days": [
+          1,
+          20
+        ],
+        "exit_rules": {
+          "partial_target_fraction": 0.5,
+          "time_review_days": 10,
+          "time_review_minimum_r": 0.5,
+          "maximum_holding_days": 20,
+          "failed_breakout_review_days": 2,
+          "failed_breakout_action": "exit_review"
+        },
+        "style_fusion_version": "global-style-fusion-v1"
+      },
+      "execution": {
+        "order_type": "limit",
+        "regular_hours_only": true,
+        "human_review_required": true
+      },
+      "style_fusion": {
+        "version": "global-style-fusion-v1",
+        "principle": "each_style_owns_one_gate_no_blended_probability",
+        "influences": [
+          {
+            "style": "Weinstein-Minervini",
+            "role": "market_and_trend_template"
+          },
+          {
+            "style": "ONeil-CANSLIM",
+            "role": "evidence_and_breakout_volume"
+          },
+          {
+            "style": "Minervini-VCP-Darvas",
+            "role": "contraction_and_price_structure"
+          },
+          {
+            "style": "Turtle-institutional-trend",
+            "role": "atr_risk_and_exit_discipline"
+          }
+        ],
+        "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+      },
+      "historical_oos": {
+        "as_of": "2026-08-13",
+        "current_model": "trend_pullback",
+        "market_regime": "green",
+        "trend_template": true,
+        "vcp_contraction": false,
+        "passed": false,
+        "model_oos": {
+          "samples": 90,
+          "origin_dates": 40,
+          "cost_adjusted_hit_rate": 0.39208333,
+          "hit_rate_ci_low": 0.22916667,
+          "hit_rate_ci_high": 0.58375,
+          "mean_net_relative_return": -0.00370517,
+          "mean_max_adverse_move": -0.03183897,
+          "passed": false
+        },
+        "status": "current_trigger_unvalidated"
+      },
+      "indicators": {
+        "signal_date": "2026-08-13",
+        "current_close": 197.6999969482422,
+        "current_low": 193.77999877929688,
+        "previous_high": 197.39999389648438,
+        "atr14": 4.972143990652902,
+        "sma10": 192.8479995727539,
+        "sma20": 192.02900009155275,
+        "sma50": 183.78740020751954,
+        "sma200": 177.11025009155273,
+        "sma200_slope_20": 3.8364499664306493,
+        "ema10": 193.44345605266918,
+        "ema20": 190.75568471159045,
+        "ema50": 187.03740791639348,
+        "prior20_high": 197.69000244140625,
+        "recent10_low": 185.8699951171875,
+        "stock_return_5": 0.04476035201574802,
+        "stock_return_20": 0.07527464533855444,
+        "qqq_return_5": 0.02437554371377626,
+        "qqq_return_20": 0.03701448393977547,
+        "relative_return_5": 0.020384808301971757,
+        "relative_return_20": 0.03826016139877897,
+        "volume_ratio": 0.7478510656178139,
+        "contraction_volume_ratio": 1.0533738409862408,
+        "recent_contraction_range_pct": 0.06235547372437604,
+        "prior_contraction_range_pct": 0.0613088415042985,
+        "distance_sma20_atr": 1.1405536258302873,
+        "distance_prior_high_atr": -0.0020101000402896825,
+        "qqq_close": 732.0700073242188,
+        "qqq_sma20": 702.3384979248046,
+        "qqq_sma50": 713.2130017089844,
+        "qqq_sma200": 650.1052996826172,
+        "qqq_sma200_slope_20": 9.747050170898433,
+        "qqq_close_vs_sma20": 29.731509399414108
+      },
+      "event_status": "unknown",
+      "market_regime": {
+        "state": "green",
+        "risk_scale": 1.0,
+        "passed": true
+      },
+      "trigger_models": {
+        "market_regime": {
+          "state": "green",
+          "risk_scale": 1.0,
+          "passed": true
+        },
+        "trend_template": true,
+        "vcp_contraction": false,
+        "volume_breakout": false,
+        "trend_pullback": true,
+        "triggered_model": "trend_pullback"
+      }
+    },
+    {
+      "schema_version": "short-term-trade-plan-v1.2",
+      "ticker": "V",
+      "research_only": true,
+      "no_trade": true,
+      "status": "blocked",
+      "status_label": "数据阻断",
+      "reason_codes": [
+        "relative_qqq_gate_failed",
+        "event_date_unknown"
+      ],
+      "warnings": [],
+      "signal": null,
+      "execution": {
+        "order_type": "limit",
+        "regular_hours_only": true,
+        "human_review_required": true
+      },
+      "style_fusion": {
+        "version": "global-style-fusion-v1",
+        "principle": "each_style_owns_one_gate_no_blended_probability",
+        "influences": [
+          {
+            "style": "Weinstein-Minervini",
+            "role": "market_and_trend_template"
+          },
+          {
+            "style": "ONeil-CANSLIM",
+            "role": "evidence_and_breakout_volume"
+          },
+          {
+            "style": "Minervini-VCP-Darvas",
+            "role": "contraction_and_price_structure"
+          },
+          {
+            "style": "Turtle-institutional-trend",
+            "role": "atr_risk_and_exit_discipline"
+          }
+        ],
+        "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+      },
+      "historical_oos": {
+        "as_of": "2026-08-13",
+        "current_model": null,
+        "market_regime": "green",
+        "trend_template": false,
+        "vcp_contraction": false,
+        "passed": false,
+        "model_oos": null,
+        "status": "no_current_trigger"
+      },
+      "indicators": {
+        "signal_date": "2026-08-13",
+        "current_close": 365.45001220703125,
+        "current_low": 358.7099914550781,
+        "previous_high": 363.3500061035156,
+        "atr14": 7.8985748291015625,
+        "sma10": 365.1910064697266,
+        "sma20": 362.58700408935545,
+        "sma50": 347.4356024169922,
+        "sma200": 331.22504943847656,
+        "sma200_slope_20": 1.6892504882812318,
+        "ema10": 363.72138940300493,
+        "ema20": 361.40836841434003,
+        "ema50": 350.76667437069483,
+        "prior20_high": 373.9700012207031,
+        "recent10_low": 358.30999755859375,
+        "stock_return_5": -0.013550325254760076,
+        "stock_return_20": 0.0008489827084336987,
+        "qqq_return_5": 0.02437554371377626,
+        "qqq_return_20": 0.03701448393977547,
+        "relative_return_5": -0.037925868968536336,
+        "relative_return_20": -0.03616550123134177,
+        "volume_ratio": 0.46940318781812507,
+        "contraction_volume_ratio": 0.7760242308305436,
+        "recent_contraction_range_pct": 0.035695371695093014,
+        "prior_contraction_range_pct": 0.0730846519962787,
+        "distance_sma20_atr": 0.3624714812002942,
+        "distance_prior_high_atr": 1.0786742163004863,
+        "qqq_close": 732.0700073242188,
+        "qqq_sma20": 702.3384979248046,
+        "qqq_sma50": 713.2130017089844,
+        "qqq_sma200": 650.1052996826172,
+        "qqq_sma200_slope_20": 9.747050170898433,
+        "qqq_close_vs_sma20": 29.731509399414108
+      },
+      "event_status": "unknown",
+      "market_regime": {
+        "state": "green",
+        "risk_scale": 1.0,
+        "passed": true
+      },
+      "trigger_models": {
+        "market_regime": {
+          "state": "green",
+          "risk_scale": 1.0,
+          "passed": true
+        },
+        "trend_template": false,
+        "vcp_contraction": false,
+        "volume_breakout": false,
+        "trend_pullback": false,
+        "triggered_model": null
+      }
+    },
+    {
+      "schema_version": "short-term-trade-plan-v1.2",
+      "ticker": "BLK",
+      "research_only": true,
+      "no_trade": true,
+      "status": "blocked",
+      "status_label": "仅研究观察",
+      "reason_codes": [
+        "idea_status_not_eligible"
+      ],
+      "warnings": [],
+      "signal": null,
+      "execution": {
+        "order_type": "limit",
+        "regular_hours_only": true,
+        "human_review_required": true
+      },
+      "style_fusion": {
+        "version": "global-style-fusion-v1",
+        "principle": "each_style_owns_one_gate_no_blended_probability",
+        "influences": [
+          {
+            "style": "Weinstein-Minervini",
+            "role": "market_and_trend_template"
+          },
+          {
+            "style": "ONeil-CANSLIM",
+            "role": "evidence_and_breakout_volume"
+          },
+          {
+            "style": "Minervini-VCP-Darvas",
+            "role": "contraction_and_price_structure"
+          },
+          {
+            "style": "Turtle-institutional-trend",
+            "role": "atr_risk_and_exit_discipline"
+          }
+        ],
+        "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+      },
+      "historical_oos": {
+        "as_of": "2026-08-13",
+        "current_model": null,
+        "market_regime": "green",
+        "trend_template": false,
+        "vcp_contraction": false,
+        "passed": false,
+        "model_oos": null,
+        "status": "no_current_trigger"
+      }
+    },
+    {
+      "schema_version": "short-term-trade-plan-v1.2",
+      "ticker": "MSFT",
+      "research_only": true,
+      "no_trade": true,
+      "status": "blocked",
+      "status_label": "仅研究观察",
+      "reason_codes": [
+        "idea_status_not_eligible"
+      ],
+      "warnings": [],
+      "signal": null,
+      "execution": {
+        "order_type": "limit",
+        "regular_hours_only": true,
+        "human_review_required": true
+      },
+      "style_fusion": {
+        "version": "global-style-fusion-v1",
+        "principle": "each_style_owns_one_gate_no_blended_probability",
+        "influences": [
+          {
+            "style": "Weinstein-Minervini",
+            "role": "market_and_trend_template"
+          },
+          {
+            "style": "ONeil-CANSLIM",
+            "role": "evidence_and_breakout_volume"
+          },
+          {
+            "style": "Minervini-VCP-Darvas",
+            "role": "contraction_and_price_structure"
+          },
+          {
+            "style": "Turtle-institutional-trend",
+            "role": "atr_risk_and_exit_discipline"
+          }
+        ],
+        "note": "独立量化规则受知名交易体系启发，不声称复制任何专有方法。"
+      },
+      "historical_oos": {
+        "as_of": "2026-08-13",
+        "current_model": null,
+        "market_regime": "green",
+        "trend_template": false,
+        "vcp_contraction": false,
+        "passed": false,
+        "model_oos": null,
+        "status": "no_current_trigger"
+      }
+    }
+  ],
+  "summary": {
+    "candidate_count": 10,
+    "status_counts": {
+      "conditional_review": 0,
+      "manual_review_ready": 0,
+      "simulation_only": 1,
+      "waiting_trigger": 2,
+      "waiting_breakout": 0,
+      "waiting_pullback": 1,
+      "chase_blocked": 0,
+      "event_blocked": 0,
+      "invalidated": 0,
+      "blocked": 6
+    },
+    "manual_review_required": true
+  }
+}

@@ -1,0 +1,3474 @@
+# Sector Breakdown 38 Vs 80
+
+```json
+{
+  "active": [
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.07871524,
+      "ic_periods": 596,
+      "positive_rate": 0.43791946,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00852807,
+      "ic_periods": 593,
+      "positive_rate": 0.49409781,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00424908,
+      "ic_periods": 585,
+      "positive_rate": 0.4991453,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00505902,
+      "ic_periods": 593,
+      "positive_rate": 0.4856661,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.04784504,
+      "ic_periods": 590,
+      "positive_rate": 0.5440678,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00746195,
+      "ic_periods": 582,
+      "positive_rate": 0.48797251,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00200244,
+      "ic_periods": 585,
+      "positive_rate": 0.5008547,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00549828,
+      "ic_periods": 582,
+      "positive_rate": 0.47766323,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.02847188,
+      "ic_periods": 574,
+      "positive_rate": 0.44425087,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02251526,
+      "ic_periods": 585,
+      "positive_rate": 0.47008547,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.03632793,
+      "ic_periods": 582,
+      "positive_rate": 0.46563574,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.08491787,
+      "ic_periods": 574,
+      "positive_rate": 0.41811847,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02277449,
+      "ic_periods": 596,
+      "positive_rate": 0.45973154,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": -0.05173986,
+      "ic_periods": 593,
+      "positive_rate": 0.4232715,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": -0.0321341,
+      "ic_periods": 585,
+      "positive_rate": 0.46324786,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01166181,
+      "ic_periods": 588,
+      "positive_rate": 0.48129252,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.0419536,
+      "ic_periods": 585,
+      "positive_rate": 0.52307692,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00044565,
+      "ic_periods": 577,
+      "positive_rate": 0.48873484,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01621354,
+      "ic_periods": 578,
+      "positive_rate": 0.50519031,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.0042236,
+      "ic_periods": 575,
+      "positive_rate": 0.5026087,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.02776518,
+      "ic_periods": 567,
+      "positive_rate": 0.45679012,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00455771,
+      "ic_periods": 583,
+      "positive_rate": 0.5025729,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00118227,
+      "ic_periods": 580,
+      "positive_rate": 0.48275862,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": -0.01838162,
+      "ic_periods": 572,
+      "positive_rate": 0.47202797,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00469799,
+      "ic_periods": 596,
+      "positive_rate": 0.50671141,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": -0.0040954,
+      "ic_periods": 593,
+      "positive_rate": 0.50758853,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": -0.03873016,
+      "ic_periods": 585,
+      "positive_rate": 0.46837607,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.03058485,
+      "ic_periods": 596,
+      "positive_rate": 0.4614094,
+      "category": "core_technology"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.01334618,
+      "ic_periods": 593,
+      "positive_rate": 0.47554806,
+      "category": "core_technology"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": 0.02046398,
+      "ic_periods": 585,
+      "positive_rate": 0.53504274,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01055167,
+      "ic_periods": 593,
+      "positive_rate": 0.47386172,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.03903148,
+      "ic_periods": 590,
+      "positive_rate": 0.54745763,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.04614629,
+      "ic_periods": 582,
+      "positive_rate": 0.55154639,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.01343101,
+      "ic_periods": 585,
+      "positive_rate": 0.51111111,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.05076092,
+      "ic_periods": 582,
+      "positive_rate": 0.55841924,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.08780488,
+      "ic_periods": 574,
+      "positive_rate": 0.55400697,
+      "category": "core_technology"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.02495726,
+      "ic_periods": 585,
+      "positive_rate": 0.52820513,
+      "category": "core_technology"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.11408935,
+      "ic_periods": 582,
+      "positive_rate": 0.61683849,
+      "category": "core_technology"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.18367347,
+      "ic_periods": 574,
+      "positive_rate": 0.65505226,
+      "category": "core_technology"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": 0.0120202,
+      "ic_periods": 592,
+      "positive_rate": 0.50844595,
+      "category": "core_technology"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": 0.01752803,
+      "ic_periods": 589,
+      "positive_rate": 0.52801358,
+      "category": "core_technology"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": 0.02856023,
+      "ic_periods": 581,
+      "positive_rate": 0.53700516,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00155491,
+      "ic_periods": 588,
+      "positive_rate": 0.48469388,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.04459096,
+      "ic_periods": 585,
+      "positive_rate": 0.51452991,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.05887596,
+      "ic_periods": 577,
+      "positive_rate": 0.54939341,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00998517,
+      "ic_periods": 578,
+      "positive_rate": 0.5017301,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.06086957,
+      "ic_periods": 575,
+      "positive_rate": 0.5426087,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.09397833,
+      "ic_periods": 567,
+      "positive_rate": 0.57319224,
+      "category": "core_technology"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": 0.0006371,
+      "ic_periods": 583,
+      "positive_rate": 0.50943396,
+      "category": "core_technology"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": 0.04433498,
+      "ic_periods": 580,
+      "positive_rate": 0.54482759,
+      "category": "core_technology"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": 0.03946054,
+      "ic_periods": 572,
+      "positive_rate": 0.5472028,
+      "category": "core_technology"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02483221,
+      "ic_periods": 596,
+      "positive_rate": 0.48825503,
+      "category": "core_technology"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": -0.07395808,
+      "ic_periods": 593,
+      "positive_rate": 0.43507589,
+      "category": "core_technology"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": -0.10954823,
+      "ic_periods": 585,
+      "positive_rate": 0.43247863,
+      "category": "core_technology"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02550336,
+      "ic_periods": 596,
+      "positive_rate": 0.46812081,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.03483498,
+      "ic_periods": 593,
+      "positive_rate": 0.46037099,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": -0.04429792,
+      "ic_periods": 585,
+      "positive_rate": 0.46324786,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.04302578,
+      "ic_periods": 593,
+      "positive_rate": 0.46374368,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.06634383,
+      "ic_periods": 590,
+      "positive_rate": 0.43898305,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.03544428,
+      "ic_periods": 582,
+      "positive_rate": 0.45876289,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02984127,
+      "ic_periods": 585,
+      "positive_rate": 0.48547009,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.05135002,
+      "ic_periods": 582,
+      "positive_rate": 0.4467354,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.0149328,
+      "ic_periods": 574,
+      "positive_rate": 0.47909408,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.0041514,
+      "ic_periods": 585,
+      "positive_rate": 0.48547009,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.02140403,
+      "ic_periods": 582,
+      "positive_rate": 0.53092784,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.02777501,
+      "ic_periods": 574,
+      "positive_rate": 0.55052265,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": 0.02710246,
+      "ic_periods": 596,
+      "positive_rate": 0.53020134,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": 0.0332249,
+      "ic_periods": 593,
+      "positive_rate": 0.53962901,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": 0.04932869,
+      "ic_periods": 585,
+      "positive_rate": 0.55726496,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.04528669,
+      "ic_periods": 588,
+      "positive_rate": 0.44217687,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": -0.07174603,
+      "ic_periods": 585,
+      "positive_rate": 0.43760684,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.03966328,
+      "ic_periods": 577,
+      "positive_rate": 0.46967071,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.03321799,
+      "ic_periods": 578,
+      "positive_rate": 0.46193772,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": -0.04119255,
+      "ic_periods": 575,
+      "positive_rate": 0.46086957,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.01476442,
+      "ic_periods": 567,
+      "positive_rate": 0.47089947,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02984563,
+      "ic_periods": 583,
+      "positive_rate": 0.47169811,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": -0.0270936,
+      "ic_periods": 580,
+      "positive_rate": 0.48275862,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": -0.01918082,
+      "ic_periods": 572,
+      "positive_rate": 0.45804196,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00373921,
+      "ic_periods": 596,
+      "positive_rate": 0.51342282,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": 0.02163334,
+      "ic_periods": 593,
+      "positive_rate": 0.53625632,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": 0.05631258,
+      "ic_periods": 585,
+      "positive_rate": 0.52478632,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "financial_payments"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "international"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01438159,
+      "ic_periods": 596,
+      "positive_rate": 0.47986577,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00855216,
+      "ic_periods": 593,
+      "positive_rate": 0.46711636,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": -0.01184371,
+      "ic_periods": 585,
+      "positive_rate": 0.47179487,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01397254,
+      "ic_periods": 593,
+      "positive_rate": 0.45868465,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00466102,
+      "ic_periods": 590,
+      "positive_rate": 0.46610169,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.02945508,
+      "ic_periods": 582,
+      "positive_rate": 0.49140893,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.0047619,
+      "ic_periods": 585,
+      "positive_rate": 0.50940171,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.03332106,
+      "ic_periods": 582,
+      "positive_rate": 0.51546392,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.05991787,
+      "ic_periods": 574,
+      "positive_rate": 0.52439024,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.02234432,
+      "ic_periods": 585,
+      "positive_rate": 0.50598291,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.06467845,
+      "ic_periods": 582,
+      "positive_rate": 0.55670103,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.09177451,
+      "ic_periods": 574,
+      "positive_rate": 0.54006969,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00109348,
+      "ic_periods": 594,
+      "positive_rate": 0.49158249,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00438175,
+      "ic_periods": 591,
+      "positive_rate": 0.4822335,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00104267,
+      "ic_periods": 584,
+      "positive_rate": 0.50342466,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00965743,
+      "ic_periods": 588,
+      "positive_rate": 0.47789116,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00091575,
+      "ic_periods": 585,
+      "positive_rate": 0.47008547,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.03676653,
+      "ic_periods": 577,
+      "positive_rate": 0.50606586,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": 0.01272862,
+      "ic_periods": 578,
+      "positive_rate": 0.49480969,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.03223602,
+      "ic_periods": 575,
+      "positive_rate": 0.5026087,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.04711514,
+      "ic_periods": 567,
+      "positive_rate": 0.50088183,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": 0.02530017,
+      "ic_periods": 583,
+      "positive_rate": 0.51801029,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": 0.03238916,
+      "ic_periods": 580,
+      "positive_rate": 0.49482759,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": 0.04401848,
+      "ic_periods": 572,
+      "positive_rate": 0.50874126,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00269655,
+      "ic_periods": 596,
+      "positive_rate": 0.48154362,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00132498,
+      "ic_periods": 593,
+      "positive_rate": 0.48060708,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": -0.00537241,
+      "ic_periods": 585,
+      "positive_rate": 0.47863248,
+      "category": "semiconductors"
+    }
+  ],
+  "expanded": [
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.0488916,
+      "ic_periods": 596,
+      "positive_rate": 0.44127517,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.01630129,
+      "ic_periods": 593,
+      "positive_rate": 0.47554806,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": -0.00467236,
+      "ic_periods": 585,
+      "positive_rate": 0.47863248,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.0066125,
+      "ic_periods": 593,
+      "positive_rate": 0.47554806,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00706728,
+      "ic_periods": 590,
+      "positive_rate": 0.48983051,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.02890763,
+      "ic_periods": 582,
+      "positive_rate": 0.48109966,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01219373,
+      "ic_periods": 585,
+      "positive_rate": 0.49059829,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.03121941,
+      "ic_periods": 582,
+      "positive_rate": 0.47079038,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.07874564,
+      "ic_periods": 574,
+      "positive_rate": 0.38675958,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00442372,
+      "ic_periods": 585,
+      "positive_rate": 0.47521368,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00439446,
+      "ic_periods": 582,
+      "positive_rate": 0.47250859,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.01340935,
+      "ic_periods": 574,
+      "positive_rate": 0.46864111,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00358473,
+      "ic_periods": 596,
+      "positive_rate": 0.48825503,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00750478,
+      "ic_periods": 593,
+      "positive_rate": 0.49241147,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": 0.03297194,
+      "ic_periods": 585,
+      "positive_rate": 0.53504274,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00583385,
+      "ic_periods": 588,
+      "positive_rate": 0.49319728,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00340844,
+      "ic_periods": 585,
+      "positive_rate": 0.49059829,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.04089071,
+      "ic_periods": 577,
+      "positive_rate": 0.45407279,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01583307,
+      "ic_periods": 578,
+      "positive_rate": 0.47750865,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": -0.02954414,
+      "ic_periods": 575,
+      "positive_rate": 0.48869565,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.07286623,
+      "ic_periods": 567,
+      "positive_rate": 0.41798942,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01387806,
+      "ic_periods": 583,
+      "positive_rate": 0.48198971,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": -0.02754441,
+      "ic_periods": 580,
+      "positive_rate": 0.47586207,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": -0.0749947,
+      "ic_periods": 572,
+      "positive_rate": 0.41083916,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00323368,
+      "ic_periods": 596,
+      "positive_rate": 0.51510067,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": -0.02024631,
+      "ic_periods": 593,
+      "positive_rate": 0.47554806,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": -0.05299145,
+      "ic_periods": 585,
+      "positive_rate": 0.44273504,
+      "category": "consumer_retail"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.03581452,
+      "ic_periods": 596,
+      "positive_rate": 0.46644295,
+      "category": "core_technology"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.01946957,
+      "ic_periods": 593,
+      "positive_rate": 0.49747049,
+      "category": "core_technology"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00545973,
+      "ic_periods": 585,
+      "positive_rate": 0.51452991,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01554499,
+      "ic_periods": 593,
+      "positive_rate": 0.46711636,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00686184,
+      "ic_periods": 590,
+      "positive_rate": 0.4779661,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.0267833,
+      "ic_periods": 582,
+      "positive_rate": 0.52405498,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00249676,
+      "ic_periods": 585,
+      "positive_rate": 0.51282051,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.03659273,
+      "ic_periods": 582,
+      "positive_rate": 0.54467354,
+      "category": "core_technology"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.05579136,
+      "ic_periods": 574,
+      "positive_rate": 0.57491289,
+      "category": "core_technology"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.01486661,
+      "ic_periods": 585,
+      "positive_rate": 0.53504274,
+      "category": "core_technology"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.06214725,
+      "ic_periods": 582,
+      "positive_rate": 0.58762887,
+      "category": "core_technology"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.12304931,
+      "ic_periods": 574,
+      "positive_rate": 0.6358885,
+      "category": "core_technology"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": 0.01240209,
+      "ic_periods": 595,
+      "positive_rate": 0.50420168,
+      "category": "core_technology"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00750182,
+      "ic_periods": 592,
+      "positive_rate": 0.52702703,
+      "category": "core_technology"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": -0.00618021,
+      "ic_periods": 584,
+      "positive_rate": 0.50684932,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02218099,
+      "ic_periods": 588,
+      "positive_rate": 0.4744898,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00245532,
+      "ic_periods": 585,
+      "positive_rate": 0.5025641,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.03236175,
+      "ic_periods": 577,
+      "positive_rate": 0.52859619,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00241166,
+      "ic_periods": 578,
+      "positive_rate": 0.48788927,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.0367747,
+      "ic_periods": 575,
+      "positive_rate": 0.53043478,
+      "category": "core_technology"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.04800385,
+      "ic_periods": 567,
+      "positive_rate": 0.5643739,
+      "category": "core_technology"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00308748,
+      "ic_periods": 583,
+      "positive_rate": 0.48885077,
+      "category": "core_technology"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": 0.03416928,
+      "ic_periods": 580,
+      "positive_rate": 0.54310345,
+      "category": "core_technology"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": 0.03630006,
+      "ic_periods": 572,
+      "positive_rate": 0.5472028,
+      "category": "core_technology"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01909701,
+      "ic_periods": 596,
+      "positive_rate": 0.47483221,
+      "category": "core_technology"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": -0.03347131,
+      "ic_periods": 593,
+      "positive_rate": 0.47048904,
+      "category": "core_technology"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": -0.0618389,
+      "ic_periods": 585,
+      "positive_rate": 0.43589744,
+      "category": "core_technology"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00593858,
+      "ic_periods": 596,
+      "positive_rate": 0.47651007,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.02758444,
+      "ic_periods": 593,
+      "positive_rate": 0.48903879,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": -0.04708625,
+      "ic_periods": 585,
+      "positive_rate": 0.45299145,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01944913,
+      "ic_periods": 593,
+      "positive_rate": 0.49072513,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.05994864,
+      "ic_periods": 590,
+      "positive_rate": 0.43898305,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.05548266,
+      "ic_periods": 582,
+      "positive_rate": 0.43986254,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02870759,
+      "ic_periods": 585,
+      "positive_rate": 0.46495726,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.06541706,
+      "ic_periods": 582,
+      "positive_rate": 0.45360825,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.03313272,
+      "ic_periods": 574,
+      "positive_rate": 0.45644599,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.01586118,
+      "ic_periods": 585,
+      "positive_rate": 0.51111111,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.02442987,
+      "ic_periods": 582,
+      "positive_rate": 0.52749141,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00354767,
+      "ic_periods": 574,
+      "positive_rate": 0.52439024,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": 0.015187,
+      "ic_periods": 596,
+      "positive_rate": 0.4966443,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": 0.03217708,
+      "ic_periods": 593,
+      "positive_rate": 0.54468803,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": 0.01998017,
+      "ic_periods": 585,
+      "positive_rate": 0.54700855,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02047001,
+      "ic_periods": 588,
+      "positive_rate": 0.47789116,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": -0.06156954,
+      "ic_periods": 585,
+      "positive_rate": 0.42564103,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.05794864,
+      "ic_periods": 577,
+      "positive_rate": 0.44194107,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02097096,
+      "ic_periods": 578,
+      "positive_rate": 0.45847751,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": -0.04602899,
+      "ic_periods": 575,
+      "positive_rate": 0.45043478,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.02882796,
+      "ic_periods": 567,
+      "positive_rate": 0.4638448,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02683092,
+      "ic_periods": 583,
+      "positive_rate": 0.46655232,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": -0.04043887,
+      "ic_periods": 580,
+      "positive_rate": 0.45344828,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": -0.02189023,
+      "ic_periods": 572,
+      "positive_rate": 0.47377622,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00284726,
+      "ic_periods": 596,
+      "positive_rate": 0.4966443,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00857479,
+      "ic_periods": 593,
+      "positive_rate": 0.51096121,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": 0.03293447,
+      "ic_periods": 585,
+      "positive_rate": 0.54700855,
+      "category": "defensive_healthcare"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01395868,
+      "ic_periods": 597,
+      "positive_rate": 0.48911223,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.01459035,
+      "ic_periods": 594,
+      "positive_rate": 0.46801347,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": -0.01702422,
+      "ic_periods": 586,
+      "positive_rate": 0.45733788,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02469136,
+      "ic_periods": 594,
+      "positive_rate": 0.46632997,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.01728306,
+      "ic_periods": 591,
+      "positive_rate": 0.45516074,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.03508127,
+      "ic_periods": 583,
+      "positive_rate": 0.44768439,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00483504,
+      "ic_periods": 586,
+      "positive_rate": 0.50170648,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.0075145,
+      "ic_periods": 583,
+      "positive_rate": 0.46312178,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.02650104,
+      "ic_periods": 575,
+      "positive_rate": 0.4626087,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.02393142,
+      "ic_periods": 586,
+      "positive_rate": 0.50853242,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.0460263,
+      "ic_periods": 583,
+      "positive_rate": 0.52830189,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.06712215,
+      "ic_periods": 575,
+      "positive_rate": 0.53043478,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01161175,
+      "ic_periods": 597,
+      "positive_rate": 0.50251256,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": 0.01480361,
+      "ic_periods": 594,
+      "positive_rate": 0.52861953,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": 0.01660228,
+      "ic_periods": 586,
+      "positive_rate": 0.53583618,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00634651,
+      "ic_periods": 589,
+      "positive_rate": 0.49575552,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00507882,
+      "ic_periods": 586,
+      "positive_rate": 0.46587031,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.03002966,
+      "ic_periods": 578,
+      "positive_rate": 0.4550173,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00106917,
+      "ic_periods": 579,
+      "positive_rate": 0.48877375,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00177745,
+      "ic_periods": 576,
+      "positive_rate": 0.47222222,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.00452716,
+      "ic_periods": 568,
+      "positive_rate": 0.46478873,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01785714,
+      "ic_periods": 584,
+      "positive_rate": 0.46746575,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00655684,
+      "ic_periods": 581,
+      "positive_rate": 0.50258176,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": -0.01362919,
+      "ic_periods": 573,
+      "positive_rate": 0.44328098,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": 0.01499561,
+      "ic_periods": 597,
+      "positive_rate": 0.48241206,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": 0.02032227,
+      "ic_periods": 594,
+      "positive_rate": 0.49494949,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": 0.02734438,
+      "ic_periods": 586,
+      "positive_rate": 0.4778157,
+      "category": "energy_materials"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00308623,
+      "ic_periods": 596,
+      "positive_rate": 0.49328859,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.03448567,
+      "ic_periods": 593,
+      "positive_rate": 0.47048904,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00402486,
+      "ic_periods": 585,
+      "positive_rate": 0.51111111,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02157238,
+      "ic_periods": 593,
+      "positive_rate": 0.47048904,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.05221623,
+      "ic_periods": 590,
+      "positive_rate": 0.44067797,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00895033,
+      "ic_periods": 582,
+      "positive_rate": 0.50171821,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.019223,
+      "ic_periods": 585,
+      "positive_rate": 0.52820513,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.01207175,
+      "ic_periods": 582,
+      "positive_rate": 0.53092784,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.02232341,
+      "ic_periods": 574,
+      "positive_rate": 0.53658537,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00112924,
+      "ic_periods": 585,
+      "positive_rate": 0.50598291,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": -7.029e-05,
+      "ic_periods": 582,
+      "positive_rate": 0.48109966,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.00334706,
+      "ic_periods": 574,
+      "positive_rate": 0.47909408,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": -0.02787786,
+      "ic_periods": 596,
+      "positive_rate": 0.47651007,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": -0.01278334,
+      "ic_periods": 593,
+      "positive_rate": 0.47892074,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": -0.02824543,
+      "ic_periods": 585,
+      "positive_rate": 0.46495726,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01450474,
+      "ic_periods": 588,
+      "positive_rate": 0.46258503,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": -0.03458689,
+      "ic_periods": 585,
+      "positive_rate": 0.46324786,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00925109,
+      "ic_periods": 577,
+      "positive_rate": 0.48353553,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00318759,
+      "ic_periods": 578,
+      "positive_rate": 0.49480969,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00780764,
+      "ic_periods": 575,
+      "positive_rate": 0.48869565,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.01190209,
+      "ic_periods": 567,
+      "positive_rate": 0.51322751,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": 0.02935444,
+      "ic_periods": 583,
+      "positive_rate": 0.53859348,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": 0.02963166,
+      "ic_periods": 580,
+      "positive_rate": 0.52758621,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": 0.03004079,
+      "ic_periods": 572,
+      "positive_rate": 0.5506993,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": 0.01514389,
+      "ic_periods": 596,
+      "positive_rate": 0.52181208,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00176044,
+      "ic_periods": 593,
+      "positive_rate": 0.5143339,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": 0.01044807,
+      "ic_periods": 585,
+      "positive_rate": 0.52820513,
+      "category": "financial_payments"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00297447,
+      "ic_periods": 597,
+      "positive_rate": 0.5041876,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": 0.0015392,
+      "ic_periods": 594,
+      "positive_rate": 0.49158249,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00463041,
+      "ic_periods": 586,
+      "positive_rate": 0.51365188,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00968997,
+      "ic_periods": 594,
+      "positive_rate": 0.48989899,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.0147274,
+      "ic_periods": 591,
+      "positive_rate": 0.50423012,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00097867,
+      "ic_periods": 583,
+      "positive_rate": 0.52315609,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00447971,
+      "ic_periods": 586,
+      "positive_rate": 0.49829352,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00903373,
+      "ic_periods": 583,
+      "positive_rate": 0.4922813,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.01604969,
+      "ic_periods": 575,
+      "positive_rate": 0.49391304,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.01409216,
+      "ic_periods": 586,
+      "positive_rate": 0.5,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.03740468,
+      "ic_periods": 583,
+      "positive_rate": 0.55403087,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.02931526,
+      "ic_periods": 575,
+      "positive_rate": 0.52695652,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01089832,
+      "ic_periods": 597,
+      "positive_rate": 0.48576214,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": -0.03159318,
+      "ic_periods": 594,
+      "positive_rate": 0.46127946,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": -0.03773313,
+      "ic_periods": 586,
+      "positive_rate": 0.46416382,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": 0.01907261,
+      "ic_periods": 589,
+      "positive_rate": 0.51103565,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.02472999,
+      "ic_periods": 586,
+      "positive_rate": 0.53412969,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.00932309,
+      "ic_periods": 578,
+      "positive_rate": 0.5,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00705949,
+      "ic_periods": 579,
+      "positive_rate": 0.50949914,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00395623,
+      "ic_periods": 576,
+      "positive_rate": 0.5,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.00656972,
+      "ic_periods": 568,
+      "positive_rate": 0.51408451,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": -0.0047619,
+      "ic_periods": 584,
+      "positive_rate": 0.51712329,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00532445,
+      "ic_periods": 581,
+      "positive_rate": 0.51807229,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": -0.00504824,
+      "ic_periods": 573,
+      "positive_rate": 0.5078534,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00221454,
+      "ic_periods": 597,
+      "positive_rate": 0.52596315,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": 0.01220575,
+      "ic_periods": 594,
+      "positive_rate": 0.52525253,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": -0.0021512,
+      "ic_periods": 586,
+      "positive_rate": 0.48464164,
+      "category": "industrial_diversified"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.04989613,
+      "ic_periods": 596,
+      "positive_rate": 0.44630872,
+      "category": "international"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.0062234,
+      "ic_periods": 593,
+      "positive_rate": 0.49915683,
+      "category": "international"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": -0.02083842,
+      "ic_periods": 585,
+      "positive_rate": 0.47008547,
+      "category": "international"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00895367,
+      "ic_periods": 593,
+      "positive_rate": 0.48735245,
+      "category": "international"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.03494754,
+      "ic_periods": 590,
+      "positive_rate": 0.52881356,
+      "category": "international"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.00658648,
+      "ic_periods": 582,
+      "positive_rate": 0.46735395,
+      "category": "international"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.0039479,
+      "ic_periods": 585,
+      "positive_rate": 0.47350427,
+      "category": "international"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00470463,
+      "ic_periods": 582,
+      "positive_rate": 0.47938144,
+      "category": "international"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": -0.02480504,
+      "ic_periods": 574,
+      "positive_rate": 0.43902439,
+      "category": "international"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00626781,
+      "ic_periods": 585,
+      "positive_rate": 0.49401709,
+      "category": "international"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00609557,
+      "ic_periods": 582,
+      "positive_rate": 0.47766323,
+      "category": "international"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.01655052,
+      "ic_periods": 574,
+      "positive_rate": 0.51045296,
+      "category": "international"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": 0.012011,
+      "ic_periods": 596,
+      "positive_rate": 0.49496644,
+      "category": "international"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": -0.01171853,
+      "ic_periods": 593,
+      "positive_rate": 0.4772344,
+      "category": "international"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00925375,
+      "ic_periods": 585,
+      "positive_rate": 0.48205128,
+      "category": "international"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00356333,
+      "ic_periods": 588,
+      "positive_rate": 0.48639456,
+      "category": "international"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.02962963,
+      "ic_periods": 585,
+      "positive_rate": 0.52307692,
+      "category": "international"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.02153999,
+      "ic_periods": 577,
+      "positive_rate": 0.4627383,
+      "category": "international"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.0110809,
+      "ic_periods": 578,
+      "positive_rate": 0.48096886,
+      "category": "international"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": -0.0026087,
+      "ic_periods": 575,
+      "positive_rate": 0.46782609,
+      "category": "international"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": -0.01494919,
+      "ic_periods": 567,
+      "positive_rate": 0.47971781,
+      "category": "international"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01033243,
+      "ic_periods": 583,
+      "positive_rate": 0.48885077,
+      "category": "international"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": 0.01473727,
+      "ic_periods": 580,
+      "positive_rate": 0.51034483,
+      "category": "international"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": 0.00557776,
+      "ic_periods": 572,
+      "positive_rate": 0.49825175,
+      "category": "international"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00135826,
+      "ic_periods": 596,
+      "positive_rate": 0.5,
+      "category": "international"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": 0.02308681,
+      "ic_periods": 593,
+      "positive_rate": 0.51096121,
+      "category": "international"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": 0.03728124,
+      "ic_periods": 585,
+      "positive_rate": 0.51965812,
+      "category": "international"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01478544,
+      "ic_periods": 596,
+      "positive_rate": 0.46644295,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": -0.02274005,
+      "ic_periods": 593,
+      "positive_rate": 0.47386172,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": -0.01772598,
+      "ic_periods": 585,
+      "positive_rate": 0.47863248,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": -0.01137513,
+      "ic_periods": 593,
+      "positive_rate": 0.47048904,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": -0.01111454,
+      "ic_periods": 590,
+      "positive_rate": 0.49152542,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.01859835,
+      "ic_periods": 582,
+      "positive_rate": 0.50343643,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00050764,
+      "ic_periods": 585,
+      "positive_rate": 0.50769231,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.02288868,
+      "ic_periods": 582,
+      "positive_rate": 0.5257732,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.06149298,
+      "ic_periods": 574,
+      "positive_rate": 0.56445993,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": 0.03326599,
+      "ic_periods": 585,
+      "positive_rate": 0.53846154,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": 0.06685411,
+      "ic_periods": 582,
+      "positive_rate": 0.57560137,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": 0.09194383,
+      "ic_periods": 574,
+      "positive_rate": 0.61498258,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00046199,
+      "ic_periods": 595,
+      "positive_rate": 0.49579832,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": 0.01392403,
+      "ic_periods": 592,
+      "positive_rate": 0.52195946,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": 0.01431532,
+      "ic_periods": 585,
+      "positive_rate": 0.53162393,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": -0.00841064,
+      "ic_periods": 588,
+      "positive_rate": 0.5085034,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": -0.00757317,
+      "ic_periods": 585,
+      "positive_rate": 0.4974359,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.03973531,
+      "ic_periods": 577,
+      "positive_rate": 0.55285962,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": 0.00689944,
+      "ic_periods": 578,
+      "positive_rate": 0.50519031,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": 0.01649539,
+      "ic_periods": 575,
+      "positive_rate": 0.50956522,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": 0.0535407,
+      "ic_periods": 567,
+      "positive_rate": 0.53968254,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": 0.02038567,
+      "ic_periods": 583,
+      "positive_rate": 0.53173242,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": 0.02453501,
+      "ic_periods": 580,
+      "positive_rate": 0.51896552,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": 0.04994702,
+      "ic_periods": 572,
+      "positive_rate": 0.53496503,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": 0.0042709,
+      "ic_periods": 596,
+      "positive_rate": 0.50503356,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": 0.00315806,
+      "ic_periods": 593,
+      "positive_rate": 0.50927487,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": -0.00958301,
+      "ic_periods": 585,
+      "positive_rate": 0.47179487,
+      "category": "semiconductors"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "weekly_return",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "momentum_4w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "momentum_12w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "sma_10_distance",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "rsi_14",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "macd",
+      "horizon": "1w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "macd",
+      "horizon": "4w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    },
+    {
+      "factor": "macd",
+      "horizon": "12w",
+      "mean_rank_ic": "",
+      "ic_periods": 0,
+      "positive_rate": "",
+      "category": "utilities_real_assets"
+    }
+  ],
+  "summary": {
+    "activeLargestCategoryShare": 0.184211,
+    "expandedLargestCategoryShare": 0.125,
+    "activeTechSemiShare": 0.342105,
+    "expandedTechSemiShare": 0.25,
+    "energyMaterialsAdded": 8,
+    "utilitiesRealAssetsAdded": 4
+  }
+}
+```

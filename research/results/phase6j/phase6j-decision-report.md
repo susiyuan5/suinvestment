@@ -1,0 +1,157 @@
+# Phase6J Decision Report
+
+```json
+{
+  "recommendation": "continue_research_80",
+  "allowedRecommendations": [
+    "keep_38_active",
+    "continue_research_80",
+    "partially_promote_selected_symbols",
+    "reject_expansion_for_now"
+  ],
+  "reasons": [
+    "Expanded universe improves sector balance and adds energy/materials plus utilities/real-assets coverage.",
+    "Expanded universe should continue research because it reduces technology/semiconductor concentration.",
+    "No live promotion is justified because factor and ML comparisons remain research-only and incomplete."
+  ],
+  "strongestExpandedFactors": [
+    {
+      "factor": "volatility_12w",
+      "horizon": "12w",
+      "active_mean_rank_ic": 0.07837855,
+      "expanded_mean_rank_ic": 0.06474499,
+      "delta": -0.01363356,
+      "direction": "consistent",
+      "expanded_ic_periods": 575
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "4w",
+      "active_mean_rank_ic": 0.04432306,
+      "expanded_mean_rank_ic": 0.03984729,
+      "delta": -0.00447577,
+      "direction": "consistent",
+      "expanded_ic_periods": 583
+    },
+    {
+      "factor": "volatility_12w",
+      "horizon": "1w",
+      "active_mean_rank_ic": 0.0196036,
+      "expanded_mean_rank_ic": 0.01721997,
+      "delta": -0.00238363,
+      "direction": "consistent",
+      "expanded_ic_periods": 586
+    },
+    {
+      "factor": "sma_20_distance",
+      "horizon": "12w",
+      "active_mean_rank_ic": 0.04111806,
+      "expanded_mean_rank_ic": 0.01192679,
+      "delta": -0.02919127,
+      "direction": "consistent",
+      "expanded_ic_periods": 568
+    },
+    {
+      "factor": "drawdown_from_52w_high",
+      "horizon": "12w",
+      "active_mean_rank_ic": 0.00406949,
+      "expanded_mean_rank_ic": 0.00953448,
+      "delta": 0.00546499,
+      "direction": "consistent",
+      "expanded_ic_periods": 586
+    }
+  ],
+  "topRankStability": {
+    "active": {
+      "periods": 574,
+      "leaders": [
+        {
+          "symbol": "AMD",
+          "top_rank_count": 494
+        },
+        {
+          "symbol": "NVDA",
+          "top_rank_count": 430
+        },
+        {
+          "symbol": "MU",
+          "top_rank_count": 422
+        },
+        {
+          "symbol": "BYDDY",
+          "top_rank_count": 398
+        },
+        {
+          "symbol": "BABA",
+          "top_rank_count": 302
+        },
+        {
+          "symbol": "AVGO",
+          "top_rank_count": 227
+        },
+        {
+          "symbol": "INTC",
+          "top_rank_count": 173
+        },
+        {
+          "symbol": "ASML",
+          "top_rank_count": 168
+        },
+        {
+          "symbol": "QCOM",
+          "top_rank_count": 142
+        },
+        {
+          "symbol": "META",
+          "top_rank_count": 136
+        }
+      ]
+    },
+    "expanded": {
+      "periods": 575,
+      "leaders": [
+        {
+          "symbol": "AMD",
+          "top_rank_count": 502
+        },
+        {
+          "symbol": "FCX",
+          "top_rank_count": 468
+        },
+        {
+          "symbol": "NVDA",
+          "top_rank_count": 446
+        },
+        {
+          "symbol": "MU",
+          "top_rank_count": 432
+        },
+        {
+          "symbol": "MELI",
+          "top_rank_count": 423
+        },
+        {
+          "symbol": "BYDDY",
+          "top_rank_count": 407
+        },
+        {
+          "symbol": "LRCX",
+          "top_rank_count": 376
+        },
+        {
+          "symbol": "AMAT",
+          "top_rank_count": 358
+        },
+        {
+          "symbol": "BABA",
+          "top_rank_count": 320
+        },
+        {
+          "symbol": "NEM",
+          "top_rank_count": 259
+        }
+      ]
+    }
+  }
+}
+```
