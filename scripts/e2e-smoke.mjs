@@ -67,6 +67,15 @@ async function main() {
   assert.equal(await page.getByText("本周定投决策", { exact: true }).count(), 0, "legacy standalone weekly decision heading must be absent");
   assert.equal(await page.getByText("本周资金计划", { exact: true }).count(), 0, "legacy standalone weekly funding heading must be absent");
   assert.equal(await page.locator("#projectHealthStatus").textContent().then((value) => Boolean(value.trim())), true, "health report should render");
+  const decisionRows = page.locator("#weeklyDecisionRows .weekly-decision-row:not(.weekly-decision-cash)");
+  assert.equal(await decisionRows.count(), 6, "weekly DCA list should render six symbols");
+  for (let index = 0; index < await decisionRows.count(); index += 1) {
+    const row = decisionRows.nth(index);
+    assert.equal(await row.locator(".weekly-decision-market-value").count(), 1, "each DCA row should show market value");
+    assert.equal(await row.locator(".weekly-decision-price").count(), 1, "each DCA row should show single-share price");
+    assert.match(await row.locator(".weekly-decision-market-value").textContent(), /持仓市值|市值未知/);
+    assert.match(await row.locator(".weekly-decision-price").textContent(), /单股价格|价格未知/);
+  }
 
   const healthResponse = await context.request.get(await page.evaluate(async () => (await LiveData.session().ready).url("results/health/project-health.json")));
   assert.equal(healthResponse.ok(), true, "health report should be readable after deployment");

@@ -55,4 +55,8 @@ test("weekly decision order contract contains SPY, QQQ and four satellites", () 
   assert.match(source, /CoreSatellitePolicy\.rowsForPreset\(activeCoreSatellitePreset\(\) \|\| CoreSatellitePolicy\.PRESET\)/);
   assert.match(source, /QQQ：纳斯达克成长 ETF/);
   assert.match(source, /数据或计算未通过安全检查，请人工复核/);
+  assert.match(source, /weekly-decision-market-value/);
+  assert.match(source, /weekly-decision-price/);
+  assert.match(source, /持仓市值/);
+  assert.match(source, /单股价格/);
 });

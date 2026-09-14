@@ -6022,13 +6022,16 @@ function equalizeAllocations() {
       const card = document.createElement("article");
       card.className = "weekly-decision-row";
       const current = Number(position.current_allocation || 0);
+      const signal = (window.__SUINVESTMENT_SIGNALS__ || []).find(function (item) { return item.symbol === symbol; }) || {};
       const base = Number(row.originalBaseAmount || 0);
       const signalAdjustment = Number(row.dcaAdjustedAmount || 0) - base + Number(row.crashFundEnhancement || 0);
       const riskAdjustment = Number(row.riskReduction || 0);
       const redirected = Number(row.redirectedToSpy || 0);
       const status = window.DashboardUiPolicy ? window.DashboardUiPolicy.decisionStatus(row.finalAmount, row.action || row.suggested_action) : (Number(row.finalAmount || 0) > 0 ? "可供人工核对" : "已阻止或保留现金");
-      card.innerHTML = "<strong></strong><span class=\"weekly-decision-target\"></span><span class=\"weekly-decision-final\"></span><span class=\"weekly-decision-status\"></span><div class=\"weekly-decision-expanded\"><div class=\"weekly-decision-detail\"><span></span><span></span><span></span><span></span><p></p></div></div>";
+      card.innerHTML = "<strong></strong><span class=\"weekly-decision-market-value\"></span><span class=\"weekly-decision-price\"></span><span class=\"weekly-decision-target\"></span><span class=\"weekly-decision-final\"></span><span class=\"weekly-decision-status\"></span><div class=\"weekly-decision-expanded\"><div class=\"weekly-decision-detail\"><span></span><span></span><span></span><span></span><p></p></div></div>";
       card.querySelector("strong").textContent = symbol;
+      card.querySelector(".weekly-decision-market-value").textContent = "持仓市值 " + (position && isFiniteNumber(position.current_value) ? formatCurrency(position.current_value) : "市值未知");
+      card.querySelector(".weekly-decision-price").textContent = "单股价格 " + (isFiniteNumber(signal.latest_price) ? "USD " + formatPrice(signal.latest_price) : "价格未知");
       card.querySelector(".weekly-decision-target").textContent = "目标 " + (targetBySymbol[symbol] || 0).toFixed(2) + "% / 当前 " + current.toFixed(2) + "%";
       card.querySelector(".weekly-decision-final").textContent = "最终人工计划 " + formatCurrency(row.finalAmount);
       card.querySelector(".weekly-decision-status").textContent = status;
