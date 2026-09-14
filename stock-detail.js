@@ -251,6 +251,6 @@
       if (quote && quote.points) root.addEventListener("resize", function () { renderChart(doc.getElementById("stockDetailChart"), quote.points); });
     });
   }
-  if (typeof document !== "undefined" && typeof fetch === "function") init(document, fetch);
+  if (typeof document !== "undefined" && typeof fetch === "function") init(document, root.LiveData ? root.LiveData.session().fetch : fetch);
   return { normalizeTicker: normalizeTicker, tickerFromSearch: tickerFromSearch, fetchJsonWithTimeout: fetchJsonWithTimeout, parseYahooChart: parseYahooChart, parseStaticTrend: parseStaticTrend, selectQuote: selectQuote, candidateForTicker: candidateForTicker, categoryForTicker: categoryForTicker, addToWatchlist: addToWatchlist, renderChart: renderChart, init: init };
 });

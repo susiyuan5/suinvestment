@@ -1,65 +1,34 @@
 name: Build project health
-
-on:
-  schedule:
-    - cron: "45 13 * * *"
-  workflow_dispatch:
-
 permissions:
-  actions: read
   contents: write
+  actions: read
   pull-requests: write
-  statuses: write
-
 concurrency:
   group: build-project-health
   cancel-in-progress: true
-
 jobs:
   health:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - name: Build health report atomically
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scripts/build_project_health.py
-      - name: Validate health report
-        run: |
-          python -m unittest tests.test_project_health
-          python -m json.tool results/health/project-health.json > /dev/null
-      - name: Create or update health report pull request
-        id: create-pr
-        uses: peter-evans/create-pull-request@v8
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: automation/update-project-health
-          delete-branch: true
-          commit-message: "Update project health report"
-          title: "Update project health report"
-          body: "Read-only operational health summary generated from validated snapshots and GitHub workflow state."
-          add-paths: |
-            results/health/project-health.json
-            results/health/project-health.md
-            results/health/project-health-history.json
-
-      - name: Mark generated commit verified
-        if: steps.create-pr.outputs.pull-request-number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_SHA: ${{ steps.create-pr.outputs.pull-request-head-sha }}
-        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -f state=success -f context=verify -f description="Project health validation passed"
-
-      - name: Merge validated health report pull request
-        if: steps.create-pr.outputs.pull-request-number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --merge --delete-branch
-
-      - name: Report unchanged health
-        if: steps.create-pr.outputs.pull-request-number == ''
-        run: echo "Project health report is unchanged; preserving the last valid files."
+      - name: Generate, validate and publish independent data
+        run: python scripts/live_data.py --task project-health
+      - name: Independent data read smoke (no Pages deployment)
+        run: node scripts/live-data-smoke.mjs
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+"on":
+  schedule:
+    - cron: 45 13 * * *
+  workflow_dispatch: null

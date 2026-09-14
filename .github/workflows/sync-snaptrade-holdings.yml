@@ -1,58 +1,37 @@
 name: Sync encrypted Wealthsimple holdings
-
-on:
-  schedule:
-    - cron: "30 6 * * *"
-  workflow_dispatch:
-
 concurrency:
   group: snaptrade-holdings-sync
   cancel-in-progress: false
-
 permissions:
   contents: write
+  actions: read
   pull-requests: write
-
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     env:
       SNAPTRADE_CLIENT_ID: ${{ secrets.SNAPTRADE_CLIENT_ID }}
       SNAPTRADE_CONSUMER_KEY: ${{ secrets.SNAPTRADE_CONSUMER_KEY }}
       HOLDINGS_SNAPSHOT_KEY: ${{ secrets.HOLDINGS_SNAPSHOT_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
         with:
-          node-version: 24
-          cache: npm
-      - uses: actions/setup-python@v5
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - name: Install Python test dependency
-        run: python -m pip install "pandas>=2,<3"
-      - run: npm ci --ignore-scripts
-      - run: node scripts/sync-snaptrade-holdings.mjs
-      - run: node scripts/validate-encrypted-holdings.mjs
-      - run: npm test
-      - run: python -m unittest discover -s tests
-      - run: git diff --check
-      - name: Commit changed encrypted snapshot
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if git diff --quiet -- data/private/wealthsimple-holdings.enc.json; then
-            echo "No holdings changes."
-            exit 0
-          fi
-          git add data/private/wealthsimple-holdings.enc.json
-          test "$(git diff --cached --name-only)" = "data/private/wealthsimple-holdings.enc.json"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(data): refresh encrypted Wealthsimple holdings"
-          branch="automation/snaptrade-holdings-${GITHUB_RUN_ID}"
-          git switch -c "$branch"
-          git push --set-upstream origin "$branch"
-          gh pr create --base main --head "$branch" --title "chore(data): refresh encrypted Wealthsimple holdings" --body "Automated encrypted Wealthsimple read-only holdings refresh. The snapshot contains no plaintext holdings or secrets." 
+      - name: Generate, validate and publish independent data
+        run: python scripts/live_data.py --task sync-snaptrade-holdings --review
+      - name: Independent data read smoke (no Pages deployment)
+        run: node scripts/live-data-smoke.mjs
+"on":
+  schedule:
+    - cron: 30 6 * * *
+  workflow_dispatch: null

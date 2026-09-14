@@ -1,4 +1,5 @@
 ﻿(function () {
+    const dataSession = window.LiveData.session();
     const paths = {
         review: "research/results/phase6q/phase6q-executive-review.json",
         candidates: "research/results/phase6q/shadow-candidate-review-table.csv",
@@ -51,7 +52,7 @@
     }
 
     async function loadText(path) {
-        const response = await fetch(path, { cache: "no-store" });
+        const response = await dataSession.fetch(path, { cache: "no-store" });
         if (!response.ok) {
             throw new Error("无法加载 " + path + "：" + response.status);
         }

@@ -68,7 +68,7 @@ async function main() {
   assert.equal(await page.getByText("本周资金计划", { exact: true }).count(), 0, "legacy standalone weekly funding heading must be absent");
   assert.equal(await page.locator("#projectHealthStatus").textContent().then((value) => Boolean(value.trim())), true, "health report should render");
 
-  const healthResponse = await context.request.get(new URL("results/health/project-health.json", baseUrl).toString());
+  const healthResponse = await context.request.get(await page.evaluate(async () => (await LiveData.session().ready).url("results/health/project-health.json")));
   assert.equal(healthResponse.ok(), true, "health report should be readable after deployment");
   const healthPayload = await healthResponse.json();
   assert.ok(["healthy", "warning", "blocked"].includes(healthPayload.status), "health report should have a known status");

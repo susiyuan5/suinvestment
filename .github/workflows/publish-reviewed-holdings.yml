@@ -1,0 +1,27 @@
+name: Publish reviewed encrypted holdings
+on:
+  schedule:
+    - cron: "15,45 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: publish-reviewed-holdings
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Validate merged encrypted snapshot and publish manifest
+        run: python scripts/live_data.py --publish-reviewed

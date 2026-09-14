@@ -1357,6 +1357,8 @@ amountBreakdown: "金额分解",
     singleStockExposureModeEl.value = localStorage.getItem(STORAGE_KEYS.etfExposureMode) || "direct_only";
     singleStockExposureModeEl.addEventListener("change", function () { localStorage.setItem(STORAGE_KEYS.etfExposureMode, singleStockExposureModeEl.value); calculateEtfExposure(); render(); });
   }
+  let liveDataSession = window.LiveData.session();
+  let liveDataStarted = false;
   initializeDcaL2Config();
   initializeEtfHoldings();
 
@@ -1427,6 +1429,10 @@ amountBreakdown: "金额分解",
     state.panicActive = false;
     markCardsLoading();
 
+    if (liveDataStarted) {
+      try { liveDataSession = await window.LiveData.refresh(); } catch (_) { liveDataSession = window.LiveData.session(); }
+    }
+    liveDataStarted = true;
     state.weeklySnapshot = await fetchWeeklySnapshot();
     state.backtestSnapshot = await fetchBacktestSnapshot();
     state.marketRegime = await fetchMarketRegime();
@@ -6875,7 +6881,7 @@ function equalizeAllocations() {
     }, CONFIG.requestTimeoutMs);
 
     try {
-      const response = await fetch(url, { signal: controller.signal });
+      const response = await liveDataSession.fetch(url, { signal: controller.signal });
       if (!response.ok) {
         const body = await response.text();
         throw new Error("Request failed with status " + response.status + " " + body.slice(0, 120));

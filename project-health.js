@@ -1,5 +1,6 @@
 (function () {
   "use strict";
+  let dataSession = window.LiveData.session();
 
   const status = document.getElementById("projectHealthStatus");
   const detail = document.getElementById("projectHealthDetails");
@@ -83,8 +84,8 @@
   }
 
   Promise.all([
-    fetch("results/health/project-health.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("health report unavailable"); return response.json(); }),
-    fetch("results/health/project-health-history.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) return { entries: [] }; return response.json(); }).catch(function () { return { entries: [] }; })
+    dataSession.fetch("results/health/project-health.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) throw new Error("health report unavailable"); return response.json(); }),
+    dataSession.fetch("results/health/project-health-history.json", { cache: "no-cache" }).then(function (response) { if (!response.ok) return { entries: [] }; return response.json(); }).catch(function () { return { entries: [] }; })
   ])
     .then(function (payloads) { applyHealth(payloads[0], payloads[1]); })
     .catch(function () {

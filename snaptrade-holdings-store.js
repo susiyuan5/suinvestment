@@ -73,7 +73,7 @@
   }
   async function importNonExtractableKey(value) { if (!validateBase64Key(value)) throw new Error("请提供合法的 32 字节 Base64 密钥"); return root.crypto.subtle.importKey("raw", base64ToBytes(value), { name: "AES-GCM" }, false, ["decrypt"]); }
   async function loadEncryptedEnvelope() {
-    var response = await root.fetch(ENVELOPE_URL, { cache: "no-cache" });
+    var response = await (root.LiveData ? root.LiveData.session().fetch : root.fetch)(ENVELOPE_URL, { cache: "no-cache" });
     if (!response.ok) throw new Error("加密持仓快照尚未发布");
     var envelope = await response.json();
     if (!envelope || envelope.schema_version !== ENVELOPE_SCHEMA || envelope.algorithm !== "AES-256-GCM") throw new Error("加密持仓快照 schema 无效");

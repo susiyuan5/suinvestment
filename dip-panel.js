@@ -336,16 +336,20 @@
     summaryEl.replaceChildren();
     latest = null;
   }
+  let historyVersion;
   async function refresh() {
     const seq = ++sequence;
     try {
       const next = await L.transact(indexedDB, (b) => L.ensure(b, Date.now()));
+      const dataSession = await window.LiveData.session().ready;
+      if (historyVersion !== dataSession.manifest.dataCommit) history = null;
       if (!history) {
-        const response = await fetch("data/v2/backtest-adjusted-daily.json", {
+        const response = await dataSession.fetch("data/v2/backtest-adjusted-daily.json", {
           cache: "no-cache",
         });
         if (!response.ok) throw Error("周线数据无法加载");
         history = await response.json();
+        historyVersion = dataSession.manifest.dataCommit;
       }
       if (seq !== sequence) return;
       book = next;

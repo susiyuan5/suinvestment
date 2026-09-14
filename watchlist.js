@@ -131,8 +131,13 @@ function renderQuote() {
   }
 
   async function getBacktestPrices() {
+    const dataSession = await window.LiveData.session().ready;
+    if (state.backtestDataVersion !== dataSession.manifest.dataCommit) {
+      state.backtestPricesPromise = null;
+      state.backtestDataVersion = dataSession.manifest.dataCommit;
+    }
     if (!state.backtestPricesPromise) {
-      state.backtestPricesPromise = fetch("data/backtest-prices.json", { cache: "force-cache" })
+      state.backtestPricesPromise = dataSession.fetch("data/backtest-prices.json", { cache: "force-cache" })
         .then((response) => {
           if (!response.ok) throw new Error("本地历史数据不可用");
           return response.json();

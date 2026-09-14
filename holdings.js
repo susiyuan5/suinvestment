@@ -1,5 +1,6 @@
 (function () {
   "use strict";
+  let dataSession = window.LiveData.session();
 
   const STORAGE = {
     portfolio: "su-investment-pro:portfolio",
@@ -33,7 +34,8 @@
   }
 
   async function loadSnapshot() {
-    const response = await fetch("data/market-data.json", { cache: "no-store" });
+    try { dataSession = await window.LiveData.refresh(); } catch (_) { dataSession = window.LiveData.session(); }
+    const response = await dataSession.fetch("data/market-data.json", { cache: "no-store" });
     if (!response.ok) throw new Error("Snapshot unavailable");
     return response.json();
   }

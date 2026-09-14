@@ -1,65 +1,34 @@
 name: Update weekly market data
-
-on:
-  schedule:
-    - cron: "30 6,22 * * *"
-  workflow_dispatch:
-
 permissions:
   contents: write
+  actions: read
   pull-requests: write
-  statuses: write
-
 concurrency:
   group: update-weekly-market-data
   cancel-in-progress: true
-
 jobs:
   update-market-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Setup Node
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
-      - name: Setup Python
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - name: Update market data
-        run: python scripts/price_sources.py
-      - name: Validate price source tests
-        run: python -m unittest tests.test_price_sources
-      - name: Create or update market data pull request
-        id: create-pr
-        uses: peter-evans/create-pull-request@v8
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: automation/update-market-data
-          delete-branch: true
-          commit-message: "Update weekly market data"
-          title: "Update weekly market data"
-          body: "Validated QQQ/SPY-covered market snapshot refresh. No strategy or trading behavior changes."
-          add-paths: |
-            data/market-data.json
-            results/data_freshness/market_price_freshness.json
-
-      - name: Mark generated commit verified
-        if: steps.create-pr.outputs.pull-request-number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_SHA: ${{ steps.create-pr.outputs.pull-request-head-sha }}
-        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" -f state=success -f context=verify -f description="Market snapshot validation passed"
-
-      - name: Merge validated market data pull request
-        if: steps.create-pr.outputs.pull-request-number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --merge --delete-branch
-
-      - name: Report no market changes
-        if: steps.create-pr.outputs.pull-request-number == ''
-        run: echo "No validated market data changes to publish."
+      - name: Generate, validate and publish independent data
+        run: python scripts/live_data.py --task update-market-data
+      - name: Independent data read smoke (no Pages deployment)
+        run: node scripts/live-data-smoke.mjs
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+"on":
+  schedule:
+    - cron: 30 6,22 * * *
+  workflow_dispatch: null

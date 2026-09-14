@@ -1,110 +1,34 @@
 name: Update monthly shadow observation
-
-on:
-  schedule:
-    - cron: "15 13 1 * *"
-  workflow_dispatch:
-
 permissions:
   contents: write
+  actions: read
   pull-requests: write
-  statuses: write
-
 concurrency:
   group: update-monthly-shadow-observation
   cancel-in-progress: true
-
 jobs:
   update-shadow:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 135
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - name: Check monthly cadence
-        run: |
-          python - <<'PY'
-          import json
-          import os
-          from datetime import datetime, timezone
-          from pathlib import Path
-          path = Path("research/results/phase6s/shadow-observation-governance-report.json")
-          report = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-          latest = report.get("latestObservationDate")
-          latest_dt = datetime.fromisoformat(latest.replace("Z", "+00:00")) if latest else None
-          due = latest_dt is None or (datetime.now(timezone.utc).date() - latest_dt.date()).days >= 7
-          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
-              handle.write(f"SHADOW_UPDATE_DUE={'true' if due else 'false'}\n")
-          print(f"shadow_update_due={due}")
-          PY
-      - name: Refresh expanded research prices
-        if: env.SHADOW_UPDATE_DUE == 'true'
-        run: python research/run_phase6i_expanded_research.py
-      - name: Validate refreshed research prices
-        if: env.SHADOW_UPDATE_DUE == 'true'
-        run: |
-          python - <<'PY'
-          import json
-          import math
-          from pathlib import Path
-          path = Path("data/research-prices-sector-balanced-80.json")
-          payload = json.loads(path.read_text(encoding="utf-8"))
-          symbols = payload.get("symbols", {})
-          required = set(payload.get("research_universe_symbols", [])) | {"QQQ", "SPY"}
-          if not required or required - set(symbols):
-              raise SystemExit(f"missing symbols: {sorted(required - set(symbols))}")
-          for symbol in required:
-              rows = symbols[symbol].get("rows", [])
-              if len(rows) < 260:
-                  raise SystemExit(f"{symbol} has insufficient history")
-              dates = [row.get("date") for row in rows]
-              if dates != sorted(set(dates)):
-                  raise SystemExit(f"{symbol} dates are not unique and increasing")
-              if any(not isinstance(row.get("close"), (int, float)) or not math.isfinite(row["close"]) or row["close"] <= 0 for row in rows):
-                  raise SystemExit(f"{symbol} contains invalid closes")
-          PY
-      - name: Build same-origin research price fallback
-        if: env.SHADOW_UPDATE_DUE == 'true'
-        run: python scripts/build_idea_price_trends.py
-      - name: Generate frozen observation and outcomes
-        if: env.SHADOW_UPDATE_DUE == 'true'
-        run: |
-          python research/run_phase6s_shadow_observation.py
-          python research/update_shadow_outcomes.py
-          python research/analyze_shadow_observation_history.py
-          python research/archive_shadow_observation_snapshot.py
-          python research/validate_shadow_observation_archive.py
-          python research/generate_shadow_monthly_review.py
-      - name: Run Shadow tests
-        if: env.SHADOW_UPDATE_DUE == 'true'
-        run: python -m unittest tests.test_shadow_governance
-      - name: Create or update Shadow pull request
-        if: env.SHADOW_UPDATE_DUE == 'true'
-        id: create-pr
-        uses: peter-evans/create-pull-request@v8
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: automation/update-shadow-observation
-          delete-branch: true
-          commit-message: "Refresh monthly shadow observation"
-          title: "Refresh monthly shadow observation"
-          body: |
-            Research-only monthly Shadow refresh. No live strategy, portfolio, broker, or Manual Trade Plan changes.
-          add-paths: |
-            data/research-prices-sector-balanced-80.json
-            data/idea-engine-v3/price-trends.json
-            research/results/phase6s/**
-
-      - name: Merge validated research-only pull request
-        if: env.SHADOW_UPDATE_DUE == 'true' && steps.create-pr.outputs.pull-request-number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${{ steps.create-pr.outputs.pull-request-head-sha }}" -f state=success -f context=verify -f description="Shadow governance validation passed"
-          gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --merge --delete-branch
-
-      - name: Report no due observation
-        if: env.SHADOW_UPDATE_DUE != 'true'
-        run: echo "A frozen Shadow observation already exists within the last seven days; preserving it unchanged."
+      - name: Generate, validate and publish independent data
+        run: python scripts/live_data.py --task update-shadow-observation
+      - name: Independent data read smoke (no Pages deployment)
+        run: node scripts/live-data-smoke.mjs
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+"on":
+  schedule:
+    - cron: 15 13 1 * *
+  workflow_dispatch: null

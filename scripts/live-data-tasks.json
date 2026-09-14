@@ -1,0 +1,295 @@
+{
+  "update-market-data": {
+    "outputs": [
+      "data/market-data.json",
+      "results/data_freshness/market_price_freshness.json"
+    ],
+    "commands": [
+      {
+        "name": "Update market data",
+        "run": "python scripts/price_sources.py"
+      },
+      {
+        "name": "Validate price source tests",
+        "run": "python -m unittest tests.test_price_sources"
+      }
+    ]
+  },
+  "project-health": {
+    "outputs": [
+      "results/health/project-health.json",
+      "results/health/project-health.md",
+      "results/health/project-health-history.json"
+    ],
+    "commands": [
+      {
+        "name": "Build health report atomically",
+        "env": {
+          "GITHUB_TOKEN": "${{ secrets.GITHUB_TOKEN }}"
+        },
+        "run": "python scripts/build_project_health.py"
+      },
+      {
+        "name": "Validate health report",
+        "run": "python -m unittest tests.test_project_health\npython -m json.tool results/health/project-health.json > /dev/null\n"
+      }
+    ]
+  },
+  "update-backtest-prices": {
+    "outputs": [
+      "data/backtest-prices.json",
+      "data/v2/backtest-adjusted-daily.json",
+      "results/dca_l2/v2/**"
+    ],
+    "commands": [
+      {
+        "name": "Install Python dependencies",
+        "run": "python -m pip install --upgrade pip\nif [ -f requirements.txt ]; then\n  python -m pip install -r requirements.txt\nfi\npython -m pip install \"pandas>=2,<3\"\n"
+      },
+      {
+        "name": "Refresh historical backtest prices",
+        "run": "python scripts/update_backtest_prices.py --refresh-all\npython scripts/update_backtest_daily_prices.py\npython dca_l2_backtest_v2.py\n"
+      },
+      {
+        "name": "Validate historical snapshot",
+        "run": "python - <<'PY'\nimport json\nfrom pathlib import Path\n\npath = Path(\"data/backtest-prices.json\")\nif not path.exists():\n    raise SystemExit(\"data/backtest-prices.json is missing\")\n\npayload = json.loads(path.read_text(encoding=\"utf-8\"))\nsymbols = payload.get(\"symbols\")\nif not isinstance(symbols, dict):\n    raise SystemExit(\"symbols object is missing\")\n\nsummary = {}\nfor symbol in (\"QQQ\", \"SPY\"):\n    rows = symbols.get(symbol)\n    if not isinstance(rows, list):\n        raise SystemExit(f\"{symbol} is missing\")\n    if len(rows) < 50:\n        raise SystemExit(f\"{symbol} has fewer than 50 weekly rows\")\n    latest = rows[-1].get(\"date\") if isinstance(rows[-1], dict) else None\n    if not latest:\n        raise SystemExit(f\"{symbol} latest date is missing\")\n    summary[symbol] = {\n        \"count\": len(rows),\n        \"latest\": latest,\n    }\n\nwith open(\"snapshot-summary.env\", \"w\", encoding=\"utf-8\") as handle:\n    for symbol, values in summary.items():\n        handle.write(f\"{symbol}_ROW_COUNT={values['count']}\\n\")\n        handle.write(f\"{symbol}_LATEST_DATE={values['latest']}\\n\")\nadjusted = json.loads(Path(\"data/v2/backtest-adjusted-daily.json\").read_text(encoding=\"utf-8\"))\nif adjusted.get(\"version\") != \"adjusted-daily-v2\" or adjusted.get(\"research_only\") is not True:\n    raise SystemExit(\"adjusted daily v2 schema metadata is invalid\")\nfor symbol in (\"QQQ\", \"SPY\"):\n    rows = adjusted.get(\"symbols\", {}).get(symbol, [])\n    if len(rows) < 260 or any(not all(field in row for field in (\"adjusted_open\", \"adjusted_high\", \"adjusted_low\", \"adjusted_close\")) for row in rows):\n        raise SystemExit(f\"{symbol} adjusted OHLC coverage is invalid\")\nv2 = json.loads(Path(\"results/dca_l2/v2/summary.json\").read_text(encoding=\"utf-8\"))\nif not v2.get(\"validity\", {}).get(\"valid\") or v2[\"validity\"].get(\"executed_trade_count\", 0) <= 0:\n    raise SystemExit(\"DCA-L2 v2 result is invalid or has no executed trades\")\nPY\ncat snapshot-summary.env >> \"$GITHUB_ENV\"\n"
+      },
+      {
+        "name": "Compile historical refresh script",
+        "run": "python -m py_compile scripts/update_backtest_prices.py scripts/update_backtest_daily_prices.py dca_l2_backtest_v2.py"
+      },
+      {
+        "name": "Run Python tests",
+        "run": "python -m unittest discover -s tests"
+      },
+      {
+        "name": "Run Node tests and dashboard contracts",
+        "run": "node --test tests/*.test.js\npython scripts/check_static_contracts.py\n"
+      }
+    ]
+  },
+  "update-short-term-signals": {
+    "outputs": [
+      "data/short-term-daily-bars-v1.json",
+      "research/results/v3_1/short-term-trade-plans-v1_3/**",
+      "data/research-refresh-status.json"
+    ],
+    "commands": [
+      {
+        "name": "Write refresh status",
+        "run": "python scripts/write_refresh_status.py --task today --status fetching --run-id \"${GITHUB_RUN_ID}\""
+      },
+      {
+        "name": "Refresh strict daily OHLCV snapshot",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python -m scripts.refresh_short_term_daily_bars"
+      },
+      {
+        "name": "Validate snapshot and generate three independent strategies",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python - <<'PY'\nimport json\nfrom pathlib import Path\nfrom research.idea_engine.v3.short_term_daily_bars import validate_snapshot\nfrom research.idea_engine.v3.short_term_trade_plan import DEFAULT_OUTPUT, atomic_write, generate\n\nprices = json.loads(Path(\"data/short-term-daily-bars-v1.json\").read_text(encoding=\"utf-8\"))\ncandidates = json.loads(Path(\"research/results/v3_1/idea-engine/latest-candidates.json\").read_text(encoding=\"utf-8\"))\nsymbols = [row[\"ticker\"] for row in candidates.get(\"candidates\", [])]\nresult = validate_snapshot(prices, symbols, benchmark=\"QQQ\", as_of=prices.get(\"as_of\"))\nif not result[\"valid\"]:\n    raise SystemExit(\"daily short-term snapshot invalid: \" + \"; \".join(result[\"errors\"][:10]))\natomic_write(DEFAULT_OUTPUT, generate(as_of=prices.get(\"as_of\")))\nPY\n"
+      },
+      {
+        "name": "Run short-term regression checks",
+        "run": "python -m unittest tests.test_short_term_trade_plan tests.test_style_fusion_short_term tests.test_short_term_daily_bars\nnode --test tests/short-term-trade-plan.test.js\npython scripts/check_static_contracts.py\n"
+      },
+      {
+        "name": "Mark refresh ready for publication",
+        "if": "success()",
+        "run": "python scripts/write_refresh_status.py --task today --status waiting_publish --run-id \"${GITHUB_RUN_ID}\""
+      },
+      {
+        "name": "Mark refresh failure without replacing results",
+        "if": "failure()",
+        "run": "python scripts/write_refresh_status.py --task today --status failed --run-id \"${GITHUB_RUN_ID}\""
+      }
+    ]
+  },
+  "update-idea-engine": {
+    "outputs": [
+      "research/results/v3_1/idea-engine/**",
+      "research/results/v3_1/short-term-trade-plans/**",
+      "research/results/v3_1/short-term-trade-plans-v1_1/**",
+      "research/results/v3_1/short-term-trade-plans-v1_2/**",
+      "research/results/v3_1/short-term-trade-plans-v1_3/**",
+      "research/results/v3_1/historical-oos-price-timing/**",
+      "research/results/v3_1/global-style-short-term-oos/**",
+      "research/results/v3_1/global-style-short-term-oos-v1_3/**",
+      "data/short-term-daily-bars-v1.json",
+      "data/idea-engine-events-v1.json",
+      "data/idea-engine-v3/price-trends.json",
+      "data/research-refresh-status.json"
+    ],
+    "commands": [
+      {
+        "name": "Write refresh status",
+        "run": "python scripts/write_refresh_status.py --task universe --status fetching --run-id \"${GITHUB_RUN_ID}\""
+      },
+      {
+        "name": "Validate pinned provider manifest",
+        "run": "python - <<'PY'\nimport json\nfrom pathlib import Path\n\npayload = json.loads(Path(\"research/idea_engine/providers/provider_manifest.json\").read_text(encoding=\"utf-8\"))\nassert payload[\"manifest_version\"] == \"1\"\nassert all(item.get(\"name\") and item.get(\"allowed_use\") for item in payload[\"providers\"])\nassert any(item.get(\"name\") == \"sec-edgar-public-data\" and not item.get(\"api_key_required\") for item in payload[\"providers\"])\nprint(\"provider_manifest_valid=true\")\nPY\n"
+      },
+      {
+        "name": "Refresh extended history for permanent OOS calibration",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python -m scripts.refresh_short_term_daily_bars --start 2020-01-01 --output \"$RUNNER_TEMP/historical-oos-bars.json\""
+      },
+      {
+        "name": "Generate leakage-aware historical OOS price-timing report",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python -m research.idea_engine.v3.historical_oos --prices \"$RUNNER_TEMP/historical-oos-bars.json\""
+      },
+      {
+        "name": "Generate global-style entry and exit OOS report",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python -m research.idea_engine.v3.style_fusion_oos --prices \"$RUNNER_TEMP/historical-oos-bars.json\""
+      },
+      {
+        "name": "Generate history-prioritized v3.1 candidates from free public data",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python -m research.idea_engine.v3.run_idea_engine_v3 --provider free --historical-oos research/results/v3_1/historical-oos-price-timing/latest.json --output research/results/v3_1/idea-engine"
+      },
+      {
+        "name": "Build same-origin research price fallback",
+        "run": "python scripts/build_idea_price_trends.py"
+      },
+      {
+        "name": "Refresh strict short-term daily OHLCV snapshot",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python -m scripts.refresh_short_term_daily_bars"
+      },
+      {
+        "name": "Validate strict short-term daily OHLCV snapshot",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python - <<'PY'\nimport json\nfrom pathlib import Path\nfrom research.idea_engine.v3.short_term_daily_bars import validate_snapshot\nuniverse = json.loads(Path('data/research-universe-sector-balanced-80.json').read_text())\npayload = json.loads(Path('data/short-term-daily-bars-v1.json').read_text())\nresult = validate_snapshot(payload, universe['research_universe_symbols'], as_of=payload.get('as_of'))\nprint(json.dumps({'valid': result['valid'], 'errors': result['errors'][:10], 'validated_symbols': sum(1 for row in result['coverage'].values() if row['valid'])}, ensure_ascii=False))\n",
+        "continue-on-error": true
+      },
+      {
+        "name": "Generate research-only v1.3 three-strategy trade plans",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python -m research.idea_engine.v3.short_term_trade_plan"
+      },
+      {
+        "name": "Run complete quality checks",
+        "run": "python -m pip install \"pandas>=2,<3\"\npython -m unittest discover -s tests\nnode --test tests/*.test.js\npython scripts/check_static_contracts.py\n"
+      },
+      {
+        "name": "Mark scan ready for publication",
+        "if": "success()",
+        "run": "python scripts/write_refresh_status.py --task universe --status waiting_publish --run-id \"${GITHUB_RUN_ID}\""
+      },
+      {
+        "name": "Mark scan failure without replacing results",
+        "if": "failure()",
+        "run": "python scripts/write_refresh_status.py --task universe --status failed --run-id \"${GITHUB_RUN_ID}\""
+      }
+    ]
+  },
+  "update-shadow-observation": {
+    "outputs": [
+      "data/research-prices-sector-balanced-80.json",
+      "data/idea-engine-v3/price-trends.json",
+      "research/results/phase6s/**"
+    ],
+    "commands": [
+      {
+        "name": "Check monthly cadence",
+        "run": "python - <<'PY'\nimport json\nimport os\nfrom datetime import datetime, timezone\nfrom pathlib import Path\npath = Path(\"research/results/phase6s/shadow-observation-governance-report.json\")\nreport = json.loads(path.read_text(encoding=\"utf-8\")) if path.exists() else {}\nlatest = report.get(\"latestObservationDate\")\nlatest_dt = datetime.fromisoformat(latest.replace(\"Z\", \"+00:00\")) if latest else None\ndue = latest_dt is None or (datetime.now(timezone.utc).date() - latest_dt.date()).days >= 7\nwith open(os.environ[\"GITHUB_ENV\"], \"a\", encoding=\"utf-8\") as handle:\n    handle.write(f\"SHADOW_UPDATE_DUE={'true' if due else 'false'}\\n\")\nprint(f\"shadow_update_due={due}\")\nPY\n"
+      },
+      {
+        "name": "Refresh expanded research prices",
+        "if": "env.SHADOW_UPDATE_DUE == 'true'",
+        "run": "python research/run_phase6i_expanded_research.py"
+      },
+      {
+        "name": "Validate refreshed research prices",
+        "if": "env.SHADOW_UPDATE_DUE == 'true'",
+        "run": "python - <<'PY'\nimport json\nimport math\nfrom pathlib import Path\npath = Path(\"data/research-prices-sector-balanced-80.json\")\npayload = json.loads(path.read_text(encoding=\"utf-8\"))\nsymbols = payload.get(\"symbols\", {})\nrequired = set(payload.get(\"research_universe_symbols\", [])) | {\"QQQ\", \"SPY\"}\nif not required or required - set(symbols):\n    raise SystemExit(f\"missing symbols: {sorted(required - set(symbols))}\")\nfor symbol in required:\n    rows = symbols[symbol].get(\"rows\", [])\n    if len(rows) < 260:\n        raise SystemExit(f\"{symbol} has insufficient history\")\n    dates = [row.get(\"date\") for row in rows]\n    if dates != sorted(set(dates)):\n        raise SystemExit(f\"{symbol} dates are not unique and increasing\")\n    if any(not isinstance(row.get(\"close\"), (int, float)) or not math.isfinite(row[\"close\"]) or row[\"close\"] <= 0 for row in rows):\n        raise SystemExit(f\"{symbol} contains invalid closes\")\nPY\n"
+      },
+      {
+        "name": "Build same-origin research price fallback",
+        "if": "env.SHADOW_UPDATE_DUE == 'true'",
+        "run": "python scripts/build_idea_price_trends.py"
+      },
+      {
+        "name": "Generate frozen observation and outcomes",
+        "if": "env.SHADOW_UPDATE_DUE == 'true'",
+        "run": "python research/run_phase6s_shadow_observation.py\npython research/update_shadow_outcomes.py\npython research/analyze_shadow_observation_history.py\npython research/archive_shadow_observation_snapshot.py\npython research/validate_shadow_observation_archive.py\npython research/generate_shadow_monthly_review.py\n"
+      },
+      {
+        "name": "Run Shadow tests",
+        "if": "env.SHADOW_UPDATE_DUE == 'true'",
+        "run": "python -m unittest tests.test_shadow_governance"
+      }
+    ]
+  },
+  "govern-research-universe": {
+    "outputs": [
+      "data/research-universe/v2/**",
+      "results/research-universe/**"
+    ],
+    "commands": [
+      {
+        "name": "Generate auditable universe snapshot",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python scripts/govern_research_universe.py"
+      },
+      {
+        "name": "Validate universe governance",
+        "env": {
+          "PYTHONPATH": "."
+        },
+        "run": "python -m unittest tests.test_research_universe_governance\npython -m json.tool data/research-universe/v2/current.json > /dev/null\n"
+      }
+    ]
+  },
+  "sync-snaptrade-holdings": {
+    "outputs": [
+      "data/private/wealthsimple-holdings.enc.json"
+    ],
+    "commands": [
+      {
+        "name": "Install Python test dependency",
+        "run": "python -m pip install \"pandas>=2,<3\""
+      },
+      {
+        "run": "npm ci --ignore-scripts"
+      },
+      {
+        "run": "node scripts/sync-snaptrade-holdings.mjs"
+      },
+      {
+        "run": "node scripts/validate-encrypted-holdings.mjs"
+      },
+      {
+        "run": "npm test"
+      },
+      {
+        "run": "python -m unittest discover -s tests"
+      },
+      {
+        "run": "git diff --check"
+      }
+    ]
+  }
+}

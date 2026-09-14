@@ -9,12 +9,15 @@ ROOT = Path(__file__).resolve().parents[1]
 class DailyShortTermWorkflowTests(unittest.TestCase):
     def test_daily_workflow_refreshes_signals_without_freezing_shadow(self):
         workflow = (ROOT / ".github/workflows/update-short-term-signals.yml").read_text(encoding="utf-8")
-        self.assertIn('cron: "20 23 * * 1-5"', workflow)
-        self.assertIn("refresh_short_term_daily_bars", workflow)
-        self.assertIn("short-term-trade-plans-v1_3", workflow)
-        self.assertIn("gh pr merge", workflow)
-        self.assertNotIn("run_idea_engine_v3", workflow)
-        self.assertNotIn("shadow/observations", workflow)
+        self.assertIn('20 23 * * 1-5', workflow)
+        self.assertIn('--task update-short-term-signals', workflow)
+        task = json.loads((ROOT / 'scripts/live-data-tasks.json').read_text(encoding='utf-8'))['update-short-term-signals']
+        commands = json.dumps(task)
+        self.assertIn('refresh_short_term_daily_bars', commands)
+        self.assertIn('short-term-trade-plans-v1_3', commands)
+        self.assertNotIn('gh pr merge', workflow)
+        self.assertNotIn('run_idea_engine_v3', commands)
+        self.assertNotIn('shadow/observations', commands)
 
     def test_published_v13_has_exactly_three_non_executable_strategies_per_candidate(self):
         payload = json.loads((ROOT / "research/results/v3_1/short-term-trade-plans-v1_3/latest.json").read_text(encoding="utf-8"))

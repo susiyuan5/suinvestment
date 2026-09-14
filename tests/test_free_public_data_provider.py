@@ -117,10 +117,13 @@ class FreePublicDataProviderTests(unittest.TestCase):
         workflow = (Path(__file__).parents[1] / ".github" / "workflows" / "update-idea-engine.yml").read_text(encoding="utf-8")
         self.assertNotIn("OCTAGON_API_KEY", workflow)
         self.assertNotIn("requirements-octagon", workflow)
-        self.assertIn("--provider free", workflow)
-        self.assertIn("research/results/v3_1/idea-engine", workflow)
-        self.assertIn("gh pr ready", workflow)
-        self.assertIn("--json isDraft", workflow)
+        registry = json.loads((Path(__file__).parents[1] / 'scripts/live-data-tasks.json').read_text(encoding='utf-8'))
+        commands = json.dumps(registry['update-idea-engine'])
+        self.assertIn('--provider free', commands)
+        self.assertIn('research/results/v3_1/idea-engine', commands)
+        self.assertIn('--task update-idea-engine', workflow)
+        self.assertNotIn('gh pr merge', workflow)
+
 
 
 if __name__ == "__main__":

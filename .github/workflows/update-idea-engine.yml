@@ -1,155 +1,35 @@
 name: Update Idea Engine v3.1 Short-term Shadow
-
-on:
-  schedule:
-    - cron: "30 14 * * 1"
-  workflow_dispatch:
-
 permissions:
   contents: write
+  actions: read
   pull-requests: write
-  statuses: write
-
 concurrency:
   group: update-idea-engine-v3-1
   cancel-in-progress: true
-
 jobs:
   shadow:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 135
     env:
       SEC_USER_AGENT: SuInvestment susiyuan0807@gmail.com
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          ref: main
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
-
-      - name: Write refresh status
-        run: python scripts/write_refresh_status.py --task universe --status fetching --run-id "${GITHUB_RUN_ID}"
-
-      - name: Validate pinned provider manifest
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          payload = json.loads(Path("research/idea_engine/providers/provider_manifest.json").read_text(encoding="utf-8"))
-          assert payload["manifest_version"] == "1"
-          assert all(item.get("name") and item.get("allowed_use") for item in payload["providers"])
-          assert any(item.get("name") == "sec-edgar-public-data" and not item.get("api_key_required") for item in payload["providers"])
-          print("provider_manifest_valid=true")
-          PY
-
-      - name: Refresh extended history for permanent OOS calibration
-        env:
-          PYTHONPATH: .
-        run: python -m scripts.refresh_short_term_daily_bars --start 2020-01-01 --output "$RUNNER_TEMP/historical-oos-bars.json"
-
-      - name: Generate leakage-aware historical OOS price-timing report
-        env:
-          PYTHONPATH: .
-        run: python -m research.idea_engine.v3.historical_oos --prices "$RUNNER_TEMP/historical-oos-bars.json"
-
-      - name: Generate global-style entry and exit OOS report
-        env:
-          PYTHONPATH: .
-        run: python -m research.idea_engine.v3.style_fusion_oos --prices "$RUNNER_TEMP/historical-oos-bars.json"
-
-      - name: Generate history-prioritized v3.1 candidates from free public data
-        env:
-          PYTHONPATH: .
-        run: python -m research.idea_engine.v3.run_idea_engine_v3 --provider free --historical-oos research/results/v3_1/historical-oos-price-timing/latest.json --output research/results/v3_1/idea-engine
-
-      - name: Build same-origin research price fallback
-        run: python scripts/build_idea_price_trends.py
-
-      - name: Refresh strict short-term daily OHLCV snapshot
-        env:
-          PYTHONPATH: .
-        run: python -m scripts.refresh_short_term_daily_bars
-
-      - name: Validate strict short-term daily OHLCV snapshot
-        env:
-          PYTHONPATH: .
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          from research.idea_engine.v3.short_term_daily_bars import validate_snapshot
-          universe = json.loads(Path('data/research-universe-sector-balanced-80.json').read_text())
-          payload = json.loads(Path('data/short-term-daily-bars-v1.json').read_text())
-          result = validate_snapshot(payload, universe['research_universe_symbols'], as_of=payload.get('as_of'))
-          print(json.dumps({'valid': result['valid'], 'errors': result['errors'][:10], 'validated_symbols': sum(1 for row in result['coverage'].values() if row['valid'])}, ensure_ascii=False))
-        continue-on-error: true
-
-      - name: Generate research-only v1.3 three-strategy trade plans
-        env:
-          PYTHONPATH: .
-        run: python -m research.idea_engine.v3.short_term_trade_plan
-
-      - name: Run complete quality checks
-        run: |
-          python -m pip install "pandas>=2,<3"
-          python -m unittest discover -s tests
-          node --test tests/*.test.js
-          python scripts/check_static_contracts.py
-
-      - name: Mark scan ready for publication
-        if: success()
-        run: python scripts/write_refresh_status.py --task universe --status waiting_publish --run-id "${GITHUB_RUN_ID}"
-      - name: Mark scan failure without replacing results
-        if: failure()
-        run: python scripts/write_refresh_status.py --task universe --status failed --run-id "${GITHUB_RUN_ID}"
-
-      - name: Create validated research pull request
-        id: create-pr
-        uses: peter-evans/create-pull-request@v8
+      - uses: actions/setup-python@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: automation/update-idea-engine-shadow
-          delete-branch: true
-          commit-message: "Update Idea Engine v3.1 short-term Shadow results"
-          title: "Update Idea Engine v3.1 short-term Shadow results"
-          draft: false
-          body: |
-            仅更新潜力股 Shadow 研究结果。
-
-            - 不影响本周定投
-            - 不连接券商
-            - 不自动交易
-            - 候选结果仅可人工复核
-            - 1–4 周为短线验证窗口，12 周仅监测信号衰减
-            - 历史 OOS 只校验价格择时层，冻结训练边界，不代替实时 Shadow
-            - v1.3 为每只股票分别输出放量突破、趋势回踩和 VCP／箱体突破三种条件情景
-            - 三种策略独立验证，不输出未经校准的上涨概率
-            - 数据源为免费 SEC EDGAR 与公开价格数据，无需付费 API Key
-          add-paths: |
-            research/results/v3_1/idea-engine/**
-            research/results/v3_1/short-term-trade-plans/**
-            research/results/v3_1/short-term-trade-plans-v1_1/**
-            research/results/v3_1/short-term-trade-plans-v1_2/**
-            research/results/v3_1/short-term-trade-plans-v1_3/**
-            research/results/v3_1/historical-oos-price-timing/**
-            research/results/v3_1/global-style-short-term-oos/**
-            research/results/v3_1/global-style-short-term-oos-v1_3/**
-            data/short-term-daily-bars-v1.json
-            data/idea-engine-events-v1.json
-            data/idea-engine-v3/price-trends.json
-            data/research-refresh-status.json
-
-      - name: Mark validated research commit and merge
-        if: steps.create-pr.outputs.pull-request-number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          pr_number="${{ steps.create-pr.outputs.pull-request-number }}"
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${{ steps.create-pr.outputs.pull-request-head-sha }}" -f state=success -f context=verify -f description="Idea Engine research validation passed"
-          if [ "$(gh pr view "$pr_number" --json isDraft --jq .isDraft)" = "true" ]; then
-            gh pr ready "$pr_number"
-          fi
-          gh pr merge "$pr_number" --merge --delete-branch
+          python-version: "3.11"
+      - name: Generate, validate and publish independent data
+        run: python scripts/live_data.py --task update-idea-engine
+      - name: Independent data read smoke (no Pages deployment)
+        run: node scripts/live-data-smoke.mjs
+"on":
+  schedule:
+    - cron: 30 14 * * 1
+  workflow_dispatch: null
