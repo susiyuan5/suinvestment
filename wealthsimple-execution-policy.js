@@ -11,6 +11,9 @@
   function money(value) { var number = finite(value); return number === null ? 0 : Math.round(Math.max(0, number) * 100) / 100; }
   function precise(value) { var number = finite(value); return number === null ? 0 : Math.max(0, number); }
   function dateValid(value, now, maxAgeDays) { var at = Date.parse(value || ""), current = now || Date.now(), age = (current - at) / 86400000; return Number.isFinite(at) && age >= 0 && age <= (maxAgeDays || 1); }
+  function marketClosedLastClose(value) {
+    return Boolean(value && (value.marketClosedLastClose === true || value.quoteStatus === "market_closed_last_close" || value.dataFreshness === "market_closed"));
+  }
   function currency(value, fallback) { var code = String(value || fallback || "").toUpperCase(); return SUPPORTED_CURRENCIES.indexOf(code) >= 0 ? code : ""; }
   function convert(amount, from, to, fxRate) {
     var value = finite(amount), rate = finite(fxRate);
@@ -31,7 +34,16 @@
     var result = { executable: false, executionStatus: "本周不可执行", planningAmount: planningAmount, planningCurrency: planningCurrency, tradingCurrency: tradingCurrency, accountCurrency: accountCurrency, executableNotionalTrading: 0, executableAmountPlanning: 0, accountDebit: 0, fxFeeAccount: 0, retainedBudgetPlanning: planningAmount, executableAmount: 0, retainedCash: planningAmount, requiredOrderType: "未知", requiresFractionalOrder: false, requiresCurrencyConversion: false, estimatedFxFee: 0, reasonCodes: [], warnings: [] };
     if (!planningAmount) { result.reasonCodes.push("ZERO_SUGGESTION"); return result; }
     if (price === null || price <= 0) { result.executionStatus = "数据过期"; result.reasonCodes.push("INVALID_PRICE"); return result; }
-    if (!dateValid(value.quoteTimestamp, config.now, config.maxQuoteAgeDays || 1)) { result.executionStatus = "数据过期"; result.reasonCodes.push("STALE_QUOTE"); return result; }
+    if (!dateValid(value.quoteTimestamp, config.now, config.maxQuoteAgeDays || 1)) {
+      if (marketClosedLastClose(value)) {
+        result.executionStatus = "休市 · 最近收盘价";
+        result.reasonCodes.push("MARKET_CLOSED_LAST_CLOSE");
+      } else {
+        result.executionStatus = "数据过期";
+        result.reasonCodes.push("STALE_QUOTE");
+      }
+      return result;
+    }
     if (!planningCurrency || !accountCurrency || !tradingCurrency || !value.accountType) { result.reasonCodes.push("ACCOUNT_RULES_UNKNOWN"); return result; }
     var needsFx = planningCurrency !== accountCurrency || accountCurrency !== tradingCurrency || planningCurrency !== tradingCurrency;
     var fxRate = finite(value.fxRate);

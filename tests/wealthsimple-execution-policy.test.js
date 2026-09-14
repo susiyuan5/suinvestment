@@ -16,6 +16,11 @@ test("FX fee is estimated only with fresh FX data", () => {
   assert.equal(result.estimatedFxFee, .3);
   assert.equal(result.requiresCurrencyConversion, true);
 });
+test("closed-market last close is distinguished from an expired quote", () => {
+  const result = policy.execute({ symbol: "SPY", marketType: "listed", price: 600, suggestedAmount: 20, tradingCurrency: "USD", accountCurrency: "USD", accountType: "NON_REGISTERED", fractionalSupported: "unknown", quoteTimestamp: "2026-09-11T20:00:00Z", dataFreshness: "market_closed", marketClosedLastClose: true }, { now: Date.parse("2026-09-14T13:00:00Z") });
+  assert.equal(result.executionStatus, "休市 · 最近收盘价");
+  assert.deepEqual(result.reasonCodes, ["MARKET_CLOSED_LAST_CLOSE"]);
+});
 test("OTC uses limit orders and never creates a fractional suggestion", () => {
   const result = policy.execute({ symbol: "OTC_SECURITY", marketType: "OTC", price: 10, suggestedAmount: 20, tradingCurrency: "USD", accountCurrency: "USD", accountType: "NON_REGISTERED", fractionalSupported: false, quoteTimestamp: "2026-08-11T12:00:00Z" }, { now: Date.parse("2026-08-12T12:00:00Z") });
   assert.equal(result.requiredOrderType, "LIMIT");
