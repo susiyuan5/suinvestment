@@ -21,6 +21,11 @@ test("closed-market last close is distinguished from an expired quote", () => {
   assert.equal(result.executionStatus, "休市 · 最近收盘价");
   assert.deepEqual(result.reasonCodes, ["MARKET_CLOSED_LAST_CLOSE"]);
 });
+test("recent closed-market quote is blocked before age checks", () => {
+  const result = policy.execute({ symbol: "SPY", marketType: "listed", price: 600, suggestedAmount: 20, tradingCurrency: "USD", accountCurrency: "USD", accountType: "NON_REGISTERED", fractionalSupported: true, quoteTimestamp: "2026-09-11T20:00:00Z", dataFreshness: "market_closed", marketClosedLastClose: true }, { now: Date.parse("2026-09-12T08:00:00Z") });
+  assert.equal(result.executionStatus, "休市 · 最近收盘价");
+  assert.equal(result.executable, false);
+});
 test("OTC uses limit orders and never creates a fractional suggestion", () => {
   const result = policy.execute({ symbol: "OTC_SECURITY", marketType: "OTC", price: 10, suggestedAmount: 20, tradingCurrency: "USD", accountCurrency: "USD", accountType: "NON_REGISTERED", fractionalSupported: false, quoteTimestamp: "2026-08-11T12:00:00Z" }, { now: Date.parse("2026-08-12T12:00:00Z") });
   assert.equal(result.requiredOrderType, "LIMIT");

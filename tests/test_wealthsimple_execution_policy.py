@@ -18,4 +18,9 @@ class WealthsimpleExecutionPolicyTests(unittest.TestCase):
         self.assertEqual("休市 · 最近收盘价", result["executionStatus"])
         self.assertEqual(["MARKET_CLOSED_LAST_CLOSE"], result["reasonCodes"])
 
+    def test_recent_closed_market_quote_is_blocked_before_age_checks(self):
+        result = execute({"symbol": "SPY", "marketType": "listed", "price": 600, "suggestedAmount": 20, "tradingCurrency": "USD", "accountCurrency": "USD", "accountType": "NON_REGISTERED", "fractionalSupported": True, "quoteTimestamp": "2026-09-11T20:00:00Z", "dataFreshness": "market_closed", "marketClosedLastClose": True}, now=datetime(2026, 9, 12, 8, tzinfo=timezone.utc))
+        self.assertEqual("休市 · 最近收盘价", result["executionStatus"])
+        self.assertFalse(result["executable"])
+
 if __name__ == "__main__": unittest.main()

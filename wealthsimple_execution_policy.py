@@ -31,11 +31,9 @@ def execute(value, *, now=None):
     if not amount: result["reasonCodes"].append("ZERO_SUGGESTION"); return result
     price = _number(value.get("price"))
     if price is None or price <= 0: result["executionStatus"] = "数据过期"; result["reasonCodes"].append("INVALID_PRICE"); return result
+    if _market_closed_last_close(value): result["executionStatus"] = "休市 · 最近收盘价"; result["reasonCodes"].append("MARKET_CLOSED_LAST_CLOSE"); return result
     if not _fresh(value.get("quoteTimestamp"), now=now, max_age_days=value.get("maxQuoteAgeDays", 1)):
-        if _market_closed_last_close(value):
-            result["executionStatus"] = "休市 · 最近收盘价"; result["reasonCodes"].append("MARKET_CLOSED_LAST_CLOSE")
-        else:
-            result["executionStatus"] = "数据过期"; result["reasonCodes"].append("STALE_QUOTE")
+        result["executionStatus"] = "数据过期"; result["reasonCodes"].append("STALE_QUOTE")
         return result
     otc = str(value.get("marketType", "")).upper() == "OTC"
     if not value.get("accountCurrency") or not value.get("tradingCurrency") or not value.get("accountType"): result["reasonCodes"].append("ACCOUNT_RULES_UNKNOWN"); return result
