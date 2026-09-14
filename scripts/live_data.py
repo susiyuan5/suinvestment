@@ -143,6 +143,25 @@ def commands(task):
         Path(temp.name).unlink(missing_ok=True)
 
 
+def market_outcome(report):
+    if report.get("publishStatus") == "published":
+        return "行情检查完成：行情已替换。行情时间仍以 quoteTimestamp 为准。"
+    return "行情检查完成：行情未替换，保留此前快照。原因：" + str(report.get("publishReason") or "检查结果不可用")
+
+
+def report_market_outcome(name):
+    if name != "update-market-data":
+        return
+    report = json.loads((ROOT / "results/data_freshness/market_price_freshness.json").read_text(encoding="utf-8"))
+    message = market_outcome(report)
+    print(message)
+    if report.get("publishStatus") != "published":
+        print("::warning::" + message)
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
+            handle.write("\n" + message + "\n\n检查时间：" + str(report.get("generatedAt")) + "\n")
+
+
 def publish_task(name, review=False):
     task = TASKS[name]
     if (name == "sync-snaptrade-holdings") != review:
@@ -184,10 +203,12 @@ def publish_task(name, review=False):
         head = release(base, changes, code_sha)
         if head == base:
             print("No data changes")
+            report_market_outcome(name)
             return
         result = subprocess.run(["git", "push", "origin", f"{head}:refs/heads/{BRANCH}"], cwd=ROOT)
         if result.returncode == 0:
             print(f"Published {head}; Pages source unchanged")
+            report_market_outcome(name)
             return
         print(f"Publication conflict/failure ({attempt + 1}/3); reloading latest inputs")
     raise RuntimeError("Publication failed after three attempts; no force push attempted")

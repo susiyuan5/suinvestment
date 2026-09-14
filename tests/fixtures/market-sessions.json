@@ -1,0 +1,399 @@
+[
+  {
+    "name": "monday-premarket",
+    "now": "2026-09-14T13:29:59Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-09-11T20:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "monday-open",
+    "now": "2026-09-14T13:30:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-09-11T20:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": false,
+      "closed": false,
+      "missedSession": false
+    },
+    "status": "stale"
+  },
+  {
+    "name": "older-thursday",
+    "now": "2026-09-14T12:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-09-10T20:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": false,
+      "closed": true,
+      "missedSession": true
+    },
+    "status": "stale"
+  },
+  {
+    "name": "weekend",
+    "now": "2026-09-13T18:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-09-11T20:00:02Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "monday-holiday",
+    "now": "2026-09-07T15:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-09-04T20:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "good-friday",
+    "now": "2026-04-03T15:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-04-02T20:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "early-close-weekend",
+    "now": "2026-11-29T18:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-11-27T18:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "wrong-early-close",
+    "now": "2026-11-29T18:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-11-27T21:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": false,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "stale"
+  },
+  {
+    "name": "christmas",
+    "now": "2026-12-25T15:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-12-24T18:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "spring-dst",
+    "now": "2026-03-09T12:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-03-06T21:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "autumn-dst",
+    "now": "2026-11-02T13:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-10-30T20:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "new-year-boundary",
+    "now": "2026-01-01T15:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2025-12-31T21:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "2028-independence",
+    "now": "2028-07-04T15:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2028-07-03T17:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "missing-close-under-24h",
+    "now": "2026-12-24T18:01:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-12-23T21:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": false,
+      "closed": true,
+      "missedSession": true
+    },
+    "status": "stale"
+  },
+  {
+    "name": "intraday-not-close",
+    "now": "2026-06-21T12:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-06-18T13:30:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": false,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "stale"
+  },
+  {
+    "name": "normal-open-keeps-24h",
+    "now": "2026-09-15T13:30:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-09-14T20:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": false,
+      "closed": false,
+      "missedSession": false
+    },
+    "status": "validated"
+  },
+  {
+    "name": "2027-yearend-open",
+    "now": "2027-12-31T20:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2027-12-30T21:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": false,
+      "closed": false,
+      "missedSession": false
+    },
+    "status": "validated"
+  },
+  {
+    "name": "new-close-available",
+    "now": "2026-09-14T20:00:02Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-09-14T20:00:01Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": true,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "market_closed_last_close"
+  },
+  {
+    "name": "unknown-exchange",
+    "now": "2026-09-14T13:29:59Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-09-11T20:00:00Z",
+      "exchange": "OTC"
+    },
+    "expected": {
+      "known": false,
+      "eligible": false,
+      "closed": false,
+      "missedSession": false
+    },
+    "status": "stale"
+  },
+  {
+    "name": "unknown-symbol",
+    "now": "2026-09-14T13:29:59Z",
+    "quote": {
+      "symbol": "UNKNOWN",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-09-11T20:00:00Z"
+    },
+    "expected": {
+      "known": false,
+      "eligible": false,
+      "closed": false,
+      "missedSession": false
+    },
+    "status": "stale"
+  },
+  {
+    "name": "untrusted",
+    "now": "2026-09-14T13:29:59Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": false,
+      "quoteTimestamp": "2026-09-11T20:00:00Z"
+    },
+    "expected": {
+      "known": true,
+      "eligible": false,
+      "closed": true,
+      "missedSession": false
+    },
+    "status": "stale"
+  },
+  {
+    "name": "calendar-out-of-range",
+    "now": "2029-09-17T12:00:00Z",
+    "quote": {
+      "symbol": "SPY",
+      "price": 100,
+      "previousClose": 99,
+      "trustedSource": true,
+      "quoteTimestamp": "2026-09-11T20:00:00Z"
+    },
+    "expected": {
+      "known": false,
+      "closed": false,
+      "eligible": false,
+      "missedSession": false
+    },
+    "status": "stale"
+  }
+]

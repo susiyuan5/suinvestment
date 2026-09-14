@@ -13,12 +13,16 @@ from pathlib import Path
 from typing import Callable
 from zoneinfo import ZoneInfo
 
+try:
+    from scripts import market_calendar
+except ModuleNotFoundError:
+    import market_calendar
+
 
 SYMBOLS = ("BYDDY", "MSFT", "NVDA", "AAPL", "ASML", "KO", "QQQ", "SPY")
 OUT_FILE = Path("data/market-data.json")
 REPORT_FILE = Path("results/data_freshness/market_price_freshness.json")
 MAX_FRESH_AGE_HOURS = 24.0
-MAX_MARKET_CLOSED_AGE_HOURS = 96.0
 FUTURE_TOLERANCE = timedelta(minutes=5)
 REQUEST_TIMEOUT_SECONDS = 20
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) SuInvestmentPriceRefresh/1.0"
@@ -79,6 +83,8 @@ def main() -> None:
             f"{summary['staleSymbols']} symbols remain stale/fallback and cannot "
             "enable an extra DCA buy."
         )
+    if not publishable:
+        print("Quote snapshot NOT replaced; previous snapshot retained: " + publish_reason)
 
 
 def is_publishable(result: dict, previous: dict) -> tuple[bool, str]:
@@ -164,6 +170,7 @@ def fetch_yahoo_daily(symbol: str) -> dict:
             regular_market_price = (result.get("meta") or {}).get("regularMarketPrice")
             regular_market_time = (result.get("meta") or {}).get("regularMarketTime")
             market_state = (result.get("meta") or {}).get("marketState")
+            exchange = (result.get("meta") or {}).get("exchangeName")
             snapshot = build_snapshot(
                 symbol,
                 points,
@@ -173,6 +180,7 @@ def fetch_yahoo_daily(symbol: str) -> dict:
                 regular_market_price=regular_market_price,
                 regular_market_time=regular_market_time,
                 market_state=market_state,
+                exchange=exchange,
             )
             candidates.append(snapshot)
             if validate_snapshot(snapshot)["validationStatus"] in {"validated", "market_closed_last_close"}:
@@ -229,12 +237,13 @@ def build_snapshot(
     regular_market_price: object = None,
     regular_market_time: object = None,
     market_state: object = None,
+    exchange: object = None,
 ) -> dict:
     if len(points) < 6:
         raise RuntimeError(f"{source} returned fewer than 6 valid closes")
     points = sorted(points, key=lambda item: item[0])
     latest, previous, week_ago = points[-1], points[-2], points[-6]
-    quote_timestamp = latest_close_timestamp(latest[0].date(), regular_market_time)
+    quote_timestamp = latest_close_timestamp(latest[0].date(), regular_market_time, symbol=symbol, bar_timestamp=latest[0])
     market_price = float(regular_market_price) if is_positive_number(regular_market_price) else latest[1]
     daily_change = round2(((latest[1] - previous[1]) / previous[1]) * 100)
     weekly_change = round2(((latest[1] - week_ago[1]) / week_ago[1]) * 100)
@@ -256,22 +265,27 @@ def build_snapshot(
         "sourceType": source_type,
         "trustedSource": trusted,
         "marketState": str(market_state or "").upper() or None,
+        "exchange": str(exchange or "").upper() or None,
     }
 
 
-def latest_close_timestamp(latest_date: date, regular_market_time: object = None) -> datetime:
-    """Return the effective close time for a Yahoo daily bar.
-
-    Yahoo's daily ``timestamp`` is normally the session open.  A matching
-    ``regularMarketTime`` is preferred, otherwise the official 16:00 New York
-    close is used, including the correct DST offset.
-    """
+def latest_close_timestamp(latest_date: date, regular_market_time: object = None, *, symbol="SPY", bar_timestamp=None) -> datetime:
+    """Only completed daily bars may be assigned a calendar close timestamp."""
     eastern = ZoneInfo("America/New_York")
     if isinstance(regular_market_time, (int, float)) and math.isfinite(regular_market_time):
         candidate = datetime.fromtimestamp(regular_market_time, tz=timezone.utc)
+        expected = market_calendar.session_close(latest_date)
+        if (candidate.astimezone(eastern).date() == latest_date and expected and expected <= candidate <= expected + timedelta(minutes=5)):
+            return candidate
         if candidate.astimezone(eastern).date() == latest_date:
             return candidate
-    return datetime.combine(latest_date, datetime_time(16, 0), tzinfo=eastern).astimezone(timezone.utc)
+    close = market_calendar.session_close(latest_date)
+    now = utc_now()
+    if close and close <= now and market_calendar.assess({"symbol": symbol}, now)["known"]:
+        return close.astimezone(timezone.utc)
+    if bar_timestamp is not None:
+        return bar_timestamp
+    raise ValueError("No confirmed completed session for this daily bar")
 
 
 def validate_snapshot(snapshot: dict, *, now: datetime | None = None) -> dict:
@@ -306,22 +320,15 @@ def validate_snapshot(snapshot: dict, *, now: datetime | None = None) -> dict:
     untrusted_large_move = (
         move_pct is not None and move_pct > 40 and snapshot.get("trustedSource") is not True
     )
-    stale = age_hours > MAX_FRESH_AGE_HOURS
-    eastern = ZoneInfo("America/New_York")
-    local_now = current_time.astimezone(eastern)
-    local_quote = quote_time.astimezone(eastern)
-    weekend_close = (
-        local_now.weekday() in {5, 6}
-        and local_quote.date() == local_now.date() - timedelta(days=local_now.weekday() - 4)
-        and local_quote.hour >= 16
-        and snapshot.get("trustedSource") is True
-    )
-    market_closed = str(snapshot.get("marketState") or "").upper() == "CLOSED" or weekend_close
+    stale = (current_time - quote_time).total_seconds() / 3600 > MAX_FRESH_AGE_HOURS
+    session = market_calendar.assess(snapshot, current_time)
     if implausible_move:
         status, reason = "manual_review", "Implausible price move requires manual review"
     elif untrusted_large_move:
         status, reason = "manual_review", "Large move from an untrusted source requires manual review"
-    elif (weekend_close or (stale and market_closed)) and age_hours <= MAX_MARKET_CLOSED_AGE_HOURS:
+    elif session["missedSession"]:
+        status, reason = "stale", "Missing the latest completed trading session"
+    elif session["eligible"]:
         status, reason = "market_closed_last_close", "Latest official close retained while the market is closed"
     elif stale:
         status, reason = "stale", f"Quote age {age_hours}h exceeds 24h"
@@ -334,6 +341,8 @@ def validate_snapshot(snapshot: dict, *, now: datetime | None = None) -> dict:
         "validationStatus": status,
         "validationReason": reason,
         "validationWarnings": warnings,
+        "calendarVersion": market_calendar.CALENDAR["version"] if market_calendar.CALENDAR else None,
+        "sessionAssessment": session,
         "stale": status not in {"validated", "market_closed_last_close"},
         "staleReason": "" if status in {"validated", "market_closed_last_close"} else reason,
     }

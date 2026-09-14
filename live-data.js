@@ -35,6 +35,19 @@
   let current;
   let active;
   let count = 0;
+  function priceUpdateSummary(report) {
+    if (
+      !report ||
+      !["published", "skipped"].includes(report.publishStatus) ||
+      !report.generatedAt
+    )
+      return "行情检查报告不可用；行情时间以各面板为准";
+    const result =
+      report.publishStatus === "published"
+        ? "行情已替换"
+        : "行情未替换，保留此前快照（未通过来源或时效校验）";
+    return "行情检查 " + report.generatedAt + " · " + result;
+  }
   function pathOf(input) {
     const value = String(input).replace(/^\.\//, "").split(/[?#]/)[0];
     return !value.includes("..") &&
@@ -162,6 +175,28 @@
             " · 行情时间以各面板为准",
         );
         links(session);
+        if (options.document) {
+          request(
+            session.url("results/data_freshness/market_price_freshness.json"),
+            { cache: "no-cache" },
+          )
+            .then((response) => (response.ok ? response.json() : null))
+            .catch(() => null)
+            .then((report) => {
+              if (
+                current !== session ||
+                options.document.getElementById("liveDataStatus")?.dataset
+                  .failed === "true"
+              )
+                return;
+              status(
+                "数据清单 " +
+                  manifest.dataCommit.slice(0, 7) +
+                  " · " +
+                  priceUpdateSummary(report),
+              );
+            });
+        }
       })
       .catch((error) =>
         status(error.message + "；未使用页面附带的旧快照。", true),
@@ -186,6 +221,7 @@
     }).observe(options.document.body, { childList: true, subtree: true });
   }
   return {
+    priceUpdateSummary,
     session,
     refresh,
     pathOf,

@@ -29,11 +29,13 @@
   function quoteFor(symbol, snapshot) {
     const quote = snapshot && snapshot.symbols && snapshot.symbols[symbol];
     if (!quote) return { price: 0, label: "Missing / 缺失" };
-    const label = quote.validationStatus === "validated" ? "Fresh / 新鲜" : quote.validationStatus === "market_closed_last_close" ? "Market closed / 市场关闭" : "Review / 复核";
+    const validationStatus = window.MarketData.quoteStatus({ ...quote, symbol });
+    const label = validationStatus === "validated" ? "Fresh / 新鲜" : validationStatus === "market_closed_last_close" ? "Market closed / 市场关闭" : "Review / 复核";
     return { price: number(quote.latestClose || quote.price), label, date: quote.latestDate || "", source: quote.source || "" };
   }
 
   async function loadSnapshot() {
+    await window.MarketCalendar.ready;
     try { dataSession = await window.LiveData.refresh(); } catch (_) { dataSession = window.LiveData.session(); }
     const response = await dataSession.fetch("data/market-data.json", { cache: "no-store" });
     if (!response.ok) throw new Error("Snapshot unavailable");

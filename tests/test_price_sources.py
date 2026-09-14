@@ -47,7 +47,7 @@ class PriceSourceValidationTests(unittest.TestCase):
         self.assertEqual(1, price_sources.summarize_snapshot({"symbols": {"SPY": snapshot}})["freshSymbols"])
 
     def test_yahoo_retries_second_host_when_first_is_stale(self):
-        old = candidate(quoteTimestamp="2026-06-18T20:00:00Z")
+        old = candidate(quoteTimestamp="2026-06-17T20:00:00Z")
         fresh = candidate()
         payload = {"chart": {"result": [{"timestamp": [], "meta": {}, "indicators": {}}]}}
         with patch.object(price_sources, "utc_now", return_value=NOW), patch.object(price_sources, "fetch_json", return_value=payload) as fetch, patch.object(price_sources, "build_snapshot", side_effect=[old, fresh]):
@@ -56,22 +56,22 @@ class PriceSourceValidationTests(unittest.TestCase):
         self.assertIn("query2", fetch.call_args_list[1].args[0])
 
     def test_daily_close_timestamp_uses_new_york_summer_close(self):
-        result = price_sources.latest_close_timestamp(date(2026, 6, 19))
-        self.assertEqual("2026-06-19T20:00:00Z", price_sources.isoformat(result))
+        result = price_sources.latest_close_timestamp(date(2026, 6, 18))
+        self.assertEqual("2026-06-18T20:00:00Z", price_sources.isoformat(result))
 
     def test_daily_close_timestamp_uses_new_york_winter_close(self):
         result = price_sources.latest_close_timestamp(date(2026, 1, 5))
         self.assertEqual("2026-01-05T21:00:00Z", price_sources.isoformat(result))
 
     def test_matching_regular_market_time_is_preferred(self):
-        regular = datetime(2026, 6, 19, 20, 1, tzinfo=timezone.utc)
-        result = price_sources.latest_close_timestamp(date(2026, 6, 19), regular.timestamp())
+        regular = datetime(2026, 6, 18, 20, 1, tzinfo=timezone.utc)
+        result = price_sources.latest_close_timestamp(date(2026, 6, 18), regular.timestamp())
         self.assertEqual(price_sources.isoformat(regular), price_sources.isoformat(result))
 
     def test_mismatched_regular_market_time_falls_back_to_close(self):
-        regular = datetime(2026, 6, 18, 20, 1, tzinfo=timezone.utc)
-        result = price_sources.latest_close_timestamp(date(2026, 6, 19), regular.timestamp())
-        self.assertEqual("2026-06-19T20:00:00Z", price_sources.isoformat(result))
+        regular = datetime(2026, 6, 17, 20, 1, tzinfo=timezone.utc)
+        result = price_sources.latest_close_timestamp(date(2026, 6, 18), regular.timestamp())
+        self.assertEqual("2026-06-18T20:00:00Z", price_sources.isoformat(result))
 
     def test_daily_open_timestamp_is_not_used_as_quote_timestamp(self):
         points = [(datetime(2026, 6, 17, 13, 30, tzinfo=timezone.utc), 98),
@@ -140,7 +140,7 @@ class PriceSourceValidationTests(unittest.TestCase):
 
     def test_recent_official_closed_market_quote_has_distinct_status(self):
         result = price_sources.validate_snapshot(
-            candidate(quoteTimestamp="2026-06-18T13:30:00Z", marketState="CLOSED"),
+            candidate(quoteTimestamp="2026-06-18T20:00:00Z", marketState="CLOSED"),
             now=datetime(2026, 6, 21, 12, tzinfo=timezone.utc),
         )
         self.assertEqual("market_closed_last_close", result["validationStatus"])

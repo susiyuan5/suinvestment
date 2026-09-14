@@ -8,6 +8,12 @@ const manifest = (n) => ({
   codeCommit: sha(9),
   publishedAt: "2026-09-13T12:00:00Z",
 });
+test("manifest publication and skipped quote refresh have distinct user messages", () => {
+  const source = create({ fetch: async () => Response.json({}) });
+  assert.match(source.priceUpdateSummary({ publishStatus: "skipped", generatedAt: "2026-09-14T12:00:00Z" }), /行情未替换/);
+  assert.match(source.priceUpdateSummary({ publishStatus: "published", generatedAt: "2026-09-14T12:00:00Z" }), /行情已替换/);
+  assert.match(source.priceUpdateSummary(null), /不可用/);
+});
 test("one session pins correlated files while next refresh can advance", async () => {
   let version = 1;
   const calls = [];

@@ -46,6 +46,8 @@ jobs:
         run: npm run audit:workspace
       - name: Check independent data sources across all pages
         run: node scripts/live-data-browser-smoke.mjs
+      - name: Verify session freshness and unchanged buy gates
+        run: node scripts/market-calendar-smoke.mjs
       - name: Run independent dip ledger and panel smoke
         run: node scripts/dip-smoke.mjs
       - name: Run accessibility and mobile audit

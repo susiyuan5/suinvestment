@@ -65,3 +65,9 @@ class LiveDataTests(unittest.TestCase):
     def test_holdings_cannot_use_automatic_publish(self):
         with self.assertRaisesRegex(ValueError, "manual"):
             live.publish_task("sync-snaptrade-holdings")
+
+    def test_skipped_quote_publication_is_not_reported_as_updated_quotes(self):
+        text = live.market_outcome({"publishStatus": "skipped", "publishReason": "reference validation failed"})
+        self.assertIn("行情未替换", text)
+        self.assertIn("reference validation failed", text)
+        self.assertNotIn("行情已替换", text)

@@ -30,9 +30,9 @@ test("portfolio golden fixtures", function () {
 });
 
 test("Yahoo daily timestamp is normalized to the effective New York close", function () {
-  const summer = market.dailyCloseTimestamp("2026-06-19", NaN, "Yahoo Finance Chart API");
-  const winter = market.dailyCloseTimestamp("2026-01-05", NaN, "Yahoo Finance Chart API");
-  assert.equal(new Date(summer).toISOString(), "2026-06-19T20:00:00.000Z");
+  const summer = market.dailyCloseTimestamp("2026-06-18", NaN, "Yahoo Finance Chart API", "SPY");
+  const winter = market.dailyCloseTimestamp("2026-01-05", NaN, "Yahoo Finance Chart API", "SPY");
+  assert.equal(new Date(summer).toISOString(), "2026-06-18T20:00:00.000Z");
   assert.equal(new Date(winter).toISOString(), "2026-01-05T21:00:00.000Z");
 });
 

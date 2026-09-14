@@ -1384,6 +1384,7 @@ amountBreakdown: "金额分解",
   }
 
   async function initializeDcaL2Config() {
+    await window.MarketCalendar.ready;
     try {
       const config = await fetchJson("data/dca-l2-policy-config.json?v=" + Date.now());
       if (!DcaPolicy.validateL2Config(config) || config.version !== "dca-l2-v2") throw new Error("invalid dca-l2-v2 policy configuration");
@@ -2088,6 +2089,7 @@ amountBreakdown: "金额分解",
       quote_timestamp: weeklyData.quoteTimestamp || null,
       market_state: weeklyData.marketState || "",
       market_closed_last_close: weeklyData.validationStatus === "market_closed_last_close",
+      calendarSnapshot: weeklyData.calendarSnapshot,
       note: weeklyData.stale ? "Scheduled close snapshot; stale carried forward" : "Scheduled close snapshot",
       fetchedAt: weeklyData.fetchedAt,
       field_meta: weeklyData.field_meta,
@@ -2122,6 +2124,7 @@ amountBreakdown: "金额分解",
         quote_timestamp: weeklyData.quoteTimestamp || null,
         market_state: weeklyData.marketState || "",
         market_closed_last_close: weeklyData.validationStatus === "market_closed_last_close",
+      calendarSnapshot: weeklyData.calendarSnapshot,
         note: weeklyData.stale ? "Scheduled close snapshot; stale carried forward" : "Scheduled close snapshot",
         fetchedAt: weeklyData.fetchedAt,
         field_meta: weeklyData.field_meta,
@@ -2165,18 +2168,17 @@ amountBreakdown: "金额分解",
     const item = state.weeklySnapshot && state.weeklySnapshot.symbols && state.weeklySnapshot.symbols[symbol];
     if (!item || !isFiniteNumber(item.weeklyChange)) return null;
     const generatedAt = state.weeklySnapshot.generatedAt ? Date.parse(state.weeklySnapshot.generatedAt) : Date.now();
-    const quoteTimestamp = window.MarketData && typeof window.MarketData.dailyCloseTimestamp === "function"
-      ? window.MarketData.dailyCloseTimestamp(item.latestDate, item.regularMarketTime, item.source)
-      : (item.quoteTimestamp ? Date.parse(item.quoteTimestamp) : null);
-    const fetchTimestamp = item.fetchTimestamp ? Date.parse(item.fetchTimestamp) : generatedAt;
-    const sourceTimestamp = Number.isFinite(quoteTimestamp) ? quoteTimestamp : fetchTimestamp;
-    let validationStatus = item.validationStatus || (item.stale ? "stale" : "weekly");
-    if (["validated", "market_closed_last_close"].includes(validationStatus) && item.trustedSource === true && window.MarketData.isWeekendClose(sourceTimestamp)) validationStatus = "market_closed_last_close";
-    else if (validationStatus === "market_closed_last_close" && Date.now() - sourceTimestamp > CONFIG.cacheHours * 3600000) validationStatus = "stale";
+    const parsedQuote = Date.parse(item.quoteTimestamp);
+    const quoteTimestamp = Number.isFinite(parsedQuote) ? parsedQuote : window.MarketData.dailyCloseTimestamp(item.latestDate, item.regularMarketTime, item.source, symbol);
+    if (!Number.isFinite(quoteTimestamp)) return null;
+    const sourceTimestamp = quoteTimestamp;
+    const calendarSnapshot = { ...item, symbol, quoteTimestamp };
+    const validationStatus = window.MarketData.quoteStatus(calendarSnapshot);
     const freshnessOptions = {
-      stale: item.stale === true || (validationStatus !== "validated" && validationStatus !== "market_closed_last_close"),
-      staleReason: item.staleReason || "",
-      maxAgeHours: validationStatus === "market_closed_last_close" ? 96 : CONFIG.cacheHours
+      stale: validationStatus === "stale",
+      freshness: validationStatus === "market_closed_last_close" ? "market_closed" : undefined,
+      staleReason: item.staleReason || (validationStatus === "stale" ? "行情未通过当前交易时段校验" : ""),
+      maxAgeHours: CONFIG.cacheHours
     };
     const sourceName = item.source || "Weekly";
     const weeklyMeta = createFieldMeta(sourceName, sourceTimestamp, freshnessOptions);
@@ -2195,7 +2197,8 @@ amountBreakdown: "金额分解",
       quoteTimestamp: Number.isFinite(sourceTimestamp) ? new Date(sourceTimestamp).toISOString() : (item.quoteTimestamp || null),
       marketState: item.marketState || "",
       marketClosedLastClose: validationStatus === "market_closed_last_close",
-      stale: item.stale === true || (validationStatus !== "validated" && validationStatus !== "market_closed_last_close"),
+      calendarSnapshot,
+      stale: validationStatus !== "validated" && validationStatus !== "market_closed_last_close",
       staleReason: item.staleReason || "",
       staleFrom: item.staleFrom || null,
       field_meta: {
@@ -3298,7 +3301,11 @@ el.querySelector(".explanation-reason").textContent = reasons.join(" ");
 
   function getDataFreshness(row, dataAgeHours) {
     if (!row || row.source === "Unavailable") return "missing";
-    if (row.market_closed_last_close === true) return window.MarketData.isWeekendClose(row.fetchedAt) || (isFiniteNumber(dataAgeHours) && dataAgeHours <= CONFIG.cacheHours) ? "market_closed" : "stale";
+    if (row.calendarSnapshot) {
+      const status = window.MarketData.quoteStatus(row.calendarSnapshot);
+      return status === "market_closed_last_close" ? "market_closed" : status === "validated" ? "fresh" : "stale";
+    }
+    if (row.market_closed_last_close === true) return "stale";
     if (row.source_validation_status && row.source_validation_status !== "validated") return "stale";
     if (row.source === "Manual") {
       if (!Number.isFinite(row.override_applied_at)) return "stale";
@@ -5015,8 +5022,9 @@ function equalizeAllocations() {
 
   function getDcaL2DataStatus(signal) {
     if (!signal || !isFiniteNumber(signal.latest_price) || signal.data_freshness === "missing" || signal.data_validation_status === "invalid") return "invalid";
-    if (signal.data_freshness === "market_closed" || signal.data_validation_status === "market_closed_last_close") return "market_closed_last_close";
-    if (signal.data_freshness === "stale" || signal.data_source_type === "fallback" || signal.data_validation_status !== "validated") return "stale";
+    if (signal.data_freshness === "stale" || signal.data_source_type === "fallback") return "stale";
+    if (signal.data_freshness === "market_closed") return "market_closed_last_close";
+    if (signal.data_validation_status !== "validated") return "stale";
     return "fresh";
   }
 
