@@ -125,6 +125,10 @@ try {
       scenario.status === "market_closed" ? /休市|开市/ : /过期|不可用/,
       scenario.name + ": visible safety reason",
     );
+    if (scenario.status === "market_closed") {
+      const cardText = await page.locator(".weekly-decision-row").allTextContents();
+      assert.ok(cardText.every((text) => !text.includes("数据过期")), scenario.name + ": closed-market cards must not say expired");
+    }
     assert.deepEqual(errors, [], scenario.name);
     await context.close();
   }
