@@ -67,6 +67,19 @@ test("static configuration and external APIs retain their original URLs", async 
   assert.equal(source.pathOf("data/private/key.json"), null);
   assert.equal(source.pathOf("results/../key"), null);
 });
+
+test("published stock search index is pinned to the live-data commit", async () => {
+  const calls = [];
+  const source = create({
+    fetch: async (url) => {
+      calls.push(String(url));
+      return Response.json(String(url).includes("manifest") ? manifest(1) : { formatVersion: 1, symbols: [] });
+    },
+  });
+  const session = await source.session().ready;
+  await session.fetch("data/us-equity-search-index.json");
+  assert.match(calls.at(-1), new RegExp(session.manifest.dataCommit + "/data/us-equity-search-index\\.json"));
+});
 test("data timeout rejects instead of leaving an executable stale snapshot", async () => {
   const source = create({
     timeoutMs: 10,

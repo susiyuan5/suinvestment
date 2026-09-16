@@ -22,6 +22,7 @@
     "data/backtest-prices.json",
     "data/v2/backtest-adjusted-daily.json",
     "data/short-term-daily-bars-v1.json",
+    "data/us-equity-search-index.json",
     "data/idea-engine-events-v1.json",
     "data/research-refresh-status.json",
     "data/research-prices-sector-balanced-80.json",
