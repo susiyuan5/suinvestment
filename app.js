@@ -1352,7 +1352,13 @@ amountBreakdown: "金额分解",
     }
   });
   stockSearchInput.addEventListener("blur", function () {
-    autocompleteCloseTimer = setTimeout(clearAutocomplete, 200);
+    autocompleteCloseTimer = setTimeout(function () {
+      // Selecting a result moves focus to the percentage field. Keep the
+      // verified summary and add action instead of treating that focus move
+      // as dismissal of the search.
+      if (state.searchValidationController || state.autocompleteSelectedResult) return;
+      clearAutocomplete();
+    }, 200);
   });
   stockSearchInput.addEventListener("focus", function () {
     clearTimeout(autocompleteCloseTimer);
