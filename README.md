@@ -6,6 +6,8 @@ Su Investment Pro is a weekly investment calculator, historical backtesting tool
 
 The homepage now opens **本周操作**, with **持仓** and **抄底** as the other two main views. **更多工具** contains watchlist, research/backtesting and data quality. URL hashes preserve the view and support legacy anchors, refresh and browser history. Settings and manual transaction forms retain their existing storage and handlers.
 
+In **本周定投清单**, enter a stock code and target percentage to add it, or edit an existing card and select **应用比例**. The edited percentage stays fixed; other allocations rebalance within the existing SPY, individual-stock and technology limits, using integer basis points to total exactly 100.00%. Each card previews its weekly base amount. Added stocks enter the shared weekly planner and persist in the existing local portfolio settings; they can be removed from the same view. Unclassified additions conservatively count toward the technology ceiling. Quote/history availability still depends on the existing data providers; adding a symbol does not expand scheduled data coverage or bypass missing-data/execution gates. Holdings, transaction ledgers and the independent dip universe are unchanged. Browser regression: `BASE_URL=<site> node scripts/weekly-allocation-smoke.mjs`.
+
 Weekly funding, holdings and dip candidates use compact summaries with expandable details. The three funding pools remain separate. Navigation only changes visibility/focus and redraws charts; it never records a fill or changes holdings. Run `npm run audit:workspace` with `BASE_URL` alongside the existing Pages and dip audits. See [UI validation notes](WORKSPACE_UI_REPORT.md).
 
 ## Independent dip reserve (2026-09-11)

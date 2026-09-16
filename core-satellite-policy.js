@@ -21,19 +21,70 @@
   function ratioFromPct(value) { return Math.round((Number(value) + 1e-9) * 100) / 10000; }
   function allAssets(p) { return [p.core].concat(p.growth_etfs || [], p.satellites || []); }
   function validatePreset(preset) {
-    if (!preset || preset.version !== "core-satellite-v5" || !preset.core || !Array.isArray(preset.growth_etfs) || !Array.isArray(preset.satellites) || preset.core.symbol !== "SPY" || preset.growth_etfs.length !== 1 || preset.growth_etfs[0].symbol !== "QQQ" || preset.satellites.length !== 4) return false;
+    if (!preset || preset.version !== "core-satellite-v5" || !preset.core || !Array.isArray(preset.growth_etfs) || !Array.isArray(preset.satellites) || preset.core.symbol !== "SPY" || preset.growth_etfs.length !== 1 || preset.growth_etfs[0].symbol !== "QQQ" || !STOCK_SYMBOLS.every(s => preset.satellites.some(row => row.symbol === s))) return false;
     var assets = allAssets(preset), total = assets.reduce(function (sum, row) { return sum + Number(row.target_allocation); }, 0);
-    return Number.isFinite(total) && Math.abs(total - 1) <= ALLOCATION_EPSILON && preset.core.asset_type === "core_etf" && preset.growth_etfs[0].asset_type === "growth_etf" && preset.satellites.every(function (row) { var value = Number(row.target_allocation); return Number.isFinite(value) && value >= 0 && value <= .15 + ALLOCATION_EPSILON && row.asset_type === "individual_stock" && row.bucket === "satellite"; });
+    return new Set(assets.map(row => row.symbol)).size === assets.length && Number.isFinite(total) && Math.abs(total - 1) <= ALLOCATION_EPSILON && assets.every(row => /^[A-Z][A-Z0-9.-]{0,14}$/.test(row.symbol) && Number.isFinite(Number(row.target_allocation)) && row.target_allocation >= 0) && preset.core.asset_type === "core_etf" && preset.growth_etfs[0].asset_type === "growth_etf" && preset.satellites.every(function (row) { var value = Number(row.target_allocation); return Number.isFinite(value) && value >= 0 && value <= .15 + ALLOCATION_EPSILON && row.asset_type === "individual_stock" && row.bucket === "satellite"; });
   }
   function normalizedPreset(preset) { return validatePreset(preset) ? clone(preset) : null; }
   function loadPreset(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error("preset fetch failed"); return r.json(); }).then(function (v) { var result = normalizedPreset(v); if (!result) throw new Error("invalid core-satellite preset"); return result; }); }
   function rowsForPreset(preset) { var p = normalizedPreset(preset) || clone(PRESET); return allAssets(p).map(function (row) { return Object.assign({}, row, { allocation: row.target_allocation, preset_version: p.version }); }); }
-  function allocationMetrics(allocations) { var values = allocations || {}, rounded = {}; SYMBOLS.forEach(function (s) { rounded[s] = pct(values[s]) === null ? 0 : pct(values[s]); }); var allocated = SYMBOLS.reduce(function (sum, s) { return sum + rounded[s]; }, 0); return { allocated: allocated, remaining: Math.max(0, 100 - allocated), overage: Math.max(0, allocated - 100), core: rounded.SPY, growthEtf: rounded.QQQ, satellite: STOCK_SYMBOLS.reduce(function (s, x) { return s + rounded[x]; }, 0), technology: TECH_SYMBOLS.reduce(function (s, x) { return s + rounded[x]; }, 0), NVDA: rounded.NVDA, AAPL: rounded.AAPL, ASML: rounded.ASML, KO: rounded.KO }; }
-  function validateAllocations(allocations) { var values = allocations || {}, errors = []; SYMBOLS.forEach(function (s) { var raw = values[s], n = finite(raw); if (raw === "" || raw === null || raw === undefined || n === null || n < 0) errors.push(s + " 目标比例必须是非负数字"); }); var metrics = allocationMetrics(values), limits = PRESET.limits; if (Math.abs(metrics.allocated - 100) > ALLOCATION_EPSILON) errors.push("六项比例合计必须严格等于 100.00%"); if (metrics.core < limits.spy_min_target_pct - ALLOCATION_EPSILON || metrics.core > limits.spy_max_target_pct + ALLOCATION_EPSILON) errors.push("SPY 目标比例必须在 40.00% 至 80.00% 之间"); if (metrics.satellite < limits.satellite_min_target_pct - ALLOCATION_EPSILON || metrics.satellite > limits.satellite_max_target_pct + ALLOCATION_EPSILON) errors.push("个股合计比例必须在 20.00% 至 60.00% 之间"); STOCK_SYMBOLS.forEach(function (s) { if (metrics[s] > limits.single_stock_max_target_pct + ALLOCATION_EPSILON) errors.push(s + " 目标为 " + metrics[s].toFixed(2) + "%，超过单股上限 " + limits.single_stock_max_target_pct.toFixed(2) + "%"); }); if (metrics.technology > limits.technology_max_target_pct + ALLOCATION_EPSILON) errors.push("科技个股合计为 " + metrics.technology.toFixed(2) + "%，超过上限 " + limits.technology_max_target_pct.toFixed(2) + "%"); return { valid: errors.length === 0, errors: errors, metrics: metrics }; }
+  function allocationSymbols(values) { return Array.from(new Set(SYMBOLS.concat(Object.keys(values || {})))); }
+  // Unclassified additions count toward the technology ceiling until classified.
+  function technologySymbol(symbol) { return TECH_SYMBOLS.includes(symbol) || !SYMBOLS.includes(symbol); }
+  function allocationMetrics(allocations) {
+    const values = allocations || {}, symbols = allocationSymbols(values), rounded = {};
+    symbols.forEach(s => { rounded[s] = pct(values[s]) || 0; });
+    const allocated = symbols.reduce((sum, s) => sum + Math.round(rounded[s] * 100), 0) / 100;
+    return { ...rounded, allocated, remaining: Math.max(0, 100 - allocated), overage: Math.max(0, allocated - 100), core: rounded.SPY, growthEtf: rounded.QQQ,
+      satellite: symbols.filter(s => s !== 'SPY' && s !== 'QQQ').reduce((sum, s) => sum + rounded[s], 0),
+      technology: symbols.filter(technologySymbol).reduce((sum, s) => sum + rounded[s], 0) };
+  }
+  function validateAllocations(allocations) {
+    const values = allocations || {}, errors = [], symbols = allocationSymbols(values), metrics = allocationMetrics(values), limits = PRESET.limits;
+    symbols.forEach(s => { const raw = values[s], n = finite(raw); if (!/^[A-Z][A-Z0-9.-]{0,14}$/.test(s) || raw === '' || raw == null || n === null || n < 0 || n > 1) errors.push(s + ' 目标比例必须是 0% 至 100% 的数字'); });
+    if (Math.abs(metrics.allocated - 100) > ALLOCATION_EPSILON) errors.push('全部比例合计必须严格等于 100.00%');
+    if (metrics.core < limits.spy_min_target_pct - ALLOCATION_EPSILON || metrics.core > limits.spy_max_target_pct + ALLOCATION_EPSILON) errors.push('SPY 目标比例必须在 40.00% 至 80.00% 之间');
+    if (metrics.satellite < limits.satellite_min_target_pct - ALLOCATION_EPSILON || metrics.satellite > limits.satellite_max_target_pct + ALLOCATION_EPSILON) errors.push('个股合计比例必须在 20.00% 至 60.00% 之间');
+    symbols.filter(s => s !== 'SPY' && s !== 'QQQ').forEach(s => { if (metrics[s] > limits.single_stock_max_target_pct + ALLOCATION_EPSILON) errors.push(s + ' 超过单股上限 15.00%'); });
+    if (metrics.technology > limits.technology_max_target_pct + ALLOCATION_EPSILON) errors.push('科技及未分类个股合计超过上限 45.00%');
+    return { valid: errors.length === 0, errors, metrics };
+  }
+  // Integer basis points, proportional water filling with nested group limits.
+  function rebalanceAllocations(allocations, symbol, percent) {
+    const values = { ...allocations }, requested = Number(percent);
+    if (!/^[A-Z][A-Z0-9.-]{0,14}$/.test(symbol) || percent == null || typeof percent === 'boolean' || String(percent).trim() === '' || !Number.isFinite(requested) || requested < 0 || requested > 100 || Math.abs(requested * 100 - Math.round(requested * 100)) > 1e-7) return { valid: false, errors: ['请输入有效比例，最多两位小数。'] };
+    if (!(symbol in values)) values[symbol] = 0;
+    const symbols = allocationSymbols(values), fixed = Math.round(requested * 100);
+    const leaf = s => ({ key: s, min: s === symbol ? fixed : s === 'SPY' ? 4000 : 0, max: s === symbol ? fixed : s === 'SPY' ? 8000 : s === 'QQQ' ? 10000 : 1500, weight: Math.max(0, Number(values[s]) || 0) });
+    const group = (key, children, min, max) => ({ key, children, min: Math.max(min, children.reduce((n, x) => n + x.min, 0)), max: Math.min(max, children.reduce((n, x) => n + x.max, 0)), weight: children.reduce((n, x) => n + x.weight, 0) });
+    if ((symbol === 'SPY' && (fixed < 4000 || fixed > 8000)) || (symbol !== 'SPY' && symbol !== 'QQQ' && fixed > 1500)) return { valid: false, errors: [symbol === 'SPY' ? 'SPY 必须在 40% 至 80% 之间。' : '单只个股不得超过 15%。'] };
+    const stocks = symbols.filter(s => s !== 'SPY' && s !== 'QQQ');
+    const tech = group('tech', stocks.filter(technologySymbol).map(leaf), 0, 4500);
+    const other = group('other', stocks.filter(s => !technologySymbol(s)).map(leaf), 0, 10000);
+    const tree = group('total', [leaf('SPY'), leaf('QQQ'), group('stocks', [tech, other], 2000, 6000)], 10000, 10000), result = {};
+    function distribute(node, total) {
+      if (node.min > node.max || total < node.min || total > node.max) throw Error('现有限制下无法分配此比例，请调整目标比例。');
+      if (!node.children) { result[node.key] = total / 10000; return; }
+      const rows = node.children;
+      if (rows.some(r => r.min > r.max) || total < rows.reduce((n, r) => n + r.min, 0) || total > rows.reduce((n, r) => n + r.max, 0)) throw Error('现有限制下无法分配此比例，请调整目标比例。');
+      if (!rows.length) return;
+      const value = (r, scale) => Math.max(r.min, Math.min(r.max, scale * (r.weight || 1e-9)));
+      let lo = 0, hi = 1e14;
+      for (let i = 0; i < 100; i++) { const mid = (lo + hi) / 2; if (rows.reduce((n, r) => n + value(r, mid), 0) < total) lo = mid; else hi = mid; }
+      const amounts = rows.map(r => Math.floor(value(r, hi) + 1e-7));
+      let tail = total - amounts.reduce((a, b) => a + b, 0);
+      rows.map((r, i) => ({ i, fraction: value(r, hi) - amounts[i], key: r.key })).sort((a, b) => b.fraction - a.fraction || a.key.localeCompare(b.key)).forEach(({ i }) => { if (tail > 0 && amounts[i] < rows[i].max) { amounts[i]++; tail--; } });
+      if (tail) throw Error('比例舍入未能守恒，请重新输入。');
+      rows.forEach((r, i) => distribute(r, amounts[i]));
+    }
+    try { distribute(tree, 10000); } catch (error) { return { valid: false, errors: [error.message] }; }
+    const validation = validateAllocations(result);
+    return { ...validation, allocations: result };
+  }
   function allocationsForCore(corePercent) { var core = finite(corePercent); if (core === null || core < 40 || core > 80) return null; var shortcut = PRESET.shortcuts[String(core)]; return shortcut ? clone(shortcut) : averageSatelliteAllocations(core); }
   function averageSatelliteAllocations(corePercent) { var core = finite(corePercent); if (core === null || core < 40 || core > 80) return null; var result = { SPY: ratioFromPct(core), QQQ: .10 }, each = ratioFromPct((90 - core) / 4); STOCK_SYMBOLS.forEach(function (s) { result[s] = each; }); return result; }
   function recommendedAllocations() { return clone(PRESET.shortcuts["40"]); }
-  function presetFromAllocations(allocations, basePreset) { var p = normalizedPreset(basePreset) || clone(PRESET), result = clone(p), values = allocations || {}; allAssets(result).forEach(function (row) { row.target_allocation = ratioFromPct(pct(values[row.symbol]) || 0); }); return validatePreset(result) ? result : null; }
+  function presetFromAllocations(allocations, basePreset) { var p = normalizedPreset(basePreset) || clone(PRESET), result = clone(p), values = allocations || {}; result.satellites = result.satellites.filter(row => SYMBOLS.includes(row.symbol) || Object.hasOwn(values, row.symbol)); allocationSymbols(values).filter(s => !allAssets(result).some(row => row.symbol === s)).forEach(symbol => result.satellites.push({ symbol, asset_type: 'individual_stock', bucket: 'satellite', sector: 'unclassified', signal_role: 'satellite_dca_l2' })); allAssets(result).forEach(function (row) { row.target_allocation = ratioFromPct(pct(values[row.symbol]) || 0); }); return validatePreset(result) ? result : null; }
   function reason(row, code) { row.reasonCodes = row.reasonCodes || []; if (row.reasonCodes.indexOf(code) < 0) row.reasonCodes.push(code); }
   function canRedirect(decision, allocation, threshold) {
     const codes = decision.reasonCodes || [];
@@ -41,7 +92,7 @@
     return Number(allocation) >= threshold || codes.some(code => /^CONCENTRATION_/.test(code));
   }
 
-  // Work in integer cents so six rounded rows can never exceed a cash cap.
+  // Work in integer cents so rounded rows can never exceed a cash cap.
   function capComponent(rows, field, limit, code) {
     const values = rows.map(row => Math.round(money(row[field]) * 100));
     const total = values.reduce((a, b) => a + b, 0);
@@ -103,10 +154,10 @@
       portfolioCashCap: input.portfolioCashCap ?? input.portfolio_cash_cap, commissionBps: input.commissionBps ?? input.commission_bps,
       safetyBlocked: input.safetyBlocked ?? input.safety_blocked, qqqDataValid: input.qqqDataValid ?? input.qqq_data_valid };
 
-    var p = normalizedPreset(input && input.preset) || clone(PRESET), budget = input || {}, baseBudget = money(budget.baseBudget == null ? budget.base_budget : budget.baseBudget), crashBudget = money(budget.crashFundRemaining == null ? budget.crash_fund_remaining : budget.crashFundRemaining), actual = budget.actualAllocations || budget.actual_allocations || {}, decisions = budget.satelliteDecisions || budget.satellite_decisions || {}, cashOnly = budget.cashOnlySymbols || [], spy = p.core.symbol, spyUsable = (budget.spyDataValid == null ? budget.spy_data_valid !== false : budget.spyDataValid !== false) && budget.safetyBlocked !== true, qqqUsable = budget.qqqDataValid == null ? true : budget.qqqDataValid !== false, spyActual = finite(actual[spy]) || 0, stockActual = STOCK_SYMBOLS.reduce(function (s, x) { return s + (finite(actual[x]) || 0); }, 0), techActual = TECH_SYMBOLS.reduce(function (s, x) { return s + (finite(actual[x]) || 0); }, 0);
+    var p = normalizedPreset(input && input.preset) || clone(PRESET), budget = input || {}, baseBudget = money(budget.baseBudget == null ? budget.base_budget : budget.baseBudget), crashBudget = money(budget.crashFundRemaining == null ? budget.crash_fund_remaining : budget.crashFundRemaining), actual = budget.actualAllocations || budget.actual_allocations || {}, decisions = budget.satelliteDecisions || budget.satellite_decisions || {}, cashOnly = budget.cashOnlySymbols || [], spy = p.core.symbol, spyUsable = (budget.spyDataValid == null ? budget.spy_data_valid !== false : budget.spyDataValid !== false) && budget.safetyBlocked !== true, qqqUsable = budget.qqqDataValid == null ? true : budget.qqqDataValid !== false, spyActual = finite(actual[spy]) || 0, stockActual = p.satellites.map(row => row.symbol).reduce(function (s, x) { return s + (finite(actual[x]) || 0); }, 0), techActual = p.satellites.filter(row => technologySymbol(row.symbol)).map(row => row.symbol).reduce(function (s, x) { return s + (finite(actual[x]) || 0); }, 0);
     var rawBase = allAssets(p).map(function (asset) { return { asset: asset, amount: baseBudget * Number(asset.target_allocation) }; }), roundedBase = rawBase.map(function (x) { return money(x.amount); }), baseTail = Math.round((baseBudget - roundedBase.reduce(function (s, n) { return s + n; }, 0)) * 100) / 100;
     var spyBase = money(roundedBase[0] + baseTail), rows = [{ symbol: spy, bucket: "core", asset_type: "core_etf", originalBaseAmount: spyBase, dcaAdjustedAmount: spyBase, crashFundEnhancement: 0, riskReduction: 0, redirectedToSpy: 0, cashRetained: 0, finalAmount: spyUsable ? spyBase : 0, reasonCodes: spyUsable ? [] : ["SPY_DATA_OR_SAFETY_BLOCK"], factorChain: ["base:" + p.core.target_allocation * 100 + "%"] }], redirect = 0;
-    function addAsset(asset, amount) { var isQqq = asset.symbol === "QQQ", decision = decisions[asset.symbol] || {}, adjusted = money(decision.finalAmount == null ? amount : decision.finalAmount), row = { symbol: asset.symbol, bucket: asset.bucket, asset_type: asset.asset_type, originalBaseAmount: amount, dcaAdjustedAmount: adjusted, crashFundEnhancement: isQqq ? 0 : money(decision.crashFundAmount || 0), riskReduction: 0, redirectedToSpy: 0, cashRetained: 0, finalAmount: adjusted, reasonCodes: (decision.reasonCodes || []).slice(), factorChain: [] }, blocked = (isQqq && !qqqUsable) || (adjusted <= 0 && amount > 0) || (!isQqq && (finite(actual[asset.symbol]) || 0) >= p.limits.single_stock_block_pct) || (!isQqq && stockActual >= p.limits.satellite_enhancement_block_pct && adjusted > amount) || (!isQqq && asset.sector === "technology" && techActual >= p.limits.technology_enhancement_block_pct && adjusted > amount) || (budget.blockedSymbols && budget.blockedSymbols.indexOf(asset.symbol) >= 0);
+    function addAsset(asset, amount) { var isQqq = asset.symbol === "QQQ", decision = decisions[asset.symbol] || {}, adjusted = money(decision.finalAmount == null ? amount : decision.finalAmount), row = { symbol: asset.symbol, bucket: asset.bucket, asset_type: asset.asset_type, originalBaseAmount: amount, dcaAdjustedAmount: adjusted, crashFundEnhancement: isQqq ? 0 : money(decision.crashFundAmount || 0), riskReduction: 0, redirectedToSpy: 0, cashRetained: 0, finalAmount: adjusted, reasonCodes: (decision.reasonCodes || []).slice(), factorChain: [] }, blocked = (isQqq && !qqqUsable) || (adjusted <= 0 && amount > 0) || (!isQqq && (finite(actual[asset.symbol]) || 0) >= p.limits.single_stock_block_pct) || (!isQqq && stockActual >= p.limits.satellite_enhancement_block_pct && adjusted > amount) || (!isQqq && technologySymbol(asset.symbol) && techActual >= p.limits.technology_enhancement_block_pct && adjusted > amount) || (budget.blockedSymbols && budget.blockedSymbols.indexOf(asset.symbol) >= 0);
       if (blocked) { row.riskReduction = adjusted; row.finalAmount = 0; reason(row, isQqq && !qqqUsable ? "QQQ_DATA_OR_SAFETY_BLOCK" : cashOnly.indexOf(asset.symbol) >= 0 ? "ETF_LOOKTHROUGH_LIMIT" : "SATELLITE_RISK_BLOCKED"); if (!isQqq && cashOnly.indexOf(asset.symbol) < 0 && canRedirect(decision, actual[asset.symbol], p.limits.single_stock_block_pct)) redirect += amount; else row.cashRetained = amount; } rows.push(row); }
     (p.growth_etfs || []).forEach(function (asset, i) { addAsset(asset, roundedBase[i + 1]); }); p.satellites.forEach(function (asset, i) { addAsset(asset, roundedBase[i + 2]); });
     var redirected = spyUsable && spyActual < p.limits.spy_max_current_pct ? money(redirect) : 0; if (redirected) { rows[0].redirectedToSpy = redirected; rows[0].finalAmount = money(rows[0].finalAmount + redirected); reason(rows[0], "SATELLITE_BASE_REDIRECTED_TO_SPY"); }
@@ -114,5 +165,5 @@
     return finalize(rows, budget, p, spyBase, spyActual, stockActual, techActual, baseBudget, crashBudget);
 
   }
-  return Object.freeze({ PRESET: PRESET, validatePreset: validatePreset, normalizedPreset: normalizedPreset, loadPreset: loadPreset, rowsForPreset: rowsForPreset, allocationMetrics: allocationMetrics, validateAllocations: validateAllocations, allocationsForCore: allocationsForCore, averageSatelliteAllocations: averageSatelliteAllocations, recommendedAllocations: recommendedAllocations, presetFromAllocations: presetFromAllocations, plan: plan, money: money, SYMBOLS: SYMBOLS, STOCK_SYMBOLS: STOCK_SYMBOLS });
+  return Object.freeze({ PRESET: PRESET, rebalanceAllocations: rebalanceAllocations, allocationSymbols: allocationSymbols, validatePreset: validatePreset, normalizedPreset: normalizedPreset, loadPreset: loadPreset, rowsForPreset: rowsForPreset, allocationMetrics: allocationMetrics, validateAllocations: validateAllocations, allocationsForCore: allocationsForCore, averageSatelliteAllocations: averageSatelliteAllocations, recommendedAllocations: recommendedAllocations, presetFromAllocations: presetFromAllocations, plan: plan, money: money, SYMBOLS: SYMBOLS, STOCK_SYMBOLS: STOCK_SYMBOLS });
 }));

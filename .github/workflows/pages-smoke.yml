@@ -44,6 +44,8 @@ jobs:
           exit 1
       - name: Run workspace navigation smoke
         run: npm run audit:workspace
+      - name: Check weekly stock and allocation editing
+        run: node scripts/weekly-allocation-smoke.mjs
       - name: Check independent data sources across all pages
         run: node scripts/live-data-browser-smoke.mjs
       - name: Verify session freshness and unchanged buy gates

@@ -1,0 +1,95 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import { chromium } from 'playwright';
+const base = process.env.BASE_URL;
+if (!base) throw Error('BASE_URL is required');
+const browser = await chromium.launch();
+try {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  // Use one deterministic data release and unavailable optional providers.
+  await context.route(/https:\/\/(finnhub\.io|query1\.finance\.yahoo\.com)\//, r => r.abort());
+  await context.route('https://www.bankofcanada.ca/valet/observations/FXUSDCAD/json**', r => r.fulfill({ json: { observations: [{ d: '2026-09-15', FXUSDCAD: { v: '1.35' } }] } }));
+  await context.route('https://raw.githubusercontent.com/susiyuan5/suinvestment/**', async route => {
+    const path = new URL(route.request().url()).pathname.split('/').slice(4).join('/');
+    if (path === 'live-data-manifest.json') return route.fulfill({ json: { formatVersion: 1, dataCommit: 'a'.repeat(40), codeCommit: 'b'.repeat(40), publishedAt: '2026-09-16T12:00:00Z' } });
+    try { await route.fulfill({ body: await fs.readFile(path), contentType: 'application/json' }); }
+    catch { await route.fulfill({ status: 404, body: 'missing' }); }
+  });
+  const page = await context.newPage(), errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.clock.setFixedTime('2026-09-16T12:00:00Z');
+  const ready = () => page.waitForFunction(() => document.querySelector('#refreshBtn')?.getAttribute('aria-busy') === 'false' && window.__SUINVESTMENT_SIGNALS__?.length > 0);
+  await page.goto(base); await ready();
+  const portfolio = () => page.evaluate(() => JSON.parse(localStorage.getItem('su-investment-pro:portfolio')));
+  const checkTotal = async () => { const rows = await portfolio(); assert.equal(rows.reduce((s, r) => s + Math.round(r.allocation * 10000), 0), 10000); return rows; };
+  await page.waitForFunction(() => document.querySelector('#dipStatus')?.textContent && !document.querySelector('#dipStatus').textContent.includes('正在'));
+  const ledger = () => page.evaluate(async () => JSON.stringify(await DipLedger.transact(indexedDB, b => b)));
+  const originalLedger = await ledger();
+  const field = symbol => page.locator('[data-weekly-allocation-symbol="' + symbol + '"]');
+  const apply = symbol => page.getByRole('button', { name: '应用 ' + symbol + ' 的比例并自动调节其余标的', exact: true }).click();
+  assert.equal(await page.locator('#stockSearchInput').isVisible(), true);
+  await field('NVDA').fill('10.55'); await apply('NVDA');
+  assert.equal(Math.round((await checkTotal()).find(r => r.symbol === 'NVDA').allocation * 10000), 1055);
+  await page.locator('#stockSearchInput').fill('TESTNEW');
+  await page.locator('#stockAllocationInput').fill('5');
+  await page.locator('#weeklyAddStockBtn').click(); await ready();
+  assert.equal((await checkTotal()).find(r => r.symbol === 'TESTNEW').allocation, .05);
+  assert.equal(await field('TESTNEW').isVisible(), true);
+  assert.equal(await page.locator('#weeklyDecisionRows .weekly-allocation-control').count(), 7);
+  const plan = await page.evaluate(() => window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__.plan);
+  assert.equal(plan.items.length, 7);
+  assert.equal(plan.items.find(r => r.symbol === 'TESTNEW').originalBaseAmount, Math.round(plan.items.reduce((sum, r) => sum + r.originalBaseAmount, 0) * .05 * 100) / 100);
+  assert.equal(plan.safe, false, 'missing custom quote preserves the buy gate');
+  const customSignal = await page.evaluate(() => window.__SUINVESTMENT_SIGNALS__.find(row => row.symbol === 'TESTNEW'));
+  assert.ok(customSignal.latest_price == null, 'unavailable ticker has no fabricated price');
+  let saved = await portfolio();
+  await page.locator('#weeklyAddStockBtn').click();
+  await field('TESTNEW').fill('16'); await apply('TESTNEW');
+  assert.match(await page.locator('#weeklyAllocationStatus').textContent(), /15%/);
+  assert.deepEqual(await portfolio(), saved, 'invalid edit does not persist');
+  await page.evaluate(() => {
+    window.__testSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key === 'su-investment-pro:portfolio') throw new DOMException('Storage full', 'QuotaExceededError');
+      return window.__testSetItem.call(this, key, value);
+    };
+  });
+  await field('TESTNEW').fill('6'); await apply('TESTNEW');
+  assert.match(await page.locator('#weeklyAllocationStatus').textContent(), /保存失败/);
+  assert.deepEqual(await portfolio(), saved, 'storage failure preserves the previous configuration');
+  await page.evaluate(() => { Storage.prototype.setItem = window.__testSetItem; delete window.__testSetItem; });
+  await page.locator('#stockSearchInput').fill('TESTNEW'); await page.locator('#stockAllocationInput').fill('5'); await page.locator('#weeklyAddStockBtn').click();
+  assert.match(await page.locator('#weeklyAllocationStatus').textContent(), /已在清单/);
+  assert.deepEqual(await portfolio(), saved, 'duplicate does not change allocation');
+  await page.reload(); await ready();
+  assert.deepEqual(await portfolio(), saved, 'reload preserves the added stock and weights');
+  assert.equal(await field('TESTNEW').inputValue(), '5.00');
+  await page.locator('#openSettingsBtn').click(); await page.locator('[data-settings-tab="allocation"]').click();
+  assert.equal(await page.locator('[data-allocation-symbol="TESTNEW"]').count(), 1);
+  await page.locator('[data-allocation-symbol="TESTNEW"]').fill('6');
+  await page.locator('#saveSettingsChangesBtn').click();
+  assert.equal(await page.locator('#settingsDirtyState').getAttribute('data-dirty'), 'false', await page.locator('#settingsModalStatus').textContent());
+  assert.equal((await checkTotal()).find(row => row.symbol === 'TESTNEW').allocation, .06);
+  await page.locator('#closeSettingsBtn').click();
+  await page.locator('.allocation-equal-button').click();
+  assert.equal((await checkTotal()).length, 7, 'equal weights retain added symbols');
+  assert.ok((await portfolio()).find(row => row.symbol === 'SPY').allocation >= .4);
+  saved = await portfolio();
+  await page.reload(); await ready();
+  assert.deepEqual(await portfolio(), saved, 'settings and equal weights persist');
+  await page.locator('#refreshBtn').click(); await ready();
+  assert.equal(await ledger(), originalLedger, 'allocation changes and refresh do not debit or duplicate dip ledger entries');
+  await fs.mkdir('output/playwright', { recursive: true });
+  await page.screenshot({ path: 'output/playwright/weekly-allocation-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await field('TESTNEW').isVisible(), true);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, 'no mobile overflow');
+  await page.screenshot({ path: 'output/playwright/weekly-allocation-mobile.png', fullPage: true });
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: '将 TESTNEW 移出定投清单', exact: true }).click(); await ready();
+  assert.equal((await checkTotal()).length, 6);
+  assert.equal(await field('TESTNEW').count(), 0);
+  assert.equal(await ledger(), originalLedger, 'removing a target does not change the dip ledger');
+  assert.deepEqual(errors, []);
+  console.log('Weekly allocation smoke passed: add, edit, caps, exact 100%, reload, settings, missing quotes, ledger and mobile.');
+} finally { await browser.close(); }
