@@ -178,7 +178,7 @@
 
 @media (min-width: 720px) {
   .stock-search-grid {
-    grid-template-columns: minmax(0, 1fr) 130px auto;
+    grid-template-columns: minmax(0, 1fr) 130px minmax(96px, auto) minmax(160px, auto);
     align-items: end;
   }
 
@@ -206,7 +206,7 @@
 
 .stock-autocomplete-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: minmax(56px, auto) minmax(120px, 1fr) minmax(180px, auto);
   gap: 10px;
   align-items: center;
   width: 100%;
@@ -256,6 +256,25 @@
   text-align: right;
 }
 
+.stock-autocomplete-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  align-items: center;
+  min-width: 0;
+  text-align: right;
+}
+
+.stock-autocomplete-meta { grid-column: 1 / -1; }
+.stock-autocomplete-price { color: var(--text); font-size: 0.8rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stock-autocomplete-status { color: var(--muted); font-size: 0.76rem; font-weight: 800; white-space: nowrap; }
+.stock-autocomplete-status[data-state="eligible"] { color: var(--accent); }
+.stock-autocomplete-status[data-state="ineligible"],
+.stock-autocomplete-status[data-state="blocked"] { color: var(--warning); }
+.stock-autocomplete-item[aria-disabled="true"] { opacity: 0.78; }
+.stock-autocomplete-heading { margin: 0; color: var(--muted); font-size: 0.78rem; font-weight: 800; }
+.stock-search-source-note { margin: 0; color: var(--warning); font-size: 0.78rem; line-height: 1.5; }
+
 .stock-autocomplete-empty,
 .stock-autocomplete-loading {
   padding: 14px;
@@ -265,6 +284,8 @@
 }
 
 .stock-autocomplete-selected {
+  display: grid;
+  gap: 4px;
   padding: 10px 12px;
   border: 1px solid var(--accent);
   border-radius: 8px;
@@ -272,6 +293,15 @@
   background: rgba(79, 195, 161, 0.08);
   font-size: 0.86rem;
   line-height: 1.4;
+}
+
+.stock-autocomplete-selected > span { overflow-wrap: anywhere; }
+.stock-search-retry { min-height: 44px; justify-self: start; margin-top: 4px; }
+
+@media (max-width: 719px) {
+  .stock-autocomplete-item { grid-template-columns: minmax(52px, auto) minmax(0, 1fr); min-height: 64px; }
+  .stock-autocomplete-detail { grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr) auto; text-align: left; }
+  .stock-autocomplete-meta { grid-column: 1 / -1; white-space: normal; text-align: left; }
 }
 
 .stock-autocomplete-duplicate {

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const requiredModules = ["MarketData", "MarketAnalysis", "SignalEngine", "PortfolioPolicy", "BacktestEngine", "DcaPolicy", "SettingsStorage", "CoreSatellitePolicy"];
+  const requiredModules = ["MarketData", "MarketAnalysis", "SignalEngine", "PortfolioPolicy", "BacktestEngine", "DcaPolicy", "SettingsStorage", "CoreSatellitePolicy", "StockSearchPolicy"];
   const missingModules = requiredModules.filter(function (name) { return !globalThis[name]; });
   if (missingModules.length) {
     const warning = document.getElementById("dataQualityWarning");
@@ -35,6 +35,7 @@
     ,coreSatelliteState: "su-investment-pro:core-satellite-state"
     ,coreSatelliteUndo: "su-investment-pro:core-satellite-undo"
     ,etfExposureMode: "su-investment-pro:etf-exposure-mode"
+    ,recentStocks: "su-investment-pro:recent-stocks-v1"
   };
 
   let planningCurrencyMigration = window.WealthsimpleCurrency && window.WealthsimpleCurrency.migrateStoredPlanningCurrency
@@ -894,6 +895,9 @@ amountBreakdown: "金额分解",
     autocompleteSelectedResult: null,
     autocompleteLastSearchQuery: "",
     autocompleteAbortController: null,
+    searchValidationController: null,
+    searchValidationCache: new Map(),
+    searchBusy: false,
     weeklySnapshot: null,
     backtestSnapshot: null,
     healthReport: null,
@@ -1311,7 +1315,7 @@ amountBreakdown: "金额分解",
     });
     input.addEventListener("keydown", handleDeploymentInputKeydown);
   });
-  stockSearchBtn.addEventListener("click", function () { if (state.autocompleteActiveIndex >= 0 && state.autocompleteResults.length > 0) { selectStockSearchResult(state.autocompleteResults[state.autocompleteActiveIndex]); } else if (state.autocompleteSelectedResult) { addSelectedStockToPortfolio(); } else { searchStocks(); } });
+  stockSearchBtn.addEventListener("click", function () { runStockSearch(stockSearchInput.value, true); });
   availableCashInput.addEventListener("change", savePortfolioRiskForm);
   availableCashInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") savePortfolioRiskForm();
@@ -1319,6 +1323,9 @@ amountBreakdown: "金额分解",
   var autocompleteCloseTimer = 0;
   stockSearchInput.addEventListener("input", function () {
     clearTimeout(autocompleteCloseTimer);
+    state.autocompleteSelectedResult = null;
+    setStockAddEnabled(false);
+    stockSearchInput.removeAttribute("aria-activedescendant");
     autoCompleteSearch();
   });
   stockSearchInput.addEventListener("keydown", function (event) {
@@ -1336,10 +1343,8 @@ amountBreakdown: "金额分解",
       event.preventDefault();
       if (state.autocompleteActiveIndex >= 0 && state.autocompleteResults.length > 0) {
         selectStockSearchResult(state.autocompleteResults[state.autocompleteActiveIndex]);
-      } else if (state.autocompleteSelectedResult) {
-        addSelectedStockToPortfolio();
       } else {
-        searchStocks();
+        runStockSearch(stockSearchInput.value, true);
       }
     } else if (event.key === "Escape") {
       clearAutocomplete();
@@ -1350,30 +1355,18 @@ amountBreakdown: "金额分解",
   });
   stockSearchInput.addEventListener("focus", function () {
     clearTimeout(autocompleteCloseTimer);
+    if (!stockSearchInput.value.trim()) renderRecentStocks();
   });
   var autoCompleteSearch = debounce(function () {
     var query = stockSearchInput.value.trim();
     if (query.length < 2) {
-      if (query.length === 0) clearAutocomplete();
+      if (query.length === 0) renderRecentStocks();
+      else clearAutocomplete();
       return;
     }
-    if (query === state.autocompleteLastSearchQuery) return;
-    state.autocompleteLastSearchQuery = query;
-    searchStockSymbols(query).then(function (results) {
-      if (stockSearchInput.value.trim() !== query) return;
-      state.autocompleteResults = results;
-      state.autocompleteQuery = query;
-      state.autocompleteActiveIndex = -1;
-      renderAutocompleteResults(results, query);
-    }).catch(function () {
-      if (stockSearchInput.value.trim() !== query) return;
-      var localResults = searchLocalSymbols(query);
-      state.autocompleteResults = localResults;
-      state.autocompleteQuery = query;
-      state.autocompleteActiveIndex = -1;
-      renderAutocompleteResults(localResults, query);
-    });
+    runStockSearch(query, false);
   }, 300);
+  setStockAddEnabled(false);
 
   document.querySelectorAll(".holdings-details, .order-copy-details").forEach(function (details) {
     details.addEventListener("toggle", function () {
@@ -1527,16 +1520,11 @@ amountBreakdown: "金额分解",
     };
   }
 
-  function normalizeStockSearchResult(raw, source) {
-    var symbol = normalizeSymbol(raw.symbol);
-    if (!symbol) return null;
-    return {
-      symbol: symbol,
-      name: raw.name || raw.description || raw.shortname || symbol,
-      exchange: raw.exchange || raw.exchDisp || "",
-      type: raw.type || raw.quoteType || "Equity",
-      source: source || "Unknown"
-    };
+  function setStockAddEnabled(enabled, busy) {
+    const button = document.getElementById("weeklyAddStockBtn");
+    button.disabled = !enabled || Boolean(busy);
+    button.setAttribute("aria-busy", String(Boolean(busy)));
+    button.textContent = busy ? "正在验证…" : "添加并自动分配比例";
   }
 
   function clearAutocomplete() {
@@ -1550,6 +1538,9 @@ amountBreakdown: "金额分解",
       state.autocompleteAbortController = null;
     }
     stockSearchResultsEl.innerHTML = "";
+    stockSearchInput.setAttribute("aria-expanded", "false");
+    stockSearchInput.removeAttribute("aria-activedescendant");
+    setStockAddEnabled(false);
   }
 
   function clearAutocompleteKeepSelected() {
@@ -1561,6 +1552,8 @@ amountBreakdown: "金额分解",
       state.autocompleteAbortController = null;
     }
     stockSearchResultsEl.innerHTML = "";
+    stockSearchInput.setAttribute("aria-expanded", "false");
+    stockSearchInput.removeAttribute("aria-activedescendant");
     // Keep selectedResult for addSelectedStockToPortfolio
   }
 
@@ -1568,22 +1561,13 @@ amountBreakdown: "金额分解",
     var url = "https://query1.finance.yahoo.com/v1/finance/search?q=" + encodeURIComponent(query) + "&quotesCount=8&newsCount=0";
     try {
       var response = await fetch(url, { signal: signal || null });
-      if (!response.ok) throw new Error("Yahoo search failed: " + response.status);
+      if (!response.ok) { const error = new Error("Yahoo search failed: " + response.status); error.status = response.status; throw error; }
       var payload = await response.json();
       var quotes = Array.isArray(payload.quotes) ? payload.quotes : [];
-      var seen = new Set();
-      return quotes.reduce(function (items, quote) {
-        var normalized = normalizeStockSearchResult(quote, "Yahoo");
-        if (!normalized || seen.has(normalized.symbol)) return items;
-        var type = String(quote.quoteType || "").toUpperCase();
-        if (type && !["EQUITY", "ETF", "MUTUALFUND"].includes(type)) return items;
-        seen.add(normalized.symbol);
-        items.push(normalized);
-        return items;
-      }, []);
+      return quotes.map(function (quote) { return StockSearchPolicy.normalize(quote, "Yahoo"); }).filter(Boolean);
     } catch (e) {
       if (e.name === "AbortError") throw e;
-      return null;
+      throw e;
     }
   }
 
@@ -1593,86 +1577,18 @@ amountBreakdown: "金额分解",
     try {
       var url = "https://finnhub.io/api/v1/search?q=" + encodeURIComponent(query) + "&token=" + apiKey;
       var response = await fetch(url, { signal: signal || null });
-      if (!response.ok) throw new Error("Finnhub search failed: " + response.status);
+      if (!response.ok) { const error = new Error("Finnhub search failed: " + response.status); error.status = response.status; throw error; }
       var payload = await response.json();
       var results = Array.isArray(payload.result) ? payload.result : [];
-      var seen = new Set();
-      return results.reduce(function (items, item) {
-        var normalized = normalizeStockSearchResult(item, "Finnhub");
-        if (!normalized || seen.has(normalized.symbol)) return items;
-        if (item.type && item.type !== "Common Stock" && item.type !== "ETF") return items;
-        seen.add(normalized.symbol);
-        items.push(normalized);
-        return items;
-      }, []);
+      return results.map(function (item) { return StockSearchPolicy.normalize(item, "Finnhub"); }).filter(Boolean);
     } catch (e) {
       if (e.name === "AbortError") throw e;
-      return null;
+      throw e;
     }
   }
 
   function searchLocalSymbols(query) {
-    var upper = query.toUpperCase();
-    var results = [];
-    var seen = new Set();
-
-    // Check Chinese aliases
-    var aliasKeys = Object.keys(LOCAL_ALIASES);
-    for (var a = 0; a < aliasKeys.length; a++) {
-      if (query.indexOf(aliasKeys[a]) >= 0) {
-        var sym = LOCAL_ALIASES[aliasKeys[a]];
-        if (!seen.has(sym)) {
-          seen.add(sym);
-          results.push({ symbol: sym, name: LOCAL_NAMES[sym] || sym, exchange: "Local", type: "Equity", source: "Local" });
-        }
-      }
-    }
-
-    // Check symbol prefix matches
-    for (var s = 0; s < LOCAL_SYMBOLS.length; s++) {
-      var symbol = LOCAL_SYMBOLS[s];
-      if (symbol.indexOf(upper) >= 0 && !seen.has(symbol)) {
-        seen.add(symbol);
-        results.push({ symbol: symbol, name: LOCAL_NAMES[symbol] || symbol, exchange: "Local", type: "Equity", source: "Local" });
-      }
-    }
-
-    // Check name contains query
-    var nameKeys = Object.keys(LOCAL_NAMES);
-    for (var n = 0; n < nameKeys.length; n++) {
-      var sym2 = nameKeys[n];
-      if (!seen.has(sym2) && LOCAL_NAMES[sym2].toUpperCase().indexOf(upper) >= 0) {
-        seen.add(sym2);
-        results.push({ symbol: sym2, name: LOCAL_NAMES[sym2], exchange: "Local", type: "Equity", source: "Local" });
-      }
-    }
-
-    // Prioritize exact matches
-    var exact = [];
-    var partial = [];
-    for (var r = 0; r < results.length; r++) {
-      if (results[r].symbol === upper) exact.push(results[r]);
-      else partial.push(results[r]);
-    }
-    return exact.concat(partial).slice(0, 8);
-  }
-
-  function mergeSearchResults(arrays) {
-    var all = [];
-    var seen = new Set();
-    for (var a = 0; a < arrays.length; a++) {
-      var arr = arrays[a];
-      if (!Array.isArray(arr)) continue;
-      for (var i = 0; i < arr.length; i++) {
-        var item = arr[i];
-        if (item && !seen.has(item.symbol)) {
-          seen.add(item.symbol);
-          all.push(item);
-          if (all.length >= 8) return all;
-        }
-      }
-    }
-    return all;
+    return StockSearchPolicy.localResults(query);
   }
 
   async function searchStockSymbols(query) {
@@ -1688,32 +1604,58 @@ amountBreakdown: "金额分解",
     }
     state.autocompleteAbortController = controller;
     var signal = controller.signal;
+    const timeout = setTimeout(function () { controller.abort(); }, CONFIG.requestTimeoutMs);
+    try {
+      const searches = await Promise.allSettled([searchYahooSymbols(query, signal), searchFinnhubSymbols(query, signal)]);
+      if (signal && signal.aborted) throw new DOMException("Aborted", "AbortError");
+      const errors = searches.filter(function (entry) { return entry.status === "rejected" && entry.reason && entry.reason.name !== "AbortError"; }).map(function (entry) { return entry.reason; });
+      const arrays = [searchLocalSymbols(query)].concat(searches.filter(function (entry) { return entry.status === "fulfilled"; }).map(function (entry) { return entry.value; }));
+      let results = StockSearchPolicy.mergeAndRank(arrays, query);
+      if (!results.length && /^[A-Za-z][A-Za-z0-9.-]{0,14}$/.test(query)) results = [StockSearchPolicy.normalize({ symbol: query, name: "精确代码，选择后验证" }, "精确查询")];
+      state.autocompleteLastSearchQuery = query;
+      return { results: results, errors: errors };
+    } finally { clearTimeout(timeout); }
+  }
 
-    // Try online sources in parallel
-    var yahooPromise = searchYahooSymbols(query, signal);
-    var finnhubPromise = searchFinnhubSymbols(query, signal);
-
-    var yahooResults = null;
-    var finnhubResults = null;
-
-    try { yahooResults = await yahooPromise; } catch (e) { if (e.name !== "AbortError") yahooResults = null; }
-    try { finnhubResults = await finnhubPromise; } catch (e) { if (e.name !== "AbortError") finnhubResults = null; }
-
-    var onlineResults = mergeSearchResults([yahooResults, finnhubResults]);
-
-    // If online results exist, show online + local fallback
-    if (onlineResults.length > 0) {
-      var localResults = searchLocalSymbols(query);
-      var merged = mergeSearchResults([onlineResults, localResults]);
-      return merged.slice(0, 8);
+  async function runStockSearch(rawQuery, explicit) {
+    const query = String(rawQuery || "").trim();
+    if (query.length < 2) {
+      if (!query) renderRecentStocks();
+      else renderSearchMessage("请输入至少 2 个字符；单字母股票可从最近添加中选择。");
+      return;
     }
+    if (!explicit && query === state.autocompleteLastSearchQuery) return;
+    state.searchBusy = true; stockSearchBtn.disabled = true; stockSearchBtn.textContent = "搜索中…";
+    stockSearchResultsEl.innerHTML = '<div class="stock-autocomplete-loading">正在搜索美股个股…</div>';
+    stockSearchInput.setAttribute("aria-expanded", "true");
+    try {
+      const response = await searchStockSymbols(query);
+      if (stockSearchInput.value.trim() !== query) return;
+      state.autocompleteResults = response.results; state.autocompleteQuery = query; state.autocompleteActiveIndex = -1;
+      renderAutocompleteResults(response.results, query);
+      if (response.results.length && response.errors.length) {
+        const note = document.createElement("p"); note.className = "stock-search-source-note";
+        note.textContent = response.errors.some(function (error) { return Number(error && error.status) === 429; }) ? "部分数据源请求过于频繁，已显示其余匹配；选择后仍会重新验证。" : "部分联网搜索暂不可用，已显示可用匹配；选择后仍会重新验证。";
+        stockSearchResultsEl.appendChild(note);
+      }
+      if (!response.results.length && response.errors.length) {
+        const limited = response.errors.some(function (error) { return Number(error && error.status) === 429; });
+        renderSearchMessage(StockSearchPolicy.reason(limited ? "rate_limited" : "network_error"));
+      }
+    } catch (error) {
+      if (error && error.name !== "AbortError") renderSearchMessage(StockSearchPolicy.reason(Number(error.status) === 429 ? "rate_limited" : "network_error"));
+    } finally {
+      state.searchBusy = false; stockSearchBtn.disabled = false; stockSearchBtn.textContent = t("search");
+    }
+  }
 
-    // If online failed, try local
-    state.autocompleteLastSearchQuery = query;
-    var localOnly = searchLocalSymbols(query);
-    if (localOnly.length > 0) return localOnly;
-
-    return [];
+  function renderRecentStocks() {
+    const recent = StockSearchPolicy.normalizeRecent(loadJson(STORAGE_KEYS.recentStocks, null)).map(function (item) { return StockSearchPolicy.normalize(item, "最近添加"); }).filter(Boolean);
+    state.autocompleteResults = recent; state.autocompleteQuery = ""; state.autocompleteActiveIndex = -1;
+    if (!recent.length) { clearAutocomplete(); return; }
+    renderAutocompleteResults(recent, "");
+    const list = stockSearchResultsEl.querySelector(".stock-autocomplete");
+    if (list) { const title = document.createElement("p"); title.className = "stock-autocomplete-heading"; title.textContent = "最近添加"; stockSearchResultsEl.insertBefore(title, list); }
   }
 
   function renderAutocompleteResults(results, query) {
@@ -1722,8 +1664,9 @@ amountBreakdown: "金额分解",
     if (!results || results.length === 0) {
       var emptyMsg = document.createElement("div");
       emptyMsg.className = "stock-autocomplete-empty";
-      emptyMsg.textContent = t("noMatches");
+      emptyMsg.textContent = StockSearchPolicy.reason("no_match");
       stockSearchResultsEl.appendChild(emptyMsg);
+      stockSearchInput.setAttribute("aria-expanded", "false");
       return;
     }
 
@@ -1731,6 +1674,7 @@ amountBreakdown: "金额分解",
     list.className = "stock-autocomplete";
     list.setAttribute("role", "listbox");
     list.setAttribute("aria-label", t("stockSearchResultsTitle"));
+    list.id = "stockSearchListbox";
 
     var maxItems = Math.min(results.length, 8);
     for (var i = 0; i < maxItems; i++) {
@@ -1740,7 +1684,9 @@ amountBreakdown: "金额分解",
       row.type = "button";
       row.setAttribute("role", "option");
       row.setAttribute("aria-selected", String(i === state.autocompleteActiveIndex));
+      row.setAttribute("aria-disabled", String(item.eligibility === "ineligible"));
       row.dataset.index = String(i);
+      row.id = "stockSearchOption-" + i;
 
       var symSpan = document.createElement("span");
       symSpan.className = "stock-autocomplete-symbol";
@@ -1750,20 +1696,24 @@ amountBreakdown: "金额分解",
       nameSpan.className = "stock-autocomplete-name";
       nameSpan.textContent = item.name;
 
-      var metaSpan = document.createElement("span");
-      metaSpan.className = "stock-autocomplete-meta";
-      var parts = [];
-      if (item.type) parts.push(item.type);
-      if (item.exchange) parts.push(item.exchange);
-      parts.push(item.source || "");
-      metaSpan.textContent = parts.join(" / ");
+      var detailSpan = document.createElement("span");
+      detailSpan.className = "stock-autocomplete-detail";
+      var metaSpan = document.createElement("span"); metaSpan.className = "stock-autocomplete-meta";
+      metaSpan.textContent = [item.canonicalExchange || item.exchange, item.instrumentType || "待确认", item.source].filter(Boolean).join(" / ");
+      var priceSpan = document.createElement("span"); priceSpan.className = "stock-autocomplete-price";
+      priceSpan.textContent = item.price ? "USD " + formatPrice(item.price) : "价格待验证";
+      var statusSpan = document.createElement("span"); statusSpan.className = "stock-autocomplete-status";
+      const duplicate = state.portfolio.some(function (stock) { return stock.symbol === item.symbol; });
+      statusSpan.dataset.state = duplicate || item.eligibility === "ineligible" ? "blocked" : item.eligibility;
+      statusSpan.textContent = duplicate ? StockSearchPolicy.reason("already_added") : item.reasonText;
+      detailSpan.appendChild(metaSpan); detailSpan.appendChild(priceSpan); detailSpan.appendChild(statusSpan);
 
       row.appendChild(symSpan);
       row.appendChild(nameSpan);
-      row.appendChild(metaSpan);
+      row.appendChild(detailSpan);
 
       (function (idx) {
-        row.addEventListener("mousedown", function (event) {
+        row.addEventListener("pointerdown", function (event) {
           event.preventDefault();
           selectStockSearchResult(results[idx]);
         });
@@ -1773,44 +1723,87 @@ amountBreakdown: "金额分解",
     }
 
     stockSearchResultsEl.appendChild(list);
+    stockSearchInput.setAttribute("aria-controls", list.id);
+    stockSearchInput.setAttribute("aria-expanded", "true");
+    if (state.autocompleteActiveIndex >= 0) stockSearchInput.setAttribute("aria-activedescendant", "stockSearchOption-" + state.autocompleteActiveIndex);
+    else stockSearchInput.removeAttribute("aria-activedescendant");
   }
 
-  function selectStockSearchResult(result) {
+  async function selectStockSearchResult(result) {
     if (!result) return;
+    state.autocompleteSelectedResult = null;
     stockSearchInput.value = result.symbol;
-    state.autocompleteSelectedResult = result;
     clearAutocompleteKeepSelected();
-
-    // Show selected summary
-    var summary = document.createElement("div");
-    summary.className = "stock-autocomplete-selected";
-    summary.textContent = t("selectedStock") + ": " + result.symbol + " — " + result.name + " — " + (result.exchange || result.type || "");
     var existing = state.portfolio.find(function (s) { return s.symbol === result.symbol; });
-    if (existing) {
-      var dupNote = document.createElement("span");
-      dupNote.className = "stock-autocomplete-duplicate";
-      dupNote.textContent = " (" + t("alreadyExists") + ")";
-      summary.appendChild(dupNote);
-    }
-    stockSearchResultsEl.innerHTML = "";
-    stockSearchResultsEl.appendChild(summary);
-
     if (!stockAllocationInput.value) stockAllocationInput.value = '5';
+    if (existing) { renderSelectedStock({ ...result, eligibility: "ineligible", reasonText: StockSearchPolicy.reason("already_added") }); setStockAddEnabled(false); return; }
+    if (result.eligibility === "ineligible") { renderSelectedStock(result); setStockAddEnabled(false); return; }
+    renderSelectedStock({ ...result, eligibility: "pending", reasonText: "正在验证证券与行情…" });
+    setStockAddEnabled(false, true);
+    try {
+      const validated = await validateStockCandidate(result);
+      if (stockSearchInput.value.trim().toUpperCase() !== result.symbol) return;
+      state.autocompleteSelectedResult = validated;
+      renderSelectedStock(validated);
+      setStockAddEnabled(validated.eligibility === "eligible");
+      if (validated.eligibility === "eligible") stockAllocationInput.focus();
+    } catch (error) {
+      if (error && error.name === "AbortError") return;
+      const code = Number(error && error.status) === 429 ? "rate_limited" : "network_error";
+      const failed = { ...result, eligibility: "ineligible", reasonCode: code, reasonText: StockSearchPolicy.reason(code) };
+      state.autocompleteSelectedResult = failed; renderSelectedStock(failed); setStockAddEnabled(false);
+    }
+  }
 
-    stockAllocationInput.focus();
+  function renderSelectedStock(result) {
+    stockSearchResultsEl.innerHTML = "";
+    const summary = document.createElement("div"); summary.className = "stock-autocomplete-selected";
+    const heading = document.createElement("strong"); heading.textContent = result.symbol + " · " + result.name;
+    const meta = document.createElement("span"); meta.textContent = [result.canonicalExchange || result.exchange, result.instrumentType, result.price ? "USD " + formatPrice(result.price) : "价格未知"].filter(Boolean).join(" / ");
+    const status = document.createElement("span"); status.className = "stock-autocomplete-status"; status.dataset.state = result.eligibility; status.textContent = result.reasonText;
+    summary.appendChild(heading); summary.appendChild(meta); summary.appendChild(status); stockSearchResultsEl.appendChild(summary);
+    if (["network_error", "rate_limited", "stale_quote", "missing_price"].includes(result.reasonCode)) {
+      const retry = document.createElement("button"); retry.type = "button"; retry.className = "secondary-button stock-search-retry"; retry.textContent = "重试验证";
+      retry.addEventListener("click", function () { selectStockSearchResult({ ...result, eligibility: "pending", reasonCode: "", reasonText: "选择后验证" }); });
+      summary.appendChild(retry);
+    }
+  }
+
+  async function validateStockCandidate(result) {
+    const cached = state.searchValidationCache.get(result.symbol);
+    if (cached && Date.now() - cached.cachedAt < 300000) return cached.result;
+    if (state.searchValidationController) state.searchValidationController.abort();
+    const controller = new AbortController(); state.searchValidationController = controller;
+    const timeout = setTimeout(function () { controller.abort(); }, CONFIG.requestTimeoutMs);
+    try {
+      const url = "https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(result.symbol) + "?range=14d&interval=1d";
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) { const error = new Error("Quote validation failed: " + response.status); error.status = response.status; throw error; }
+      const payload = await response.json(), chart = payload.chart && payload.chart.result && payload.chart.result[0];
+      if (!chart || !chart.meta || !chart.indicators || !chart.indicators.quote) throw new Error("Quote validation returned no security");
+      const quoteRows = chart.indicators.quote[0].close || [], times = chart.timestamp || [];
+      let last = -1; for (let i = quoteRows.length - 1; i >= 0; i--) { if (isFiniteNumber(quoteRows[i])) { last = i; break; } }
+      const latestDate = last >= 0 && Number.isFinite(times[last]) ? new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(times[last] * 1000)) : "";
+      const quoteTimestamp = MarketData.dailyCloseTimestamp(latestDate, Number(chart.meta.regularMarketTime) * 1000, "Yahoo", result.symbol);
+      const exchange = chart.meta.exchangeName || chart.meta.fullExchangeName || result.exchange;
+      const calendarSnapshot = { symbol: result.symbol, exchange: exchange, quoteTimestamp: quoteTimestamp, trustedSource: true, validationStatus: "validated" };
+      const status = MarketData.quoteStatus(calendarSnapshot);
+      const validated = StockSearchPolicy.validate(result, {
+        symbol: result.symbol, name: chart.meta.longName || chart.meta.shortName || result.name,
+        exchange: exchange, instrumentType: chart.meta.instrumentType, currency: chart.meta.currency,
+        price: isFiniteNumber(chart.meta.regularMarketPrice) ? chart.meta.regularMarketPrice : last >= 0 ? quoteRows[last] : null,
+        quoteTimestamp: Number.isFinite(quoteTimestamp) ? quoteTimestamp : null, source: "Yahoo"
+      }, status);
+      if (validated.eligibility === "eligible") state.searchValidationCache.set(result.symbol, { cachedAt: Date.now(), result: validated });
+      return validated;
+    } finally { clearTimeout(timeout); if (state.searchValidationController === controller) state.searchValidationController = null; }
   }
 
   function addSelectedStockToPortfolio() {
     var result = state.autocompleteSelectedResult;
-    if (!result) {
-      // Try to use input directly as ticker
-      var rawSymbol = normalizeSymbol(stockSearchInput.value);
-      if (rawSymbol) {
-        result = { symbol: rawSymbol, name: rawSymbol, exchange: "Manual", type: "Equity", source: "Manual" };
-      }
-    }
-    if (!result) {
-      copyStatusEl.textContent = t("enterTicker");
+    if (!result || result.eligibility !== "eligible") {
+      renderSearchMessage("请先从搜索结果选择并验证一只股票。");
+      setStockAddEnabled(false);
       return;
     }
 
@@ -1818,6 +1811,7 @@ amountBreakdown: "金额分解",
     if (!symbol) return;
 
     if (!applyWeeklyAllocation(symbol, stockAllocationInput.value, result.name || symbol, true)) return;
+    saveJson(STORAGE_KEYS.recentStocks, StockSearchPolicy.addRecent(loadJson(STORAGE_KEYS.recentStocks, null), result));
 
     // Clear autocomplete and inputs
     state.autocompleteSelectedResult = null;
@@ -1834,105 +1828,13 @@ amountBreakdown: "金额分解",
     copyStatusEl.textContent = t("addedSymbol", { symbol: symbol });
   }
 
-  async function searchStocks() {
-    const query = stockSearchInput.value.trim();
-    if (!query) {
-      renderSearchMessage(t("enterTicker"));
-      return;
-    }
-
-    stockSearchBtn.disabled = true;
-    stockSearchBtn.textContent = t("searching");
-    renderSearchMessage(t("searching"));
-
-    try {
-      const results = await fetchStockSearchResults(query);
-      renderSearchResults(results, query);
-    } catch (error) {
-      console.warn("Stock search failed", error);
-      const fallbackSymbol = normalizeSymbol(query);
-      if (fallbackSymbol) {
-        renderSearchResults([{ symbol: fallbackSymbol, name: t("addExactTicker"), exchange: t("manual") }], query);
-      } else {
-        renderSearchMessage(t("searchFailed"));
-      }
-    } finally {
-      stockSearchBtn.disabled = false;
-      stockSearchBtn.textContent = t("search");
-    }
-  }
-
-  async function fetchStockSearchResults(query) {
-    const url = "https://query1.finance.yahoo.com/v1/finance/search?q=" + encodeURIComponent(query) + "&quotesCount=8&newsCount=0";
-    const payload = await fetchJson(url);
-    const quotes = Array.isArray(payload.quotes) ? payload.quotes : [];
-    const seen = new Set();
-
-    return quotes.reduce(function (items, quote) {
-      const symbol = normalizeSymbol(quote.symbol);
-      if (!symbol || seen.has(symbol)) return items;
-
-      const quoteType = String(quote.quoteType || "").toUpperCase();
-      if (quoteType && !["EQUITY", "ETF", "MUTUALFUND"].includes(quoteType)) return items;
-
-      seen.add(symbol);
-      items.push({
-        symbol,
-        name: quote.longname || quote.shortname || quote.name || symbol,
-        exchange: quote.exchDisp || quote.exchange || quoteType || "Market"
-      });
-      return items;
-    }, []);
-  }
-
-  function renderSearchResults(results, query) {
-    stockSearchResultsEl.innerHTML = "";
-
-    const exactSymbol = normalizeSymbol(query);
-    if (exactSymbol && !results.some(function (item) { return item.symbol === exactSymbol; })) {
-      results.unshift({ symbol: exactSymbol, name: "Add exact ticker", exchange: "Manual" });
-    }
-
-    if (!results.length) {
-      renderSearchMessage(t("noMatches"));
-      return;
-    }
-
-    results.slice(0, 8).forEach(function (result) {
-      const button = document.createElement("button");
-      button.className = "search-result";
-      button.type = "button";
-      button.innerHTML = "<strong></strong><span></span><em></em>";
-      button.querySelector("strong").textContent = result.symbol;
-      button.querySelector("span").textContent = result.name;
-      button.querySelector("em").textContent = result.exchange;
-      button.addEventListener("click", function () {
-        addStock(result);
-      });
-      stockSearchResultsEl.appendChild(button);
-    });
-  }
-
   function renderSearchMessage(message) {
     stockSearchResultsEl.innerHTML = "";
     const note = document.createElement("p");
     note.className = "search-message";
     note.textContent = message;
     stockSearchResultsEl.appendChild(note);
-  }
-
-  function addStock(result) {
-    const symbol = normalizeSymbol(result.symbol);
-    if (!symbol) return;
-
-    if (!applyWeeklyAllocation(symbol, stockAllocationInput.value, result.name || symbol, true)) return;
-    stockSearchInput.value = "";
-    stockAllocationInput.value = "";
-    stockSearchResultsEl.innerHTML = "";
-    renderPortfolioTotal();
-    renderPortfolioRiskInputs();
-    renderSkeleton();
-    refreshMarketData();
+    stockSearchInput.setAttribute("aria-expanded", "false");
   }
 
   function removeStock(symbol) {
