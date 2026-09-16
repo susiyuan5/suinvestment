@@ -13,6 +13,7 @@ ROOT = Path(__file__).parents[1]
 UNIVERSE = ROOT / "data" / "research-universe-sector-balanced-80.json"
 BARS = ROOT / "data" / "short-term-daily-bars-v1.json"
 OUTPUT = ROOT / "data" / "us-equity-search-index.json"
+EXTRAS = ROOT / "data" / "weekly-search-symbols.json"
 NY = ZoneInfo("America/New_York")
 
 
@@ -33,8 +34,26 @@ def lookup(symbol: str) -> dict:
     return next((row for row in rows if str(row.get("symbol", "")).upper() == symbol), {})
 
 
+def latest_quote(symbol: str) -> dict:
+    url = "https://query1.finance.yahoo.com/v8/finance/chart/" + urllib.parse.quote(symbol) + "?range=14d&interval=1d"
+    request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 SuInvestmentSearchIndex/1.0"})
+    with urllib.request.urlopen(request, timeout=20) as response:
+        chart = json.loads(response.read().decode("utf-8")).get("chart", {}).get("result", [None])[0]
+    if not chart:
+        return {}
+    closes = chart.get("indicators", {}).get("quote", [{}])[0].get("close", [])
+    timestamps = chart.get("timestamp", [])
+    for index in range(min(len(closes), len(timestamps)) - 1, -1, -1):
+        if closes[index] is not None and float(closes[index]) > 0:
+            date = datetime.fromtimestamp(int(timestamps[index]), NY).date()
+            return {"close": float(closes[index]), "date": date.isoformat()}
+    return {}
+
+
 def main() -> None:
-    universe = load(UNIVERSE, {}).get("research_universe_symbols", [])
+    research_symbols = load(UNIVERSE, {}).get("research_universe_symbols", [])
+    extra_symbols = load(EXTRAS, {}).get("symbols", [])
+    universe = list(dict.fromkeys([*research_symbols, *extra_symbols]))
     bars_payload = load(BARS, {})
     bars = bars_payload.get("symbols", {})
     previous = {row.get("symbol"): row for row in load(OUTPUT, {}).get("symbols", [])}
@@ -50,6 +69,11 @@ def main() -> None:
                 meta = old
         rows = bars.get(symbol, [])
         latest = next((row for row in reversed(rows) if row.get("date") and float(row.get("close") or 0) > 0), {})
+        if not latest and symbol in extra_symbols:
+            try:
+                latest = latest_quote(symbol)
+            except Exception:
+                latest = {}
         quote_timestamp = None
         if latest:
             quote_timestamp = datetime.combine(
@@ -63,7 +87,7 @@ def main() -> None:
             "currency": "USD",
             "price": latest.get("close"),
             "quoteTimestamp": quote_timestamp,
-            "source": "Published research universe",
+            "source": "Published weekly search index",
         })
     payload = {
         "formatVersion": 1,

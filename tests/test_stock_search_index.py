@@ -12,7 +12,9 @@ class StockSearchIndexTests(unittest.TestCase):
         payload = json.loads((ROOT / "data/us-equity-search-index.json").read_text(encoding="utf-8"))
         rows = payload["symbols"]
         self.assertEqual(payload["formatVersion"], 1)
-        self.assertEqual({row["symbol"] for row in rows}, set(universe))
+        symbols = {row["symbol"] for row in rows}
+        self.assertTrue(set(universe).issubset(symbols))
+        self.assertIn("JOBY", symbols)
         for row in rows:
             self.assertTrue(row["name"])
             self.assertTrue(row["exchange"])
