@@ -1888,7 +1888,7 @@ amountBreakdown: "金额分解",
     }
     if (!window.confirm("确认移除 " + symbol + "？这只会修改未来定投配置，不会卖出或修改真实持仓。")) return;
     if (CORE_SATELLITE_SYMBOLS.includes(symbol)) {
-      document.getElementById('weeklyAllocationStatus').textContent = '默认标的保留在清单中；可调整目标比例，SPY 最低为 40%。';
+      document.getElementById('weeklyAllocationStatus').textContent = '默认标的保留在清单中；每个标的均可设置为 0%–100%，其余比例会自动调节。';
       return;
     }
     if (!applyWeeklyAllocation(symbol, 0, symbol, false)) return;

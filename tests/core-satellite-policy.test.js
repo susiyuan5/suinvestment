@@ -30,14 +30,14 @@ test("planner conservation includes retained cash exactly once", () => {
   assert.ok(Math.abs(result.items.reduce((sum, row) => sum + row.finalAmount, 0) + result.cashRetained - result.conservation.source) <= .005);
 });
 
-test("allocation limits and two decimal precision are enforced", () => {
+test("every target accepts zero to one hundred percent while totals remain exact", () => {
   const valid = { SPY: .4, QQQ: .1, NVDA: .125, AAPL: .125, ASML: .125, KO: .125 };
   assert.equal(policy.validateAllocations(valid).valid, true);
-  assert.equal(policy.validateAllocations({ ...valid, NVDA: .1501 }).valid, false);
-  const techAbove = { SPY: .4, QQQ: .1, NVDA: .1501, AAPL: .125, ASML: .125, KO: .0999 };
-  assert.equal(policy.validateAllocations(techAbove).valid, false);
+  assert.equal(policy.validateAllocations({ SPY: 0, QQQ: 0, NVDA: 1, AAPL: 0, ASML: 0, KO: 0 }).valid, true);
+  assert.equal(policy.validateAllocations({ SPY: 0, QQQ: 1, NVDA: 0, AAPL: 0, ASML: 0, KO: 0 }).valid, true);
+  assert.equal(policy.validateAllocations({ ...valid, NVDA: 1.0001 }).valid, false);
   assert.equal(policy.validateAllocations({ ...valid, KO: NaN }).valid, false);
-  assert.match(policy.validateAllocations({ ...valid, NVDA: .1501 }).errors.join(" "), /NVDA/);
+  assert.match(policy.validateAllocations({ ...valid, NVDA: 1.0001 }).errors.join(" "), /NVDA/);
 });
 
 test("40/60, 50/50, 60/40 shortcuts and equal satellite allocation", () => {

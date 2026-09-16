@@ -71,8 +71,8 @@ try {
   assert.equal(plan.items.find(r => r.symbol === 'MSFT').originalBaseAmount, Math.round(plan.items.reduce((sum, r) => sum + r.originalBaseAmount, 0) * .05 * 100) / 100);
   let saved = await portfolio();
   assert.equal(await page.locator('#weeklyAddStockBtn').isDisabled(), true, 'add requires a currently verified selection');
-  await field('MSFT').fill('16'); await apply('MSFT');
-  assert.match(await page.locator('#weeklyAllocationStatus').textContent(), /15%/);
+  await field('MSFT').fill('101'); await apply('MSFT');
+  assert.match(await page.locator('#weeklyAllocationStatus').textContent(), /0% 至 100%|有效比例/);
   assert.deepEqual(await portfolio(), saved, 'invalid edit does not persist');
   await page.evaluate(() => {
     window.__testSetItem = Storage.prototype.setItem;
@@ -109,7 +109,7 @@ try {
   await page.locator('#closeSettingsBtn').click();
   await page.locator('.allocation-equal-button').click();
   assert.equal((await checkTotal()).length, 7, 'equal weights retain added symbols');
-  assert.ok((await portfolio()).find(row => row.symbol === 'SPY').allocation >= .4);
+  assert.ok((await portfolio()).every(row => row.allocation >= 0 && row.allocation <= 1));
   saved = await portfolio();
   await page.reload(); await ready();
   assert.deepEqual(await portfolio(), saved, 'settings and equal weights persist');

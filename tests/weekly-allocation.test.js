@@ -10,25 +10,23 @@ test('adding a stock locks its percentage and conserves integer basis points', (
   assert.equal(added.allocations.MSFT, .0555);
   assert.equal(Object.values(added.allocations).reduce((sum, n) => sum + Math.round(n * 10000), 0), 10000);
   assert.deepEqual(before, C.recommendedAllocations());
-  assert.ok(added.allocations.SPY >= .4);
-  assert.ok(added.metrics.technology <= 45 + 1e-8);
 });
-test('edits, caps, invalid and infeasible targets never silently change the requested amount', () => {
-  for (const [symbol, pct] of [['SPY', 39], ['SPY', 81], ['NVDA', 15.01], ['QQQ', 50], ['MSFT', -1], ['MSFT', ''], ['MSFT', NaN], ['MSFT', null], ['MSFT', false], ['MSFT', '  '], ['MSFT', 1.234], ['<script>', 5]]) {
+test('all symbols accept zero to one hundred; invalid values never silently change the request', () => {
+  for (const [symbol, pct] of [['SPY', 101], ['NVDA', 100.01], ['MSFT', -1], ['MSFT', ''], ['MSFT', NaN], ['MSFT', null], ['MSFT', false], ['MSFT', '  '], ['MSFT', 1.234], ['<script>', 5]]) {
     assert.equal(C.rebalanceAllocations(C.recommendedAllocations(), symbol, pct).valid, false, symbol + ':' + pct);
   }
-  for (const [symbol, pct] of [['SPY', 80], ['SPY', 40], ['QQQ', 0], ['NVDA', 0], ['MSFT', 15]]) {
+  for (const [symbol, pct] of [['SPY', 0], ['SPY', 100], ['QQQ', 0], ['QQQ', 100], ['NVDA', 55], ['MSFT', 75]]) {
     const result = C.rebalanceAllocations(C.recommendedAllocations(), symbol, pct);
     assert.equal(result.valid, true, symbol);
     assert.equal(result.allocations[symbol], pct / 100);
     assert.equal(C.validateAllocations(result.allocations).valid, true);
   }
 });
-test('repeated edits and zero-weight fallback preserve limits and exact total', () => {
+test('repeated edits and zero-weight fallback preserve exact totals', () => {
   let values = { SPY: .8, QQQ: 0, NVDA: 0, AAPL: 0, ASML: .1, KO: .1 };
   for (let i = 0; i < 300; i++) {
     const symbol = ['MSFT', 'NVDA', 'AAPL', 'TSLA', 'KO'][i % 5];
-    const pct = (i * 137 % 1501) / 100;
+    const pct = (i * 137 % 10001) / 100;
     const next = C.rebalanceAllocations(values, symbol, pct);
     assert.equal(next.valid, true, JSON.stringify(next));
     assert.equal(Math.round(next.allocations[symbol] * 10000), Math.round(pct * 100));

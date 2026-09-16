@@ -23,7 +23,7 @@
   function validatePreset(preset) {
     if (!preset || preset.version !== "core-satellite-v5" || !preset.core || !Array.isArray(preset.growth_etfs) || !Array.isArray(preset.satellites) || preset.core.symbol !== "SPY" || preset.growth_etfs.length !== 1 || preset.growth_etfs[0].symbol !== "QQQ" || !STOCK_SYMBOLS.every(s => preset.satellites.some(row => row.symbol === s))) return false;
     var assets = allAssets(preset), total = assets.reduce(function (sum, row) { return sum + Number(row.target_allocation); }, 0);
-    return new Set(assets.map(row => row.symbol)).size === assets.length && Number.isFinite(total) && Math.abs(total - 1) <= ALLOCATION_EPSILON && assets.every(row => /^[A-Z][A-Z0-9.-]{0,14}$/.test(row.symbol) && Number.isFinite(Number(row.target_allocation)) && row.target_allocation >= 0) && preset.core.asset_type === "core_etf" && preset.growth_etfs[0].asset_type === "growth_etf" && preset.satellites.every(function (row) { var value = Number(row.target_allocation); return Number.isFinite(value) && value >= 0 && value <= .15 + ALLOCATION_EPSILON && row.asset_type === "individual_stock" && row.bucket === "satellite"; });
+    return new Set(assets.map(row => row.symbol)).size === assets.length && Number.isFinite(total) && Math.abs(total - 1) <= ALLOCATION_EPSILON && assets.every(row => /^[A-Z][A-Z0-9.-]{0,14}$/.test(row.symbol) && Number.isFinite(Number(row.target_allocation)) && row.target_allocation >= 0 && row.target_allocation <= 1) && preset.core.asset_type === "core_etf" && preset.growth_etfs[0].asset_type === "growth_etf" && preset.satellites.every(function (row) { var value = Number(row.target_allocation); return Number.isFinite(value) && value >= 0 && value <= 1 + ALLOCATION_EPSILON && row.asset_type === "individual_stock" && row.bucket === "satellite"; });
   }
   function normalizedPreset(preset) { return validatePreset(preset) ? clone(preset) : null; }
   function loadPreset(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error("preset fetch failed"); return r.json(); }).then(function (v) { var result = normalizedPreset(v); if (!result) throw new Error("invalid core-satellite preset"); return result; }); }
@@ -43,10 +43,6 @@
     const values = allocations || {}, errors = [], symbols = allocationSymbols(values), metrics = allocationMetrics(values), limits = PRESET.limits;
     symbols.forEach(s => { const raw = values[s], n = finite(raw); if (!/^[A-Z][A-Z0-9.-]{0,14}$/.test(s) || raw === '' || raw == null || n === null || n < 0 || n > 1) errors.push(s + ' 目标比例必须是 0% 至 100% 的数字'); });
     if (Math.abs(metrics.allocated - 100) > ALLOCATION_EPSILON) errors.push('全部比例合计必须严格等于 100.00%');
-    if (metrics.core < limits.spy_min_target_pct - ALLOCATION_EPSILON || metrics.core > limits.spy_max_target_pct + ALLOCATION_EPSILON) errors.push('SPY 目标比例必须在 40.00% 至 80.00% 之间');
-    if (metrics.satellite < limits.satellite_min_target_pct - ALLOCATION_EPSILON || metrics.satellite > limits.satellite_max_target_pct + ALLOCATION_EPSILON) errors.push('个股合计比例必须在 20.00% 至 60.00% 之间');
-    symbols.filter(s => s !== 'SPY' && s !== 'QQQ').forEach(s => { if (metrics[s] > limits.single_stock_max_target_pct + ALLOCATION_EPSILON) errors.push(s + ' 超过单股上限 15.00%'); });
-    if (metrics.technology > limits.technology_max_target_pct + ALLOCATION_EPSILON) errors.push('科技及未分类个股合计超过上限 45.00%');
     return { valid: errors.length === 0, errors, metrics };
   }
   // Integer basis points, proportional water filling with nested group limits.
@@ -55,13 +51,9 @@
     if (!/^[A-Z][A-Z0-9.-]{0,14}$/.test(symbol) || percent == null || typeof percent === 'boolean' || String(percent).trim() === '' || !Number.isFinite(requested) || requested < 0 || requested > 100 || Math.abs(requested * 100 - Math.round(requested * 100)) > 1e-7) return { valid: false, errors: ['请输入有效比例，最多两位小数。'] };
     if (!(symbol in values)) values[symbol] = 0;
     const symbols = allocationSymbols(values), fixed = Math.round(requested * 100);
-    const leaf = s => ({ key: s, min: s === symbol ? fixed : s === 'SPY' ? 4000 : 0, max: s === symbol ? fixed : s === 'SPY' ? 8000 : s === 'QQQ' ? 10000 : 1500, weight: Math.max(0, Number(values[s]) || 0) });
+    const leaf = s => ({ key: s, min: s === symbol ? fixed : 0, max: s === symbol ? fixed : 10000, weight: Math.max(0, Number(values[s]) || 0) });
     const group = (key, children, min, max) => ({ key, children, min: Math.max(min, children.reduce((n, x) => n + x.min, 0)), max: Math.min(max, children.reduce((n, x) => n + x.max, 0)), weight: children.reduce((n, x) => n + x.weight, 0) });
-    if ((symbol === 'SPY' && (fixed < 4000 || fixed > 8000)) || (symbol !== 'SPY' && symbol !== 'QQQ' && fixed > 1500)) return { valid: false, errors: [symbol === 'SPY' ? 'SPY 必须在 40% 至 80% 之间。' : '单只个股不得超过 15%。'] };
-    const stocks = symbols.filter(s => s !== 'SPY' && s !== 'QQQ');
-    const tech = group('tech', stocks.filter(technologySymbol).map(leaf), 0, 4500);
-    const other = group('other', stocks.filter(s => !technologySymbol(s)).map(leaf), 0, 10000);
-    const tree = group('total', [leaf('SPY'), leaf('QQQ'), group('stocks', [tech, other], 2000, 6000)], 10000, 10000), result = {};
+    const tree = group('total', symbols.map(leaf), 10000, 10000), result = {};
     function distribute(node, total) {
       if (node.min > node.max || total < node.min || total > node.max) throw Error('现有限制下无法分配此比例，请调整目标比例。');
       if (!node.children) { result[node.key] = total / 10000; return; }
