@@ -27,6 +27,15 @@ try {
   await context.route('https://raw.githubusercontent.com/susiyuan5/suinvestment/**', async route => {
     const path = new URL(route.request().url()).pathname.split('/').slice(4).join('/');
     if (path === 'live-data-manifest.json') return route.fulfill({ json: { formatVersion: 1, dataCommit: 'a'.repeat(40), codeCommit: 'b'.repeat(40), publishedAt: '2026-09-16T12:00:00Z' } });
+    if (path === 'data/us-equity-search-index.json') return route.fulfill({ json: {
+      formatVersion: 1,
+      generatedAt: '2026-09-16T12:00:00Z',
+      priceAsOf: '2026-09-15',
+      symbols: [
+        { symbol: 'MSFT', name: 'Microsoft Corporation', exchange: 'NMS', instrumentType: 'EQUITY', currency: 'USD', price: 420, quoteTimestamp: '2026-09-15T20:00:00Z', source: 'Smoke fixture' },
+        { symbol: 'VOO', name: 'Vanguard S&P 500 ETF', exchange: 'PCX', instrumentType: 'ETF', currency: 'USD', price: 650, quoteTimestamp: '2026-09-15T20:00:00Z', source: 'Smoke fixture' }
+      ]
+    } });
     try { await route.fulfill({ body: await fs.readFile(path), contentType: 'application/json' }); }
     catch { await route.fulfill({ status: 404, body: 'missing' }); }
   });

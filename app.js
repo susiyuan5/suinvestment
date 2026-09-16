@@ -1609,8 +1609,9 @@ amountBreakdown: "金额分解",
   async function searchPublishedSymbols(query) {
     const payload = await fetchPublishedStockSearchIndex();
     const upper = String(query || "").trim().toUpperCase();
+    const aliasSymbols = new Set(StockSearchPolicy.localResults(query).map(function (row) { return row.symbol; }));
     return payload.symbols.filter(function (row) {
-      return String(row.symbol || "").toUpperCase().includes(upper) || String(row.name || "").toUpperCase().includes(upper);
+      return aliasSymbols.has(String(row.symbol || "").toUpperCase()) || String(row.symbol || "").toUpperCase().includes(upper) || String(row.name || "").toUpperCase().includes(upper);
     }).map(function (row) { return StockSearchPolicy.normalize(row, "已发布行情"); }).filter(Boolean);
   }
 
