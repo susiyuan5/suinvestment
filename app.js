@@ -897,6 +897,7 @@ amountBreakdown: "金额分解",
     autocompleteAbortController: null,
     searchValidationController: null,
     searchValidationCache: new Map(),
+    stockSearchIndex: null,
     searchBusy: false,
     weeklySnapshot: null,
     backtestSnapshot: null,
@@ -1591,6 +1592,22 @@ amountBreakdown: "金额分解",
     return StockSearchPolicy.localResults(query);
   }
 
+  async function fetchPublishedStockSearchIndex() {
+    if (state.stockSearchIndex) return state.stockSearchIndex;
+    const payload = await fetchJson("data/us-equity-search-index.json");
+    if (!payload || payload.formatVersion !== 1 || !Array.isArray(payload.symbols)) throw new Error("Published stock search index is unavailable");
+    state.stockSearchIndex = payload;
+    return payload;
+  }
+
+  async function searchPublishedSymbols(query) {
+    const payload = await fetchPublishedStockSearchIndex();
+    const upper = String(query || "").trim().toUpperCase();
+    return payload.symbols.filter(function (row) {
+      return String(row.symbol || "").toUpperCase().includes(upper) || String(row.name || "").toUpperCase().includes(upper);
+    }).map(function (row) { return StockSearchPolicy.normalize(row, "已发布行情"); }).filter(Boolean);
+  }
+
   async function searchStockSymbols(query) {
     // Cancel previous search
     if (state.autocompleteAbortController) {
@@ -1606,12 +1623,15 @@ amountBreakdown: "金额分解",
     var signal = controller.signal;
     const timeout = setTimeout(function () { controller.abort(); }, CONFIG.requestTimeoutMs);
     try {
-      const searches = await Promise.allSettled([searchYahooSymbols(query, signal), searchFinnhubSymbols(query, signal)]);
+      // Yahoo's public endpoints do not permit cross-origin requests from GitHub Pages.
+      // Search the immutable live-data index first and use the user's Finnhub key only
+      // as an optional extension, avoiding a request that browsers will always block.
+      const searches = await Promise.allSettled([searchPublishedSymbols(query), searchFinnhubSymbols(query, signal)]);
       if (signal && signal.aborted) throw new DOMException("Aborted", "AbortError");
       const errors = searches.filter(function (entry) { return entry.status === "rejected" && entry.reason && entry.reason.name !== "AbortError"; }).map(function (entry) { return entry.reason; });
       const arrays = [searchLocalSymbols(query)].concat(searches.filter(function (entry) { return entry.status === "fulfilled"; }).map(function (entry) { return entry.value; }));
       let results = StockSearchPolicy.mergeAndRank(arrays, query);
-      if (!results.length && /^[A-Za-z][A-Za-z0-9.-]{0,14}$/.test(query)) results = [StockSearchPolicy.normalize({ symbol: query, name: "精确代码，选择后验证" }, "精确查询")];
+      if (!results.length && /^[A-Za-z][A-Za-z0-9.-]{0,14}$/.test(query)) results = [StockSearchPolicy.normalize({ symbol: query, name: "精确代码，等待已发布数据验证" }, "精确查询")];
       state.autocompleteLastSearchQuery = query;
       return { results: results, errors: errors };
     } finally { clearTimeout(timeout); }
@@ -1776,23 +1796,40 @@ amountBreakdown: "金额分解",
     const controller = new AbortController(); state.searchValidationController = controller;
     const timeout = setTimeout(function () { controller.abort(); }, CONFIG.requestTimeoutMs);
     try {
-      const url = "https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(result.symbol) + "?range=14d&interval=1d";
-      const response = await fetch(url, { signal: controller.signal });
-      if (!response.ok) { const error = new Error("Quote validation failed: " + response.status); error.status = response.status; throw error; }
-      const payload = await response.json(), chart = payload.chart && payload.chart.result && payload.chart.result[0];
-      if (!chart || !chart.meta || !chart.indicators || !chart.indicators.quote) throw new Error("Quote validation returned no security");
-      const quoteRows = chart.indicators.quote[0].close || [], times = chart.timestamp || [];
-      let last = -1; for (let i = quoteRows.length - 1; i >= 0; i--) { if (isFiniteNumber(quoteRows[i])) { last = i; break; } }
-      const latestDate = last >= 0 && Number.isFinite(times[last]) ? new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(times[last] * 1000)) : "";
-      const quoteTimestamp = MarketData.dailyCloseTimestamp(latestDate, Number(chart.meta.regularMarketTime) * 1000, "Yahoo", result.symbol);
-      const exchange = chart.meta.exchangeName || chart.meta.fullExchangeName || result.exchange;
+      try {
+        const published = await fetchPublishedStockSearchIndex();
+        const quote = published.symbols.find(function (row) { return String(row.symbol).toUpperCase() === result.symbol; });
+        if (quote) {
+          const calendarSnapshot = { symbol: result.symbol, exchange: quote.exchange, quoteTimestamp: quote.quoteTimestamp, trustedSource: true, validationStatus: "validated" };
+          const publishedStatus = MarketData.quoteStatus(calendarSnapshot);
+          const publishedResult = StockSearchPolicy.validate(result, quote, publishedStatus);
+          if (publishedResult.eligibility === "eligible") {
+            state.searchValidationCache.set(result.symbol, { cachedAt: Date.now(), result: publishedResult });
+            return publishedResult;
+          }
+        }
+      } catch (publishedError) {
+        console.warn("Published stock search index failed", publishedError);
+      }
+      const finnhubKey = SettingsStorage.getApiKey(localStorage);
+      if (!finnhubKey) {
+        return { ...result, eligibility: "ineligible", reasonCode: "not_published", reasonText: StockSearchPolicy.reason("not_published") };
+      }
+      const quoteUrl = "https://finnhub.io/api/v1/quote?symbol=" + encodeURIComponent(result.symbol) + "&token=" + encodeURIComponent(finnhubKey);
+      const profileUrl = "https://finnhub.io/api/v1/stock/profile2?symbol=" + encodeURIComponent(result.symbol) + "&token=" + encodeURIComponent(finnhubKey);
+      const responses = await Promise.all([fetch(quoteUrl, { signal: controller.signal }), fetch(profileUrl, { signal: controller.signal })]);
+      if (!responses[0].ok || !responses[1].ok) { const error = new Error("Finnhub validation failed"); error.status = responses[0].status || responses[1].status; throw error; }
+      const payloads = await Promise.all([responses[0].json(), responses[1].json()]);
+      const quote = payloads[0] || {}, profile = payloads[1] || {};
+      const quoteTimestamp = Number.isFinite(Number(quote.t)) ? Number(quote.t) * 1000 : null;
+      const exchange = profile.exchange || result.exchange;
       const calendarSnapshot = { symbol: result.symbol, exchange: exchange, quoteTimestamp: quoteTimestamp, trustedSource: true, validationStatus: "validated" };
       const status = MarketData.quoteStatus(calendarSnapshot);
       const validated = StockSearchPolicy.validate(result, {
-        symbol: result.symbol, name: chart.meta.longName || chart.meta.shortName || result.name,
-        exchange: exchange, instrumentType: chart.meta.instrumentType, currency: chart.meta.currency,
-        price: isFiniteNumber(chart.meta.regularMarketPrice) ? chart.meta.regularMarketPrice : last >= 0 ? quoteRows[last] : null,
-        quoteTimestamp: Number.isFinite(quoteTimestamp) ? quoteTimestamp : null, source: "Yahoo"
+        symbol: result.symbol, name: profile.name || result.name,
+        exchange: exchange, instrumentType: "EQUITY", currency: profile.currency || "USD",
+        price: isFiniteNumber(quote.c) ? quote.c : null,
+        quoteTimestamp: Number.isFinite(quoteTimestamp) ? quoteTimestamp : null, source: "Finnhub"
       }, status);
       if (validated.eligibility === "eligible") state.searchValidationCache.set(result.symbol, { cachedAt: Date.now(), result: validated });
       return validated;

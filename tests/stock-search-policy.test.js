@@ -6,6 +6,7 @@ test('normalizes providers into one result shape and rejects unsupported securit
   const stock = S.normalize({ symbol: 'msft', longname: 'Microsoft', exchange: 'NMS', quoteType: 'EQUITY', currency: 'USD', regularMarketPrice: 420, regularMarketTime: 1700000000 }, 'Yahoo');
   assert.deepEqual({ symbol: stock.symbol, exchange: stock.canonicalExchange, type: stock.instrumentType, currency: stock.currency, price: stock.price }, { symbol: 'MSFT', exchange: 'NASDAQ', type: 'EQUITY', currency: 'USD', price: 420 });
   assert.equal(stock.eligibility, 'pending');
+  assert.equal(S.normalize({ symbol: 'MSFT', exchange: 'NASDAQ NMS - GLOBAL MARKET', quoteType: 'EQUITY' }, 'Finnhub').canonicalExchange, 'NASDAQ');
   assert.equal(S.normalize({ symbol: 'SPY', quoteType: 'ETF' }, 'Yahoo').reasonCode, 'unsupported_type');
   assert.equal(S.normalize({ symbol: 'SHOP.TO', quoteType: 'EQUITY', currency: 'CAD' }, 'Yahoo').reasonCode, 'unsupported_currency');
   assert.equal(S.normalize({ symbol: 'ABCD', quoteType: 'EQUITY', currency: 'USD', exchange: 'PNK' }, 'Yahoo').reasonCode, 'unsupported_exchange');

@@ -36,7 +36,9 @@
   function finite(value) { const n = Number(value); return Number.isFinite(n) ? n : null; }
   function normalizeExchange(value) {
     const raw = String(value || "").trim();
-    return { raw, canonical: EXCHANGES[raw.toUpperCase().replace(/[\s_-]/g, "")] || "" };
+    const compact = raw.toUpperCase().replace(/[\s_-]/g, "");
+    const canonical = EXCHANGES[compact] || (compact.includes("NASDAQ") ? "NASDAQ" : compact.includes("NYSEAMERICAN") || compact.includes("AMEX") ? "NYSE American" : compact.startsWith("NYSE") ? "NYSE" : "");
+    return { raw, canonical };
   }
   function instrument(value) {
     const raw = String(value || "").trim().toUpperCase().replace(/[\s_-]/g, "");
@@ -50,7 +52,8 @@
       unsupported_type: "仅支持美股普通股或 ADR", unsupported_currency: "仅支持 USD 证券",
       unsupported_exchange: "仅支持 Nasdaq、NYSE 或 NYSE American", missing_price: "未取得有效价格",
       stale_quote: "行情过期或不是可信的最近收盘价", invalid_symbol: "证券代码无效",
-      network_error: "联网搜索失败，请检查网络后重试", rate_limited: "数据源请求过于频繁，请稍后重试",
+      network_error: "搜索数据源暂不可用，请稍后重试", rate_limited: "数据源请求过于频繁，请稍后重试",
+      not_published: "未在已发布股票池中；可在设置中配置 Finnhub 后重试",
       no_match: "没有找到匹配的美股个股", already_added: "已在定投清单中"
     })[code] || "等待验证";
   }

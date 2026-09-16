@@ -7,6 +7,7 @@ const session = await source.session().ready;
 for (const path of [
   "data/market-data.json",
   "data/backtest-prices.json",
+  "data/us-equity-search-index.json",
   "results/health/project-health.json",
   "research/results/v3_1/idea-engine/latest-candidates.json",
   "data/private/wealthsimple-holdings.enc.json",

@@ -71,6 +71,7 @@
   "update-short-term-signals": {
     "outputs": [
       "data/short-term-daily-bars-v1.json",
+      "data/us-equity-search-index.json",
       "research/results/v3_1/short-term-trade-plans-v1_3/**",
       "data/research-refresh-status.json"
     ],
@@ -85,6 +86,10 @@
           "PYTHONPATH": "."
         },
         "run": "python -m scripts.refresh_short_term_daily_bars"
+      },
+      {
+        "name": "Build browser-safe stock search index",
+        "run": "python scripts/build_stock_search_index.py"
       },
       {
         "name": "Validate snapshot and generate three independent strategies",
