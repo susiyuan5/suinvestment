@@ -37,6 +37,7 @@
     ,etfExposureMode: "su-investment-pro:etf-exposure-mode"
     ,recentStocks: "su-investment-pro:recent-stocks-v1"
     ,weeklyListSort: "su-investment-pro:weekly-list-sort-v1"
+    ,weeklyExcludedSymbols: "su-investment-pro:weekly-excluded-symbols-v1"
   };
 
   let planningCurrencyMigration = window.WealthsimpleCurrency && window.WealthsimpleCurrency.migrateStoredPlanningCurrency
@@ -900,6 +901,7 @@ amountBreakdown: "金额分解",
     searchValidationCache: new Map(),
     stockSearchIndex: null,
     weeklyListSort: WeeklyListSort.normalize(loadJson(STORAGE_KEYS.weeklyListSort, null)),
+    weeklyExcludedSymbols: (function () { const value = loadJson(STORAGE_KEYS.weeklyExcludedSymbols, []); return Array.isArray(value) ? Array.from(new Set(value.filter(function (symbol) { return symbol === "SPY"; }))) : []; })(),
     searchBusy: false,
     weeklySnapshot: null,
     backtestSnapshot: null,
@@ -1038,6 +1040,7 @@ amountBreakdown: "金额分解",
   const weeklyDecisionRowsEl = document.getElementById("weeklyDecisionRows");
   const weeklyListSortEl = document.getElementById("weeklyListSort");
   const weeklyListSortDirectionEl = document.getElementById("weeklyListSortDirection");
+  const weeklyRemovedStocksEl = document.getElementById("weeklyRemovedStocks");
   const weeklyDecisionSafetyEl = document.getElementById("weeklyDecisionSafety");
   const weeklyBaseBudgetEl = document.getElementById("weeklyBaseBudget");
   const weeklyCrashFundEl = document.getElementById("weeklyCrashFund");
@@ -1910,7 +1913,11 @@ amountBreakdown: "金额分解",
     }
     if (!window.confirm("确认移除 " + symbol + "？这只会修改未来定投配置，不会卖出或修改真实持仓。")) return;
     if (symbol === "SPY") {
-      document.getElementById('weeklyAllocationStatus').textContent = 'SPY 是市场状态和策略计算的核心参考，不能移出清单；可以把目标比例设为 0%。';
+      if (!applyWeeklyAllocation(symbol, 0, symbol, false)) return;
+      state.weeklyExcludedSymbols = ["SPY"];
+      saveJson(STORAGE_KEYS.weeklyExcludedSymbols, state.weeklyExcludedSymbols);
+      render();
+      document.getElementById('weeklyAllocationStatus').textContent = 'SPY 已移出定投清单；仍仅作为市场状态参考，不会分配定投金额。';
       return;
     }
     if (!applyWeeklyAllocation(symbol, 0, symbol, false)) return;
@@ -5893,7 +5900,16 @@ function equalizeAllocations() {
     const presetRows = activeCoreSatellitePreset() && CoreSatellitePolicy.rowsForPreset(activeCoreSatellitePreset()) || [];
     const targetBySymbol = presetRows.reduce(function (map, row) { map[row.symbol] = row.target_allocation * 100; return map; }, {});
     const positions = portfolioRisk && portfolioRisk.positions || {};
-    const expected = CoreSatellitePolicy.rowsForPreset(activeCoreSatellitePreset() || CoreSatellitePolicy.PRESET).map(function (row) { return row.symbol; });
+    const expected = CoreSatellitePolicy.rowsForPreset(activeCoreSatellitePreset() || CoreSatellitePolicy.PRESET).map(function (row) { return row.symbol; }).filter(function (symbol) { return !state.weeklyExcludedSymbols.includes(symbol); });
+    if (weeklyRemovedStocksEl) {
+      weeklyRemovedStocksEl.innerHTML = "";
+      state.weeklyExcludedSymbols.forEach(function (symbol) {
+        const label = document.createElement("span"); label.textContent = "已移除 " + symbol;
+        const restore = document.createElement("button"); restore.type = "button"; restore.className = "secondary-button"; restore.textContent = "恢复"; restore.setAttribute("aria-label", "恢复 " + symbol + " 到定投清单");
+        restore.addEventListener("click", function () { state.weeklyExcludedSymbols = state.weeklyExcludedSymbols.filter(function (item) { return item !== symbol; }); saveJson(STORAGE_KEYS.weeklyExcludedSymbols, state.weeklyExcludedSymbols); render(); document.getElementById('weeklyAllocationStatus').textContent = symbol + ' 已恢复到定投清单，当前目标比例为 0%，可在该行重新设置。'; });
+        weeklyRemovedStocksEl.appendChild(label); weeklyRemovedStocksEl.appendChild(restore);
+      });
+    }
     const rows = plan && Array.isArray(plan.items) ? plan.items : [];
     const bySymbol = rows.reduce(function (map, row) { map[row.symbol] = row; return map; }, {});
     const safe = Boolean(plan && plan.safe === true && expected.every(function (symbol) { return bySymbol[symbol]; }));
@@ -5989,7 +6005,7 @@ function equalizeAllocations() {
         weeklyDecisionRowsEl.querySelector('[data-weekly-allocation-symbol="' + symbol + '"]')?.focus({ preventScroll: true });
       });
       allocationControl.appendChild(apply);
-      if (symbol !== "SPY") {
+      {
         const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'secondary-button'; remove.textContent = '删除';
         remove.setAttribute('aria-label', '将 ' + symbol + ' 移出定投清单');
         remove.addEventListener('click', function () { removeStock(symbol); });

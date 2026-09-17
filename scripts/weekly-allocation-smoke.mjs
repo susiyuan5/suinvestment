@@ -77,7 +77,7 @@ try {
   const apply = symbol => page.getByRole('button', { name: '应用 ' + symbol + ' 的比例并自动调节其余标的', exact: true }).click();
   assert.equal(await page.locator('#stockSearchInput').isVisible(), true);
   assert.equal(await page.locator('#weeklyAddStockBtn').isDisabled(), true);
-  assert.equal(await page.getByRole('button', { name: '将 SPY 移出定投清单', exact: true }).count(), 0, 'SPY remains the strategy anchor');
+  assert.equal(await page.getByRole('button', { name: '将 SPY 移出定投清单', exact: true }).count(), 1, 'SPY can be removed from the visible plan');
   await field('NVDA').fill('10.55'); await apply('NVDA');
   assert.equal(Math.round((await checkTotal()).find(r => r.symbol === 'NVDA').allocation * 10000), 1055);
   await page.locator('#stockSearchInput').fill('微软');
@@ -157,6 +157,14 @@ try {
   await page.reload(); await ready();
   assert.equal(await field('KO').count(), 0, 'removed default stock stays removed after refresh');
   assert.equal((await checkTotal()).reduce((sum, row) => sum + Math.round(row.allocation * 10000), 0), 10000);
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: '将 SPY 移出定投清单', exact: true }).click();
+  assert.equal(await field('SPY').count(), 0, 'SPY is removed from the visible plan');
+  assert.equal(await page.getByRole('button', { name: '恢复 SPY 到定投清单', exact: true }).count(), 1);
+  await page.reload(); await ready();
+  assert.equal(await field('SPY').count(), 0, 'SPY removal survives refresh');
+  await page.getByRole('button', { name: '恢复 SPY 到定投清单', exact: true }).click();
+  assert.equal(await field('SPY').count(), 1, 'SPY can be restored for later allocation');
   assert.equal(await ledger(), originalLedger, 'removing a target does not change the dip ledger');
   assert.deepEqual(errors, []);
   console.log('Weekly allocation smoke passed: verified search, add, edit, remove, exact 100%, reload, settings, ledger and mobile.');
