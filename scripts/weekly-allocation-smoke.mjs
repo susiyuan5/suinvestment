@@ -49,6 +49,22 @@ try {
   await page.waitForFunction(() => document.querySelector('#dipStatus')?.textContent && !document.querySelector('#dipStatus').textContent.includes('正在'));
   const ledger = () => page.evaluate(async () => JSON.stringify(await DipLedger.transact(indexedDB, b => b)));
   const originalLedger = await ledger();
+  const planBeforeSort = await page.evaluate(() => JSON.stringify(window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__.plan));
+  const visibleSymbols = () => page.locator('#weeklyDecisionRows .weekly-decision-row:not(.weekly-decision-cash)').evaluateAll(rows => rows.map(row => row.dataset.symbol));
+  const defaultSymbols = await visibleSymbols();
+  const defaultAmounts = await page.evaluate(symbols => {
+    const amounts = Object.fromEntries(window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__.plan.items.map(row => [row.symbol, Number(row.finalAmount || 0)]));
+    return symbols.map(symbol => amounts[symbol]);
+  }, defaultSymbols);
+  assert.deepEqual(defaultAmounts, defaultAmounts.slice().sort((a, b) => b - a), 'default rows sort by suggested amount descending');
+  await page.locator('#weeklyListSort').selectOption('symbol');
+  assert.deepEqual(await visibleSymbols(), defaultSymbols.slice().sort((a, b) => b.localeCompare(a)), 'symbol descending sort is stable');
+  await page.reload(); await ready();
+  assert.equal(await page.locator('#weeklyListSort').inputValue(), 'symbol');
+  assert.match(await page.locator('#weeklyListSortDirection').textContent(), /降序/);
+  assert.deepEqual(await visibleSymbols(), defaultSymbols.slice().sort((a, b) => b.localeCompare(a)), 'sort preference survives refresh');
+  assert.equal(await page.evaluate(() => JSON.stringify(window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__.plan)), planBeforeSort, 'sorting does not change financial output');
+  await page.locator('#weeklyListSort').selectOption('suggested');
   const field = symbol => page.locator('[data-weekly-allocation-symbol="' + symbol + '"]');
   const apply = symbol => page.getByRole('button', { name: '应用 ' + symbol + ' 的比例并自动调节其余标的', exact: true }).click();
   assert.equal(await page.locator('#stockSearchInput').isVisible(), true);

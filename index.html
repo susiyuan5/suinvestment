@@ -239,6 +239,21 @@
                 等待数据或计算安全检查。
               </p>
               <a class="data-help-link" href="#tools-data">检查数据问题</a>
+              <div class="weekly-list-toolbar" aria-label="定投清单排序">
+                <label for="weeklyListSort">排序</label>
+                <select id="weeklyListSort">
+                  <option value="suggested">建议金额</option>
+                  <option value="target">目标比例</option>
+                  <option value="current">当前比例</option>
+                  <option value="marketValue">持仓市值</option>
+                  <option value="price">单股价格</option>
+                  <option value="symbol">股票代码</option>
+                </select>
+                <button class="secondary-button" id="weeklyListSortDirection" type="button" aria-label="当前降序，切换为升序">降序 ↓</button>
+              </div>
+              <div class="weekly-list-header" aria-hidden="true">
+                <span>标的</span><span>价格 / 市值</span><span>当前 / 目标</span><span>建议</span><span>状态</span><span>比例调整</span>
+              </div>
               <div
                 aria-live="polite"
                 class="weekly-decision-rows"
@@ -2388,6 +2403,7 @@
     <script src="market-calendar.js?v=us-sessions-v1"></script>
     <script src="market-data.js?v=us-sessions-v1"></script>
     <script src="stock-search-policy.js?v=verified-search-v1"></script>
+    <script src="weekly-list-sort.js?v=weekly-list-v1"></script>
     <script src="market-analysis.js?v=contracts-1"></script>
     <script src="signal-engine.js?v=contracts-1"></script>
     <script src="portfolio-policy.js?v=weekly-dca-v1"></script>

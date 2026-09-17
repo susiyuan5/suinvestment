@@ -146,6 +146,53 @@
 #weeklyDecisionTotal {
   display: none;
 }
+
+.weekly-list-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 8px 0; }
+.weekly-list-toolbar label { color: var(--muted); font-size: 12px; }
+.weekly-list-toolbar select, .weekly-list-toolbar button { min-height: 36px; font-size: 12px; }
+.weekly-list-header, #weeklyDecisionRows .weekly-decision-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1.1fr) minmax(0, 1fr) minmax(88px, .8fr) minmax(72px, .75fr) minmax(160px, 1.35fr);
+  gap: 10px;
+  align-items: center;
+}
+.weekly-list-header { padding: 0 10px 7px; color: var(--muted); font-size: 11px; border-bottom: 1px solid #28374a; }
+#weeklyDecisionRows { grid-template-columns: 1fr; gap: 4px; }
+#weeklyDecisionRows .weekly-decision-row { padding: 9px 10px; border-radius: 4px; background: #121a26; }
+#weeklyDecisionRows .weekly-decision-row > strong { font-size: 14px; }
+#weeklyDecisionRows .weekly-decision-value-pair { display: grid; gap: 2px; min-width: 0; }
+#weeklyDecisionRows .weekly-decision-market-value, #weeklyDecisionRows .weekly-decision-price { font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+#weeklyDecisionRows .weekly-decision-target, #weeklyDecisionRows .weekly-decision-final { font-size: 12px; font-variant-numeric: tabular-nums; }
+#weeklyDecisionRows .weekly-decision-status { grid-column: auto; font-size: 11px; font-weight: 800; }
+#weeklyDecisionRows .weekly-decision-edit { min-width: 0; }
+#weeklyDecisionRows .weekly-allocation-control { grid-column: auto; display: flex; flex-wrap: nowrap; gap: 5px; padding: 0; border: 0; }
+#weeklyDecisionRows .weekly-allocation-control label { font-size: 0; }
+#weeklyDecisionRows .weekly-allocation-control input { width: 72px; min-height: 34px; font-size: 12px; }
+#weeklyDecisionRows .weekly-allocation-control button { min-height: 34px; padding: 5px 8px; white-space: nowrap; }
+#weeklyDecisionRows .weekly-allocation-control > span { display: none; }
+#weeklyDecisionRows .weekly-decision-reason { grid-column: 2 / -1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#weeklyDecisionRows .weekly-decision-expanded { grid-column: 1 / -1; }
+#weeklyDecisionRows .weekly-decision-expanded > summary { color: #7db1ff; cursor: pointer; font-size: 11px; width: max-content; }
+#weeklyDecisionRows .weekly-decision-detail { display: none; }
+#weeklyDecisionRows .weekly-decision-expanded[open] .weekly-decision-detail { display: grid; }
+#weeklyDecisionRows .weekly-decision-cash { grid-template-columns: 1fr auto minmax(220px, 2fr); margin-top: 5px; }
+#weeklyDecisionRows .weekly-decision-cash p { grid-column: auto; }
+#coreSatelliteRebalanceNotice { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+
+@media (max-width: 719px) {
+  .weekly-list-toolbar { justify-content: flex-start; flex-wrap: wrap; }
+  .weekly-list-header { display: none; }
+  #weeklyDecisionRows .weekly-decision-row { grid-template-columns: minmax(60px, .7fr) minmax(0, 1.3fr); gap: 6px 10px; }
+  #weeklyDecisionRows .weekly-decision-row > strong { grid-column: 1; }
+  #weeklyDecisionRows .weekly-decision-final { grid-column: 2; grid-row: 1; justify-self: end; }
+  #weeklyDecisionRows .weekly-decision-value-pair, #weeklyDecisionRows .weekly-decision-target { grid-column: span 1; }
+  #weeklyDecisionRows .weekly-decision-status { grid-column: 1; }
+  #weeklyDecisionRows .weekly-decision-edit { grid-column: 2; justify-self: end; }
+  #weeklyDecisionRows .weekly-decision-reason, #weeklyDecisionRows .weekly-decision-expanded { grid-column: 1 / -1; }
+  #weeklyDecisionRows .weekly-decision-reason { white-space: normal; }
+  #weeklyDecisionRows .weekly-decision-cash { grid-template-columns: 1fr auto; }
+  #weeklyDecisionRows .weekly-decision-cash p { grid-column: 1 / -1; }
+}
 #weeklyCalculationDetails .decision-summary-item {
   margin: 10px 0;
 }
@@ -730,5 +777,90 @@ body {
   .workspace-sidebar .workspace-nav a {
     font-size: 12px;
     white-space: nowrap;
+  }
+}
+
+/* Keep the weekly plan as a true one-security-per-row list after legacy card rules. */
+#weeklyDecisionPlan #weeklyDecisionRows {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row {
+  grid-template-columns: 56px minmax(0, 1.1fr) minmax(0, 1fr) minmax(88px, .8fr) minmax(72px, .75fr) minmax(160px, 1.35fr);
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border-radius: 4px;
+  background: #121a26;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-state {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-reason {
+  grid-column: auto;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-edit {
+  min-width: 0;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-allocation-control {
+  display: flex;
+  grid-column: auto;
+  flex-wrap: nowrap;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-allocation-control label {
+  font-size: 0;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-allocation-control input {
+  width: 68px;
+  min-height: 32px;
+  padding: 5px;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-allocation-control button {
+  min-height: 32px;
+  padding: 4px 7px;
+  white-space: nowrap;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-allocation-control > span {
+  display: none;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-expanded {
+  grid-column: 1 / -1;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-cash {
+  grid-template-columns: 1fr auto minmax(220px, 2fr);
+  margin-top: 5px;
+}
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-cash p {
+  grid-column: auto;
+}
+@media (max-width: 719px) {
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row {
+    grid-template-columns: minmax(60px, .7fr) minmax(0, 1.3fr);
+    gap: 6px 10px;
+  }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-state {
+    grid-column: 1;
+  }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-edit {
+    grid-column: 2;
+    justify-self: end;
+  }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-reason {
+    white-space: normal;
+  }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-cash {
+    grid-template-columns: 1fr auto;
+  }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-cash p {
+    grid-column: 1 / -1;
   }
 }

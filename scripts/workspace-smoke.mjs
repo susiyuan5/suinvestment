@@ -41,13 +41,8 @@ try {
       panels.orders.right <= panels.funds.left,
     "weekly panels use three separate columns",
   );
-  assert.equal(
-    await page
-      .locator("#weeklyDecisionRows .weekly-decision-detail:visible")
-      .count(),
-    6,
-    "all six order details are visible without expanding",
-  );
+  assert.equal(await page.locator("#weeklyDecisionRows .weekly-decision-detail:visible").count(), 0, "secondary calculation details start collapsed");
+  assert.equal(await page.locator("#weeklyDecisionRows .weekly-decision-expanded").count(), 6, "each stock row retains expandable calculation details");
   await page.evaluate(() =>
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
