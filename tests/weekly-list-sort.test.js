@@ -21,3 +21,10 @@ test('all sort fields and directions are stable and missing values stay last', (
 test('invalid persisted preferences fall back safely', () => {
   assert.deepEqual(Sort.normalize({ version: 9, field: 'unknown', direction: 'sideways' }), Sort.DEFAULT);
 });
+
+test('manual order is persisted, appends new symbols and moves one row at a time', () => {
+  const order = Sort.move(['SPY', 'AAPL'], 'AAPL', -1, ['SPY', 'AAPL', 'JOBY']);
+  assert.deepEqual(order, ['AAPL', 'SPY', 'JOBY']);
+  assert.deepEqual(Sort.rows(rows, { version: 2, field: 'manual', direction: 'asc', order }).map(row => row.symbol), ['AAPL', 'SPY', 'JOBY']);
+  assert.deepEqual(Sort.normalize({ version: 1, field: 'symbol', direction: 'asc' }), { version: 2, field: 'symbol', direction: 'asc', order: [] });
+});

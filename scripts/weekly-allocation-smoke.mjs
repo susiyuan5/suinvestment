@@ -64,6 +64,14 @@ try {
   assert.match(await page.locator('#weeklyListSortDirection').textContent(), /降序/);
   assert.deepEqual(await visibleSymbols(), defaultSymbols.slice().sort((a, b) => b.localeCompare(a)), 'sort preference survives refresh');
   assert.equal(await page.evaluate(() => JSON.stringify(window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__.plan)), planBeforeSort, 'sorting does not change financial output');
+  await page.locator('#weeklyListSort').selectOption('manual');
+  const beforeManualMove = await visibleSymbols(), moved = beforeManualMove[1];
+  await page.getByRole('button', { name: moved + ' 上移', exact: true }).click();
+  assert.deepEqual((await visibleSymbols()).slice(0, 2), [moved, beforeManualMove[0]], 'manual move changes only display order');
+  await page.reload(); await ready();
+  assert.equal(await page.locator('#weeklyListSort').inputValue(), 'manual');
+  assert.deepEqual((await visibleSymbols()).slice(0, 2), [moved, beforeManualMove[0]], 'manual order survives refresh');
+  assert.equal(await page.evaluate(() => JSON.stringify(window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__.plan)), planBeforeSort, 'manual order does not change financial output');
   await page.locator('#weeklyListSort').selectOption('suggested');
   const field = symbol => page.locator('[data-weekly-allocation-symbol="' + symbol + '"]');
   const apply = symbol => page.getByRole('button', { name: '应用 ' + symbol + ' 的比例并自动调节其余标的', exact: true }).click();

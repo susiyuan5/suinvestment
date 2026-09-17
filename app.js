@@ -1325,16 +1325,17 @@ amountBreakdown: "金额分解",
     if (weeklyListSortEl) weeklyListSortEl.value = state.weeklyListSort.field;
     if (weeklyListSortDirectionEl) {
       const descending = state.weeklyListSort.direction === "desc";
+      weeklyListSortDirectionEl.hidden = state.weeklyListSort.field === "manual";
       weeklyListSortDirectionEl.textContent = descending ? "降序 ↓" : "升序 ↑";
       weeklyListSortDirectionEl.setAttribute("aria-label", descending ? "当前降序，切换为升序" : "当前升序，切换为降序");
     }
   }
   if (weeklyListSortEl) weeklyListSortEl.addEventListener("change", function () {
-    state.weeklyListSort = WeeklyListSort.normalize({ version: WeeklyListSort.VERSION, field: weeklyListSortEl.value, direction: state.weeklyListSort.direction });
+    state.weeklyListSort = WeeklyListSort.normalize({ version: WeeklyListSort.VERSION, field: weeklyListSortEl.value, direction: state.weeklyListSort.direction, order: state.weeklyListSort.order });
     saveJson(STORAGE_KEYS.weeklyListSort, state.weeklyListSort); updateWeeklyListSortControls(); render();
   });
   if (weeklyListSortDirectionEl) weeklyListSortDirectionEl.addEventListener("click", function () {
-    state.weeklyListSort = WeeklyListSort.normalize({ version: WeeklyListSort.VERSION, field: state.weeklyListSort.field, direction: state.weeklyListSort.direction === "desc" ? "asc" : "desc" });
+    state.weeklyListSort = WeeklyListSort.normalize({ version: WeeklyListSort.VERSION, field: state.weeklyListSort.field, direction: state.weeklyListSort.direction === "desc" ? "asc" : "desc", order: state.weeklyListSort.order });
     saveJson(STORAGE_KEYS.weeklyListSort, state.weeklyListSort); updateWeeklyListSortControls(); render();
   });
   updateWeeklyListSortControls();
@@ -5944,8 +5945,20 @@ function equalizeAllocations() {
       const riskAdjustment = Number(row.riskReduction || 0);
       const redirected = Number(row.redirectedToSpy || 0);
       const status = window.DashboardUiPolicy ? window.DashboardUiPolicy.decisionStatus(row.finalAmount, row.action || row.suggested_action) : (Number(row.finalAmount || 0) > 0 ? "可供人工核对" : "已阻止或保留现金");
-      card.innerHTML = "<strong></strong><div class=\"weekly-decision-value-pair\"><span class=\"weekly-decision-price\"></span><span class=\"weekly-decision-market-value\"></span></div><span class=\"weekly-decision-target\"></span><span class=\"weekly-decision-final\"></span><div class=\"weekly-decision-state\"><span class=\"weekly-decision-status\"></span><p class=\"weekly-decision-reason\"></p></div><div class=\"weekly-decision-edit\"></div><details class=\"weekly-decision-expanded\"><summary>详情</summary><div class=\"weekly-decision-detail\"><span></span><span></span><span></span><span></span><p></p></div></details>";
+      card.innerHTML = "<div class=\"weekly-symbol-cell\"><strong></strong><span class=\"weekly-manual-order\"></span></div><div class=\"weekly-decision-value-pair\"><span class=\"weekly-decision-price\"></span><span class=\"weekly-decision-market-value\"></span></div><span class=\"weekly-decision-target\"></span><span class=\"weekly-decision-final\"></span><div class=\"weekly-decision-state\"><span class=\"weekly-decision-status\"></span><p class=\"weekly-decision-reason\"></p></div><div class=\"weekly-decision-edit\"></div><details class=\"weekly-decision-expanded\"><summary>详情</summary><div class=\"weekly-decision-detail\"><span></span><span></span><span></span><span></span><p></p></div></details>";
       card.querySelector("strong").textContent = symbol;
+      if (state.weeklyListSort.field === "manual") {
+        const controls = card.querySelector(".weekly-manual-order");
+        [["上移", -1], ["下移", 1]].forEach(function (entry) {
+          const button = document.createElement("button"); button.type = "button"; button.className = "secondary-button"; button.textContent = entry[1] < 0 ? "↑" : "↓"; button.setAttribute("aria-label", symbol + " " + entry[0]);
+          const index = sortedSymbols.indexOf(symbol); button.disabled = entry[1] < 0 ? index === 0 : index === sortedSymbols.length - 1;
+          button.addEventListener("click", function () {
+            state.weeklyListSort = WeeklyListSort.normalize({ version: WeeklyListSort.VERSION, field: "manual", direction: "asc", order: WeeklyListSort.move(sortedSymbols, symbol, entry[1], sortedSymbols) });
+            saveJson(STORAGE_KEYS.weeklyListSort, state.weeklyListSort); render();
+            weeklyDecisionRowsEl.querySelector('[aria-label="' + symbol + ' ' + entry[0] + '"]')?.focus({ preventScroll: true });
+          }); controls.appendChild(button);
+        });
+      }
       card.querySelector(".weekly-decision-market-value").textContent = "持仓市值 " + (position && isFiniteNumber(position.current_value) ? formatCurrency(position.current_value) : "市值未知");
       card.querySelector(".weekly-decision-price").textContent = "单股价格 " + (isFiniteNumber(signal.latest_price) ? "USD " + formatPrice(signal.latest_price) : "价格未知");
       card.querySelector(".weekly-decision-target").textContent = "目标 " + (targetBySymbol[symbol] || 0).toFixed(2) + "% / 当前 " + current.toFixed(2) + "%";
