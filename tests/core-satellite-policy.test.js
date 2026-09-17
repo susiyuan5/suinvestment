@@ -40,6 +40,15 @@ test("every target accepts zero to one hundred percent while totals remain exact
   assert.match(policy.validateAllocations({ ...valid, NVDA: 1.0001 }).errors.join(" "), /NVDA/);
 });
 
+test("default and custom stocks can be removed while SPY remains the strategy anchor", () => {
+  const withoutKo = { SPY: .45, QQQ: .1, NVDA: .15, AAPL: .15, ASML: .15 };
+  const preset = policy.presetFromAllocations(withoutKo);
+  assert.ok(preset);
+  assert.deepEqual(policy.rowsForPreset(preset).map(row => row.symbol), ["SPY", "QQQ", "NVDA", "AAPL", "ASML"]);
+  assert.equal(policy.validateAllocations(withoutKo).valid, true);
+  assert.equal(policy.presetFromAllocations({ QQQ: 1 }), null, "SPY cannot be removed from the strategy preset");
+});
+
 test("40/60, 50/50, 60/40 shortcuts and equal satellite allocation", () => {
   assert.deepEqual(policy.allocationsForCore(40), { SPY: .4, QQQ: .1, NVDA: .125, AAPL: .125, ASML: .125, KO: .125 });
   assert.deepEqual(policy.allocationsForCore(50), { SPY: .5, QQQ: .1, NVDA: .1, AAPL: .1, ASML: .1, KO: .1 });

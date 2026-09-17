@@ -21,21 +21,21 @@
   function ratioFromPct(value) { return Math.round((Number(value) + 1e-9) * 100) / 10000; }
   function allAssets(p) { return [p.core].concat(p.growth_etfs || [], p.satellites || []); }
   function validatePreset(preset) {
-    if (!preset || preset.version !== "core-satellite-v5" || !preset.core || !Array.isArray(preset.growth_etfs) || !Array.isArray(preset.satellites) || preset.core.symbol !== "SPY" || preset.growth_etfs.length !== 1 || preset.growth_etfs[0].symbol !== "QQQ" || !STOCK_SYMBOLS.every(s => preset.satellites.some(row => row.symbol === s))) return false;
+    if (!preset || preset.version !== "core-satellite-v5" || !preset.core || !Array.isArray(preset.growth_etfs) || !Array.isArray(preset.satellites) || preset.core.symbol !== "SPY" || preset.growth_etfs.length > 1 || (preset.growth_etfs[0] && preset.growth_etfs[0].symbol !== "QQQ")) return false;
     var assets = allAssets(preset), total = assets.reduce(function (sum, row) { return sum + Number(row.target_allocation); }, 0);
-    return new Set(assets.map(row => row.symbol)).size === assets.length && Number.isFinite(total) && Math.abs(total - 1) <= ALLOCATION_EPSILON && assets.every(row => /^[A-Z][A-Z0-9.-]{0,14}$/.test(row.symbol) && Number.isFinite(Number(row.target_allocation)) && row.target_allocation >= 0 && row.target_allocation <= 1) && preset.core.asset_type === "core_etf" && preset.growth_etfs[0].asset_type === "growth_etf" && preset.satellites.every(function (row) { var value = Number(row.target_allocation); return Number.isFinite(value) && value >= 0 && value <= 1 + ALLOCATION_EPSILON && row.asset_type === "individual_stock" && row.bucket === "satellite"; });
+    return new Set(assets.map(row => row.symbol)).size === assets.length && Number.isFinite(total) && Math.abs(total - 1) <= ALLOCATION_EPSILON && assets.every(row => /^[A-Z][A-Z0-9.-]{0,14}$/.test(row.symbol) && Number.isFinite(Number(row.target_allocation)) && row.target_allocation >= 0 && row.target_allocation <= 1) && preset.core.asset_type === "core_etf" && preset.growth_etfs.every(function (row) { return row.asset_type === "growth_etf"; }) && preset.satellites.every(function (row) { var value = Number(row.target_allocation); return Number.isFinite(value) && value >= 0 && value <= 1 + ALLOCATION_EPSILON && row.asset_type === "individual_stock" && row.bucket === "satellite"; });
   }
   function normalizedPreset(preset) { return validatePreset(preset) ? clone(preset) : null; }
   function loadPreset(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error("preset fetch failed"); return r.json(); }).then(function (v) { var result = normalizedPreset(v); if (!result) throw new Error("invalid core-satellite preset"); return result; }); }
   function rowsForPreset(preset) { var p = normalizedPreset(preset) || clone(PRESET); return allAssets(p).map(function (row) { return Object.assign({}, row, { allocation: row.target_allocation, preset_version: p.version }); }); }
-  function allocationSymbols(values) { return Array.from(new Set(SYMBOLS.concat(Object.keys(values || {})))); }
+  function allocationSymbols(values) { var keys = Object.keys(values || {}); return keys.length ? Array.from(new Set(keys)) : SYMBOLS.slice(); }
   // Unclassified additions count toward the technology ceiling until classified.
   function technologySymbol(symbol) { return TECH_SYMBOLS.includes(symbol) || !SYMBOLS.includes(symbol); }
   function allocationMetrics(allocations) {
     const values = allocations || {}, symbols = allocationSymbols(values), rounded = {};
     symbols.forEach(s => { rounded[s] = pct(values[s]) || 0; });
     const allocated = symbols.reduce((sum, s) => sum + Math.round(rounded[s] * 100), 0) / 100;
-    return { ...rounded, allocated, remaining: Math.max(0, 100 - allocated), overage: Math.max(0, allocated - 100), core: rounded.SPY, growthEtf: rounded.QQQ,
+    return { ...rounded, allocated, remaining: Math.max(0, 100 - allocated), overage: Math.max(0, allocated - 100), core: rounded.SPY || 0, growthEtf: rounded.QQQ || 0,
       satellite: symbols.filter(s => s !== 'SPY' && s !== 'QQQ').reduce((sum, s) => sum + rounded[s], 0),
       technology: symbols.filter(technologySymbol).reduce((sum, s) => sum + rounded[s], 0) };
   }
@@ -76,7 +76,7 @@
   function allocationsForCore(corePercent) { var core = finite(corePercent); if (core === null || core < 40 || core > 80) return null; var shortcut = PRESET.shortcuts[String(core)]; return shortcut ? clone(shortcut) : averageSatelliteAllocations(core); }
   function averageSatelliteAllocations(corePercent) { var core = finite(corePercent); if (core === null || core < 40 || core > 80) return null; var result = { SPY: ratioFromPct(core), QQQ: .10 }, each = ratioFromPct((90 - core) / 4); STOCK_SYMBOLS.forEach(function (s) { result[s] = each; }); return result; }
   function recommendedAllocations() { return clone(PRESET.shortcuts["40"]); }
-  function presetFromAllocations(allocations, basePreset) { var p = normalizedPreset(basePreset) || clone(PRESET), result = clone(p), values = allocations || {}; result.satellites = result.satellites.filter(row => SYMBOLS.includes(row.symbol) || Object.hasOwn(values, row.symbol)); allocationSymbols(values).filter(s => !allAssets(result).some(row => row.symbol === s)).forEach(symbol => result.satellites.push({ symbol, asset_type: 'individual_stock', bucket: 'satellite', sector: 'unclassified', signal_role: 'satellite_dca_l2' })); allAssets(result).forEach(function (row) { row.target_allocation = ratioFromPct(pct(values[row.symbol]) || 0); }); return validatePreset(result) ? result : null; }
+  function presetFromAllocations(allocations, basePreset) { var p = normalizedPreset(basePreset) || clone(PRESET), result = clone(p), values = allocations || {}; if (!Object.hasOwn(values, "SPY")) return null; result.growth_etfs = result.growth_etfs.filter(row => Object.hasOwn(values, row.symbol)); result.satellites = result.satellites.filter(row => Object.hasOwn(values, row.symbol)); allocationSymbols(values).filter(s => !allAssets(result).some(row => row.symbol === s)).forEach(symbol => result.satellites.push({ symbol, asset_type: 'individual_stock', bucket: 'satellite', sector: 'unclassified', signal_role: 'satellite_dca_l2' })); allAssets(result).forEach(function (row) { row.target_allocation = ratioFromPct(pct(values[row.symbol]) || 0); }); return validatePreset(result) ? result : null; }
   function reason(row, code) { row.reasonCodes = row.reasonCodes || []; if (row.reasonCodes.indexOf(code) < 0) row.reasonCodes.push(code); }
   function canRedirect(decision, allocation, threshold) {
     const codes = decision.reasonCodes || [];

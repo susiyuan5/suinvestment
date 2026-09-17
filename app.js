@@ -74,7 +74,7 @@
   const CORE_SATELLITE_SYMBOLS = ["SPY", "QQQ", "NVDA", "AAPL", "ASML", "KO"];
   const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.40, QQQ: 0.10, NVDA: 0.125, AAPL: 0.125, ASML: 0.125, KO: 0.125 };
   function coreSatelliteAllocations(portfolio) {
-    return Array.from(new Set(CORE_SATELLITE_SYMBOLS.concat((portfolio || []).map(row => row.symbol)))).reduce(function (map, symbol) {
+    return Array.from(new Set((portfolio || []).map(row => row.symbol))).reduce(function (map, symbol) {
       const item = (portfolio || []).find(function (row) { return row.symbol === symbol; });
       map[symbol] = item && Number.isFinite(Number(item.target_allocation)) ? Number(item.target_allocation) : Number(item && item.allocation || 0);
       return map;
@@ -1908,8 +1908,8 @@ amountBreakdown: "金额分解",
       return;
     }
     if (!window.confirm("确认移除 " + symbol + "？这只会修改未来定投配置，不会卖出或修改真实持仓。")) return;
-    if (CORE_SATELLITE_SYMBOLS.includes(symbol)) {
-      document.getElementById('weeklyAllocationStatus').textContent = '默认标的保留在清单中；每个标的均可设置为 0%–100%，其余比例会自动调节。';
+    if (symbol === "SPY") {
+      document.getElementById('weeklyAllocationStatus').textContent = 'SPY 是市场状态和策略计算的核心参考，不能移出清单；可以把目标比例设为 0%。';
       return;
     }
     if (!applyWeeklyAllocation(symbol, 0, symbol, false)) return;
@@ -5976,8 +5976,8 @@ function equalizeAllocations() {
         weeklyDecisionRowsEl.querySelector('[data-weekly-allocation-symbol="' + symbol + '"]')?.focus({ preventScroll: true });
       });
       allocationControl.appendChild(apply);
-      if (!CORE_SATELLITE_SYMBOLS.includes(symbol)) {
-        const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'secondary-button'; remove.textContent = '移出清单';
+      if (symbol !== "SPY") {
+        const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'secondary-button'; remove.textContent = '删除';
         remove.setAttribute('aria-label', '将 ' + symbol + ' 移出定投清单');
         remove.addEventListener('click', function () { removeStock(symbol); });
         allocationControl.appendChild(remove);
