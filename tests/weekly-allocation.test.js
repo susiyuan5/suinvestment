@@ -46,7 +46,10 @@ test('custom stock reaches the shared planner and is included in concentration g
   const blocked = C.plan({ preset, baseBudget: 100, actualAllocations: { MSFT: 18 } });
   assert.equal(blocked.items.find(row => row.symbol === 'MSFT').finalAmount, 0);
   const groupBlocked = C.plan({ preset, baseBudget: 100, actualAllocations: { MSFT: 41 }, satelliteDecisions: { AAPL: { finalAmount: 15 } } });
-  assert.equal(groupBlocked.items.find(row => row.symbol === 'AAPL').finalAmount, 0);
+  const aapl = groupBlocked.items.find(row => row.symbol === 'AAPL');
+  assert.equal(aapl.finalAmount, aapl.originalBaseAmount);
+  assert.equal(aapl.extraAmount, 0);
+  assert.ok(aapl.reasonCodes.includes('TECHNOLOGY_ENHANCEMENT_BLOCKED'));
   const full = W.plan({ preset, baseBudget: 100, policyState: {}, budget: { normalPool: 100, crashFund: 0 }, core: {}, inputs: C.rowsForPreset(preset).map(row => ({ symbol: row.symbol, input: { baseAmount: row.allocation * 100, price: 100, dataStatus: 'fresh', marketRegime: 'Bull', currentAllocationPct: 0, date: '2026-09-15', drawdownPct: 0, volatilityPct: 2, trendStatus: 'above_sma' } })) });
   assert.equal(full.plan.items.length, 7);
   assert.ok(full.plan.totalPlanned <= 100);

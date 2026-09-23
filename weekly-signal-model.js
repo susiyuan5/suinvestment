@@ -248,6 +248,17 @@
     };
   }
 
+ function weeklyDcaActionGate(signal) {
+   const s = signal || {}, algorithm = s.algorithm || {};
+   const action = s.suggested_action || getSuggestedAction(s);
+   const actionBlocked = s.data_source === 'Unavailable' || ['missing', 'stale', 'invalid', 'future'].includes(s.data_freshness)
+     || s.data_validation_status === 'invalid' || !isFiniteNumber(s.decision_change)
+     || s.risk_level === 'Extreme' || (isFiniteNumber(algorithm.drawdown) && algorithm.drawdown >= 35)
+     || s.panic_active === true || s.portfolio_adjustment === 0 || algorithm.portfolio_adjustment === 0
+     || action === 'HOLD' || action === 'CONSIDER_SELL';
+   return { actionBlocked, extraBlocked: actionBlocked || action === 'DO_NOT_BUY' || action === 'REDUCE_BUY'
+     || getActionLabelFromMultiplier(s).cls === 'action-pause-buy' };
+ }
  return Object.freeze({ ALGORITHM_PARAMS, LOW_FREQ_ALGO_PARAMS, calculateSmoothMultiplier, getMarketRegimeMultiplierCap,
-   calculateRiskLevel, getSuggestedAction, getActionLabelFromMultiplier, calculateEnhancedLowFrequencyMultiplier });
+   calculateRiskLevel, getSuggestedAction, getActionLabelFromMultiplier, calculateEnhancedLowFrequencyMultiplier, weeklyDcaActionGate });
 });

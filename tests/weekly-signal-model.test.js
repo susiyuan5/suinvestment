@@ -14,3 +14,12 @@ test('existing price action hard stops survive extraction', () => {
  assert.equal(Model.getSuggestedAction({...signal,risk_level:'Extreme'}),'DO_NOT_BUY');
  assert.equal(Model.getSuggestedAction({...signal,decision_change:16}),'CONSIDER_SELL');
 });
+
+test('weekly base distinguishes ordinary price timing from non-negotiable risk blocks', () => {
+ const signal={data_source:'Historical',data_freshness:'fresh',decision_change:-5,weekly_change:-5,multiplier:.3,signal_score:15,risk_level:'Low',algorithm:{},suggested_action:'DO_NOT_BUY'};
+ assert.deepEqual(Model.weeklyDcaActionGate(signal), {actionBlocked:false,extraBlocked:true});
+ for (const change of [{risk_level:'Extreme'}, {panic_active:true}, {algorithm:{drawdown:35}}, {portfolio_adjustment:0}, {algorithm:{portfolio_adjustment:0}}, {data_freshness:'stale'}, {suggested_action:'HOLD'}, {suggested_action:'CONSIDER_SELL'}]) {
+   assert.deepEqual(Model.weeklyDcaActionGate({...signal,...change}), {actionBlocked:true,extraBlocked:true});
+ }
+ assert.equal(Model.weeklyDcaActionGate({...signal,signal_score:70,multiplier:1,suggested_action:'BUY'}).extraBlocked,false);
+});

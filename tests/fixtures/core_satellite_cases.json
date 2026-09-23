@@ -122,6 +122,61 @@
     }
   },
   {
+    "name": "spy action gate blocks base redirection and crash enhancement",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "crash_fund_remaining": 100,
+      "actual_allocations": { "NVDA": 18 },
+      "satellite_decisions": { "SPY": { "finalAmount": 0, "reasonCodes": ["ACTION_REQUIRES_ZERO_AMOUNT"] } }
+    },
+    "expected": { "totalPlanned": 475, "spyRedirected": 0, "plannedCrash": 0 }
+  },
+  {
+    "name": "spy hard block cannot be recreated",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "crash_fund_remaining": 100,
+      "satellite_decisions": { "SPY": { "hardBlocked": true, "finalAmount": 0, "reasonCodes": ["HARD_BLOCK_INVALID_PRICE"] } }
+    },
+    "expected": { "totalPlanned": 600, "spyRedirected": 0 }
+  },
+  {
+    "name": "spy stock concentration gate does not cancel core base",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "crash_fund_remaining": 0,
+      "satellite_decisions": { "SPY": { "finalAmount": 0, "reasonCodes": ["CONCENTRATION_VERY_HIGH_BLOCKED"] } }
+    },
+    "expected": { "totalPlanned": 1000 }
+  },
+  {
+    "name": "technology ceiling preserves base and cancels enhancements",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "normal_pool_remaining": 1200,
+      "crash_fund_remaining": 100,
+      "actual_allocations": { "NVDA": 14, "AAPL": 14, "ASML": 14 },
+      "satellite_decisions": { "NVDA": { "baseAmount": 125, "extraAmount": 25, "crashFundAmount": 10, "finalAmount": 160 } }
+    },
+    "expected": { "items": 125, "totalPlanned": 1000, "plannedCrash": 0, "spyRedirected": 0 }
+  },
+  {
+    "name": "satellite ceiling preserves defensive base below nominal amount",
+    "case": "plan",
+    "input": {
+      "base_budget": 1000,
+      "normal_pool_remaining": 1200,
+      "crash_fund_remaining": 100,
+      "actual_allocations": { "NVDA": 15, "AAPL": 15, "ASML": 15, "KO": 15 },
+      "satellite_decisions": { "NVDA": { "baseAmount": 62.5, "extraAmount": 25, "crashFundAmount": 10, "finalAmount": 97.5 } }
+    },
+    "expected": { "items": 62.5, "totalPlanned": 937.5, "plannedCrash": 0, "spyRedirected": 0 }
+  },
+  {
     "name": "cash cap includes commission",
     "case": "plan",
     "input": {

@@ -40,6 +40,26 @@ class CoreSatellitePolicyTests(unittest.TestCase):
         result = plan_core_satellite(base_budget=69.23, crash_fund_remaining=100, actual_allocations={})
         self.assertAlmostEqual(result["conservation"]["source"], sum(row["finalAmount"] for row in result["items"]) + result["cashRetained"], places=2)
 
+    def test_optional_qqq_preserves_custom_satellite_funding(self):
+        preset = load_preset()
+        preset["growth_etfs"] = []
+        allocations = {"SPY": .50, "NVDA": .10, "AAPL": .15, "ASML": .05, "KO": .20}
+        for row in [preset["core"], *preset["satellites"]]: row["target_allocation"] = allocations[row["symbol"]]
+        self.assertTrue(validate_preset(preset))
+        result = plan_core_satellite(base_budget=100, crash_fund_remaining=0, preset=preset)
+        self.assertEqual([["SPY", 50], ["NVDA", 10], ["AAPL", 15], ["ASML", 5], ["KO", 20]], [[row["symbol"], row["baseAmount"]] for row in result["items"]])
+        self.assertEqual(100, result["totalPlanned"])
+
+    def test_spy_base_is_not_reclassified_as_unexecuted_extra(self):
+        result = plan_core_satellite(base_budget=100, crash_fund_remaining=0, satellite_decisions={"SPY": {"baseAmount": 40, "extraAmount": 8, "finalAmount": 48}})
+        self.assertEqual(40, result["items"][0]["baseAmount"])
+        self.assertEqual(0, result["items"][0]["extraAmount"])
+
+    def test_subcent_cash_caps_are_rounded_down(self):
+        for cash in [0.006, 0.016, 1.006]:
+            result = plan_core_satellite(base_budget=100, crash_fund_remaining=0, portfolio_cash_cap=cash)
+            self.assertLessEqual(result["totalPlanned"], cash)
+
 
 if __name__ == "__main__":
     unittest.main()

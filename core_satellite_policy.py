@@ -1,6 +1,6 @@
 """Pure Core-Satellite v5 budgeting policy shared by dashboard and reports."""
 from __future__ import annotations
-import json, math
+import json, math, re
 from pathlib import Path
 from typing import Any
 
@@ -26,9 +26,12 @@ def load_preset(path: Path = PRESET_PATH) -> dict[str, Any]:
 def validate_preset(preset: dict[str, Any]) -> bool:
     if not isinstance(preset, dict) or preset.get("version") != "core-satellite-v5": return False
     core, growth, stocks = preset.get("core") or {}, preset.get("growth_etfs"), preset.get("satellites")
-    if core.get("symbol") != "SPY" or not isinstance(growth, list) or len(growth) != 1 or growth[0].get("symbol") != "QQQ" or not isinstance(stocks, list) or len(stocks) != 4: return False
-    assets = [core, *growth, *stocks]; total = sum(float(row.get("target_allocation", float("nan"))) for row in assets)
-    return math.isfinite(total) and abs(total - 1) <= ALLOCATION_EPSILON and core.get("asset_type") == "core_etf" and growth[0].get("asset_type") == "growth_etf" and all(0 <= float(row.get("target_allocation", 1)) <= .15 + ALLOCATION_EPSILON and row.get("asset_type") == "individual_stock" and row.get("bucket") == "satellite" for row in stocks)
+    if core.get("symbol") != "SPY" or not isinstance(growth, list) or len(growth) > 1 or (growth and growth[0].get("symbol") != "QQQ") or not isinstance(stocks, list): return False
+    assets = [core, *growth, *stocks]
+    try: allocations = [float(row.get("target_allocation", float("nan"))) for row in assets]
+    except (TypeError, ValueError): return False
+    symbols = [str(row.get("symbol", "")) for row in assets]
+    return len(set(symbols)) == len(assets) and all(re.fullmatch(r"[A-Z][A-Z0-9.-]{0,14}", symbol) for symbol in symbols) and all(math.isfinite(value) and 0 <= value <= 1 for value in allocations) and abs(sum(allocations) - 1) <= ALLOCATION_EPSILON and core.get("asset_type") == "core_etf" and all(row.get("asset_type") == "growth_etf" for row in growth) and all(row.get("asset_type") == "individual_stock" and row.get("bucket") == "satellite" for row in stocks)
 def allocation_metrics(allocations: dict[str, Any]) -> dict[str, float]:
     values = {symbol: (_pct(allocations.get(symbol, 0)) or 0.0) for symbol in CORE_SYMBOLS}
     allocated = sum(values.values())
@@ -63,23 +66,39 @@ def plan_core_satellite(*, base_budget: float, crash_fund_remaining: float, actu
     if not validate_preset(preset): raise ValueError("invalid preset")
     blocked_symbols, cash_only_symbols = blocked_symbols or [], cash_only_symbols or []
     limits, base, crash = preset["limits"], money(base_budget), money(crash_fund_remaining)
-    spy_usable, qqq_usable = spy_data_valid and not safety_blocked, qqq_data_valid and not safety_blocked
-    spy_actual = float(actual.get("SPY") or 0); stock_actual = sum(float(actual.get(s) or 0) for s in STOCK_SYMBOLS); tech_actual = sum(float(actual.get(s) or 0) for s in TECH_SYMBOLS)
+    spy_decision = decisions.get("SPY") or {}
+    spy_usable, qqq_usable = spy_data_valid and not safety_blocked and not _core_decision_blocked(spy_decision) and "SPY" not in blocked_symbols, qqq_data_valid and not safety_blocked
+    stock_symbols = [row["symbol"] for row in preset["satellites"]]
+    technology_symbol = lambda symbol: symbol in TECH_SYMBOLS or symbol not in CORE_SYMBOLS
+    spy_actual = float(actual.get("SPY") or 0); stock_actual = sum(float(actual.get(s) or 0) for s in stock_symbols); tech_actual = sum(float(actual.get(s) or 0) for s in stock_symbols if technology_symbol(s))
     assets = [preset["core"], *preset["growth_etfs"], *preset["satellites"]]; rounded = [money(base * row["target_allocation"]) for row in assets]; rounded[0] = money(rounded[0] + base - sum(rounded))
-    rows = [{"symbol":"SPY","bucket":"core","asset_type":"core_etf","originalBaseAmount":rounded[0],"dcaAdjustedAmount":rounded[0],"crashFundEnhancement":0.0,"riskReduction":0.0,"redirectedToSpy":0.0,"cashRetained":0.0,"finalAmount":rounded[0] if spy_usable else 0.0,"reasonCodes":[] if spy_usable else ["SPY_DATA_OR_SAFETY_BLOCK"],"factorChain":[] }]; redirect = 0.0
+    rows = [{"symbol":"SPY","bucket":"core","asset_type":"core_etf","originalBaseAmount":rounded[0],"dcaAdjustedAmount":rounded[0],"extraAmount":0.0,"crashFundEnhancement":0.0,"riskReduction":0.0,"redirectedToSpy":0.0,"cashRetained":0.0,"finalAmount":rounded[0] if spy_usable else 0.0,"reasonCodes":[] if spy_usable else list(dict.fromkeys([*spy_decision.get("reasonCodes", []), "SPY_DATA_OR_SAFETY_BLOCK"])),"factorChain":[] }]; redirect = 0.0
     for index, asset in enumerate(assets[1:], 1):
         symbol, original, is_qqq = asset["symbol"], rounded[index], asset["symbol"] == "QQQ"; decision = decisions.get(symbol) or {}; adjusted = money(decision.get("finalAmount", original))
-        row = {"symbol":symbol,"bucket":asset["bucket"],"asset_type":asset["asset_type"],"originalBaseAmount":original,"dcaAdjustedAmount":adjusted,"crashFundEnhancement":0.0 if is_qqq else money(decision.get("crashFundAmount")),"riskReduction":0.0,"redirectedToSpy":0.0,"cashRetained":0.0,"finalAmount":adjusted,"reasonCodes":list(decision.get("reasonCodes", [])),"factorChain":[]}
-        hard = (is_qqq and not qqq_usable) or (adjusted <= 0 < original) or (not is_qqq and float(actual.get(symbol) or 0) >= limits["single_stock_block_pct"]) or (not is_qqq and stock_actual >= limits["satellite_enhancement_block_pct"] and adjusted > original) or (not is_qqq and asset.get("sector") == "technology" and tech_actual >= limits["technology_enhancement_block_pct"] and adjusted > original) or symbol in blocked_symbols
+        row = {"symbol":symbol,"bucket":asset["bucket"],"asset_type":asset["asset_type"],"originalBaseAmount":original,"dcaAdjustedAmount":adjusted,"extraAmount":money(decision.get("extraAmount")),"crashFundEnhancement":0.0 if is_qqq else money(decision.get("crashFundAmount")),"riskReduction":0.0,"redirectedToSpy":0.0,"cashRetained":0.0,"finalAmount":adjusted,"reasonCodes":list(decision.get("reasonCodes", [])),"factorChain":[]}
+        hard = (is_qqq and not qqq_usable) or (adjusted <= 0 < original) or (not is_qqq and float(actual.get(symbol) or 0) >= limits["single_stock_block_pct"]) or symbol in blocked_symbols
         if hard:
-            row["riskReduction"], row["finalAmount"] = adjusted, 0.0; row["reasonCodes"].append("QQQ_DATA_OR_SAFETY_BLOCK" if is_qqq and not qqq_usable else "SATELLITE_RISK_BLOCKED")
+            row["riskReduction"], row["finalAmount"] = adjusted, 0.0; row["reasonCodes"].append("QQQ_DATA_OR_SAFETY_BLOCK" if is_qqq and not qqq_usable else "ETF_LOOKTHROUGH_LIMIT" if symbol in cash_only_symbols else "SATELLITE_RISK_BLOCKED")
             if is_qqq or symbol in cash_only_symbols: row["cashRetained"] = original
             elif _can_redirect(decision, actual.get(symbol, 0), limits["single_stock_block_pct"]): redirect += original
+            else: row["cashRetained"] = original
+        elif not is_qqq:
+            satellite_limit = stock_actual >= limits["satellite_enhancement_block_pct"]
+            technology_limit = technology_symbol(symbol) and tech_actual >= limits["technology_enhancement_block_pct"]
+            if (satellite_limit or technology_limit) and (adjusted > original or row["extraAmount"] > 0 or row["crashFundEnhancement"] > 0):
+                allowed_base = money(decision.get("baseAmount")) if decision.get("baseAmount") is not None else money(adjusted - row["extraAmount"] - row["crashFundEnhancement"])
+                row["finalAmount"] = min(original, adjusted, allowed_base)
+                row["extraAmount"] = row["crashFundEnhancement"] = 0.0
+                row["reasonCodes"].append("SATELLITE_ENHANCEMENT_BLOCKED" if satellite_limit else "TECHNOLOGY_ENHANCEMENT_BLOCKED")
         rows.append(row)
     redirected = money(redirect) if spy_usable and spy_actual < limits["spy_max_current_pct"] else 0.0
     if redirected: rows[0]["redirectedToSpy"], rows[0]["finalAmount"] = redirected, money(rows[0]["finalAmount"] + redirected); rows[0]["reasonCodes"].append("SATELLITE_BASE_REDIRECTED_TO_SPY")
     enhancement = money(min(crash, rounded[0] * (limits["spy_enhancement_max_multiple"] - 1), money(spy_crash_enhancement))) if spy_usable else 0.0; rows[0]["crashFundEnhancement"], rows[0]["finalAmount"] = enhancement, money(rows[0]["finalAmount"] + enhancement)
     return _finalize(rows, decisions, preset, base, crash, normal_pool_remaining, portfolio_cash_cap, commission_bps, safety_blocked, spy_actual, stock_actual, tech_actual, rounded[0])
+
+
+def _core_decision_blocked(decision):
+    return decision.get("hardBlocked") is True or any(code.startswith(("HARD_BLOCK", "ACTION_", "DATA_", "POLICY_")) for code in decision.get("reasonCodes", []))
 
 
 def _can_redirect(decision, allocation, threshold):
@@ -105,7 +124,10 @@ def _cap_component(rows, field, limit, code):
 
 def _finalize(rows, decisions, preset, base, crash, normal_remaining, cash_cap, commission_bps, safety_blocked, spy_actual, stock_actual, tech_actual, spy_base):
     normal = base if normal_remaining is None else money(normal_remaining)
-    cash_cap = None if cash_cap is None else money(cash_cap)
+    if cash_cap is not None:
+        try: cash_value = float(cash_cap)
+        except (TypeError, ValueError): cash_value = 0.0
+        cash_cap = math.floor(max(0, cash_value if math.isfinite(cash_value) else 0) * 100 + 1e-7) / 100
     fee_rate = max(0, float(commission_bps)) / 10000
     for row in rows:
         if safety_blocked:
@@ -114,7 +136,7 @@ def _finalize(rows, decisions, preset, base, crash, normal_remaining, cash_cap, 
         decision = decisions.get(row["symbol"], {})
         row["crashFundAmount"] = min(row["finalAmount"], money(row["crashFundEnhancement"]))
         normal_amount = money(row["finalAmount"] - row["crashFundAmount"])
-        row["extraAmount"] = min(normal_amount, money(decision.get("extraAmount")))
+        row["extraAmount"] = min(normal_amount, money(row.get("extraAmount", decision.get("extraAmount"))))
         row["baseAmount"] = money(normal_amount - row["extraAmount"])
     def total(field): return money(sum(row[field] for row in rows))
     _cap_component(rows, "baseAmount", normal, "NORMAL_POOL_BASE_BUDGET_APPLIED")

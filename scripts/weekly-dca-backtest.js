@@ -68,7 +68,7 @@ function run(payload, options = {}) {
     }
     events.set(execution, { signalDate, plannedDate });
   }
-  const names = ['fixed_full_budget', 'fixed_same_reserve', 'current_v5_price_only', 'no_redirection', 'underweight_contributions', 'stable_base_limited_extra'];
+  const names = ['fixed_full_budget', 'fixed_same_reserve', 'current_v5_price_only', 'no_redirection', 'underweight_contributions', 'stable_base_limited_extra', 'balanced_weekly_v2'];
   const strategies = Object.fromEntries(names.map(name => [name, { cash: 0, holdings: Object.fromEntries(symbols.map(s => [s, 0])), invested: 0,
     fees: 0, slippage: 0, normalUsed: 0, crashUsed: 0, policyState: {}, deposits: 0, flows: [], curve: [], decisions: [], trades: [] }]));
   let lastMonth = '';
@@ -101,7 +101,8 @@ function run(payload, options = {}) {
         } else {
           const inputs = assets.map(asset => {
             const sig = signals[asset.symbol];
-            return { symbol: asset.symbol, actionBlocked: sig.actionBlocked, input: {
+            const gate = name === 'balanced_weekly_v2' ? Model.weeklyDcaActionGate(sig) : { actionBlocked: sig.actionBlocked };
+            return { symbol: asset.symbol, ...gate, input: {
               baseAmount: C.money(baseBudget * asset.allocation), price: lookup[asset.symbol][event.signalDate].adjusted_close,
               dataStatus: 'fresh', marketRegime: regime.type, panicActive: false,
               drawdownPct: sig.algorithm.drawdown, volatilityPct: sig.algorithm.realized_weekly_volatility,
@@ -117,11 +118,20 @@ function run(payload, options = {}) {
             inputs.forEach(item => { item.actionBlocked = false; });
           }
           const result = W.plan({ inputs, config: policyConfig, policyState: strategy.policyState, preset, baseBudget, commissionBps,
+            plannedDate: event.plannedDate, policyMode: name === 'balanced_weekly_v2' ? undefined : 'legacy',
             budget: { normalPool: 300, normalPoolUsed: strategy.normalUsed, crashFund: 100, crashFundUsed: strategy.crashUsed,
               portfolioCashCap: strategy.cash * config.cashUsageCap },
             core: { actualAllocations: actual, spyDataValid: true, qqqDataValid: true, cashOnlySymbols: name === 'no_redirection' ? symbols : [] } });
           strategy.policyState = result.policyState;
           orders = result.plan.items;
+          if (name === 'balanced_weekly_v2') {
+            const plan = result.plan, funding = plan.funding;
+            if (!plan.conservation.balanced || plan.plannedNormal > funding.normalLimit + 1e-7
+              || plan.plannedNormal > Math.max(0, funding.normalRemaining - funding.futureReserved) + 1e-7
+              || plan.plannedCrash > funding.crashLimit + 1e-7
+              || strategy.normalUsed + plan.plannedNormal > 300 + 1e-7
+              || strategy.crashUsed + plan.plannedCrash > 100 + 1e-7) throw new Error('Weekly funding invariant failed: ' + date);
+          }
           strategy.decisions.push({ date, signalDate: event.signalDate, plannedDate: event.plannedDate, inputs, plan: result.plan });
         }
         for (const row of orders) {
@@ -132,7 +142,7 @@ function run(payload, options = {}) {
           strategy.cash -= amount + fee; strategy.holdings[row.symbol] += amount / price;
           strategy.invested += amount; strategy.fees += fee; strategy.slippage += amount * slippageBps / 10000;
           strategy.normalUsed += row.baseAmount + row.extraAmount; strategy.crashUsed += row.crashFundAmount;
-          strategy.trades.push({ date, signalDate: event.signalDate, symbol: row.symbol, amount, fee,
+          strategy.trades.push({ date, signalDate: event.signalDate, plannedDate: event.plannedDate, symbol: row.symbol, amount, fee,
             base: row.baseAmount, extra: row.extraAmount, crash: row.crashFundAmount });
         }
       }
@@ -146,10 +156,12 @@ function run(payload, options = {}) {
     externalDeposits: strategy.deposits, invested: C.money(strategy.invested), finalValue: C.money(strategy.curve.at(-1).value), cash: C.money(strategy.cash),
     investmentRatio: strategy.invested / strategy.deposits, costs: C.money(strategy.fees + strategy.slippage), trades: strategy.trades.length,
     ...Metrics.performance(strategy.curve, strategy.flows) }]));
-  return { researchOnly: true, valid: events.size > 0 && strategies.current_v5_price_only.trades.length > 0 && !issues.some(x => x.reason === 'missing_adjusted_open'),
+  return { researchOnly: true, valid: events.size > 0 && strategies.current_v5_price_only.trades.length > 0 && strategies.balanced_weekly_v2.trades.length > 0 && !issues.some(x => x.reason === 'missing_adjusted_open'),
     engineVersion: W.version, configVersion: config.version, presetVersion: preset.version, start: dates[0], end: dates.at(-1), events: events.size, summaries, issues,
     assumptions: { signal: 'prior raw close and weekly raw closes as on dashboard (adjusted fallback in synthetic fixtures); adjusted OHLC for total-return execution and valuation', execution: 'Tuesday open, holiday through Friday',
-      deposits: '400 at first trading day of each calendar month, before returns', budget: 'calendar Tuesdays; missing execution does not redistribute its budget',
+      deposits: '400 at first trading day of each calendar month, before returns; weekly DCA pools only, excluding the separate 100 independent Dip pool',
+      budget: '300 normal + 100 Crash per month; calendar Tuesdays identified by plannedDate; missing execution does not redistribute its budget',
+      strategies: 'balanced_weekly_v2 uses the shared default planner; current_v5_price_only, no_redirection and stable_base_limited_extra explicitly use legacy policy mode',
       commissionBps, slippageBps, cashYield: 0, currency: 'constant currency research units; no historical CAD FX series',
       exclusions: ['historical news and fundamentals overlays', 'manual panic/overrides', 'broker execution restrictions', 'live portfolio overlay history'],
       promotionAllowed: false }, strategies };
@@ -157,7 +169,7 @@ function run(payload, options = {}) {
 if (require.main === module && !process.argv.includes('--dip')) {
   const args = process.argv.slice(2), option = (name, fallback) => args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
   const prices = option('--prices', 'data/v2/backtest-adjusted-daily.json');
-  const output = option('--output', 'results/weekly_dca_v1');
+  const output = option('--output', 'results/weekly_dca_v2');
   const raw = fs.readFileSync(prices);
   const result = run(JSON.parse(raw), { start: option('--start', '2022-06-01'), asOf: option('--as-of', undefined),
     commissionBps: Number(option('--commission-bps', 10)), slippageBps: Number(option('--slippage-bps', 5)) });

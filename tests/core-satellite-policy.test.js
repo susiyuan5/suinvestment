@@ -61,3 +61,61 @@ test("actual concentration blocks only at 18 percent", () => {
   assert.equal(policy.plan({ baseBudget: 1000, crashFundRemaining: 0, actualAllocations: { NVDA: 17.99 } }).items.find((row) => row.symbol === "NVDA").finalAmount, 125);
   assert.equal(policy.plan({ baseBudget: 1000, crashFundRemaining: 0, actualAllocations: { NVDA: 18 } }).items.find((row) => row.symbol === "NVDA").finalAmount, 0);
 });
+
+test("SPY honors hard, action, data, and config gates while ignoring stock concentration gates", () => {
+  for (const code of ["HARD_BLOCK_INVALID_PRICE", "ACTION_REQUIRES_ZERO_AMOUNT", "DATA_MANUAL_REVIEW", "POLICY_CONFIG_UNAVAILABLE"]) {
+    const result = policy.plan({ baseBudget: 100, crashFundRemaining: 20, spyCrashEnhancement: 10,
+      actualAllocations: { NVDA: 18 }, satelliteDecisions: { SPY: { finalAmount: 0, reasonCodes: [code] } } });
+    const spy = result.items.find(row => row.symbol === "SPY");
+    assert.equal(spy.finalAmount, 0, code);
+    assert.equal(result.spyRedirected, 0, code);
+    assert.ok(spy.reasonCodes.includes(code));
+  }
+  const result = policy.plan({ baseBudget: 100, crashFundRemaining: 0,
+    satelliteDecisions: { SPY: { finalAmount: 0, reasonCodes: ["CONCENTRATION_VERY_HIGH_BLOCKED"] } } });
+  assert.equal(result.items[0].finalAmount, 40);
+});
+
+test("SPY base cannot be relabeled as an unexecuted drawdown extra", () => {
+  const result = policy.plan({ baseBudget: 100, normalPoolRemaining: 300, crashFundRemaining: 0,
+    satelliteDecisions: { SPY: { baseAmount: 40, extraAmount: 8, finalAmount: 48 } } });
+  assert.equal(result.items[0].baseAmount, 40);
+  assert.equal(result.items[0].extraAmount, 0);
+  assert.equal(result.items[0].finalAmount, 40);
+});
+
+test("group exposure limits remove enhancements and preserve the already allowed base", () => {
+  for (const actual of [{ NVDA: 14, AAPL: 14, ASML: 14 }, { NVDA: 15, AAPL: 15, ASML: 15, KO: 15 }]) {
+    for (const base of [125, 62.5]) {
+      const result = policy.plan({ baseBudget: 1000, normalPoolRemaining: 1200, crashFundRemaining: 100,
+        actualAllocations: actual,
+        satelliteDecisions: { NVDA: { baseAmount: base, extraAmount: 20, crashFundAmount: 10, finalAmount: base + 30 } } });
+      const nvda = result.items.find(row => row.symbol === "NVDA");
+      assert.equal(nvda.baseAmount, base);
+      assert.equal(nvda.extraAmount, 0);
+      assert.equal(nvda.crashFundAmount, 0);
+      assert.equal(nvda.finalAmount, base);
+      assert.equal(result.spyRedirected, 0);
+    }
+  }
+  const blocked = policy.plan({ baseBudget: 1000, crashFundRemaining: 100,
+    actualAllocations: { NVDA: 18, AAPL: 14, ASML: 14 },
+    satelliteDecisions: { NVDA: { baseAmount: 125, extraAmount: 20, crashFundAmount: 10, finalAmount: 155 } } });
+  assert.equal(blocked.items.find(row => row.symbol === "NVDA").finalAmount, 0);
+});
+
+test("removing QQQ preserves each custom satellite base and total funding", () => {
+  const preset = policy.presetFromAllocations({ SPY: .50, NVDA: .10, AAPL: .15, ASML: .05, KO: .20 });
+  const result = policy.plan({ preset, baseBudget: 100, crashFundRemaining: 0 });
+  assert.deepEqual(result.items.map(row => [row.symbol, row.baseAmount]), [["SPY", 50], ["NVDA", 10], ["AAPL", 15], ["ASML", 5], ["KO", 20]]);
+  assert.equal(result.totalPlanned, 100);
+  assert.ok(result.conservation.balanced);
+});
+
+test("fractional-cent cash limits are rounded down before allocation", () => {
+  for (const cash of [.006, .016, 1.006]) {
+    const result = policy.plan({ baseBudget: 100, crashFundRemaining: 0, portfolioCashCap: cash });
+    assert.ok(result.totalPlanned <= cash);
+    assert.ok(result.conservation.balanced);
+  }
+});

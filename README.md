@@ -2,6 +2,16 @@
 
 Su Investment Pro is a weekly investment calculator, historical backtesting toolkit, and live market decision-support assistant. It is not an automatic trading bot. It never places real orders, never logs in to a brokerage account, and never submits buy or sell instructions through a broker API.
 
+## Weekly funding v2 (2026-09-23)
+
+The live weekly planner now reserves later Tuesdays' Base before allocating Extra. Normal spending is limited to 125% of the scheduled weekly Base, funded only by remaining money after that reservation. Confirmed Base/Extra and Crash use consumes the respective weekly allowance; Crash remains a separate monthly pool with a 25% weekly release cap. Existing saved budgets and allocations are retained. With a Normal Pool of 300, scheduled Base is 75 in four-Tuesday months and 60 in five-Tuesday months; cent remainders are assigned deterministically.
+
+Ordinary price-score/multiplier pauses now block Extra while preserving scheduled Base. Market defence alone no longer halves Base. Extreme risk, a drawdown of 35% or more, manual panic, data failures, portfolio blocks, HOLD/CONSIDER_SELL, and cash constraints still apply. Group enhancement limits remove Extra/Crash instead of cancelling an otherwise eligible Base. SPY respects explicit hard/action gates, and removing QQQ preserves the remaining assets' budget mapping.
+
+`npm run backtest:weekly` now writes `results/weekly_dca_v2/`. It compares the default shared planner with fixed DCA and explicit legacy-policy scenarios. The frozen pre-change replay is preserved in `before-summary.json` and `before-sensitivity.json`; legacy scenarios in the current replay include shared Core correctness fixes and are therefore not identical to the pre-change engine. The research simulation covers only the 300 Normal + 100 Crash pools, excluding the separate 100 Dip reserve from every comparison.
+
+See [the optimization and validation report](WEEKLY_DCA_OPTIMIZATION_2026-09-23.md). The result supports steadier contributions with more market exposure, not guaranteed returns or demonstrated superiority over fixed DCA.
+
 ## Workspace navigation (2026-09-11)
 
 The homepage now opens **本周操作**, with **持仓** and **抄底** as the other two main views. **更多工具** contains watchlist, research/backtesting and data quality. URL hashes preserve the view and support legacy anchors, refresh and browser history. Settings and manual transaction forms retain their existing storage and handlers.

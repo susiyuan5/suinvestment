@@ -70,3 +70,81 @@ test('weekly indicators never read a future close', () => {
   const rows=[{date:'2026-01-05',adjusted_close:100},{date:'2026-01-09',adjusted_close:999}];
   assert.deepEqual(weeklyRows(rows,'2026-01-05'),[{date:'2026-01-05',close:100}]);
 });
+
+test('five weekly contributions preserve all future base funding despite dip signals', () => {
+  let used = 0;
+  for (const date of ['2026-09-01', '2026-09-08', '2026-09-15', '2026-09-22', '2026-09-29']) {
+    const options = input(date);
+    options.baseBudget = 60;
+    options.budget = { normalPool: 300, normalPoolUsed: used, crashFund: 100 };
+    options.inputs.forEach((row, i) => { row.input.baseAmount = 60 * C.rowsForPreset(C.PRESET)[i].allocation; row.input.normalPoolUsed = used; });
+    const result = W.plan(options);
+    assert.equal(result.plan.plannedNormal, 60);
+    used += result.plan.plannedNormal;
+    assert.ok(result.budgetReport.normalPoolRemaining - result.plan.plannedNormal >= result.budgetReport.funding.futureReserved);
+  }
+  assert.equal(used, 300);
+});
+
+test('monthly cents conserve exactly and funding uses the plan month rather than quote month', () => {
+  const dates = ['2026-09-01', '2026-09-08', '2026-09-15', '2026-09-22', '2026-09-29'];
+  assert.equal(dates.reduce((sum, date) => sum + Math.round(W.weeklyBudget(300.03, date) * 100), 0), 30003);
+  assert.throws(() => W.weeklyBudget(300, '2026-13-01'));
+  assert.throws(() => W.weeklyBudget(300, '2026-02-30'));
+  const options = input('2026-08-31');
+  options.plannedDate = '2026-09-01'; options.baseBudget = 60;
+  options.budget.portfolioCashCap = null;
+  const result = W.plan(options);
+  assert.equal(result.budgetReport.funding.futureReserved, 240);
+  assert.ok(result.plan.plannedNormal <= 60);
+});
+
+test('unspent earlier funding allows only a bounded extra and recorded weekly use consumes its allowance', () => {
+  assert.deepEqual(W.fundingPlan(300, 0, '2026-09-08', 60), { planDate: '2026-09-08', scheduledBase: 60,
+    futureReserved: 180, normalRemaining: 300, normalLimit: 75, weeklyLimit: 75, weekUsed: 0 });
+  assert.equal(W.fundingPlan(300, 75, '2026-09-08', 60, 75).normalLimit, 0);
+  assert.equal(W.fundingPlan(300, 250, '2026-09-15', 60).normalLimit, 0);
+});
+
+test('market defence preserves Base while explicit action and data blocks still stop buys', () => {
+  const options = input('2026-02-03'); options.budget.portfolioCashCap = null;
+  options.inputs.forEach(row => { row.input.marketRegime = 'Bear'; row.extraBlocked = true; });
+  let result = W.plan(options);
+  assert.equal(result.plan.plannedNormal, 75);
+  assert.equal(result.plan.plannedCrash, 0);
+  assert.ok(result.decisions.NVDA.reasonCodes.includes('SCHEDULED_BASE_PRESERVED'));
+  assert.ok(!result.decisions.NVDA.reasonCodes.includes('DEFENSIVE_BASE_50'));
+  for (const row of options.inputs) row.actionBlocked = true;
+  assert.equal(W.plan(options).plan.totalPlanned, 0);
+  options.inputs.forEach(row => { row.actionBlocked = false; row.input.dataStatus = 'invalid'; });
+  assert.equal(W.plan(options).plan.totalPlanned, 0);
+});
+
+test('weekly funding remains affordable over fractional cash caps and keeps report components aligned', () => {
+  for (let cents = 0; cents <= 200; cents++) {
+    const options = input('2026-02-03'), cap = cents / 100 * .3;
+    options.budget.portfolioCashCap = cap;
+    const result = W.plan(options);
+    assert.ok(result.plan.totalPlanned <= cap + 1e-8, 'cash cap ' + cap);
+    assert.equal(result.plan.plannedNormal, result.budgetReport.plannedNormal);
+    assert.equal(result.plan.totalPlanned, result.budgetReport.totalPlanned);
+    result.plan.items.forEach(row => assert.equal(Math.round((row.baseAmount + row.extraAmount + row.crashFundAmount) * 100), Math.round(row.finalAmount * 100)));
+  }
+});
+
+test('Crash funding excludes ETF allocations and confirmed use cannot reopen the same weekly allowance', () => {
+  const options = input('2026-02-03'); options.budget.portfolioCashCap = null;
+  options.inputs.forEach(row => { row.input.drawdownPct = 25; row.input.trendStatus = 'above_sma'; row.input.crashFundBalance = 100; });
+  let result = W.plan(options);
+  assert.equal(result.plan.plannedCrash, 25);
+  for (const symbol of ['SPY', 'QQQ']) assert.equal(result.decisions[symbol].crashFundAmount, 0);
+  options.budget.weekCrashUsed = 20;
+  options.budget.crashFundUsed = 20;
+  result = W.plan(options);
+  assert.equal(result.plan.plannedCrash, 5);
+  options.budget.weekCrashUsed = 25;
+  options.budget.crashFundUsed = 25;
+  result = W.plan(options);
+  assert.equal(result.plan.plannedCrash, 0);
+  assert.equal(result.budgetReport.crashFundRemaining, 75);
+});

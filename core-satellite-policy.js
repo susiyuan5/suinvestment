@@ -78,6 +78,9 @@
   function recommendedAllocations() { return clone(PRESET.shortcuts["40"]); }
   function presetFromAllocations(allocations, basePreset) { var p = normalizedPreset(basePreset) || clone(PRESET), result = clone(p), values = allocations || {}; if (!Object.hasOwn(values, "SPY")) return null; result.growth_etfs = result.growth_etfs.filter(row => Object.hasOwn(values, row.symbol)); result.satellites = result.satellites.filter(row => Object.hasOwn(values, row.symbol)); allocationSymbols(values).filter(s => !allAssets(result).some(row => row.symbol === s)).forEach(symbol => result.satellites.push({ symbol, asset_type: 'individual_stock', bucket: 'satellite', sector: 'unclassified', signal_role: 'satellite_dca_l2' })); allAssets(result).forEach(function (row) { row.target_allocation = ratioFromPct(pct(values[row.symbol]) || 0); }); return validatePreset(result) ? result : null; }
   function reason(row, code) { row.reasonCodes = row.reasonCodes || []; if (row.reasonCodes.indexOf(code) < 0) row.reasonCodes.push(code); }
+  function coreDecisionBlocked(decision) {
+    return decision.hardBlocked === true || (decision.reasonCodes || []).some(code => /^(HARD_BLOCK|ACTION_|DATA_|POLICY_)/.test(code));
+  }
   function canRedirect(decision, allocation, threshold) {
     const codes = decision.reasonCodes || [];
     if (decision.hardBlocked || codes.some(code => /^(HARD_BLOCK|DATA_|POLICY_|NORMAL_POOL|CASH_|PORTFOLIO_CASH|ACTION_)/.test(code))) return false;
@@ -102,14 +105,14 @@
   function finalize(rows, budget, p, spyBase, spyActual, stockActual, techActual, baseBudget, crashBudget) {
     const decisions = budget.satelliteDecisions || budget.satellite_decisions || {};
     const normal = budget.normalPoolRemaining == null ? baseBudget : money(budget.normalPoolRemaining);
-    const cashCap = budget.portfolioCashCap == null ? null : money(budget.portfolioCashCap);
+    const cashCap = budget.portfolioCashCap == null ? null : Math.floor(Math.max(0, finite(budget.portfolioCashCap) || 0) * 100 + 1e-7) / 100;
     const feeRate = Math.max(0, Number(budget.commissionBps) || 0) / 10000;
     rows.forEach(row => {
       if (budget.safetyBlocked) { row.finalAmount = 0; reason(row, "PLAN_SAFETY_BLOCK"); }
       const decision = decisions[row.symbol] || {};
       row.crashFundAmount = Math.min(row.finalAmount, money(row.crashFundEnhancement));
       const normalAmount = money(row.finalAmount - row.crashFundAmount);
-      row.extraAmount = Math.min(normalAmount, money(decision.extraAmount));
+      row.extraAmount = Math.min(normalAmount, money(row.extraAmount == null ? decision.extraAmount : row.extraAmount));
       row.baseAmount = money(normalAmount - row.extraAmount);
     });
     const sum = field => money(rows.reduce((total, row) => total + row[field], 0));
@@ -147,11 +150,32 @@
       safetyBlocked: input.safetyBlocked ?? input.safety_blocked, qqqDataValid: input.qqqDataValid ?? input.qqq_data_valid };
 
     var p = normalizedPreset(input && input.preset) || clone(PRESET), budget = input || {}, baseBudget = money(budget.baseBudget == null ? budget.base_budget : budget.baseBudget), crashBudget = money(budget.crashFundRemaining == null ? budget.crash_fund_remaining : budget.crashFundRemaining), actual = budget.actualAllocations || budget.actual_allocations || {}, decisions = budget.satelliteDecisions || budget.satellite_decisions || {}, cashOnly = budget.cashOnlySymbols || [], spy = p.core.symbol, spyUsable = (budget.spyDataValid == null ? budget.spy_data_valid !== false : budget.spyDataValid !== false) && budget.safetyBlocked !== true, qqqUsable = budget.qqqDataValid == null ? true : budget.qqqDataValid !== false, spyActual = finite(actual[spy]) || 0, stockActual = p.satellites.map(row => row.symbol).reduce(function (s, x) { return s + (finite(actual[x]) || 0); }, 0), techActual = p.satellites.filter(row => technologySymbol(row.symbol)).map(row => row.symbol).reduce(function (s, x) { return s + (finite(actual[x]) || 0); }, 0);
+    var spyDecision = decisions[spy] || {};
+    spyUsable = spyUsable && !coreDecisionBlocked(spyDecision) && !(budget.blockedSymbols || []).includes(spy);
     var rawBase = allAssets(p).map(function (asset) { return { asset: asset, amount: baseBudget * Number(asset.target_allocation) }; }), roundedBase = rawBase.map(function (x) { return money(x.amount); }), baseTail = Math.round((baseBudget - roundedBase.reduce(function (s, n) { return s + n; }, 0)) * 100) / 100;
-    var spyBase = money(roundedBase[0] + baseTail), rows = [{ symbol: spy, bucket: "core", asset_type: "core_etf", originalBaseAmount: spyBase, dcaAdjustedAmount: spyBase, crashFundEnhancement: 0, riskReduction: 0, redirectedToSpy: 0, cashRetained: 0, finalAmount: spyUsable ? spyBase : 0, reasonCodes: spyUsable ? [] : ["SPY_DATA_OR_SAFETY_BLOCK"], factorChain: ["base:" + p.core.target_allocation * 100 + "%"] }], redirect = 0;
-    function addAsset(asset, amount) { var isQqq = asset.symbol === "QQQ", decision = decisions[asset.symbol] || {}, adjusted = money(decision.finalAmount == null ? amount : decision.finalAmount), row = { symbol: asset.symbol, bucket: asset.bucket, asset_type: asset.asset_type, originalBaseAmount: amount, dcaAdjustedAmount: adjusted, crashFundEnhancement: isQqq ? 0 : money(decision.crashFundAmount || 0), riskReduction: 0, redirectedToSpy: 0, cashRetained: 0, finalAmount: adjusted, reasonCodes: (decision.reasonCodes || []).slice(), factorChain: [] }, blocked = (isQqq && !qqqUsable) || (adjusted <= 0 && amount > 0) || (!isQqq && (finite(actual[asset.symbol]) || 0) >= p.limits.single_stock_block_pct) || (!isQqq && stockActual >= p.limits.satellite_enhancement_block_pct && adjusted > amount) || (!isQqq && technologySymbol(asset.symbol) && techActual >= p.limits.technology_enhancement_block_pct && adjusted > amount) || (budget.blockedSymbols && budget.blockedSymbols.indexOf(asset.symbol) >= 0);
-      if (blocked) { row.riskReduction = adjusted; row.finalAmount = 0; reason(row, isQqq && !qqqUsable ? "QQQ_DATA_OR_SAFETY_BLOCK" : cashOnly.indexOf(asset.symbol) >= 0 ? "ETF_LOOKTHROUGH_LIMIT" : "SATELLITE_RISK_BLOCKED"); if (!isQqq && cashOnly.indexOf(asset.symbol) < 0 && canRedirect(decision, actual[asset.symbol], p.limits.single_stock_block_pct)) redirect += amount; else row.cashRetained = amount; } rows.push(row); }
-    (p.growth_etfs || []).forEach(function (asset, i) { addAsset(asset, roundedBase[i + 1]); }); p.satellites.forEach(function (asset, i) { addAsset(asset, roundedBase[i + 2]); });
+    var spyBase = money(roundedBase[0] + baseTail), rows = [{ symbol: spy, bucket: "core", asset_type: "core_etf", originalBaseAmount: spyBase, dcaAdjustedAmount: spyBase, extraAmount: 0, crashFundEnhancement: 0, riskReduction: 0, redirectedToSpy: 0, cashRetained: 0, finalAmount: spyUsable ? spyBase : 0, reasonCodes: spyUsable ? [] : Array.from(new Set((spyDecision.reasonCodes || []).concat(["SPY_DATA_OR_SAFETY_BLOCK"]))), factorChain: ["base:" + p.core.target_allocation * 100 + "%"] }], redirect = 0;
+    function addAsset(asset, amount) {
+      var isQqq = asset.symbol === "QQQ", decision = decisions[asset.symbol] || {}, adjusted = money(decision.finalAmount == null ? amount : decision.finalAmount);
+      var row = { symbol: asset.symbol, bucket: asset.bucket, asset_type: asset.asset_type, originalBaseAmount: amount, dcaAdjustedAmount: adjusted, extraAmount: money(decision.extraAmount), crashFundEnhancement: isQqq ? 0 : money(decision.crashFundAmount || 0), riskReduction: 0, redirectedToSpy: 0, cashRetained: 0, finalAmount: adjusted, reasonCodes: (decision.reasonCodes || []).slice(), factorChain: [] };
+      var blocked = (isQqq && !qqqUsable) || (adjusted <= 0 && amount > 0) || (!isQqq && (finite(actual[asset.symbol]) || 0) >= p.limits.single_stock_block_pct) || (budget.blockedSymbols && budget.blockedSymbols.indexOf(asset.symbol) >= 0);
+      if (blocked) {
+        row.riskReduction = adjusted; row.finalAmount = 0;
+        reason(row, isQqq && !qqqUsable ? "QQQ_DATA_OR_SAFETY_BLOCK" : cashOnly.indexOf(asset.symbol) >= 0 ? "ETF_LOOKTHROUGH_LIMIT" : "SATELLITE_RISK_BLOCKED");
+        if (!isQqq && cashOnly.indexOf(asset.symbol) < 0 && canRedirect(decision, actual[asset.symbol], p.limits.single_stock_block_pct)) redirect += amount;
+        else row.cashRetained = amount;
+      } else if (!isQqq) {
+        const satelliteLimit = stockActual >= p.limits.satellite_enhancement_block_pct;
+        const technologyLimit = technologySymbol(asset.symbol) && techActual >= p.limits.technology_enhancement_block_pct;
+        if ((satelliteLimit || technologyLimit) && (adjusted > amount || row.extraAmount > 0 || row.crashFundEnhancement > 0)) {
+          const allowedBase = decision.baseAmount == null ? money(adjusted - row.extraAmount - row.crashFundEnhancement) : money(decision.baseAmount);
+          row.finalAmount = Math.min(amount, adjusted, allowedBase);
+          row.extraAmount = row.crashFundEnhancement = 0;
+          reason(row, satelliteLimit ? "SATELLITE_ENHANCEMENT_BLOCKED" : "TECHNOLOGY_ENHANCEMENT_BLOCKED");
+        }
+      }
+      rows.push(row);
+    }
+    allAssets(p).slice(1).forEach(function (asset, i) { addAsset(asset, roundedBase[i + 1]); });
     var redirected = spyUsable && spyActual < p.limits.spy_max_current_pct ? money(redirect) : 0; if (redirected) { rows[0].redirectedToSpy = redirected; rows[0].finalAmount = money(rows[0].finalAmount + redirected); reason(rows[0], "SATELLITE_BASE_REDIRECTED_TO_SPY"); }
     var enhancement = spyUsable ? money(Math.min(crashBudget, Math.max(0, spyBase * (p.limits.spy_enhancement_max_multiple - 1)), money(budget.spyCrashEnhancement))) : 0; rows[0].crashFundEnhancement = enhancement; rows[0].finalAmount = money(rows[0].finalAmount + enhancement);
     return finalize(rows, budget, p, spyBase, spyActual, stockActual, techActual, baseBudget, crashBudget);

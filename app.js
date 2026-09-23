@@ -68,9 +68,10 @@
     no_broker_no_auto_trade: true
   });
 
-  function currentPlanMonthWeeks() {
-    return WeeklyDcaEngine.planWeeksInMonth(new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()));
+  function currentPlanDate() {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   }
+  function currentPlanMonthWeeks() { return WeeklyDcaEngine.planWeeksInMonth(currentPlanDate()); }
 
   const CORE_SATELLITE_SYMBOLS = ["SPY", "QQQ", "NVDA", "AAPL", "ASML", "KO"];
   const DEFAULT_CORE_ALLOCATIONS = { SPY: 0.40, QQQ: 0.10, NVDA: 0.125, AAPL: 0.125, ASML: 0.125, KO: 0.125 };
@@ -3471,7 +3472,8 @@ allocWrapper.appendChild(editBtn);
 
       const originalAmount = signal.suggested_buy_amount;
       const driftRatio = position.allocation_drift / 100;
-      if (driftRatio >= LOW_FREQ_ALGO_PARAMS.overTargetBlockThreshold || position.current_allocation >= 30) {
+      const isDiversifiedEtf = ['core_etf', 'growth_etf'].includes(entry.stock.asset_type);
+      if (driftRatio >= LOW_FREQ_ALGO_PARAMS.overTargetBlockThreshold || (!isDiversifiedEtf && position.current_allocation >= 30)) {
         signal.signal_score = clamp(signal.signal_score - ALGORITHM_PARAMS.farOverAllocationScorePenalty, 0, 100);
         signal.suggested_buy_amount = 0;
         signal.portfolio_adjustment = 0;
@@ -4735,7 +4737,7 @@ function equalizeAllocations() {
     });
     const planRows = state.coreSatellitePlan && state.coreSatellitePlan.items || [];
     if (planRows.length) {
-      orderLines.push("本周计划投入总额: " + formatCurrency(state.coreSatellitePlan.conservation.source));
+      orderLines.push("本周计划买入总额: " + formatCurrency(state.coreSatellitePlan.totalPlanned));
       planRows.forEach(function (row) {
         orderLines.push(row.symbol + "：基础 " + formatCurrency(row.originalBaseAmount) + "；信号调整 " + formatCurrency(row.dcaAdjustedAmount - row.originalBaseAmount + row.crashFundEnhancement) + "；风控调整 " + formatCurrency(row.riskReduction) + "；最终人工计划 " + formatCurrency(row.finalAmount) + "；" + coreSatelliteReason(row));
       });
@@ -4759,7 +4761,7 @@ function equalizeAllocations() {
     renderAllocationEditor();
 
     orderLines.push("");
-    orderLines.push(t("total") + "：" + formatCurrency(state.coreSatellitePlan && state.coreSatellitePlan.conservation ? state.coreSatellitePlan.conservation.source : targetTotal));
+    orderLines.push(t("total") + "：" + formatCurrency(targetTotal));
     orderLines.push("");
     orderLines.push(t("safetyDisclaimer"));
     orderTextEl.textContent = orderLines.join("\n");
@@ -4813,10 +4815,13 @@ function equalizeAllocations() {
     const activePreset = activeCoreSatellitePreset();
     const result = WeeklyDcaEngine.plan({
       inputs: inputs.map(function (item) { return { symbol: item.entry.signal.symbol, input: item.input,
-        actionBlocked: getActionLabelFromMultiplier(item.entry.signal).cls === "action-pause-buy" || ["HOLD", "DO_NOT_BUY"].includes(item.entry.signal.suggested_action) }; }),
+        ...WeeklySignalModel.weeklyDcaActionGate(item.entry.signal) }; }),
       policyState: ledger, config: state.dcaL2ConfigReady ? state.dcaL2Config : { ...state.dcaL2Config, configValid: false },
+      plannedDate: currentPlanDate(),
       preset: activePreset || CoreSatellitePolicy.PRESET, baseBudget: state.deployment.weeklyDeployment,
       budget: { normalPool: state.deployment.normalPool, normalPoolUsed: normalUsed,
+        weekNormalUsed: ledger.entries.filter(function (row) { return row.month === ledger.month && ['base', 'extra'].includes(row.type) && DcaPolicy.isoWeekId(row.date) === DcaPolicy.isoWeekId(currentPlanDate()); }).reduce(function (total, row) { return total + row.amount; }, 0),
+        weekCrashUsed: ledger.entries.filter(function (row) { return row.month === ledger.month && row.type === 'crash' && DcaPolicy.isoWeekId(row.date) === DcaPolicy.isoWeekId(currentPlanDate()); }).reduce(function (total, row) { return total + row.amount; }, 0),
         crashFund: state.deployment.crashFund, crashFundUsed: crashUsed,
         highPct: state.dcaL2Config.concentration.highPct, veryHighPct: state.dcaL2Config.concentration.veryHighPct,
         portfolioCashCap: portfolioRisk.available_cash_provided ? portfolioRisk.available_cash * state.dcaL2Config.cashUsageCap : null },
@@ -4917,11 +4922,11 @@ function equalizeAllocations() {
   }
 
   function normalizeDcaL2Ledger(value) {
-    return PortfolioPolicy.normalizeDcaL2Ledger(value, new Date().toISOString().slice(0, 7));
+    return PortfolioPolicy.normalizeDcaL2Ledger(value, currentPlanDate().slice(0, 7));
   }
 
   function ensureDcaL2Ledger() {
-    const month = new Date().toISOString().slice(0, 7);
+    const month = currentPlanDate().slice(0, 7);
     if (state.dcaL2Ledger.month !== month) state.dcaL2Ledger.month = month;
     if (!isFiniteNumber(state.dcaL2Ledger.initial) || state.dcaL2Ledger.initial !== state.deployment.crashFund) state.dcaL2Ledger.initial = state.deployment.crashFund;
     return state.dcaL2Ledger;
@@ -5029,7 +5034,7 @@ function equalizeAllocations() {
       copyStatusEl.textContent = "备用金记录必须为正，且不得超过当前余额。";
       return;
     }
-    ledger.entries.push({ id: String(Date.now()), month: ledger.month, type, symbol: String(dcaLedgerSymbolEl && dcaLedgerSymbolEl.value || "").trim().toUpperCase(), date: new Date().toISOString().slice(0, 10), amount: round2(amount), note: String(dcaLedgerNoteEl && dcaLedgerNoteEl.value || "").trim(), reversible: true });
+    ledger.entries.push({ id: String(Date.now()), month: ledger.month, type, symbol: String(dcaLedgerSymbolEl && dcaLedgerSymbolEl.value || "").trim().toUpperCase(), date: currentPlanDate(), amount: round2(amount), note: String(dcaLedgerNoteEl && dcaLedgerNoteEl.value || "").trim(), reversible: true });
     saveDcaL2Ledger();
     if (dcaLedgerAmountEl) dcaLedgerAmountEl.value = "";
     if (dcaLedgerSymbolEl) dcaLedgerSymbolEl.value = "";
@@ -5241,7 +5246,7 @@ function equalizeAllocations() {
     if (dcaBudgetSummaryEl) {
       const report = state.dcaBudgetReport;
       dcaBudgetSummaryEl.textContent = report
-        ? "Base: used " + formatCurrency(report.normalPoolUsed) + " + planned " + formatCurrency(report.plannedNormal) + " / remaining " + formatCurrency(report.normalPoolRemaining) + " · Extra shares Normal Pool · Crash: used " + formatCurrency(report.crashFundUsed) + " + planned " + formatCurrency(report.plannedCrash) + " / remaining " + formatCurrency(report.crashFundRemaining) + " · Unallocated " + formatCurrency(report.unallocatedCash) + (state.dcaL2ConfigReady ? "" : " · MANUAL REVIEW: config unavailable")
+        ? "常规资金：已用 " + formatCurrency(report.normalPoolUsed) + " · 本周计划 " + formatCurrency(report.plannedNormal) + " · 余额 " + formatCurrency(report.normalPoolRemaining) + (report.funding ? " · 后续周基础预留 " + formatCurrency(report.funding.futureReserved) + " · 本周常规上限 " + formatCurrency(report.funding.normalLimit) : "") + " · Crash 本周 " + formatCurrency(report.plannedCrash) + " / 余额 " + formatCurrency(report.crashFundRemaining) + " · 未投入 " + formatCurrency(report.unallocatedCash) + (state.dcaL2ConfigReady ? "" : " · 配置不可用，请人工复核")
         : "Monthly Base / Extra / Crash budget report unavailable; manual review required.";
     }
     dcaLedgerEntriesEl.innerHTML = "";
@@ -5602,7 +5607,7 @@ function equalizeAllocations() {
       monthlyBudget,
       normalPool,
       crashFund,
-      weeklyDeployment: round2(normalPool / currentPlanMonthWeeks())
+      weeklyDeployment: WeeklyDcaEngine.weeklyBudget(normalPool, currentPlanDate())
     };
   }
 
@@ -5872,6 +5877,9 @@ function equalizeAllocations() {
     if (codes.indexOf("SATELLITE_RISK_BLOCKED") >= 0) return "个股风控门禁阻止买入，资金保留或转入 SPY";
     if (codes.indexOf("SATELLITE_BASE_REDIRECTED_TO_SPY") >= 0) return "个股基础金额已转入 SPY";
     if (codes.indexOf("NORMAL_POOL_BUDGET_APPLIED") >= 0) return "已按常规资金池上限削减";
+    if (codes.indexOf("FUTURE_BASE_RESERVED") >= 0) return "优先预留后续周基础定投，本周加仓受限";
+    if (codes.indexOf("PRICE_SIGNAL_BLOCKS_EXTRA_ONLY") >= 0) return "短期信号偏弱，保留基础定投，暂停额外加仓";
+    if (codes.indexOf("SCHEDULED_BASE_PRESERVED") >= 0) return "市场防御期保留基础定投，暂停额外加仓";
     if (row.symbol === "SPY") return "核心基础定投，不根据短期涨跌择时";
     return "按 DCA-L2 信号调整后供人工复核";
   }
@@ -5914,14 +5922,14 @@ function equalizeAllocations() {
     const bySymbol = rows.reduce(function (map, row) { map[row.symbol] = row; return map; }, {});
     const safe = Boolean(plan && plan.safe === true && expected.every(function (symbol) { return bySymbol[symbol]; }));
     const executionSummary = executionSummaryForPlan(plan);
-    weeklyDecisionTotalEl.textContent = formatCurrency(plan && plan.conservation ? plan.conservation.source : 0);
+    weeklyDecisionTotalEl.textContent = formatCurrency(plan && plan.totalPlanned || 0);
     const source = plan && plan.conservation ? Number(plan.conservation.source || 0) : 0;
     const coreRows = rows.filter(function (row) { return row.bucket === "core"; });
     const satelliteRows = rows.filter(function (row) { return row.bucket === "satellite"; });
     const techSymbols = state.portfolio.filter(row => ['NVDA', 'AAPL', 'ASML'].includes(row.symbol) || !CORE_SATELLITE_SYMBOLS.includes(row.symbol)).map(row => row.symbol);
     const techTotal = satelliteRows.filter(function (row) { return techSymbols.indexOf(row.symbol) >= 0; }).reduce(function (sum, row) { return sum + Number(row.finalAmount || 0); }, 0);
     if (weeklyBaseBudgetEl) weeklyBaseBudgetEl.textContent = formatCurrency(state.deployment.weeklyDeployment);
-    if (weeklyCrashFundEl) weeklyCrashFundEl.textContent = formatCurrency(Math.max(0, source - state.deployment.weeklyDeployment));
+    if (weeklyCrashFundEl) weeklyCrashFundEl.textContent = formatCurrency(plan && plan.plannedCrash || 0);
     if (weeklyAvailableFundsEl) weeklyAvailableFundsEl.textContent = formatCurrency(source);
     if (weeklyPlannedTotalEl) weeklyPlannedTotalEl.textContent = formatCurrency(plan && plan.totalPlanned || 0);
     if (weeklyRetainedCashEl) weeklyRetainedCashEl.textContent = formatCurrency(plan && plan.cashRetained || 0);
