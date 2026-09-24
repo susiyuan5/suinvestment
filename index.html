@@ -32,7 +32,7 @@
     />
     <link href="settings-center.css?v=settings-center-v2" rel="stylesheet" />
     <link
-      href="workspace-navigation.css?v=weekly-list-v2"
+      href="workspace-navigation.css?v=weekly-dashboard-v3"
       rel="stylesheet"
     />
   <link rel="stylesheet" href="live-data.css?v=live-data-v1">
@@ -41,7 +41,7 @@
     <div class="app-shell">
       <header class="hero">
         <div class="hero-brand">
-          <h1>投资工作台</h1>
+          <h1>量化定投决策台</h1>
         </div>
         <div aria-label="Dashboard status" class="hero-status">
           <span class="hero-status-label">数据更新时间</span>
@@ -61,7 +61,7 @@
             <strong>每周二 12:00</strong>
           </div>
           <button
-            class="primary-button hero-settings"
+            class="secondary-button hero-settings"
             id="openSettingsBtn"
             type="button"
           >
@@ -123,36 +123,23 @@
                 >加载中</span
               >
             </div>
-            <div class="decision-summary-grid">
-              <article class="decision-summary-item">
-                <span>市场状态</span>
-                <strong id="decisionMarketState">加载中</strong>
+            <div class="summary-grid decision-summary-grid" aria-label="本周摘要">
+              <article class="summary-card">
+                <span>市场状态</span><strong id="decisionMarketState">加载中</strong>
+                <small id="decisionAction">等待数据</small>
               </article>
-              <article class="decision-summary-item">
-                <span>数据截至</span>
-                <strong id="decisionDataAsOf">等待数据</strong>
+              <article class="summary-card">
+                <span>本周基础预算</span><strong id="weeklyNormalCompact">等待计算</strong>
+                <small>定投资金池</small>
               </article>
-              <article class="decision-summary-item decision-summary-action">
-                <span>建议动作</span>
-                <strong id="decisionAction">等待数据</strong>
-                <small id="decisionReason"
-                  >完成数据质量检查前不会生成买入建议。</small
-                >
+              <article class="summary-card">
+                <span>暴跌备用金</span><strong id="weeklyCrashCompact">等待计算</strong>
+                <small>本周已批准</small>
               </article>
-            </div>
-            <div aria-label="三个独立资金池" class="fund-pools">
-              <article>
-                <span>定投 · 本周基础预算</span
-                ><strong id="weeklyNormalCompact">等待计算</strong>
-              </article>
-              <article>
-                <span>暴跌备用金 · 本周已批准</span
-                ><strong id="weeklyCrashCompact">等待计算</strong>
-              </article>
-              <article>
-                <span>独立抄底 · 储备余额</span
-                ><strong id="weeklyDipCompact">等待账本</strong
-                ><a href="#dip">查看抄底</a>
+              <article class="summary-card">
+                <span>独立抄底 · 储备金额</span><strong id="weeklyDipCompact">等待账本</strong>
+                <small><span id="summaryDataSource">等待数据</span> · <a href="#dip">查看储备</a></small>
+                <small id="decisionDataAsOf">等待数据</small>
               </article>
             </div>
             <section
@@ -161,13 +148,11 @@
               id="weeklyDecisionPlan"
             >
               <div class="weekly-decision-heading">
-                <h3 id="weeklyDecisionPlanTitle">本周定投清单</h3>
-                <strong id="weeklyDecisionTotal">CAD 0.00</strong>
-              </div>
+                <h3 id="weeklyDecisionPlanTitle">本周定投计划</h3>
+                <span class="weekly-plan-total">计划合计 <strong id="weeklyDecisionTotal">CAD 0.00</strong></span>
+                <button class="primary-button" id="refreshBtn" type="button">刷新并重新检查</button>
               <div class="weekly-decision-actions">
-                <button class="primary-button" id="refreshBtn" type="button">
-                  刷新并重新检查</button
-                ><button class="secondary-button" id="copyBtn" type="button">
+                <button class="secondary-button" id="copyBtn" type="button">
                   复制本周人工计划
                 </button>
                 <details class="compact-details" id="weeklyPlanSettings">
@@ -187,7 +172,8 @@
                   </button>
                 </details>
               </div>
-              <p class="weekly-allocation-help">添加股票或调整任一标的的目标比例；SPY、QQQ 和个股均可设置为 0%–100%，其余比例自动调节至合计 100%。无可用行情时仍会暂停建议。</p>
+              </div>
+              <p class="weekly-allocation-help">调整目标比例后，其余标的自动调节至合计 100%；无可用行情时暂停建议。</p>
               <p id="weeklyAllocationStatus" role="status"></p>
               <div id="weeklyRemovedStocks" class="weekly-removed-stocks" aria-live="polite"></div>
               <div aria-label="添加股票" class="stock-search-panel">
@@ -223,23 +209,12 @@
                   >
                     搜索
                   </button>
-                  <button type="button" id="weeklyAddStockBtn" class="secondary-button">添加并自动分配比例</button>
+                  <button type="button" id="weeklyAddStockBtn" class="secondary-button">+ 添加股票</button>
                 </div>
+                <div class="weekly-controls-bar">
                 <div class="portfolio-total" id="portfolioTotal">
                   总配置 100%
                 </div>
-                <div
-                  aria-label="股票搜索结果"
-                  aria-live="polite"
-                  class="stock-search-results"
-                  id="stockSearchResults"
-                  role="region"
-                ></div>
-              </div>
-              <p class="weekly-decision-safety" id="weeklyDecisionSafety">
-                等待数据或计算安全检查。
-              </p>
-              <a class="data-help-link" href="#tools-data">检查数据问题</a>
               <div class="weekly-list-toolbar" aria-label="定投清单排序">
                 <label for="weeklyListSort">排序</label>
                 <select id="weeklyListSort">
@@ -253,19 +228,32 @@
                 </select>
                 <button class="secondary-button" id="weeklyListSortDirection" type="button" aria-label="当前降序，切换为升序">降序 ↓</button>
               </div>
-              <div class="weekly-list-header" aria-hidden="true">
-                <span>标的</span><span>价格 / 市值</span><span>当前 / 目标</span><span>建议</span><span>状态</span><span>比例调整</span>
+                </div>
+                <div
+                  aria-label="股票搜索结果"
+                  aria-live="polite"
+                  class="stock-search-results"
+                  id="stockSearchResults"
+                  role="region"
+                ></div>
               </div>
-              <div
-                aria-live="polite"
-                class="weekly-decision-rows"
-                id="weeklyDecisionRows"
-              ></div>
+              <p class="weekly-decision-safety" id="weeklyDecisionSafety" role="status">
+                等待数据或计算安全检查。
+              </p>
+              <a class="data-help-link" href="#tools-data">检查数据问题</a>
+              <table class="weekly-allocation-table" aria-label="本周定投股票清单">
+                <thead class="weekly-list-header"><tr>
+                  <th scope="col">标的</th><th scope="col">价格 / 市值</th><th scope="col">当前 → 目标</th><th scope="col">建议买入</th><th scope="col">状态</th><th scope="col">配置比例</th><th scope="col">操作</th>
+                </tr></thead>
+                <tbody aria-live="polite" class="weekly-decision-rows" id="weeklyDecisionRows"></tbody>
+              </table>
               <p class="status-line" id="copyStatus" role="status"></p>
             </section>
           </section>
           <details class="panel compact-details" id="weeklyCalculationDetails">
             <summary>计算详情与个股信号</summary>
+            <details class="summary-explanation"><summary>市场与数据说明</summary><p id="decisionReason">完成数据质量检查前不会生成买入建议。</p></details>
+
             <details class="order-copy-details">
               <summary>查看复制文本</summary>
               <pre class="order-text copy-buffer" id="orderText"></pre>
@@ -2425,7 +2413,7 @@
     <script src="portfolio-risk-input.js?v=explicit-cash-v1"></script>
     <script src="weekly-dca-engine.js?v=weekly-dca-v2"></script>
     <script src="weekly-signal-model.js?v=weekly-dca-v2"></script>
-    <script src="app.js?v=weekly-dca-v2"></script>
+    <script src="app.js?v=weekly-dashboard-v3"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>

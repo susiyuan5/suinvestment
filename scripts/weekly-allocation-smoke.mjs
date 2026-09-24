@@ -132,6 +132,7 @@ try {
   assert.equal(await page.locator('#settingsDirtyState').getAttribute('data-dirty'), 'false', await page.locator('#settingsModalStatus').textContent());
   assert.equal((await checkTotal()).find(row => row.symbol === 'MSFT').allocation, .06);
   await page.locator('#closeSettingsBtn').click();
+  await page.locator('.allocation-tools > summary').click();
   await page.locator('.allocation-equal-button').click();
   assert.equal((await checkTotal()).length, 7, 'equal weights retain added symbols');
   assert.ok((await portfolio()).every(row => row.allocation >= 0 && row.allocation <= 1));

@@ -12,10 +12,20 @@ try {
     /https:\/\/(finnhub\.io|query1\.finance\.yahoo\.com|www\.bankofcanada\.ca)\//,
     (r) => r.abort(),
   );
+  // Pin the data release so history/reload checks compare the same financial inputs.
+  await context.route('https://raw.githubusercontent.com/susiyuan5/suinvestment/**', async route => {
+    const path = new URL(route.request().url()).pathname.split('/').slice(4).join('/');
+    if (path === 'live-data-manifest.json') return route.fulfill({ json: { formatVersion: 1, dataCommit: 'a'.repeat(40), codeCommit: 'b'.repeat(40), publishedAt: '2026-09-22T12:00:00Z' } });
+    try { await route.fulfill({ body: await fs.readFile(path), contentType: 'application/json' }); }
+    catch { await route.fulfill({ status: 404, body: 'missing' }); }
+  });
   const page = await context.newPage(),
     errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  await page.clock.setFixedTime('2026-09-22T12:00:00Z');
+  const ready = () => page.waitForFunction(() => document.querySelector('#refreshBtn')?.getAttribute('aria-busy') === 'false' && window.__SUINVESTMENT_SIGNALS__?.length > 0);
   await page.goto(base);
+  await ready();
   await page.locator(".dip-candidate").first().waitFor({ state: "attached" });
   const visible = () =>
     page
@@ -29,7 +39,7 @@ try {
       nav: rect(".workspace-sidebar"),
       state: rect(".decision-summary-grid"),
       orders: rect("#weeklyDecisionPlan"),
-      funds: rect(".fund-pools"),
+      funds: rect(".summary-card:last-child"),
     };
   });
   assert.ok(
@@ -37,9 +47,9 @@ try {
     "desktop navigation stays left of data",
   );
   assert.ok(
-    panels.state.right <= panels.orders.left &&
-      panels.orders.right <= panels.funds.left,
-    "weekly panels use three separate columns",
+    panels.state.bottom <= panels.orders.top &&
+      Math.abs(panels.state.width - panels.orders.width) < 2,
+    "KPI summary sits above the full-width plan",
   );
   assert.equal(await page.locator("#weeklyDecisionRows .weekly-decision-detail:visible").count(), 0, "secondary calculation details start collapsed");
   assert.equal(await page.locator("#weeklyDecisionRows .weekly-decision-expanded").count(), 6, "each stock row retains expandable calculation details");
@@ -88,6 +98,7 @@ try {
   await page.goForward();
   assert.deepEqual(await visible(), ["holdings"]);
   await page.reload();
+  await ready();
   assert.deepEqual(await visible(), ["holdings"]);
   for (const [hash, view, details] of [
     ["signalsSection", "weekly", "weeklyCalculationDetails"],

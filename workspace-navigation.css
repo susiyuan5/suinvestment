@@ -144,7 +144,7 @@
   grid-column: 1/-1;
 }
 #weeklyDecisionTotal {
-  display: none;
+  display: inline;
 }
 
 .weekly-list-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 8px 0; }
@@ -872,3 +872,205 @@ body {
     grid-column: 1 / -1;
   }
 }
+/* Weekly dashboard: full-width summary and compact allocation table. */
+body:has(.workspace-sidebar) { display: flex; flex-direction: column; }
+body:has(.workspace-sidebar) > #liveDataStatus { order: 1; margin-left: 156px; border-top: 1px solid var(--dashboard-border); border-bottom: 0; }
+:root {
+  --dashboard-text: #e7edf5;
+  --dashboard-secondary: #9aaabd;
+  --dashboard-muted: #8a9aaf;
+  --dashboard-border: rgba(148, 163, 184, .14);
+  --dashboard-panel: #111721;
+}
+.app-shell { padding: 56px 0 0 156px; display: block; }
+.workspace-sidebar { width: 156px; border-color: var(--dashboard-border); }
+#workspaceViews { width: 100%; max-width: 1560px; margin: 0 auto; padding: 24px 28px 40px; }
+.hero { height: 56px; border-color: var(--dashboard-border); }
+.hero h1 { color: var(--dashboard-text); font-size: 17px; }
+.hero .hero-status { margin-left: auto; color: var(--dashboard-secondary); }
+.hero .hero-tools { margin-left: 0; }
+.hero .more-tools { order: 3; color: var(--dashboard-muted); }
+.hero .more-tools > summary { border: 0; }
+.sidebar-note, .sidebar-note > span:first-child { color: var(--dashboard-muted); }
+#view-weekly #decisionSummary { display: block; margin-top: 0; }
+#decisionSummary > .decision-summary-heading { border: 0; padding: 0; margin-bottom: 16px; }
+#decisionSummary > .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; background: none; border: 0; overflow: visible; margin-bottom: 8px; }
+.summary-card { min-width: 0; min-height: 106px; padding: 14px 16px; display: flex; flex-direction: column; gap: 7px; background: var(--dashboard-panel); border: 1px solid var(--dashboard-border); border-radius: 8px; }
+.summary-card > span { color: var(--dashboard-secondary); font-size: 12px; }
+.summary-card > strong { color: var(--dashboard-text); font-size: 23px; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.summary-card small { color: var(--dashboard-muted); font-size: 11px; overflow-wrap: anywhere; }
+.summary-card a { color: #8bbcff; }
+.summary-explanation { font-size: 12px; color: var(--dashboard-secondary); margin: 0 0 12px; }
+.summary-explanation summary { cursor: pointer; width: fit-content; }
+.summary-explanation p { margin: 8px 0; }
+#decisionSummary > #weeklyDecisionPlan { padding: 16px; border-color: var(--dashboard-border); border-radius: 8px; }
+#weeklyDecisionPlan .weekly-decision-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+#weeklyDecisionPlan h3 { font-size: 16px; margin: 0; }
+.weekly-plan-total { margin-left: auto; font-size: 12px; color: var(--dashboard-secondary); }
+.weekly-plan-total strong { color: var(--dashboard-text); }
+#weeklyDecisionPlan .weekly-decision-actions { display: flex; margin: 0; gap: 8px; align-items: center; }
+#weeklyDecisionPlan .weekly-decision-actions #copyBtn { font-size: 11px; }
+#weeklyPlanSettings { position: relative; }
+#weeklyPlanSettings[open] { z-index: 12; }
+#weeklyDecisionPlan #weeklyPlanSettings > button { position: absolute; top: 100%; right: 0; width: 150px; background: #1a2535; }
+#weeklyDecisionPlan #weeklyPlanSettings > button + button { top: calc(100% + 32px); }
+.weekly-controls-bar { display: flex; align-items: center; gap: 16px; }
+.weekly-controls-bar #portfolioTotal { flex: 1; }
+.hero .schedule-card > span { display: none; }
+#weeklyDecisionPlan #weeklyPlanSettings { margin: 0; padding: 0; border: 0; }
+#weeklyDecisionPlan #weeklyPlanSettings > summary { min-height: 30px; padding: 6px; color: var(--dashboard-secondary); }
+#weeklyDecisionPlan .weekly-allocation-help { color: var(--dashboard-secondary); margin: 6px 0; line-height: 1.5; }
+#weeklyAllocationStatus:empty, #weeklyRemovedStocks:empty, #stockSearchResults:empty { display: none; }
+#weeklyDecisionPlan .stock-search-panel { width: 100%; max-width: 100%; padding: 0; background: none; border: 0; gap: 8px; margin: 10px 0; overflow: visible; }
+#weeklyDecisionPlan .stock-search-grid { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto auto; align-items: end; gap: 8px; }
+#weeklyDecisionPlan .stock-search-grid label { font-size: 11px; color: var(--dashboard-secondary); gap: 4px; }
+#weeklyDecisionPlan .stock-search-grid input { height: 36px; padding: 7px 10px; }
+#weeklyDecisionPlan button { min-height: 32px; font-size: 12px; padding: 6px 10px; border-radius: 5px; }
+#weeklyDecisionPlan .secondary-button { color: #c2ccda; background: transparent; border: 1px solid var(--dashboard-border); box-shadow: none; }
+#weeklyDecisionPlan .primary-button { background: #2865b5; color: #fff; border: 1px solid #3976c6; }
+#portfolioTotal { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+#portfolioTotal .allocation-tools { position: relative; display: block; margin: 0; font-weight: 400; }
+.allocation-tools > summary { cursor: pointer; padding: 6px 10px; border: 1px solid var(--dashboard-border); border-radius: 5px; }
+#portfolioTotal .allocation-tools[open] { z-index: 20; }
+#portfolioTotal .allocation-tools button { position: absolute; right: 0; top: 100%; width: 168px; min-height: 36px; margin: 0; background: #1a2535; color: var(--dashboard-text); border: 1px solid var(--dashboard-border); text-align: left; }
+#portfolioTotal .allocation-tools button + button { top: calc(100% + 36px); }
+#weeklyDecisionPlan .weekly-decision-safety { display: inline-block; margin: 0; padding: 8px 10px; max-width: 100%; border: 0; border-radius: 5px; background: #17202c; color: #bcc9d9; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+#weeklyDecisionPlan .weekly-decision-safety[data-state="blocked"] { color: #ebbd79; }
+#weeklyDecisionPlan .data-help-link { display: inline-block; margin: 6px 0 6px 10px; font-size: 12px; color: #8bbcff; }
+#weeklyDecisionPlan .weekly-list-toolbar { margin: 8px 0; padding: 0; font-size: 12px; }
+.weekly-allocation-table { width: 100%; border-collapse: collapse; table-layout: fixed; color: var(--dashboard-text); font-size: 12px; font-variant-numeric: tabular-nums; }
+#weeklyDecisionPlan .weekly-list-header { display: table-header-group; color: var(--dashboard-secondary); }
+.weekly-allocation-table th { text-align: left; font-size: 11px; font-weight: 500; padding: 8px; border-bottom: 1px solid var(--dashboard-border); }
+.weekly-allocation-table th:nth-child(1) { width: 9%; }
+.weekly-allocation-table th:nth-child(2) { width: 19%; }
+.weekly-allocation-table th:nth-child(3) { width: 18%; }
+.weekly-allocation-table th:nth-child(4) { width: 14%; }
+.weekly-allocation-table th:nth-child(5) { width: 10%; }
+.weekly-allocation-table th:nth-child(6) { width: 17%; }
+.weekly-allocation-table th:nth-child(7) { width: 13%; }
+#weeklyDecisionPlan #weeklyDecisionRows { display: table-row-group; }
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row { display: table-row; height: 60px; border: 0; background: transparent; }
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td { padding: 8px; border-bottom: 1px solid var(--dashboard-border); vertical-align: middle; overflow-wrap: anywhere; }
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-symbol-cell,
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-state,
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-value-pair { display: table-cell; }
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-symbol-cell strong { color: var(--dashboard-text); font-size: 14px; }
+#weeklyDecisionRows .weekly-decision-value-pair > span { display: block; white-space: normal; line-height: 1.6; font-size: 11px; }
+#weeklyDecisionRows .weekly-decision-market-value { color: var(--dashboard-muted); }
+#weeklyDecisionRows .weekly-decision-target { font-size: 12px; }
+#weeklyDecisionRows .weekly-decision-final { color: var(--dashboard-text); font-size: 12px; }
+#weeklyDecisionRows .weekly-decision-status { color: var(--dashboard-secondary); font-size: 11px; }
+#weeklyDecisionRows .weekly-decision-status[data-state="ready"] { color: #81c9a4; }
+#weeklyDecisionRows .weekly-decision-status[data-state="warning"] { color: #ebbd79; }
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-allocation-control input { width: 66px; height: 32px; color: var(--dashboard-text); background: #0d141e; border: 1px solid #47566c; }
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-row-actions button { padding: 5px; border-color: transparent; }
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-row-actions .weekly-remove-button { color: #e5a0a6; }
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-expanded { background: #151e2b; }
+#weeklyDecisionRows .weekly-decision-expanded > td { padding: 12px 16px; }
+#weeklyDecisionRows .weekly-decision-detail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 0; padding: 0; color: var(--dashboard-secondary); }
+#weeklyDecisionRows .weekly-decision-detail p { grid-column: 1 / -1; }
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-cash { height: 42px; color: var(--dashboard-secondary); font-size: 11px; }
+#weeklyDecisionRows .weekly-decision-cash p { margin: 0; }
+#weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row:hover { background: rgba(148, 163, 184, .035); }
+#weeklyDecisionPlan button:hover { filter: brightness(1.15); background-color: #22334c; }
+#weeklyDecisionPlan button:active { filter: brightness(.95); transform: none; }
+#workspaceViews :is(button, input, select, summary, a):focus-visible, .hero :focus-visible { outline: 2px solid #8bbcff; outline-offset: 3px; }
+#weeklyDecisionPlan button:disabled { opacity: .5; cursor: not-allowed; }
+@media (min-width: 800px) and (max-width: 1199px) {
+  #workspaceViews { padding: 24px; }
+  #decisionSummary > .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .weekly-allocation-table th, #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td { padding: 6px 3px; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-allocation-control { flex-wrap: wrap; }
+  #weeklyDecisionRows .weekly-decision-target { font-size: 11px; }
+}
+@media (max-width: 799px) {
+  .app-shell { padding: 106px 0 0; }
+  body:has(.workspace-sidebar) > #liveDataStatus { margin-left: 0; }
+  #workspaceViews { padding: 16px 12px 32px; }
+  .hero { padding: 0 12px; gap: 8px; }
+  .hero h1 { font-size: 15px; }
+  .hero .hero-status, .hero .schedule-card { display: none; }
+  .hero .hero-tools { margin-left: auto; }
+  .workspace-sidebar { inset: 56px 0 auto; width: auto; padding: 5px 12px; border: 0; border-bottom: 1px solid var(--dashboard-border); }
+  .workspace-sidebar > .sidebar-label, .sidebar-tools, .sidebar-note { display: none; }
+  .workspace-sidebar .workspace-nav { display: flex; gap: 4px; }
+  .workspace-sidebar .workspace-nav a { text-align: center; padding: 10px 4px; }
+  #decisionSummary > .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .summary-card { padding: 12px; }
+  .summary-card > strong { font-size: 20px; }
+  #decisionSummary > #weeklyDecisionPlan { padding: 12px; }
+  #weeklyDecisionPlan .weekly-decision-heading { flex-wrap: wrap; justify-content: space-between; }
+  #weeklyDecisionPlan #refreshBtn { width: auto; flex: 0 0 auto; }
+  #weeklyDecisionPlan .weekly-decision-actions { width: 100%; flex-wrap: nowrap; }
+  #weeklyDecisionPlan #copyBtn { width: auto; }
+  #weeklyDecisionPlan #weeklyPlanSettings > button { right: auto; left: 0; }
+  #weeklyDecisionPlan #weeklyAddStockBtn { min-width: 100px; white-space: nowrap; justify-self: end; }
+  .weekly-controls-bar { flex-wrap: wrap; gap: 4px; }
+  .weekly-controls-bar #portfolioTotal { flex-basis: 100%; }
+  .weekly-plan-total { margin: 0; order: 3; flex-basis: 100%; }
+  #weeklyDecisionPlan .stock-search-grid { grid-template-columns: minmax(0, 1fr) 80px; }
+  #weeklyDecisionPlan .stock-search-grid button { width: auto; }
+  #weeklyDecisionPlan .weekly-list-header { display: table-header-group; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .weekly-allocation-table, #weeklyDecisionPlan #weeklyDecisionRows { display: block; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); height: auto; padding: 10px 0; border-bottom: 1px solid var(--dashboard-border); gap: 6px; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td { display: block; padding: 0; border: 0; }
+  #weeklyDecisionRows .weekly-symbol-cell { grid-column: 1; grid-row: 1; }
+  #weeklyDecisionRows .weekly-decision-state { grid-column: 2; grid-row: 1; text-align: right; }
+  #weeklyDecisionRows .weekly-decision-value-pair { grid-column: 1; grid-row: 2; }
+  #weeklyDecisionRows .weekly-decision-target { grid-column: 2; grid-row: 2; text-align: right; }
+  #weeklyDecisionRows .weekly-decision-final { grid-column: 1 / -1; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-edit { grid-column: 1; justify-self: start; }
+  #weeklyDecisionRows .weekly-row-actions { text-align: right; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-expanded { display: block; }
+  #weeklyDecisionRows .weekly-decision-expanded > td { display: block; }
+  #weeklyDecisionRows .weekly-decision-detail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-cash p { grid-column: auto; }
+  #workspaceViews h2, #workspaceViews details { scroll-margin-top: 120px; }
+}
+@media (max-width: 379px) {
+  #decisionSummary > .summary-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero .more-tools > summary { padding: 4px; font-size: 10px; }
+  #weeklyDecisionPlan .weekly-decision-heading > * { max-width: 100%; }
+  #weeklyDecisionPlan .weekly-list-toolbar { flex-wrap: wrap; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row { grid-template-columns: minmax(0, 1fr); }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td { grid-column: 1; grid-row: auto; text-align: left; }
+}
+#weeklyPlanSettings:not([open]) > button,
+.allocation-tools:not([open]) > button { display: none; }
+@media (max-width: 799px) {
+  #weeklyDecisionPlan .weekly-list-toolbar { display: flex; flex-wrap: nowrap; width: 100%; }
+  #weeklyDecisionPlan .weekly-list-toolbar button { width: auto; min-width: 64px; }
+  #weeklyDecisionPlan .weekly-decision-actions button { flex: 0 1 auto; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td { grid-area: auto; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td.weekly-symbol-cell { grid-area: 1 / 1; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td.weekly-decision-state { grid-area: 1 / 2; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td.weekly-decision-value-pair { grid-area: 2 / 1; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td.weekly-decision-target { grid-area: 2 / 2; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td.weekly-decision-final { grid-area: 3 / 1 / 4 / -1; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td.weekly-decision-edit { grid-area: 4 / 1; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td.weekly-row-actions { grid-area: 4 / 2; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-row-actions button { width: auto; }
+}
+@media (max-width: 379px) {
+  #weeklyDecisionPlan .weekly-list-toolbar { flex-wrap: wrap; }
+  #weeklyDecisionPlan .weekly-decision-actions { flex-wrap: wrap; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td { grid-area: auto; }
+  #weeklyDecisionPlan #weeklyPlanSettings > button { position: static; }
+}
+
+#weeklyDecisionPlan { container-type: inline-size; }
+@container (max-width: 280px) {
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row { display: flex; flex-direction: column; align-items: stretch; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-allocation-control { flex-wrap: wrap; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td { text-align: left; }
+  #weeklyDecisionPlan .weekly-decision-actions, .weekly-controls-bar { flex-wrap: wrap; }
+}
+.summary-card > strong { overflow-wrap: anywhere; }
+#decisionSummary { container-type: inline-size; }
+@container (max-width: 280px) {
+  #decisionSummary > .summary-grid { grid-template-columns: minmax(0, 1fr); }
+  #weeklyDecisionPlan .stock-search-grid { grid-template-columns: minmax(0, 1fr); }
+  #weeklyDecisionPlan .stock-search-grid > * { width: 100%; }
+}
+#weeklyDecisionPlan #refreshBtn { min-width: 106px; white-space: nowrap; }
+#weeklyDecisionPlan #weeklyAddStockBtn { min-width: 100px; }
