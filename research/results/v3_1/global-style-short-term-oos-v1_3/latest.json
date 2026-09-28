@@ -1,8 +1,8 @@
 {
   "schema_version": "global-style-short-term-oos-v1.3",
   "methodology_version": "global-style-short-term-oos-v1.3.0",
-  "generated_at": "2026-09-21T19:42:35.863112+00:00",
-  "as_of": "2026-09-21",
+  "generated_at": "2026-09-28T20:44:13.648999+00:00",
+  "as_of": "2026-09-28",
   "research_only": true,
   "no_trade": true,
   "status": "preliminary_no_reliable_edge",
@@ -15,7 +15,7 @@
   "round_trip_cost_bps": 30,
   "input": {
     "path": "historical-oos-bars.json",
-    "sha256": "4e6be6a66f37ea817c12fab9d921dae94a3582fbd8bc01eec42930b35f83429d",
+    "sha256": "911b1abbcfb81893349221dd1d544f8e6f2cc27a6773564dcb194a9cd4013372",
     "config_version": "short-term-trade-plan-config-v1.3.1",
     "symbols": 81,
     "source": "Yahoo Finance chart adapter via data_loader.load_yahoo_daily_prices"
@@ -31,23 +31,23 @@
     "train_signal_end": "2025-03-05",
     "train_last_exit": "2025-03-07",
     "oos_signal_start": "2025-06-13",
-    "oos_signal_end": "2026-08-18",
-    "oos_last_exit": "2026-08-27"
+    "oos_signal_end": "2026-08-25",
+    "oos_last_exit": "2026-08-31"
   },
   "sample_counts": {
-    "all": 551,
+    "all": 552,
     "train": 398,
-    "permanent_oos": 153,
+    "permanent_oos": 154,
     "rejected_chase_entries": 72
   },
   "overall_oos": {
-    "samples": 153,
-    "origin_dates": 47,
-    "cost_adjusted_hit_rate": 0.42222222,
-    "hit_rate_ci_low": 0.27659574,
-    "hit_rate_ci_high": 0.55957447,
-    "mean_net_relative_return": -0.00148708,
-    "mean_max_adverse_move": -0.02957795,
+    "samples": 154,
+    "origin_dates": 48,
+    "cost_adjusted_hit_rate": 0.41342593,
+    "hit_rate_ci_low": 0.27835648,
+    "hit_rate_ci_high": 0.55601852,
+    "mean_net_relative_return": -0.00173344,
+    "mean_max_adverse_move": -0.02956892,
     "passed": false,
     "evidence_tier": "no_historical_edge"
   },
@@ -64,13 +64,13 @@
       "evidence_tier": "no_historical_edge"
     },
     "trend_pullback": {
-      "samples": 102,
-      "origin_dates": 45,
-      "cost_adjusted_hit_rate": 0.38925926,
-      "hit_rate_ci_low": 0.23185185,
-      "hit_rate_ci_high": 0.54888889,
-      "mean_net_relative_return": -0.00333999,
-      "mean_max_adverse_move": -0.03196352,
+      "samples": 103,
+      "origin_dates": 46,
+      "cost_adjusted_hit_rate": 0.3807971,
+      "hit_rate_ci_low": 0.24130435,
+      "hit_rate_ci_high": 0.54528986,
+      "mean_net_relative_return": -0.00369034,
+      "mean_max_adverse_move": -0.03192685,
       "passed": false,
       "evidence_tier": "no_historical_edge"
     },
@@ -80,8 +80,8 @@
       "cost_adjusted_hit_rate": 0.62857143,
       "hit_rate_ci_low": 0.62857143,
       "hit_rate_ci_high": 0.82857143,
-      "mean_net_relative_return": 0.00907891,
-      "mean_max_adverse_move": -0.02553564,
+      "mean_net_relative_return": 0.00907889,
+      "mean_max_adverse_move": -0.02553563,
       "passed": false,
       "evidence_tier": "insufficient"
     }
@@ -102,7 +102,7 @@
   },
   "current_mappings": {
     "AAPL": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": true,
@@ -127,13 +127,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -147,8 +147,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -158,11 +158,13 @@
       "status": "no_current_trigger"
     },
     "ABBV": {
-      "as_of": "2026-09-21",
-      "current_models": [],
+      "as_of": "2026-09-28",
+      "current_models": [
+        "trend_pullback"
+      ],
       "market_regime": "green",
-      "trend_template": false,
-      "vcp_contraction": false,
+      "trend_template": true,
+      "vcp_contraction": true,
       "strategies": {
         "oneil_volume_breakout": {
           "triggered": false,
@@ -180,16 +182,16 @@
           }
         },
         "trend_pullback": {
-          "triggered": false,
+          "triggered": true,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -203,18 +205,18 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
         }
       },
       "passed": false,
-      "status": "no_current_trigger"
+      "status": "current_trigger_unvalidated"
     },
     "ABT": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -239,13 +241,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -259,8 +261,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -270,7 +272,7 @@
       "status": "no_current_trigger"
     },
     "ADBE": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -295,13 +297,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -315,8 +317,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -326,7 +328,7 @@
       "status": "no_current_trigger"
     },
     "AMAT": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -351,13 +353,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -371,8 +373,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -382,16 +384,14 @@
       "status": "no_current_trigger"
     },
     "AMD": {
-      "as_of": "2026-09-21",
-      "current_models": [
-        "oneil_volume_breakout"
-      ],
+      "as_of": "2026-09-28",
+      "current_models": [],
       "market_regime": "green",
       "trend_template": true,
       "vcp_contraction": false,
       "strategies": {
         "oneil_volume_breakout": {
-          "triggered": true,
+          "triggered": false,
           "passed": false,
           "model_oos": {
             "samples": 40,
@@ -409,13 +409,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -429,18 +429,18 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
         }
       },
       "passed": false,
-      "status": "current_trigger_unvalidated"
+      "status": "no_current_trigger"
     },
     "AMT": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -465,13 +465,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -485,8 +485,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -496,7 +496,7 @@
       "status": "no_current_trigger"
     },
     "AMZN": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -521,13 +521,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -541,8 +541,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -552,7 +552,7 @@
       "status": "no_current_trigger"
     },
     "APD": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -577,13 +577,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -597,8 +597,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -608,7 +608,7 @@
       "status": "no_current_trigger"
     },
     "ASML": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -633,13 +633,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -653,8 +653,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -664,7 +664,7 @@
       "status": "no_current_trigger"
     },
     "AVGO": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -689,13 +689,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -709,8 +709,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -720,7 +720,7 @@
       "status": "no_current_trigger"
     },
     "AXP": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -745,13 +745,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -765,8 +765,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -776,7 +776,7 @@
       "status": "no_current_trigger"
     },
     "BA": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -801,13 +801,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -821,8 +821,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -832,7 +832,7 @@
       "status": "no_current_trigger"
     },
     "BABA": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -857,13 +857,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -877,8 +877,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -888,7 +888,7 @@
       "status": "no_current_trigger"
     },
     "BAC": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -913,13 +913,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -933,8 +933,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -944,7 +944,7 @@
       "status": "no_current_trigger"
     },
     "BKNG": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -969,13 +969,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -989,8 +989,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1000,7 +1000,7 @@
       "status": "no_current_trigger"
     },
     "BLK": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1025,13 +1025,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1045,8 +1045,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1056,7 +1056,7 @@
       "status": "no_current_trigger"
     },
     "BYDDY": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1081,13 +1081,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1101,8 +1101,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1112,7 +1112,7 @@
       "status": "no_current_trigger"
     },
     "CAT": {
-      "as_of": "2026-09-18",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1137,13 +1137,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1157,8 +1157,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1168,7 +1168,7 @@
       "status": "no_current_trigger"
     },
     "CMG": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1193,13 +1193,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1213,8 +1213,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1224,7 +1224,7 @@
       "status": "no_current_trigger"
     },
     "COP": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-25",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1249,13 +1249,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1269,8 +1269,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1280,7 +1280,7 @@
       "status": "no_current_trigger"
     },
     "COST": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1305,13 +1305,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1325,8 +1325,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1336,7 +1336,7 @@
       "status": "no_current_trigger"
     },
     "CRM": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1361,13 +1361,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1381,8 +1381,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1392,7 +1392,7 @@
       "status": "no_current_trigger"
     },
     "CVX": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1417,13 +1417,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1437,8 +1437,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1448,7 +1448,7 @@
       "status": "no_current_trigger"
     },
     "DE": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": true,
@@ -1473,13 +1473,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1493,8 +1493,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1504,7 +1504,7 @@
       "status": "no_current_trigger"
     },
     "DUK": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1529,13 +1529,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1549,8 +1549,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1560,7 +1560,7 @@
       "status": "no_current_trigger"
     },
     "ECL": {
-      "as_of": "2026-09-18",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1585,13 +1585,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1605,8 +1605,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1616,7 +1616,7 @@
       "status": "no_current_trigger"
     },
     "ETN": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1641,13 +1641,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1661,8 +1661,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1672,7 +1672,7 @@
       "status": "no_current_trigger"
     },
     "FCX": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1697,13 +1697,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1717,8 +1717,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1728,7 +1728,7 @@
       "status": "no_current_trigger"
     },
     "GE": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1753,13 +1753,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1773,8 +1773,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1784,7 +1784,7 @@
       "status": "no_current_trigger"
     },
     "GOOGL": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1809,13 +1809,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1829,8 +1829,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1840,7 +1840,7 @@
       "status": "no_current_trigger"
     },
     "GS": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1865,13 +1865,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1885,8 +1885,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1896,7 +1896,7 @@
       "status": "no_current_trigger"
     },
     "HD": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1921,13 +1921,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1941,8 +1941,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -1952,7 +1952,7 @@
       "status": "no_current_trigger"
     },
     "HON": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -1977,13 +1977,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -1997,8 +1997,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2008,16 +2008,14 @@
       "status": "no_current_trigger"
     },
     "INTC": {
-      "as_of": "2026-09-21",
-      "current_models": [
-        "oneil_volume_breakout"
-      ],
+      "as_of": "2026-09-28",
+      "current_models": [],
       "market_regime": "green",
       "trend_template": true,
       "vcp_contraction": false,
       "strategies": {
         "oneil_volume_breakout": {
-          "triggered": true,
+          "triggered": false,
           "passed": false,
           "model_oos": {
             "samples": 40,
@@ -2035,13 +2033,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2055,18 +2053,18 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
         }
       },
       "passed": false,
-      "status": "current_trigger_unvalidated"
+      "status": "no_current_trigger"
     },
     "JNJ": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2091,13 +2089,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2111,8 +2109,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2122,7 +2120,7 @@
       "status": "no_current_trigger"
     },
     "JPM": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2147,13 +2145,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2167,8 +2165,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2178,7 +2176,7 @@
       "status": "no_current_trigger"
     },
     "KO": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2203,13 +2201,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2223,8 +2221,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2234,7 +2232,7 @@
       "status": "no_current_trigger"
     },
     "LIN": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2259,13 +2257,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2279,8 +2277,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2290,7 +2288,7 @@
       "status": "no_current_trigger"
     },
     "LMT": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2315,13 +2313,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2335,8 +2333,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2346,7 +2344,7 @@
       "status": "no_current_trigger"
     },
     "LOW": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2371,13 +2369,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2391,8 +2389,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2402,7 +2400,7 @@
       "status": "no_current_trigger"
     },
     "LRCX": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2427,13 +2425,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2447,8 +2445,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2458,7 +2456,7 @@
       "status": "no_current_trigger"
     },
     "MA": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2483,13 +2481,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2503,8 +2501,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2514,7 +2512,7 @@
       "status": "no_current_trigger"
     },
     "MCD": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2539,13 +2537,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2559,8 +2557,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2570,7 +2568,7 @@
       "status": "no_current_trigger"
     },
     "MELI": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2595,13 +2593,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2615,8 +2613,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2626,7 +2624,7 @@
       "status": "no_current_trigger"
     },
     "META": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2651,13 +2649,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2671,8 +2669,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2682,7 +2680,7 @@
       "status": "no_current_trigger"
     },
     "MMM": {
-      "as_of": "2026-09-18",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2707,13 +2705,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2727,8 +2725,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2738,7 +2736,7 @@
       "status": "no_current_trigger"
     },
     "MRK": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2763,13 +2761,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2783,8 +2781,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2794,7 +2792,7 @@
       "status": "no_current_trigger"
     },
     "MS": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2819,13 +2817,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2839,8 +2837,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2850,7 +2848,7 @@
       "status": "no_current_trigger"
     },
     "MSFT": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2875,13 +2873,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2895,8 +2893,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2906,7 +2904,7 @@
       "status": "no_current_trigger"
     },
     "MU": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": true,
@@ -2931,13 +2929,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -2951,8 +2949,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -2962,7 +2960,7 @@
       "status": "no_current_trigger"
     },
     "NEE": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -2987,13 +2985,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3007,8 +3005,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3018,7 +3016,7 @@
       "status": "no_current_trigger"
     },
     "NEM": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3043,13 +3041,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3063,8 +3061,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3074,7 +3072,7 @@
       "status": "no_current_trigger"
     },
     "NKE": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3099,13 +3097,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3119,8 +3117,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3130,7 +3128,7 @@
       "status": "no_current_trigger"
     },
     "NOW": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3155,13 +3153,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3175,8 +3173,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3186,10 +3184,8 @@
       "status": "no_current_trigger"
     },
     "NVDA": {
-      "as_of": "2026-09-21",
-      "current_models": [
-        "trend_pullback"
-      ],
+      "as_of": "2026-09-28",
+      "current_models": [],
       "market_regime": "green",
       "trend_template": true,
       "vcp_contraction": false,
@@ -3210,16 +3206,16 @@
           }
         },
         "trend_pullback": {
-          "triggered": true,
+          "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3233,18 +3229,18 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
         }
       },
       "passed": false,
-      "status": "current_trigger_unvalidated"
+      "status": "no_current_trigger"
     },
     "NVO": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3269,13 +3265,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3289,8 +3285,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3300,7 +3296,7 @@
       "status": "no_current_trigger"
     },
     "ORCL": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3325,13 +3321,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3345,8 +3341,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3356,7 +3352,7 @@
       "status": "no_current_trigger"
     },
     "PEP": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3381,13 +3377,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3401,8 +3397,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3412,7 +3408,7 @@
       "status": "no_current_trigger"
     },
     "PFE": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3437,13 +3433,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3457,8 +3453,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3468,7 +3464,7 @@
       "status": "no_current_trigger"
     },
     "PG": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3493,13 +3489,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3513,8 +3509,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3524,7 +3520,7 @@
       "status": "no_current_trigger"
     },
     "PYPL": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3549,13 +3545,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3569,8 +3565,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3580,10 +3576,10 @@
       "status": "no_current_trigger"
     },
     "QCOM": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-25",
       "current_models": [],
       "market_regime": "green",
-      "trend_template": false,
+      "trend_template": true,
       "vcp_contraction": false,
       "strategies": {
         "oneil_volume_breakout": {
@@ -3605,13 +3601,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3625,8 +3621,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3636,7 +3632,7 @@
       "status": "no_current_trigger"
     },
     "RTX": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3661,13 +3657,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3681,8 +3677,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3692,7 +3688,7 @@
       "status": "no_current_trigger"
     },
     "SAP": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3717,13 +3713,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3737,8 +3733,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3748,7 +3744,7 @@
       "status": "no_current_trigger"
     },
     "SBUX": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3773,13 +3769,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3793,8 +3789,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3804,7 +3800,7 @@
       "status": "no_current_trigger"
     },
     "SCHW": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3829,13 +3825,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3849,8 +3845,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3860,7 +3856,7 @@
       "status": "no_current_trigger"
     },
     "SO": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3885,13 +3881,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3905,8 +3901,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3916,7 +3912,7 @@
       "status": "no_current_trigger"
     },
     "SONY": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3941,13 +3937,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -3961,8 +3957,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -3972,7 +3968,7 @@
       "status": "no_current_trigger"
     },
     "TCEHY": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -3997,13 +3993,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4017,8 +4013,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -4028,7 +4024,7 @@
       "status": "no_current_trigger"
     },
     "TGT": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -4053,13 +4049,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4073,8 +4069,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -4084,7 +4080,7 @@
       "status": "no_current_trigger"
     },
     "TM": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -4109,13 +4105,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4129,8 +4125,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -4140,7 +4136,7 @@
       "status": "no_current_trigger"
     },
     "TMO": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": true,
@@ -4165,13 +4161,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4185,8 +4181,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -4196,7 +4192,7 @@
       "status": "no_current_trigger"
     },
     "TSM": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": true,
@@ -4221,13 +4217,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4241,8 +4237,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -4252,7 +4248,7 @@
       "status": "no_current_trigger"
     },
     "TXN": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -4277,13 +4273,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4297,8 +4293,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -4308,7 +4304,7 @@
       "status": "no_current_trigger"
     },
     "UNH": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -4333,13 +4329,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4353,8 +4349,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -4364,7 +4360,7 @@
       "status": "no_current_trigger"
     },
     "UPS": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -4389,13 +4385,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4409,8 +4405,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -4420,7 +4416,7 @@
       "status": "no_current_trigger"
     },
     "V": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -4445,13 +4441,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4465,8 +4461,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -4476,7 +4472,7 @@
       "status": "no_current_trigger"
     },
     "WMT": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -4501,13 +4497,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4521,8 +4517,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
@@ -4532,7 +4528,7 @@
       "status": "no_current_trigger"
     },
     "XOM": {
-      "as_of": "2026-09-21",
+      "as_of": "2026-09-28",
       "current_models": [],
       "market_regime": "green",
       "trend_template": false,
@@ -4557,13 +4553,13 @@
           "triggered": false,
           "passed": false,
           "model_oos": {
-            "samples": 102,
-            "origin_dates": 45,
-            "cost_adjusted_hit_rate": 0.38925926,
-            "hit_rate_ci_low": 0.23185185,
-            "hit_rate_ci_high": 0.54888889,
-            "mean_net_relative_return": -0.00333999,
-            "mean_max_adverse_move": -0.03196352,
+            "samples": 103,
+            "origin_dates": 46,
+            "cost_adjusted_hit_rate": 0.3807971,
+            "hit_rate_ci_low": 0.24130435,
+            "hit_rate_ci_high": 0.54528986,
+            "mean_net_relative_return": -0.00369034,
+            "mean_max_adverse_move": -0.03192685,
             "passed": false,
             "evidence_tier": "no_historical_edge"
           }
@@ -4577,8 +4573,8 @@
             "cost_adjusted_hit_rate": 0.62857143,
             "hit_rate_ci_low": 0.62857143,
             "hit_rate_ci_high": 0.82857143,
-            "mean_net_relative_return": 0.00907891,
-            "mean_max_adverse_move": -0.02553564,
+            "mean_net_relative_return": 0.00907889,
+            "mean_max_adverse_move": -0.02553563,
             "passed": false,
             "evidence_tier": "insufficient"
           }
