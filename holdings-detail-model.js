@@ -122,6 +122,7 @@
     var entries = Array.isArray(input.entries) ? input.entries : [];
     var portfolioRisk = input.portfolioRisk || {};
     var positions = portfolioRisk.positions || {};
+    var actualPositions = input.actualPositions || {};
     var snapshotRows = input.status === "ready" ? aggregateSnapshotHoldings(input.snapshot) : {};
     var entryBySymbol = {};
     var plannedSymbols = [];
@@ -131,21 +132,22 @@
       entryBySymbol[symbol] = entry;
       plannedSymbols.push(symbol);
     });
-    var allSymbols = unique(plannedSymbols.concat(Object.keys(snapshotRows)));
+    var allSymbols = unique(plannedSymbols.concat(Object.keys(snapshotRows), Object.keys(actualPositions)));
     var rows = allSymbols.map(function (symbol) {
       var entry = entryBySymbol[symbol] || null;
-      var position = positions[symbol] || {};
+      var position = positions[symbol] || actualPositions[symbol] || {};
+      var hasActualPosition = Boolean(actualPositions[symbol]);
       var snapshotRow = snapshotRows[symbol] || {};
       var planned = Boolean(entry);
       var shares = positive(position.shares) || positive(snapshotRow.shares);
-      var averageCost = positive(position.average_cost) || finite(snapshotRow.averageCost);
-      var currentValue = positive(position.current_value) || finite(snapshotRow.currentValue) || 0;
-      var latestPrice = finite(position.latest_price) || finite(entry && entry.signal && entry.signal.latest_price) || finite(snapshotRow.latestPrice);
+      var averageCost = positive(position.average_cost) || (hasActualPosition ? null : finite(snapshotRow.averageCost));
+      var currentValue = hasActualPosition ? finite(position.current_value) || 0 : positive(position.current_value) || finite(snapshotRow.currentValue) || 0;
+      var latestPrice = finite(position.latest_price) || finite(entry && entry.signal && entry.signal.latest_price) || (hasActualPosition && snapshotRow.currency !== input.planningCurrency ? null : finite(snapshotRow.latestPrice));
       var target = planned ? finite(position.target_allocation) : 0;
       if (planned && (target === null || target === 0)) target = positive(entry.stock.allocation) * 100;
       var currentAllocation = planned ? finite(position.current_allocation) : null;
       var drift = planned && currentAllocation !== null ? currentAllocation - target : null;
-      var costBasis = shares > 0 && averageCost !== null && averageCost >= 0 ? shares * averageCost : finite(snapshotRow.costBasis);
+      var costBasis = shares > 0 && averageCost !== null && averageCost >= 0 ? shares * averageCost : hasActualPosition ? null : finite(snapshotRow.costBasis);
       var pnl = costBasis !== null ? currentValue - costBasis : null;
       var pnlPercent = costBasis !== null && costBasis > 0 ? pnl / costBasis * 100 : null;
       return {
@@ -167,10 +169,19 @@
         dataAsOf: snapshotRow.dataAsOf || input.snapshot && (input.snapshot.positions_as_of || input.snapshot.generated_at) || null,
         accountLabel: snapshotRow.accountLabel || "--",
         exchange: snapshotRow.exchange || "--",
-        currency: position.currency || snapshotRow.currency || input.planningCurrency || null
+        currency: position.currency || (actualPositions[symbol] ? input.planningCurrency : null) || snapshotRow.currency || input.planningCurrency || null
       };
     }).filter(function (row) {
       return row.shares > 0 || row.currentValue > 0 || row.costBasis > 0;
+    });
+
+    // Display weight includes every held security, including positions outside
+    // the weekly plan, and excludes cash. Never add values in mixed currencies.
+    var currencies = unique(rows.map(function (row) { return row.currency; }));
+    var weightsKnown = rows.every(function (row) { return Boolean(row.currency) && row.currency !== "MIXED"; }) && currencies.length === 1;
+    var holdingsValue = rows.reduce(function (sum, row) { return sum + row.currentValue; }, 0);
+    rows.forEach(function (row) {
+      row.positionWeight = weightsKnown && holdingsValue > 0 ? row.currentValue / holdingsValue * 100 : null;
     });
 
     var pnlRows = rows.filter(function (row) { return row.planned && row.pnl !== null; });

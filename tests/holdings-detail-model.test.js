@@ -76,3 +76,44 @@ test("does not invent PnL when average cost is unavailable", () => {
   assert.equal(result.rows[0].pnl, null);
   assert.equal(result.summary.pnlComplete, false);
 });
+
+test("holding weights include outside-plan positions, exclude cash and use normalized currency", () => {
+  const result = model.build({
+    entries: [{ stock: { symbol: "AAPL", allocation: .4 } }],
+    portfolioRisk: { positions: { AAPL: { shares: 2, average_cost: 100, current_value: 240 } }, available_cash: 900 },
+    actualPositions: { AAPL: { shares: 2, average_cost: 100, current_value: 240 }, SHOP: { shares: 1, average_cost: 80, current_value: 60 } },
+    snapshot: { holdings: [{ symbol: "SHOP", included_in_stock_plan: true, units: 1, cost_basis: 108, market_value: 81, position_currency: "CAD" }] },
+    status: "ready", planningCurrency: "USD"
+  });
+  assert.equal(result.rows[0].positionWeight, 80);
+  assert.equal(result.rows[1].positionWeight, 20);
+  assert.equal(result.rows[1].planned, false);
+  assert.equal(result.rows[1].currency, "USD");
+  assert.equal(result.rows[1].pnl, -20);
+  assert.equal(result.rows[1].pnlPercent, -25);
+});
+
+test("holding weights stay unknown for unconverted mixed currencies and zero values", () => {
+  const result = model.build({
+    snapshot: { holdings: [
+      { symbol: "AAPL", included_in_stock_plan: true, units: 1, market_value: 120, position_currency: "USD" },
+      { symbol: "SHOP", included_in_stock_plan: true, units: 1, market_value: 81, position_currency: "CAD" }
+    ] }, status: "ready"
+  });
+  assert.ok(result.rows.every(row => row.positionWeight === null));
+  const zero = model.build({ actualPositions: { SPY: { shares: 1, average_cost: 10, current_value: 0 } }, planningCurrency: "USD" });
+  assert.equal(zero.rows[0].positionWeight, null);
+});
+
+test("missing normalized cost never falls back to an unconverted snapshot cost", () => {
+  const result = model.build({
+    actualPositions: { SHOP: { shares: 1, average_cost: 0, current_value: 60 } },
+    snapshot: { holdings: [{ symbol: "SHOP", included_in_stock_plan: true, units: 1, cost_basis: 108, price: 81, market_value: 81, position_currency: "CAD" }] },
+    status: "ready", planningCurrency: "USD"
+  });
+  assert.equal(result.rows[0].currency, "USD");
+  assert.equal(result.rows[0].currentValue, 60);
+  assert.equal(result.rows[0].costBasis, null);
+  assert.equal(result.rows[0].pnl, null);
+  assert.equal(result.rows[0].latestPrice, null);
+});

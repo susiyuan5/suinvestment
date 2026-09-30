@@ -6115,6 +6115,7 @@ function equalizeAllocations() {
       snapshot: state.snaptradeHoldingsSnapshot,
       status: state.snaptradeHoldingsStatus,
       sourceMode: state.portfolioRiskSource,
+      actualPositions: state.portfolioRiskInput.positions,
       planningCurrency: currencySettings.planningCurrency
     });
     const automatic = state.portfolioRiskSource === "snaptrade_automatic";
@@ -6199,8 +6200,8 @@ function equalizeAllocations() {
       row.className = "inline-holding-row";
       row.dataset.allocationState = holding.allocationState;
       const pnlClass = holding.pnl > 0 ? "is-positive" : holding.pnl < 0 ? "is-negative" : "";
-      const pnlValue = holding.pnl === null ? "--" : formatHoldingMoney(holding.pnl, holding.currency);
-      const pnlPercent = holding.pnlPercent === null ? "" : " · " + (holding.pnlPercent > 0 ? "+" : "") + holding.pnlPercent.toFixed(2) + "%";
+      const pnlValue = holding.pnl === null ? "--" : (holding.pnl > 0 ? "+" : "") + formatHoldingMoney(holding.pnl, holding.currency);
+      const pnlPercent = holding.pnlPercent === null ? "--" : (holding.pnlPercent > 0 ? "+" : "") + holding.pnlPercent.toFixed(2) + "%";
       const identityMeta = [holding.exchange, holding.currency].filter(function (value) { return value && value !== "--"; }).join(" · ") || "证券信息待核对";
       const allocationValue = holding.planned && holding.currentAllocation !== null
         ? holding.currentAllocation.toFixed(2) + "% / 目标 " + holding.targetAllocation.toFixed(2) + "%"
@@ -6213,7 +6214,6 @@ function equalizeAllocations() {
           holdingMetric("最新价格", holding.latestPrice && holding.latestPrice > 0 ? formatHoldingMoney(holding.latestPrice, holding.currency) : "--") +
           holdingMetric("平均成本", holding.averageCost !== null && holding.averageCost > 0 ? formatHoldingMoney(holding.averageCost, holding.currency) : "--") +
           holdingMetric("成本总额", holding.costBasis !== null ? formatHoldingMoney(holding.costBasis, holding.currency) : "--") +
-          holdingMetric("浮盈亏", pnlValue + pnlPercent, pnlClass) +
           holdingMetric("当前 / 目标", allocationValue) +
         "</div>" +
         "<div class=\"inline-holding-allocation\"><div><span>配置偏差</span><strong>" + escapeHtml(driftValue) + "</strong></div><div class=\"inline-holding-allocation-track\" role=\"progressbar\" aria-label=\"" + escapeHtml(holding.symbol + " 当前配置") + "\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + escapeHtml(holding.currentAllocation === null ? "0" : String(Math.max(0, Math.min(100, holding.currentAllocation)))) + "\"><span></span></div></div>" +
@@ -6221,12 +6221,16 @@ function equalizeAllocations() {
       const bar = row.querySelector(".inline-holding-allocation-track span");
       if (bar) bar.style.width = holding.currentAllocation === null ? "0%" : Math.max(0, Math.min(100, holding.currentAllocation)) + "%";
       const expanded = document.createElement("details");
-      expanded.innerHTML = "<summary>数量、成本与来源</summary>";
+      expanded.className = "inline-holding-details";
+      expanded.innerHTML = "<summary aria-label=\"" + escapeHtml(holding.symbol + " 持仓详情") + "\">详情</summary>";
       const compact = document.createElement("div");
       compact.className = "inline-holding-compact";
       const metrics = row.querySelector(".inline-holding-metrics");
-      Array.from(metrics.children).slice(4).forEach(function (metric) { compact.appendChild(metric); });
-      expanded.append(metrics, row.querySelector(".inline-holding-allocation"), row.querySelector(".inline-holding-row-meta"));
+      compact.innerHTML = holdingMetric("盈亏金额", pnlValue, pnlClass) +
+        holdingMetric("盈亏比例", pnlPercent, pnlClass) +
+        holdingMetric("占总仓位", holding.positionWeight === null ? "--" : holding.positionWeight.toFixed(2) + "%");
+      compact.lastElementChild.title = "该持仓市值 ÷ 全部股票与 ETF 市值（不含现金）";
+      expanded.append(row.querySelector(".inline-holding-badges"), metrics, row.querySelector(".inline-holding-allocation"), row.querySelector(".inline-holding-row-meta"));
       row.append(compact, expanded);
       inlineHoldingsRowsEl.appendChild(row);
     });
