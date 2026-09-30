@@ -5134,6 +5134,53 @@ h2 {
   backdrop-filter: blur(12px);
 }
 .dashboard-anchor-nav a { flex: 0 0 auto; padding: 8px 12px; color: var(--muted); border-radius: 8px; text-decoration: none; font-weight: 700; }
+
+/* Keep the three holding outcomes visible while secondary data stays folded. */
+.inline-holdings-rows { gap: 5px; }
+#inlineHoldingsSection > .compact-details { margin: 0; padding: 6px 0; }
+#inlineHoldingsSection .inline-holdings-actions { flex-wrap: wrap; min-width: 0; }
+.inline-holding-row {
+  grid-template-columns: minmax(200px, 1fr) minmax(300px, 1.2fr) auto;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 7px 10px;
+}
+.inline-holding-row-heading { grid-template-columns: minmax(90px, 1fr) auto; gap: 8px; }
+.inline-holding-identity small { display: none; }
+.inline-holding-identity > span { font-size: .72rem; }
+.inline-holding-symbol { font-size: .94rem; }
+.inline-holding-value strong, .inline-holding-metric strong { font-variant-numeric: tabular-nums; }
+.inline-holding-compact { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.inline-holding-compact .inline-holding-metric { padding: 0; border: 0; text-align: right; }
+.inline-holding-compact .inline-holding-metric strong { font-size: .86rem; margin-top: 2px; }
+.inline-holding-compact strong.is-positive { color: var(--accent); }
+.inline-holding-compact strong.is-negative { color: var(--danger); }
+.inline-holding-details { min-width: 0; }
+.inline-holding-details > summary { min-height: 44px; display: list-item; align-content: center; cursor: pointer; color: var(--muted); font-size: .74rem; }
+.inline-holding-details[open] { grid-column: 1 / -1; }
+.inline-holding-details[open] > summary { width: fit-content; margin-left: auto; }
+.inline-holding-details[open] > :not(summary) { margin-top: 8px; }
+.inline-holding-details .inline-holding-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.inline-holdings-weight-note { margin: 0; color: var(--muted); font-size: .7rem; }
+@media (max-width: 719px) {
+  #inlineHoldingsSection .inline-holdings-mode { flex-basis: 100%; width: auto; white-space: normal; }
+  #inlineHoldingsSection .inline-holdings-actions .secondary-button { flex: 1 1 auto; min-width: 0; }
+  #inlineHoldingsSection > .inline-holdings-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #inlineHoldingsSection > .inline-holdings-stats > div { padding: 7px; border-bottom: 0; }
+  #inlineHoldingsSection > .inline-holdings-stats strong { font-size: .8rem; }
+  .inline-holding-row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; padding: 7px 9px; }
+  .inline-holding-row-heading { grid-column: 1; grid-row: 1; grid-template-columns: minmax(0, 1fr) auto; }
+  .inline-holding-identity { grid-column: auto; }
+  .inline-holding-identity > span { white-space: nowrap; }
+  .inline-holding-value { justify-items: end; }
+  .inline-holding-compact { grid-column: 1 / -1; grid-row: 2; gap: 6px; }
+  .inline-holding-compact .inline-holding-metric { text-align: left; }
+  .inline-holding-compact .inline-holding-metric strong { font-size: .8rem; }
+  .inline-holding-details { grid-column: 2; grid-row: 1; }
+  .inline-holding-details[open] { grid-column: 1 / -1; grid-row: 3; }
+  .inline-holding-details .inline-holding-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .inline-holding-details .inline-holding-metric:last-child { grid-column: 1 / -1; }
+}
 .dashboard-anchor-nav a:hover, .dashboard-anchor-nav a:focus-visible, .dashboard-anchor-nav a.is-active { color: var(--text); background: var(--panel-2); outline: 2px solid var(--accent); outline-offset: 1px; }
 .weekly-decision-actions { align-items: center; flex-wrap: wrap; }
 .weekly-decision-overview { grid-template-columns: repeat(4, minmax(0, 1fr)); }
