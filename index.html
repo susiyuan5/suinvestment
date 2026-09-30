@@ -31,6 +31,7 @@
       rel="stylesheet"
     />
     <link href="settings-center.css?v=settings-center-v2" rel="stylesheet" />
+    <link href="allocation-draft.css?v=optimization-draft-v1" rel="stylesheet" />
     <link
       href="workspace-navigation.css?v=holdings-compact-v2"
       rel="stylesheet"
@@ -157,6 +158,7 @@
                 </button>
                 <details class="compact-details" id="weeklyPlanSettings">
                   <summary>调整计划设置</summary>
+                  <div class="weekly-plan-settings-menu">
                   <button
                     class="secondary-button"
                     id="adjustAllocationBtn"
@@ -165,15 +167,52 @@
                     调整目标比例</button
                   ><button
                     class="secondary-button"
+                    id="openAllocationDraftBtn"
+                    type="button"
+                    aria-controls="allocationSuggestionDraft"
+                    aria-expanded="false"
+                  >
+                    建议配置草稿</button
+                  ><button
+                    class="secondary-button"
                     id="adjustBudgetBtn"
                     type="button"
                   >
                     调整预算
                   </button>
+                  </div>
                 </details>
               </div>
               </div>
               <p class="weekly-allocation-help">调整目标比例后，其余标的自动调节至合计 100%；无可用行情时暂停建议。</p>
+              <section id="allocationSuggestionDraft" class="allocation-suggestion-draft" aria-labelledby="allocationSuggestionTitle" aria-busy="false" hidden>
+                <h4 id="allocationSuggestionTitle" tabindex="-1">建议配置草稿</h4>
+                <p>这是风险预算起点，尚未证明收益最优。KO、WMT 为可选持仓；可移除或调整。修改一项后，其余比例自动调节；应用前请核对下方当前目标与草稿目标。</p>
+                <div class="allocation-suggestion-table-scroll">
+                  <table class="allocation-suggestion-table" aria-label="当前目标与建议配置草稿对照">
+                    <thead><tr><th scope="col">标的</th><th scope="col">当前目标</th><th scope="col">草稿目标 %</th><th scope="col">清单调整</th></tr></thead>
+                    <tbody id="allocationSuggestionRows"></tbody>
+                  </table>
+                </div>
+                <div class="allocation-suggestion-add">
+                  <label for="allocationSuggestionCandidate">添加候选标的<select id="allocationSuggestionCandidate"><option value="">选择已有标的或已持仓股票</option></select></label>
+                  <label for="allocationSuggestionAddPercent">新增目标 %<input id="allocationSuggestionAddPercent" type="number" min="0.01" max="100" step="0.01" inputmode="decimal" value="1.00"></label>
+                  <button class="secondary-button" id="addAllocationSuggestionBtn" type="button">加入草稿</button>
+                </div>
+                <div class="allocation-suggestion-metrics" aria-live="polite">
+                  <span>合计 <strong id="allocationSuggestionTotal">100.00%</strong></span>
+                  <span>SPY <strong id="allocationSuggestionSpy">20.00%</strong>（可设 0%–100%）</span>
+                  <span>QNT / CBRS / JOBY <strong id="allocationSuggestionSpeculative">15.00%</strong></span>
+                </div>
+                <p id="allocationSuggestionWarning"></p>
+                <p>归一化和移除标的会保留当前手动设置的 SPY 比例。配置仍遵守现有风控；个股或科技持仓集中时可能暂停额外加仓。</p>
+                <p id="allocationSuggestionStatus" role="status" aria-live="polite"></p>
+                <div class="allocation-suggestion-actions">
+                  <button class="secondary-button" id="normalizeAllocationSuggestionBtn" type="button">按当前 SPY 比例归一化</button>
+                  <button class="primary-button" id="applyAllocationSuggestionBtn" type="button">应用到定投清单</button>
+                  <button class="secondary-button" id="cancelAllocationSuggestionBtn" type="button">取消草稿</button>
+                </div>
+              </section>
               <p id="weeklyAllocationStatus" role="status"></p>
               <div id="weeklyRemovedStocks" class="weekly-removed-stocks" aria-live="polite"></div>
               <div aria-label="添加股票" class="stock-search-panel">
@@ -2390,7 +2429,7 @@
     </template>
     <script src="live-data.js?v=market-check-v2"></script>
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
-    <script src="dca-policy.js?v=weekly-dca-v1"></script>
+    <script src="dca-policy.js?v=gap-funding-v1"></script>
     <script src="market-calendar.js?v=us-sessions-v1"></script>
     <script src="market-data.js?v=us-sessions-v1"></script>
     <script src="stock-search-policy.js?v=verified-search-v1"></script>
@@ -2398,7 +2437,8 @@
     <script src="market-analysis.js?v=contracts-1"></script>
     <script src="signal-engine.js?v=contracts-1"></script>
     <script src="portfolio-policy.js?v=weekly-dca-v1"></script>
-    <script src="core-satellite-policy.js?v=weekly-dca-v2"></script>
+    <script src="core-satellite-policy.js?v=gap-funding-v1"></script>
+    <script src="allocation-draft.js?v=optimization-draft-v1"></script>
     <script src="backtest-engine.js?v=contracts-1"></script>
     <script src="settings-storage.js?v=currency-preference-1"></script>
     <script src="wealthsimple-currency.js?v=usd-planning-v2"></script>
@@ -2411,10 +2451,10 @@
     <script src="portfolio-stress-test.js?v=wealthsimple-v1"></script>
     <script src="holdings-detail-model.js?v=holdings-compact-v2"></script>
     <script src="dashboard-ui-policy.js?v=holdings-compact-v1"></script>
-    <script src="portfolio-risk-input.js?v=explicit-cash-v1"></script>
-    <script src="weekly-dca-engine.js?v=weekly-dca-v2"></script>
-    <script src="weekly-signal-model.js?v=weekly-dca-v2"></script>
-    <script src="app.js?v=holdings-compact-v2"></script>
+    <script src="portfolio-risk-input.js?v=holdings-gap-v1"></script>
+    <script src="weekly-dca-engine.js?v=gap-funding-v1"></script>
+    <script src="weekly-signal-model.js?v=risk-history-v1"></script>
+    <script src="app.js?v=dca-optimization-v1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>

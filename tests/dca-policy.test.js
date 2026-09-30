@@ -10,6 +10,21 @@ function risingCloses(length) {
   return Array.from({ length }, function (_, index) { return 100 + index * 0.4; });
 }
 
+test('deferring the account cap preserves L2 Base for one portfolio-level allocation', () => {
+  const input = { baseAmount: 50, price: 100, dataStatus: 'fresh', date: '2026-02-03',
+    marketRegime: 'Neutral', trendStatus: 'above_sma', volatilityPct: 1, drawdownPct: 0,
+    normalPool: 300, availableCashProvided: true, availableCash: 100 };
+  assert.equal(policy.evaluateDcaL2Policy(input, {}).finalAmount, 30);
+  const deferred = policy.evaluateDcaL2Policy({ ...input, deferPortfolioCashCap: true }, {});
+  assert.equal(deferred.finalAmount, 50);
+  assert.equal(deferred.cashCapAmount, null);
+  for (const blocked of [{ price: 0 }, { dataStatus: 'invalid' }, { availableCash: 0 }]) {
+    const decision = policy.evaluateDcaL2Policy({ ...input, ...blocked, deferPortfolioCashCap: true }, {});
+    assert.equal(decision.finalAmount, 0);
+    assert.equal(decision.hardBlocked, true);
+  }
+});
+
 test("kill switch preserves base amount", function () {
   const result = policy.evaluateDcaPolicy({ baseAmount: 50 }, { enabled: false });
   assert.equal(result.multiplier, 1);

@@ -235,6 +235,7 @@
       trend_adjustment: round2(trendCap),
       drawdown_adjustment: round2(drawdownCap),
       portfolio_adjustment: 1,
+      history_rows: history.length,
       final_multiplier: finalMultiplier,
       volatilityReduced: smooth.volatilityReduced || volatilityAdjustment < 0.99,
       downtrendCapped: smooth.downtrendCapped || trend.status === "strong_downtrend",
@@ -248,6 +249,18 @@
     };
   }
 
+ function riskDataStatus(signal) {
+   const algorithm = signal && signal.algorithm || {};
+   const meta = algorithm.field_meta || {};
+   const missingHistory = algorithm.history_rows != null && algorithm.history_rows < 21;
+   const invalidMeta = ['missing', 'stale', 'invalid', 'future'].includes(signal && signal.data_freshness)
+     || ['trend', 'volatility', 'drawdown'].some(key => meta[key]
+       && (meta[key].missing === true || meta[key].stale === true || ['missing', 'stale', 'invalid', 'future'].includes(meta[key].freshness)));
+   return missingHistory || invalidMeta || !isFiniteNumber(algorithm.drawdown)
+     || !isFiniteNumber(algorithm.realized_weekly_volatility)
+     || !algorithm.trend || !algorithm.trend.status ? 'unknown' : 'known';
+ }
+
  function weeklyDcaActionGate(signal) {
    const s = signal || {}, algorithm = s.algorithm || {};
    const action = s.suggested_action || getSuggestedAction(s);
@@ -256,9 +269,9 @@
      || s.risk_level === 'Extreme' || (isFiniteNumber(algorithm.drawdown) && algorithm.drawdown >= 35)
      || s.panic_active === true || s.portfolio_adjustment === 0 || algorithm.portfolio_adjustment === 0
      || action === 'HOLD' || action === 'CONSIDER_SELL';
-   return { actionBlocked, extraBlocked: actionBlocked || action === 'DO_NOT_BUY' || action === 'REDUCE_BUY'
+   return { actionBlocked, extraBlocked: actionBlocked || riskDataStatus(s) === 'unknown' || action === 'DO_NOT_BUY' || action === 'REDUCE_BUY'
      || getActionLabelFromMultiplier(s).cls === 'action-pause-buy' };
  }
  return Object.freeze({ ALGORITHM_PARAMS, LOW_FREQ_ALGO_PARAMS, calculateSmoothMultiplier, getMarketRegimeMultiplierCap,
-   calculateRiskLevel, getSuggestedAction, getActionLabelFromMultiplier, calculateEnhancedLowFrequencyMultiplier, weeklyDcaActionGate });
+   calculateRiskLevel, getSuggestedAction, getActionLabelFromMultiplier, calculateEnhancedLowFrequencyMultiplier, weeklyDcaActionGate, riskDataStatus });
 });

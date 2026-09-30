@@ -148,3 +148,111 @@ test('Crash funding excludes ETF allocations and confirmed use cannot reopen the
   assert.equal(result.plan.plannedCrash, 0);
   assert.equal(result.budgetReport.crashFundRemaining, 75);
 });
+
+test('account cash no longer reduces an affordable scheduled Base to thirty percent', () => {
+  let used = 0, cash = 400;
+  for (const date of ['2026-02-03', '2026-02-10', '2026-02-17', '2026-02-24']) {
+    const options = input(date);
+    options.budget = { normalPool: 300, normalPoolUsed: used, crashFund: 100,
+      portfolioCashCap: cash, optionalCashCap: cash * .3 };
+    options.inputs.forEach(row => Object.assign(row.input, { drawdownPct: 0, normalPoolUsed: used,
+      availableCashProvided: true, availableCash: cash }));
+    const result = W.plan(options);
+    assert.equal(result.plan.plannedNormal, 75);
+    assert.equal(result.plan.plannedOptional, 0);
+    assert.ok(result.plan.conservation.balanced);
+    used += result.plan.plannedNormal; cash -= result.plan.totalPlanned;
+  }
+  assert.equal(used, 300);
+  assert.equal(cash, 100);
+});
+
+test('legacy cash mode preserves the old limit with balanced weekly funding', () => {
+  const options = input('2026-02-24'); options.cashPolicyMode = 'legacy';
+  options.budget = { normalPool: 300, normalPoolUsed: 225, crashFund: 100, portfolioCashCap: 52.5, optionalCashCap: 0 };
+  options.inputs.forEach(row => Object.assign(row.input, { drawdownPct: 0, normalPoolUsed: 225,
+    availableCashProvided: true, availableCash: 175 }));
+  const result = W.plan(options);
+  assert.equal(result.plan.plannedNormal, 52.5);
+  assert.equal(result.plan.optionalCashCap, null);
+});
+
+test('cash priority preserves Base proportions when actual cash is scarce', () => {
+  const options = input('2026-02-03');
+  options.budget.portfolioCashCap = 1; options.budget.optionalCashCap = .3;
+  options.inputs.forEach(row => Object.assign(row.input, { drawdownPct: 0, availableCashProvided: true, availableCash: 1 }));
+  const result = W.plan(options);
+  assert.equal(result.plan.totalPlanned, 1);
+  assert.equal(result.decisions.SPY.baseAmount, .4);
+  assert.ok(result.plan.items.every(row => !row.reasonCodes.includes('CASH_CAP_APPLIED')));
+});
+
+test('shared optional cap remains separate from cash and weekly Crash allowances', () => {
+  const options = input('2026-02-10');
+  options.budget = { normalPool: 300, normalPoolUsed: 0, crashFund: 100, portfolioCashCap: 100, optionalCashCap: 5 };
+  options.inputs.forEach(row => Object.assign(row.input, { drawdownPct: 25, trendStatus: 'above_sma',
+    crashFundBalance: 100, availableCashProvided: true, availableCash: 100 }));
+  const result = W.plan(options);
+  assert.equal(result.plan.items.reduce((sum, row) => sum + row.baseAmount, 0), 75);
+  assert.equal(result.plan.plannedOptional, 5);
+  assert.ok(result.plan.totalPlanned <= 100);
+  assert.ok(result.plan.plannedCrash <= 25);
+  assert.equal(result.budgetReport.plannedOptional, 5);
+});
+
+test('gap Base uses all supplied eligible securities and excludes account cash', () => {
+  const preset = C.presetFromAllocations({ SPY: .2, QQQ: .2, NVDA: .15, AAPL: .15, ASML: .15, KO: .15 });
+  const result = W.gapBasePlan({ preset, eligibleUSPositions: { SPY: { current_value: 60 }, AAPL: 120, KO: 10, WMT: 10 },
+    holdingsComplete: true, baseBudget: 30, normalLimit: 30, portfolioCashCap: 100 });
+  assert.equal(result.valid, true);
+  assert.equal(result.securitiesValue, 200);
+  assert.equal(result.gaps.SPY, 0);
+  assert.equal(result.baseAmounts.SPY, 0);
+  assert.equal(Object.values(result.baseAmounts).reduce((sum, value) => sum + Math.round(value * 100), 0), 3000);
+  assert.equal(result.baseAmounts.WMT, undefined, 'outside-plan holding never becomes a buy');
+  const otherCash = W.gapBasePlan({ preset, eligibleUSPositions: { SPY: 60, AAPL: 120, KO: 10, WMT: 10 },
+    holdingsComplete: true, baseBudget: 30, normalLimit: 30, portfolioCashCap: 1000 });
+  assert.deepEqual(otherCash.baseAmounts, result.baseAmounts);
+});
+
+test('gap Base computes affordable funding before gaps and distributes cents deterministically', () => {
+  const options = { eligibleUSPositions: {}, holdingsComplete: true, baseBudget: 75, normalLimit: 20.03,
+    portfolioCashCap: 10, commissionBps: 100 };
+  const result = W.gapBasePlan(options);
+  assert.equal(result.baseBudget, 9.9);
+  assert.equal(result.securitiesValue, 0);
+  assert.equal(Object.values(result.baseAmounts).reduce((sum, value) => sum + Math.round(value * 100), 0), 990);
+  assert.deepEqual(W.gapBasePlan(options), result);
+  const zero = W.gapBasePlan({ ...options, baseBudget: 0 });
+  assert.equal(zero.valid, true);
+  assert.ok(Object.values(zero.baseAmounts).every(value => value === 0));
+});
+
+test('unknown holdings or invalid values cannot be treated as an empty portfolio', () => {
+  for (const values of [undefined, null, { SPY: null }, { SPY: {} }, { SPY: { current_value: null } },
+    { SPY: NaN }, { SPY: -1 }, { SPY: '10' }, { SPY: 1e308, KO: 1e308 }]) {
+    const result = W.gapBasePlan({ eligibleUSPositions: values, holdingsComplete: true, baseBudget: 60, normalLimit: 60 });
+    assert.equal(result.valid, false);
+    assert.equal(result.baseAmounts, null);
+  }
+  assert.equal(W.gapBasePlan({ eligibleUSPositions: {}, holdingsComplete: false, baseBudget: 60 }).valid, false);
+});
+
+test('shared gap overrides survive the full chain and blocked contributions stay in cash', () => {
+  const options = input('2026-02-03');
+  options.budget.portfolioCashCap = 100;
+  options.baseAmounts = { SPY: 0, QQQ: 15, NVDA: 15, AAPL: 15, ASML: 15, KO: 15 };
+  options.inputs.forEach(row => Object.assign(row.input, { drawdownPct: 0, availableCashProvided: true, availableCash: 100 }));
+  options.inputs.find(row => row.symbol === 'NVDA').input.currentAllocationPct = 18;
+  options.core.actualAllocations = { NVDA: 18 };
+  const result = W.plan(options);
+  assert.equal(result.plan.spyRedirected, 0);
+  assert.equal(result.decisions.SPY.finalAmount, 0);
+  assert.equal(result.decisions.NVDA.finalAmount, 0);
+  assert.equal(result.plan.totalPlanned, 60);
+  assert.equal(result.decisions.QQQ.baseAmount, 15);
+  assert.equal(options.inputs.find(row => row.symbol === 'SPY').input.baseAmount, 30, 'caller inputs are not mutated');
+  const invalid = W.plan({ ...options, baseAmounts: { SPY: 0 } });
+  assert.equal(invalid.plan.totalPlanned, 0);
+  assert.ok(invalid.plan.items.every(row => row.reasonCodes.includes('BASE_AMOUNTS_INVALID')));
+});
