@@ -66,6 +66,29 @@ class LiveDataTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "manual"):
             live.publish_task("sync-snaptrade-holdings")
 
+    def test_holdings_whitespace_check_ignores_overlay_csv_but_rejects_bad_snapshot(self):
+        live.git("config", "core.autocrlf", "false")
+        live.git("config", "core.whitespace", "blank-at-eol,blank-at-eof,space-before-tab")
+        snapshot_path = "data/private/wealthsimple-holdings.enc.json"
+        csv_path = "results/dca_l2/v2/trades.csv"
+        for path, content in [(snapshot_path, b'{"n":1}\n'), (csv_path, b"symbol,value\n")]:
+            target = self.root / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+        base = live.commit_files(None, {snapshot_path: b'{"n":1}\n', csv_path: b"symbol,value\n"}, "baseline")
+        live.git("update-ref", "HEAD", base)
+        live.git("read-tree", base)
+        (self.root / csv_path).write_bytes(b"symbol,value\r\nSPY,1\r\n")
+        (self.root / snapshot_path).write_bytes(b'{"n":2}\n')
+        checks = [step["run"] for step in live.TASKS["sync-snaptrade-holdings"]["commands"]
+                  if step["run"].startswith("git diff --check")]
+        self.assertEqual(len(checks), 1)
+        check = checks[0].split()
+        self.assertEqual(subprocess.run(check, cwd=self.root, capture_output=True).returncode, 0)
+        self.assertNotEqual(subprocess.run(["git", "diff", "--check"], cwd=self.root, capture_output=True).returncode, 0)
+        (self.root / snapshot_path).write_bytes(b'{"n":2} \n')
+        self.assertNotEqual(subprocess.run(check, cwd=self.root, capture_output=True).returncode, 0)
+
     def test_skipped_quote_publication_is_not_reported_as_updated_quotes(self):
         text = live.market_outcome({"publishStatus": "skipped", "publishReason": "reference validation failed"})
         self.assertIn("行情未替换", text)
