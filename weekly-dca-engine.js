@@ -46,13 +46,60 @@
     return { rawDrawdownPct: dd, rawWeeklyVolatility: vol, trend: M.tickerTrend(closes, decisionChange),
       volatilityPct: vol === null ? null : money(vol * 100), drawdownPct: dd === null ? null : money(dd) };
   }
+  // Callers supply a complete, verified US/USD holdings universe. It includes
+  // held securities outside the buy list; cash never enters this denominator.
+  function gapBasePlan(options) {
+    const input = options || {}, preset = C.normalizedPreset(input.preset || C.PRESET);
+    const fail = code => ({ valid: false, reasonCodes: [code], baseBudget: 0, securitiesValue: null, gaps: {}, baseAmounts: null });
+    const positions = input.eligibleUSPositions;
+    if (!preset) return fail('GAP_PRESET_INVALID');
+    if (input.holdingsComplete !== true || !positions || typeof positions !== 'object' || Array.isArray(positions)) return fail('GAP_HOLDINGS_UNAVAILABLE');
+    const values = {};
+    for (const [symbol, position] of Object.entries(positions)) {
+      const value = typeof position === 'object' && position !== null ? position.current_value : position;
+      if (!/^[A-Z][A-Z0-9.-]{0,14}$/.test(symbol) || typeof value !== 'number' || !Number.isFinite(value) || value < 0) return fail('GAP_HOLDINGS_INVALID');
+      values[symbol] = value;
+    }
+    const base = input.baseBudget, normal = input.normalLimit == null ? base : input.normalLimit;
+    const feeBps = input.commissionBps == null ? 0 : input.commissionBps, cash = input.portfolioCashCap;
+    if (![base, normal, feeBps].every(value => typeof value === 'number' && Number.isFinite(value) && value >= 0)
+      || (cash != null && (typeof cash !== 'number' || !Number.isFinite(cash) || cash < 0))) return fail('GAP_BUDGET_INVALID');
+    const affordable = cash == null ? base : cash / (1 + feeBps / 10000);
+    const cents = Math.floor(Math.min(base, normal, affordable) * 100 + 1e-7), baseBudget = cents / 100;
+    if (!Number.isSafeInteger(cents)) return fail('GAP_BUDGET_INVALID');
+    const totalSecurities = Object.values(values).reduce((sum, value) => sum + value, 0);
+    if (!Number.isFinite(totalSecurities) || !Number.isSafeInteger(Math.round(totalSecurities * 100))) return fail('GAP_HOLDINGS_INVALID');
+    const securitiesValue = money(totalSecurities);
+    const assets = C.rowsForPreset(preset), gaps = {}, baseAmounts = {};
+    assets.forEach(asset => {
+      gaps[asset.symbol] = Math.max(0, asset.target_allocation * (securitiesValue + baseBudget) - (values[asset.symbol] || 0));
+      baseAmounts[asset.symbol] = 0;
+    });
+    const totalGap = Object.values(gaps).reduce((sum, value) => sum + value, 0);
+    if (cents && totalGap > 0) {
+      const parts = assets.map(asset => {
+        const exact = gaps[asset.symbol] / totalGap * cents;
+        return { symbol: asset.symbol, amount: Math.floor(exact), remainder: exact - Math.floor(exact) };
+      });
+      let tail = cents - parts.reduce((sum, part) => sum + part.amount, 0);
+      parts.slice().sort((a, b) => b.remainder - a.remainder || (a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0)).forEach(part => {
+        if (tail > 0 && gaps[part.symbol] > 0) { part.amount++; tail--; }
+      });
+      parts.forEach(part => { baseAmounts[part.symbol] = part.amount / 100; });
+    }
+    return { valid: true, reasonCodes: totalGap > 0 || !cents ? [] : ['GAP_NO_POSITIVE_DEFICIT'], baseBudget, securitiesValue, gaps, baseAmounts };
+  }
   function plan(options) {
     const rawConfig = options.config || D.getL2Config();
     const config = { ...rawConfig, configValid: rawConfig.configValid !== false && D.validateL2Config(rawConfig) };
     const state = { ...(options.policyState || {}) };
-    const inputs = options.inputs || [];
     const balanced = options.policyMode !== 'legacy';
+    const cashBasePriority = balanced && options.cashPolicyMode !== 'legacy';
     const assets = C.rowsForPreset(options.preset || C.PRESET);
+    const hasBaseAmounts = Object.hasOwn(options, 'baseAmounts');
+    const baseAmountsValid = !hasBaseAmounts || C.validateBaseAmounts(options.baseAmounts, options.preset || C.PRESET, options.baseBudget);
+    const inputs = (options.inputs || []).map(item => hasBaseAmounts ? { ...item, input: { ...item.input,
+      baseAmount: baseAmountsValid ? options.baseAmounts[item.symbol] || 0 : 0 } } : item);
     const date = options.plannedDate || (inputs[0] && inputs[0].input.date);
     const funding = balanced ? fundingPlan(options.budget.normalPool, options.budget.normalPoolUsed || 0,
       date, options.baseBudget, options.budget.weekNormalUsed || 0) : null;
@@ -60,7 +107,7 @@
       // Market timing does not halve the scheduled contribution. Explicit
       // action/data/concentration blocks still win; defensive states disable extras.
       const policy = balanced ? { ...config, base: { ...config.base, defensive: 1 } } : config;
-      const decision = D.evaluateDcaL2Policy(item.input, state, policy);
+      const decision = D.evaluateDcaL2Policy({ ...item.input, deferPortfolioCashCap: cashBasePriority }, state, policy);
       if (balanced && decision.reasonCodes.includes('DEFENSIVE_BASE_50')) {
         decision.reasonCodes = decision.reasonCodes.filter(code => code !== 'DEFENSIVE_BASE_50');
         decision.reasonCodes.push('SCHEDULED_BASE_PRESERVED');
@@ -95,14 +142,17 @@
       }
       return { symbol: item.symbol, decision, currentAllocationPct: item.input.currentAllocationPct };
     });
-    const budget = P.allocateDcaL2Plan(rows, options.budget);
+    // Account funding is applied once in Core, after any asset redirection.
+    const budget = P.allocateDcaL2Plan(rows, cashBasePriority ? { ...options.budget, portfolioCashCap: null } : options.budget);
     const crashLimit = balanced ? money(Math.min(budget.crashFundRemaining,
       Math.max(0, Number(options.budget.crashFund) * Number(config.crashFund.weeklyReleaseInitialMonthlyBudgetPct) - money(options.budget.weekCrashUsed)))) : budget.crashFundRemaining;
     if (funding) funding.crashLimit = crashLimit;
     const decisions = Object.fromEntries(budget.items.map(row => [row.symbol, row.decision]));
     const core = C.plan({ ...options.core, preset: options.preset || C.PRESET, baseBudget: options.baseBudget,
+      ...(hasBaseAmounts ? { baseAmounts: options.baseAmounts } : {}),
       normalPoolRemaining: funding ? Math.min(budget.normalPoolRemaining, funding.normalLimit) : budget.normalPoolRemaining, crashFundRemaining: crashLimit,
-      portfolioCashCap: options.budget.portfolioCashCap, commissionBps: options.commissionBps || 0, satelliteDecisions: decisions });
+      portfolioCashCap: options.budget.portfolioCashCap, optionalCashCap: cashBasePriority ? options.budget.optionalCashCap : null,
+      commissionBps: options.commissionBps || 0, satelliteDecisions: decisions });
     for (const row of core.items) {
       const decision = decisions[row.symbol];
       if (!decision) continue;
@@ -118,8 +168,9 @@
     budget.items.forEach(row => { row.finalAmount = row.decision.finalAmount; });
     core.funding = funding;
     return { plan: core, decisions, policyState: state, budgetReport: { ...budget, funding,
-      plannedNormal: core.plannedNormal, plannedCrash: core.plannedCrash, totalPlanned: core.totalPlanned,
+      plannedNormal: core.plannedNormal, plannedCrash: core.plannedCrash, plannedOptional: core.plannedOptional,
+      portfolioCashCap: core.portfolioCashCap, optionalCashCap: core.optionalCashCap, totalPlanned: core.totalPlanned,
       unallocatedCash: money(budget.normalPoolRemaining + budget.crashFundRemaining - core.totalPlanned) } };
   }
-  return Object.freeze({ plan, indicators, planWeeksInMonth, weeklyBudget, fundingPlan, version: 'weekly-dca-v2' });
+  return Object.freeze({ plan, indicators, planWeeksInMonth, weeklyBudget, fundingPlan, gapBasePlan, version: 'weekly-dca-v2' });
 });

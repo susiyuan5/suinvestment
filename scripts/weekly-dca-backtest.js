@@ -35,8 +35,18 @@ function signal(rows, weekly, date, regime) {
   return value;
 }
 function run(payload, options = {}) {
-  const config = JSON.parse(JSON.stringify(D.getL2Config()));
+  const config = JSON.parse(JSON.stringify(options.config || D.getL2Config()));
   const preset = options.preset || C.PRESET, assets = C.rowsForPreset(preset), symbols = assets.map(x => x.symbol);
+  if (!C.validatePreset(preset)) throw new Error('Invalid research preset');
+  const normalPool = options.normalPool ?? config.budget.defaultNormalPool;
+  const crashFund = options.crashFund ?? config.budget.defaultCrashFund;
+  if (![normalPool, crashFund].every(x => Number.isFinite(x) && x >= 0) || normalPool + crashFund <= 0) throw new Error('Invalid research budget');
+  const monthlyDeposit = normalPool + crashFund;
+  const variants = options.variants || [];
+  const standardNames = ['fixed_full_budget', 'fixed_same_reserve', 'current_v5_price_only', 'no_redirection', 'underweight_contributions', 'stable_base_limited_extra', 'balanced_weekly_v2'];
+  if (!Array.isArray(variants) || variants.some(v => !v || typeof v.name !== 'string' || !/^[a-z][a-z0-9_]*$/.test(v.name)
+    || standardNames.includes(v.name) || !['legacy', 'base_priority'].includes(v.cashPolicyMode) || !['target', 'gap'].includes(v.allocationMode))) throw new Error('Invalid research variant');
+  if (new Set(variants.map(v => v.name)).size !== variants.length) throw new Error('Duplicate research variant');
   const commissionBps = options.commissionBps ?? 10, slippageBps = options.slippageBps ?? 5;
   if (![commissionBps, slippageBps].every(x => Number.isFinite(x) && x >= 0)) throw new Error('Invalid costs');
   const all = {}, lookup = {};
@@ -63,17 +73,20 @@ function run(payload, options = {}) {
     if (!execution) { issues.push({ plannedDate, reason: 'no_trading_day_this_week' }); continue; }
     const signalDate = calendar[calendar.indexOf(execution) - 1];
     if (!signalDate || symbols.some(symbol => !lookup[symbol][signalDate])) continue;
-    if (symbols.some(symbol => !(lookup[symbol][execution].adjusted_open > 0))) {
+    if (symbols.some(symbol => !(lookup[symbol][execution].adjusted_open > 0) || !Number.isFinite(lookup[symbol][execution].adjusted_open))) {
       issues.push({ plannedDate, reason: 'missing_adjusted_open' }); continue;
     }
     events.set(execution, { signalDate, plannedDate });
   }
-  const names = ['fixed_full_budget', 'fixed_same_reserve', 'current_v5_price_only', 'no_redirection', 'underweight_contributions', 'stable_base_limited_extra', 'balanced_weekly_v2'];
+  const availableNames = standardNames.concat(variants.map(v => v.name));
+  const names = options.strategyNames || availableNames;
+  if (!Array.isArray(names) || !names.length || new Set(names).size !== names.length || names.some(name => !availableNames.includes(name))) throw new Error('Invalid research strategy selection');
+  const variantByName = Object.fromEntries(variants.map(v => [v.name, v]));
   const strategies = Object.fromEntries(names.map(name => [name, { cash: 0, holdings: Object.fromEntries(symbols.map(s => [s, 0])), invested: 0,
     fees: 0, slippage: 0, normalUsed: 0, crashUsed: 0, policyState: {}, deposits: 0, flows: [], curve: [], decisions: [], trades: [] }]));
   let lastMonth = '';
   for (const date of dates) {
-    const month = date.slice(0, 7), deposit = month !== lastMonth ? 400 : 0;
+    const month = date.slice(0, 7), deposit = month !== lastMonth ? monthlyDeposit : 0;
     lastMonth = month;
     for (const strategy of Object.values(strategies)) {
       if (deposit) { strategy.cash += deposit; strategy.deposits += deposit; strategy.flows.push({ date, amount: -deposit }); strategy.normalUsed = 0; strategy.crashUsed = 0; }
@@ -84,13 +97,13 @@ function run(payload, options = {}) {
       const regime = M.marketRegime(weekly.QQQ) || M.marketRegime(weekly.SPY) || { type: 'Neutral' };
       const signals = Object.fromEntries(symbols.map(s => [s, signal(all[s], weekly[s], event.signalDate, regime)]));
       for (const [name, strategy] of Object.entries(strategies)) {
-        const baseBudget = W.weeklyBudget(config.budget.defaultNormalPool, event.plannedDate);
+        const baseBudget = W.weeklyBudget(normalPool, event.plannedDate);
         const values = Object.fromEntries(symbols.map(s => [s, strategy.holdings[s] * lookup[s][event.signalDate].adjusted_close]));
         const assetValue = sum(Object.values(values));
         const actual = Object.fromEntries(symbols.map(s => [s, assetValue + strategy.cash > 0 ? C.money(values[s] / (assetValue + strategy.cash) * 100) : 0]));
         let orders;
         if (name.startsWith('fixed_') || name === 'underweight_contributions') {
-          const allowance = name === 'fixed_full_budget' ? 400 : 300;
+          const allowance = name === 'fixed_full_budget' ? monthlyDeposit : normalPool;
           const amount = Math.min(W.weeklyBudget(allowance, event.plannedDate), allowance - strategy.normalUsed, strategy.cash / (1 + commissionBps / 10000));
           let weights = assets.map(asset => asset.allocation);
           if (name === 'underweight_contributions') {
@@ -99,16 +112,29 @@ function run(payload, options = {}) {
           }
           orders = assets.map((asset, i) => ({ symbol: asset.symbol, baseAmount: Math.max(0, amount * weights[i]), extraAmount: 0, crashFundAmount: 0, finalAmount: Math.max(0, amount * weights[i]) }));
         } else {
+          const variant = variantByName[name], balanced = name === 'balanced_weekly_v2' || !!variant;
+          const cashPolicyMode = variant ? variant.cashPolicyMode : 'legacy';
+          const fullCash = balanced && cashPolicyMode === 'base_priority';
+          const portfolioCashCap = strategy.cash * (fullCash ? 1 : config.cashUsageCap);
+          let baseAmounts;
+          if (variant && variant.allocationMode === 'gap') {
+            const funding = W.fundingPlan(normalPool, strategy.normalUsed, event.plannedDate, baseBudget);
+            const gap = W.gapBasePlan({ preset, holdingsComplete: true,
+              eligibleUSPositions: values,
+              baseBudget, normalLimit: funding.normalLimit, portfolioCashCap, commissionBps });
+            if (!gap.valid) throw new Error('Invalid historical gap allocation: ' + gap.reasonCodes.join(','));
+            baseAmounts = gap.baseAmounts;
+          }
           const inputs = assets.map(asset => {
             const sig = signals[asset.symbol];
-            const gate = name === 'balanced_weekly_v2' ? Model.weeklyDcaActionGate(sig) : { actionBlocked: sig.actionBlocked };
+            const gate = balanced ? Model.weeklyDcaActionGate(sig) : { actionBlocked: sig.actionBlocked };
             return { symbol: asset.symbol, ...gate, input: {
               baseAmount: C.money(baseBudget * asset.allocation), price: lookup[asset.symbol][event.signalDate].adjusted_close,
               dataStatus: 'fresh', marketRegime: regime.type, panicActive: false,
               drawdownPct: sig.algorithm.drawdown, volatilityPct: sig.algorithm.realized_weekly_volatility,
               trendStatus: sig.algorithm.trend.status, currentAllocationPct: actual[asset.symbol],
-              normalPool: 300, normalPoolUsed: strategy.normalUsed, crashFundInitial: 100,
-              crashFundUsed: strategy.crashUsed, crashFundBalance: Math.max(0, 100 - strategy.crashUsed),
+              normalPool, normalPoolUsed: strategy.normalUsed, crashFundInitial: crashFund,
+              crashFundUsed: strategy.crashUsed, crashFundBalance: Math.max(0, crashFund - strategy.crashUsed),
               date: event.signalDate, availableCashProvided: true, availableCash: strategy.cash } };
           });
           let policyConfig = config;
@@ -118,19 +144,21 @@ function run(payload, options = {}) {
             inputs.forEach(item => { item.actionBlocked = false; });
           }
           const result = W.plan({ inputs, config: policyConfig, policyState: strategy.policyState, preset, baseBudget, commissionBps,
-            plannedDate: event.plannedDate, policyMode: name === 'balanced_weekly_v2' ? undefined : 'legacy',
-            budget: { normalPool: 300, normalPoolUsed: strategy.normalUsed, crashFund: 100, crashFundUsed: strategy.crashUsed,
-              portfolioCashCap: strategy.cash * config.cashUsageCap },
+            plannedDate: event.plannedDate, policyMode: balanced ? undefined : 'legacy', cashPolicyMode,
+            ...(baseAmounts ? { baseAmounts } : {}),
+            budget: { normalPool, normalPoolUsed: strategy.normalUsed, crashFund, crashFundUsed: strategy.crashUsed,
+              portfolioCashCap, ...(fullCash ? { optionalCashCap: strategy.cash * config.cashUsageCap } : {}) },
             core: { actualAllocations: actual, spyDataValid: true, qqqDataValid: true, cashOnlySymbols: name === 'no_redirection' ? symbols : [] } });
           strategy.policyState = result.policyState;
           orders = result.plan.items;
-          if (name === 'balanced_weekly_v2') {
+          if (orders.some(row => row.reasonCodes.includes('BASE_AMOUNTS_INVALID'))) throw new Error('Invalid research Base allocation: ' + name + ' ' + date);
+          if (balanced) {
             const plan = result.plan, funding = plan.funding;
             if (!plan.conservation.balanced || plan.plannedNormal > funding.normalLimit + 1e-7
               || plan.plannedNormal > Math.max(0, funding.normalRemaining - funding.futureReserved) + 1e-7
               || plan.plannedCrash > funding.crashLimit + 1e-7
-              || strategy.normalUsed + plan.plannedNormal > 300 + 1e-7
-              || strategy.crashUsed + plan.plannedCrash > 100 + 1e-7) throw new Error('Weekly funding invariant failed: ' + date);
+              || strategy.normalUsed + plan.plannedNormal > normalPool + 1e-7
+              || strategy.crashUsed + plan.plannedCrash > crashFund + 1e-7) throw new Error('Weekly funding invariant failed: ' + date);
           }
           strategy.decisions.push({ date, signalDate: event.signalDate, plannedDate: event.plannedDate, inputs, plan: result.plan });
         }
@@ -156,12 +184,13 @@ function run(payload, options = {}) {
     externalDeposits: strategy.deposits, invested: C.money(strategy.invested), finalValue: C.money(strategy.curve.at(-1).value), cash: C.money(strategy.cash),
     investmentRatio: strategy.invested / strategy.deposits, costs: C.money(strategy.fees + strategy.slippage), trades: strategy.trades.length,
     ...Metrics.performance(strategy.curve, strategy.flows) }]));
-  return { researchOnly: true, valid: events.size > 0 && strategies.current_v5_price_only.trades.length > 0 && strategies.balanced_weekly_v2.trades.length > 0 && !issues.some(x => x.reason === 'missing_adjusted_open'),
-    engineVersion: W.version, configVersion: config.version, presetVersion: preset.version, start: dates[0], end: dates.at(-1), events: events.size, summaries, issues,
+  return { researchOnly: true, valid: events.size > 0 && Object.values(strategies).some(strategy => strategy.trades.length > 0) && !issues.some(x => x.reason === 'missing_adjusted_open'),
+    engineVersion: W.version, configVersion: config.version, presetVersion: preset.version, allocations: Object.fromEntries(assets.map(a => [a.symbol, a.allocation])),
+    researchVariants: variants, budget: { normalPool, crashFund, monthlyDeposit }, start: dates[0], end: dates.at(-1), events: events.size, summaries, issues,
     assumptions: { signal: 'prior raw close and weekly raw closes as on dashboard (adjusted fallback in synthetic fixtures); adjusted OHLC for total-return execution and valuation', execution: 'Tuesday open, holiday through Friday',
-      deposits: '400 at first trading day of each calendar month, before returns; weekly DCA pools only, excluding the separate 100 independent Dip pool',
-      budget: '300 normal + 100 Crash per month; calendar Tuesdays identified by plannedDate; missing execution does not redistribute its budget',
-      strategies: 'balanced_weekly_v2 uses the shared default planner; current_v5_price_only, no_redirection and stable_base_limited_extra explicitly use legacy policy mode',
+      deposits: monthlyDeposit + ' at first trading day of each calendar month, before returns; weekly DCA pools only, excluding the separate independent Dip pool',
+      budget: normalPool + ' normal + ' + crashFund + ' Crash per month; calendar Tuesdays identified by plannedDate; missing execution does not redistribute its budget',
+      strategies: 'balanced_weekly_v2 freezes the prior 30% cash policy with current hard gates; named variants use the shared planner with explicit cash/allocation modes; legacy comparisons are research ablations only',
       commissionBps, slippageBps, cashYield: 0, currency: 'constant currency research units; no historical CAD FX series',
       exclusions: ['historical news and fundamentals overlays', 'manual panic/overrides', 'broker execution restrictions', 'live portfolio overlay history'],
       promotionAllowed: false }, strategies };
@@ -169,7 +198,8 @@ function run(payload, options = {}) {
 if (require.main === module && !process.argv.includes('--dip')) {
   const args = process.argv.slice(2), option = (name, fallback) => args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
   const prices = option('--prices', 'data/v2/backtest-adjusted-daily.json');
-  const output = option('--output', 'results/weekly_dca_v2');
+  const output = option('--output', 'results/weekly_dca_research');
+  if (['results/weekly_dca_v1', 'results/weekly_dca_v2'].some(frozen => path.resolve(frozen) === path.resolve(output))) throw new Error('Frozen prior research reports must not be overwritten');
   const raw = fs.readFileSync(prices);
   const result = run(JSON.parse(raw), { start: option('--start', '2022-06-01'), asOf: option('--as-of', undefined),
     commissionBps: Number(option('--commission-bps', 10)), slippageBps: Number(option('--slippage-bps', 5)) });

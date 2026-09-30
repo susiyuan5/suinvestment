@@ -1,0 +1,42 @@
+.allocation-suggestion-draft[hidden] { display: none; }
+.weekly-plan-settings-menu {
+  position: absolute; top: 100%; right: 0; z-index: 12;
+  display: grid; gap: 6px; width: 170px; padding: 6px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+}
+#weeklyPlanSettings:not([open]) > .weekly-plan-settings-menu { display: none; }
+.weekly-plan-settings-menu button { min-height: 40px; width: 100%; }
+.allocation-suggestion-draft {
+  min-width: 0;
+  margin: 14px 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-2);
+}
+.allocation-suggestion-draft h4 { margin: 0; font-size: 1.05rem; }
+.allocation-suggestion-draft p { margin: 8px 0; color: var(--muted); font-size: .82rem; line-height: 1.55; }
+.allocation-suggestion-table-scroll { max-height: 470px; overflow: auto; margin: 12px 0; }
+.allocation-suggestion-table { width: 100%; border-collapse: collapse; text-align: left; }
+.allocation-suggestion-table th, .allocation-suggestion-table td { padding: 8px; border-bottom: 1px solid var(--line); font-size: .82rem; }
+.allocation-suggestion-table thead th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.allocation-suggestion-table input { width: 100%; min-width: 72px; max-width: 110px; min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); }
+.allocation-suggestion-table input[aria-invalid="true"] { border-color: var(--danger); }
+.allocation-suggestion-add { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.allocation-suggestion-add label { display: grid; gap: 6px; color: var(--muted); font-size: .82rem; }
+.allocation-suggestion-add label:first-child { flex: 1; min-width: 185px; }
+.allocation-suggestion-add select, .allocation-suggestion-add input { min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+.allocation-suggestion-add input { width: 100px; }
+.allocation-suggestion-add select:focus-visible { outline: 3px solid rgba(102, 163, 255, .45); outline-offset: 2px; }
+.allocation-suggestion-metrics, .allocation-suggestion-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.allocation-suggestion-metrics { color: var(--muted); font-size: .82rem; }
+.allocation-suggestion-metrics strong { color: var(--text); }
+#allocationSuggestionStatus.is-error { color: var(--danger); }
+#allocationSuggestionWarning { color: var(--warning); }
+@media (max-width: 600px) {
+  .weekly-plan-settings-menu { position: static; width: 100%; margin-top: 6px; }
+  .allocation-suggestion-draft { padding: 12px; }
+  .allocation-suggestion-table th, .allocation-suggestion-table td { padding: 7px 4px; font-size: .75rem; }
+  .allocation-suggestion-table .secondary-button { padding: 8px; font-size: .75rem; }
+  .allocation-suggestion-actions button { flex: 1; min-width: 125px; }
+}

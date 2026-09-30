@@ -79,6 +79,9 @@
     if (state.crashFundInitial === undefined && Number.isFinite(Number(data.crashFundInitial))) state.crashFundInitial = Number(data.crashFundInitial);
     if (state.crashFundBalance === undefined && Number.isFinite(Number(data.crashFundBalance))) state.crashFundBalance = Number(data.crashFundBalance);
     configureL2BudgetState(data, state, config);
+    // The shared planner applies the account limit after all asset risk gates.
+    // Deferring this cap still preserves the zero-cash hard block below.
+    state._deferPortfolioCashCap = data.deferPortfolioCashCap === true;
     const baseOriginal = roundMoney(nonNegative(data.baseAmount));
     const price = Number(data.price);
     const quality = String(data.dataStatus || "invalid").toLowerCase();
@@ -261,7 +264,7 @@
       crash = roundMoney(Math.min(crash, crashRemaining));
       if (crash < originalCrash) reasons.push("CRASH_FUND_BUDGET_APPLIED");
     }
-    const cap = cashProvided && Number.isFinite(availableCash) ? roundMoney(availableCash * config.cashUsageCap) : null;
+    const cap = !policyState._deferPortfolioCashCap && cashProvided && Number.isFinite(availableCash) ? roundMoney(availableCash * config.cashUsageCap) : null;
     let finalBase = base, finalExtra = extra, finalCrash = crash;
     if (cap !== null && finalBase + finalExtra + finalCrash > cap) {
       let reduction = finalBase + finalExtra + finalCrash - cap;

@@ -119,3 +119,53 @@ test("fractional-cent cash limits are rounded down before allocation", () => {
     assert.ok(result.conservation.balanced);
   }
 });
+
+test('optional account cap cuts Crash then Extra and preserves an affordable Base', () => {
+  const result = policy.plan({ baseBudget: 100, normalPoolRemaining: 140, crashFundRemaining: 40,
+    portfolioCashCap: 200, optionalCashCap: 30,
+    satelliteDecisions: { NVDA: { baseAmount: 12.5, extraAmount: 40, crashFundAmount: 40, finalAmount: 92.5 } } });
+  assert.equal(result.items.reduce((sum, row) => sum + row.baseAmount, 0), 100);
+  assert.equal(result.plannedOptional, 30);
+  assert.equal(result.plannedCrash, 0);
+  assert.equal(result.items.find(row => row.symbol === 'NVDA').extraAmount, 30);
+  assert.equal(result.totalPlanned, 130);
+  assert.ok(result.conservation.balanced);
+});
+
+test('real and optional cash limits include fees and never exceed fractional cents', () => {
+  for (const cash of [0, .006, .016, 10, 100]) {
+    const result = policy.plan({ baseBudget: 75, normalPoolRemaining: 150, crashFundRemaining: 20,
+      portfolioCashCap: cash, optionalCashCap: cash * .3, commissionBps: 100,
+      satelliteDecisions: { NVDA: { baseAmount: 9.38, extraAmount: 15, crashFundAmount: 20, finalAmount: 44.38 } } });
+    assert.ok(result.totalPlanned * 1.01 <= cash + 1e-8);
+    assert.ok(result.plannedOptional * 1.01 <= cash * .3 + 1e-8);
+    assert.ok(result.conservation.balanced);
+  }
+});
+
+test('Base amount override cannot resurrect zero SPY through rounding or redirection', () => {
+  const baseAmounts = Object.fromEntries(policy.SYMBOLS.map(symbol => [symbol, 0]));
+  Object.assign(baseAmounts, { NVDA: 9.99, KO: 10 });
+  const normal = policy.plan({ baseBudget: 20, baseAmounts, crashFundRemaining: 0 });
+  assert.equal(normal.items[0].finalAmount, 0);
+  assert.equal(normal.totalPlanned, 19.99);
+  const blocked = policy.plan({ baseBudget: 20, baseAmounts, crashFundRemaining: 0, actualAllocations: { NVDA: 18 } });
+  assert.equal(blocked.items[0].finalAmount, 0);
+  assert.equal(blocked.spyRedirected, 0);
+  assert.equal(blocked.totalPlanned, 10);
+  assert.equal(blocked.items.find(row => row.symbol === 'NVDA').finalAmount, 0);
+});
+
+test('invalid or incomplete Base overrides block the whole plan without restoring target buys', () => {
+  const valid = Object.fromEntries(policy.SYMBOLS.map(symbol => [symbol, 0]));
+  const incomplete = { ...valid }; delete incomplete.KO;
+  for (const baseAmounts of [null, {}, incomplete, { ...valid, NVDA: NaN }, { ...valid, NVDA: null },
+    { ...valid, NVDA: '10' }, { ...valid, NVDA: -.01 }, { ...valid, NVDA: .001 },
+    { ...valid, NVDA: 20.01 }, { ...valid, MSFT: 0 }]) {
+    const result = policy.plan({ baseBudget: 20, baseAmounts, crashFundRemaining: 100,
+      satelliteDecisions: { NVDA: { finalAmount: 40, extraAmount: 10, crashFundAmount: 10 } } });
+    assert.equal(result.totalPlanned, 0);
+    assert.ok(result.items.every(row => row.reasonCodes.includes('BASE_AMOUNTS_INVALID')));
+    assert.ok(result.conservation.balanced);
+  }
+});
