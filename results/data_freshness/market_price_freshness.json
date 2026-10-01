@@ -1,12 +1,14 @@
 {
-  "generatedAt": "2026-09-30T12:49:03.558400Z",
-  "publishStatus": "published",
-  "publishReason": "Validated references and monotonic quote timestamps",
+  "generatedAt": "2026-10-01T01:21:38.321049Z",
+  "publishStatus": "skipped",
+  "publishReason": "QQQ and SPY must both be validated before publishing",
   "totalSymbols": 8,
-  "freshSymbols": 8,
-  "staleSymbols": 0,
+  "freshSymbols": 1,
+  "staleSymbols": 7,
   "freshSymbolNames": [
-    "BYDDY",
+    "BYDDY"
+  ],
+  "staleSymbolNames": [
     "MSFT",
     "NVDA",
     "AAPL",
@@ -15,31 +17,31 @@
     "QQQ",
     "SPY"
   ],
-  "staleSymbolNames": [],
   "sourceCounts": {
-    "Yahoo Finance Chart API": 8
+    "Yahoo Finance Chart API": 6,
+    "Previous weekly snapshot": 2
   },
   "symbols": {
     "BYDDY": {
       "symbol": "BYDDY",
-      "price": 9.51,
-      "latestClose": 9.51,
-      "latestDate": "2026-09-29",
-      "previousClose": 9.87,
-      "previousDate": "2026-09-28",
-      "weekAgoClose": 10.36,
-      "weekAgoDate": "2026-09-22",
-      "dailyChange": -3.65,
-      "weeklyChange": -8.2,
-      "decisionChange": -8.2,
-      "quoteTimestamp": "2026-09-29T20:00:00Z",
-      "fetchTimestamp": "2026-09-30T12:49:03.704156Z",
+      "price": 9.59,
+      "latestClose": 9.59,
+      "latestDate": "2026-09-30",
+      "previousClose": 9.51,
+      "previousDate": "2026-09-29",
+      "weekAgoClose": 10.12,
+      "weekAgoDate": "2026-09-23",
+      "dailyChange": 0.84,
+      "weeklyChange": -5.24,
+      "decisionChange": -5.24,
+      "quoteTimestamp": "2026-09-30T20:00:01Z",
+      "fetchTimestamp": "2026-10-01T01:21:38.410066Z",
       "source": "Yahoo Finance Chart API",
       "sourceType": "api",
       "trustedSource": true,
       "marketState": null,
       "exchange": "PNK",
-      "freshnessAgeHours": 16.82,
+      "freshnessAgeHours": 5.36,
       "validationStatus": "validated",
       "validationReason": "Price and timestamp validated",
       "validationWarnings": [],
@@ -57,7 +59,7 @@
     },
     "MSFT": {
       "symbol": "MSFT",
-      "price": 508.96,
+      "price": 512.9,
       "latestClose": 508.96,
       "latestDate": "2026-09-29",
       "previousClose": 509.22,
@@ -68,31 +70,31 @@
       "weeklyChange": 2.2,
       "decisionChange": -0.05,
       "quoteTimestamp": "2026-09-29T20:00:00Z",
-      "fetchTimestamp": "2026-09-30T12:49:03.990728Z",
+      "fetchTimestamp": "2026-10-01T01:21:38.652797Z",
       "source": "Yahoo Finance Chart API",
       "sourceType": "api",
       "trustedSource": true,
       "marketState": null,
       "exchange": "NMS",
-      "freshnessAgeHours": 16.82,
-      "validationStatus": "market_closed_last_close",
-      "validationReason": "Latest official close retained while the market is closed",
+      "freshnessAgeHours": 29.36,
+      "validationStatus": "stale",
+      "validationReason": "Missing the latest completed trading session",
       "validationWarnings": [],
       "calendarVersion": "us-equity-sessions-2026-2028-v1",
       "sessionAssessment": {
         "known": true,
         "closed": true,
-        "eligible": true,
-        "missedSession": false,
-        "expectedClose": "2026-09-29T20:00:00Z",
-        "reason": "latest_official_close"
+        "eligible": false,
+        "missedSession": true,
+        "expectedClose": "2026-09-30T20:00:00Z",
+        "reason": "missing_latest_session"
       },
-      "stale": false,
-      "staleReason": ""
+      "stale": true,
+      "staleReason": "Missing the latest completed trading session"
     },
     "NVDA": {
       "symbol": "NVDA",
-      "price": 227.21,
+      "price": 228.38,
       "latestClose": 227.21,
       "latestDate": "2026-09-29",
       "previousClose": 228.86,
@@ -103,31 +105,31 @@
       "weeklyChange": -0.73,
       "decisionChange": -0.73,
       "quoteTimestamp": "2026-09-29T20:00:00Z",
-      "fetchTimestamp": "2026-09-30T12:49:04.258109Z",
+      "fetchTimestamp": "2026-10-01T01:21:39.636265Z",
       "source": "Yahoo Finance Chart API",
       "sourceType": "api",
       "trustedSource": true,
       "marketState": null,
       "exchange": "NMS",
-      "freshnessAgeHours": 16.82,
-      "validationStatus": "market_closed_last_close",
-      "validationReason": "Latest official close retained while the market is closed",
+      "freshnessAgeHours": 29.36,
+      "validationStatus": "stale",
+      "validationReason": "Missing the latest completed trading session",
       "validationWarnings": [],
       "calendarVersion": "us-equity-sessions-2026-2028-v1",
       "sessionAssessment": {
         "known": true,
         "closed": true,
-        "eligible": true,
-        "missedSession": false,
-        "expectedClose": "2026-09-29T20:00:00Z",
-        "reason": "latest_official_close"
+        "eligible": false,
+        "missedSession": true,
+        "expectedClose": "2026-09-30T20:00:00Z",
+        "reason": "missing_latest_session"
       },
-      "stale": false,
-      "staleReason": ""
+      "stale": true,
+      "staleReason": "Missing the latest completed trading session"
     },
     "AAPL": {
       "symbol": "AAPL",
-      "price": 329.4,
+      "price": 333.02,
       "latestClose": 329.4,
       "latestDate": "2026-09-29",
       "previousClose": 338.4,
@@ -138,27 +140,27 @@
       "weeklyChange": -3.05,
       "decisionChange": -3.05,
       "quoteTimestamp": "2026-09-29T20:00:00Z",
-      "fetchTimestamp": "2026-09-30T12:49:04.518432Z",
+      "fetchTimestamp": "2026-10-01T01:21:40.494246Z",
       "source": "Yahoo Finance Chart API",
       "sourceType": "api",
       "trustedSource": true,
       "marketState": null,
       "exchange": "NMS",
-      "freshnessAgeHours": 16.82,
-      "validationStatus": "market_closed_last_close",
-      "validationReason": "Latest official close retained while the market is closed",
+      "freshnessAgeHours": 29.36,
+      "validationStatus": "stale",
+      "validationReason": "Missing the latest completed trading session",
       "validationWarnings": [],
       "calendarVersion": "us-equity-sessions-2026-2028-v1",
       "sessionAssessment": {
         "known": true,
         "closed": true,
-        "eligible": true,
-        "missedSession": false,
-        "expectedClose": "2026-09-29T20:00:00Z",
-        "reason": "latest_official_close"
+        "eligible": false,
+        "missedSession": true,
+        "expectedClose": "2026-09-30T20:00:00Z",
+        "reason": "missing_latest_session"
       },
-      "stale": false,
-      "staleReason": ""
+      "stale": true,
+      "staleReason": "Missing the latest completed trading session"
     },
     "ASML": {
       "symbol": "ASML",
@@ -173,16 +175,19 @@
       "weeklyChange": 4.95,
       "decisionChange": 3.56,
       "quoteTimestamp": "2026-09-29T20:00:01Z",
-      "fetchTimestamp": "2026-09-30T12:49:04.765859Z",
-      "source": "Yahoo Finance Chart API",
-      "sourceType": "api",
+      "fetchTimestamp": "2026-10-01T01:21:38.321049Z",
+      "source": "Previous weekly snapshot",
+      "sourceType": "fallback",
       "trustedSource": true,
       "marketState": null,
       "exchange": "NMS",
-      "freshnessAgeHours": 16.82,
-      "validationStatus": "market_closed_last_close",
-      "validationReason": "Latest official close retained while the market is closed",
-      "validationWarnings": [],
+      "freshnessAgeHours": 29.36,
+      "validationStatus": "stale_fallback",
+      "validationReason": "Yahoo Finance Chart API: Missing the latest completed trading session | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "validationWarnings": [
+        "Yahoo Finance Chart API: Missing the latest completed trading session",
+        "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+      ],
       "calendarVersion": "us-equity-sessions-2026-2028-v1",
       "sessionAssessment": {
         "known": true,
@@ -192,8 +197,10 @@
         "expectedClose": "2026-09-29T20:00:00Z",
         "reason": "latest_official_close"
       },
-      "stale": false,
-      "staleReason": ""
+      "stale": true,
+      "staleReason": "Yahoo Finance Chart API: Missing the latest completed trading session | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "upstreamSource": "Yahoo Finance Chart API",
+      "staleFrom": "2026-09-30T12:49:03.558400Z"
     },
     "KO": {
       "symbol": "KO",
@@ -208,16 +215,19 @@
       "weeklyChange": -2.0,
       "decisionChange": -2.0,
       "quoteTimestamp": "2026-09-29T20:00:02Z",
-      "fetchTimestamp": "2026-09-30T12:49:05.070473Z",
-      "source": "Yahoo Finance Chart API",
-      "sourceType": "api",
+      "fetchTimestamp": "2026-10-01T01:21:38.321049Z",
+      "source": "Previous weekly snapshot",
+      "sourceType": "fallback",
       "trustedSource": true,
       "marketState": null,
       "exchange": "NYQ",
-      "freshnessAgeHours": 16.82,
-      "validationStatus": "market_closed_last_close",
-      "validationReason": "Latest official close retained while the market is closed",
-      "validationWarnings": [],
+      "freshnessAgeHours": 29.36,
+      "validationStatus": "stale_fallback",
+      "validationReason": "Yahoo Finance Chart API: Missing the latest completed trading session | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "validationWarnings": [
+        "Yahoo Finance Chart API: Missing the latest completed trading session",
+        "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+      ],
       "calendarVersion": "us-equity-sessions-2026-2028-v1",
       "sessionAssessment": {
         "known": true,
@@ -227,12 +237,14 @@
         "expectedClose": "2026-09-29T20:00:00Z",
         "reason": "latest_official_close"
       },
-      "stale": false,
-      "staleReason": ""
+      "stale": true,
+      "staleReason": "Yahoo Finance Chart API: Missing the latest completed trading session | Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes",
+      "upstreamSource": "Yahoo Finance Chart API",
+      "staleFrom": "2026-09-30T12:49:03.558400Z"
     },
     "QQQ": {
       "symbol": "QQQ",
-      "price": 737.93,
+      "price": 739.77,
       "latestClose": 737.93,
       "latestDate": "2026-09-29",
       "previousClose": 736.53,
@@ -243,31 +255,31 @@
       "weeklyChange": -1.27,
       "decisionChange": -1.27,
       "quoteTimestamp": "2026-09-29T20:00:00Z",
-      "fetchTimestamp": "2026-09-30T12:49:05.310705Z",
+      "fetchTimestamp": "2026-10-01T01:21:43.442223Z",
       "source": "Yahoo Finance Chart API",
       "sourceType": "api",
       "trustedSource": true,
       "marketState": null,
       "exchange": "NGM",
-      "freshnessAgeHours": 16.82,
-      "validationStatus": "market_closed_last_close",
-      "validationReason": "Latest official close retained while the market is closed",
+      "freshnessAgeHours": 29.36,
+      "validationStatus": "stale",
+      "validationReason": "Missing the latest completed trading session",
       "validationWarnings": [],
       "calendarVersion": "us-equity-sessions-2026-2028-v1",
       "sessionAssessment": {
         "known": true,
         "closed": true,
-        "eligible": true,
-        "missedSession": false,
-        "expectedClose": "2026-09-29T20:00:00Z",
-        "reason": "latest_official_close"
+        "eligible": false,
+        "missedSession": true,
+        "expectedClose": "2026-09-30T20:00:00Z",
+        "reason": "missing_latest_session"
       },
-      "stale": false,
-      "staleReason": ""
+      "stale": true,
+      "staleReason": "Missing the latest completed trading session"
     },
     "SPY": {
       "symbol": "SPY",
-      "price": 764.2,
+      "price": 762.63,
       "latestClose": 764.2,
       "latestDate": "2026-09-29",
       "previousClose": 765.61,
@@ -278,28 +290,57 @@
       "weeklyChange": -1.19,
       "decisionChange": -1.19,
       "quoteTimestamp": "2026-09-29T20:00:00Z",
-      "fetchTimestamp": "2026-09-30T12:49:05.566836Z",
+      "fetchTimestamp": "2026-10-01T01:21:44.415590Z",
       "source": "Yahoo Finance Chart API",
       "sourceType": "api",
       "trustedSource": true,
       "marketState": null,
       "exchange": "PCX",
-      "freshnessAgeHours": 16.82,
-      "validationStatus": "market_closed_last_close",
-      "validationReason": "Latest official close retained while the market is closed",
+      "freshnessAgeHours": 29.36,
+      "validationStatus": "stale",
+      "validationReason": "Missing the latest completed trading session",
       "validationWarnings": [],
       "calendarVersion": "us-equity-sessions-2026-2028-v1",
       "sessionAssessment": {
         "known": true,
         "closed": true,
-        "eligible": true,
-        "missedSession": false,
-        "expectedClose": "2026-09-29T20:00:00Z",
-        "reason": "latest_official_close"
+        "eligible": false,
+        "missedSession": true,
+        "expectedClose": "2026-09-30T20:00:00Z",
+        "reason": "missing_latest_session"
       },
-      "stale": false,
-      "staleReason": ""
+      "stale": true,
+      "staleReason": "Missing the latest completed trading session"
     }
   },
-  "errors": {}
+  "errors": {
+    "MSFT": [
+      "Yahoo Finance Chart API: Missing the latest completed trading session",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "NVDA": [
+      "Yahoo Finance Chart API: Missing the latest completed trading session",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "AAPL": [
+      "Yahoo Finance Chart API: Missing the latest completed trading session",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "ASML": [
+      "Yahoo Finance Chart API: Missing the latest completed trading session",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "KO": [
+      "Yahoo Finance Chart API: Missing the latest completed trading session",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "QQQ": [
+      "Yahoo Finance Chart API: Missing the latest completed trading session",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ],
+    "SPY": [
+      "Yahoo Finance Chart API: Missing the latest completed trading session",
+      "Stooq daily CSV API: Stooq daily CSV API returned fewer than 6 valid closes"
+    ]
+  }
 }
