@@ -1,7 +1,7 @@
 # Project Health
 
 - Status: **HEALTHY**
-- Generated: `2026-09-30T18:34:33.424641+00:00`
+- Generated: `2026-10-01T19:02:41.479899+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
@@ -10,8 +10,8 @@
 
 ## Historical Coverage
 
-- QQQ: 278 rows; latest `2026-09-25`; lag `5` days
-- SPY: 278 rows; latest `2026-09-25`; lag `5` days
+- QQQ: 278 rows; latest `2026-09-25`; lag `6` days
+- SPY: 278 rows; latest `2026-09-25`; lag `6` days
 
 ## Workflows
 
@@ -36,7 +36,7 @@
 
 ## Shadow
 
-- Observation runs: `4`
+- Observation runs: `5`
 - Complete mature outcomes: `0`
 - Human review gate: `False`
 - Live promotion eligible: `false`
