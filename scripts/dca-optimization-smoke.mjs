@@ -6,16 +6,19 @@ const base = process.env.BASE_URL;
 if (!base) throw Error('BASE_URL is required');
 const now = '2026-09-30T17:00:00Z', quoteAt = '2026-09-30T16:00:00Z';
 // Independent synthetic configuration and holdings; no live account values.
-const target = { SPY: .2, QQQ: .15, NVDA: .15, AAPL: .10, ASML: .10, QNT: .075, JOBY: .075, PEP: .075, CBRS: .075 };
+const weeklyWeights = { SPY: .2, QQQ: .15, NVDA: .15, AAPL: .10, ASML: .10, QNT: .075, JOBY: .075, PEP: .075, CBRS: .075 };
 const usValues = { SPY: 60, QQQ: 25, NVDA: 25, AAPL: 20, ASML: 20, QNT: 5, CBRS: 5, JOBY: 10, PEP: 10, KO: 10, WMT: 10 };
 const symbols = Object.keys(usValues), portfolioKey = 'su-investment-pro:portfolio';
 const marketTemplate = JSON.parse(await fs.readFile('data/market-data.json', 'utf8'));
 const historyTemplate = JSON.parse(await fs.readFile('data/backtest-prices.json', 'utf8'));
 const evidence = { fixture: 'Synthetic isolated browser fixture; not a prediction of live signals.', checks: [] };
+const checkpoint = name => console.log('Weekly contribution audit: ' + name);
 const browser = await chromium.launch({ headless: true });
 
-async function setup({ missingPublished = [], hardDrawdown = false, stale = false } = {}) {
+async function setup({ missingPublished = [], hardDrawdown = false, stale = false, weights = weeklyWeights } = {}) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'zh-CN' });
+  context.setDefaultTimeout(30000);
+  context.setDefaultNavigationTimeout(30000);
   const errors = [], requests = [], market = structuredClone(marketTemplate), history = structuredClone(historyTemplate);
   market.generatedAt = now; market.symbols = {}; history.generatedAt = now; history.symbols = {};
   for (const symbol of symbols) {
@@ -60,7 +63,7 @@ async function setup({ missingPublished = [], hardDrawdown = false, stale = fals
       planningMigrationVersion: 'usd-planning-v2', planningMigrationPending: false, fxRate: 1.35, fxAsOf: now, fxFeeRate: 0, fxMaxAgeDays: 3 }));
     localStorage.setItem('su-investment-pro:display-currency', 'USD');
     localStorage.setItem('smoke:initialized', 'true');
-  }, { target, now });
+  }, { target: weights, now });
   const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
   await page.clock.setFixedTime(now);
   await page.goto(base);
@@ -84,7 +87,7 @@ async function openDraft(page) {
   await page.locator('#openAllocationDraftBtn').click();
   await page.locator('#allocationSuggestionDraft').waitFor({ state: 'visible' });
 }
-async function automaticHoldings(page, empty = false, anomaly = '', cash = 100) {
+async function automaticHoldings(page, empty = false, anomaly = '', cash = 100, values = usValues) {
   await page.evaluate(({ usValues, now, empty, anomaly, cash }) => {
     const holdings = empty ? [] : Object.entries(usValues).map(([symbol, value]) => ({ symbol, included_in_stock_plan: true,
       instrument_kind: symbol === 'SPY' || symbol === 'QQQ' ? 'etf' : 'stock', listing_currency: 'USD', position_currency: 'USD',
@@ -102,11 +105,12 @@ async function automaticHoldings(page, empty = false, anomaly = '', cash = 100) 
       accounts: [{ account_id: 'smoke', account_name: 'Smoke TFSA', account_category: 'registered', balances: [{ currency: 'USD', cash }] }], holdings };
     const risk = SnaptradeHoldingsView.portfolioRisk(snapshot);
     window.dispatchEvent(new CustomEvent('snaptrade:holdings-updated', { detail: { status: 'ready', sourceMode: 'automatic', snapshot, portfolioRisk: risk } }));
-  }, { usValues, now, empty, anomaly, cash });
+  }, { usValues: values, now, empty, anomaly, cash });
   await page.waitForFunction(expected => window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__.plan?.allocationContext?.complete === expected, !anomaly);
 }
 
 try {
+  checkpoint('initialization');
   const main = await setup(), { page } = main;
   const original = await stored(page);
   await openDraft(page);
@@ -118,43 +122,58 @@ try {
   assert.equal(await stored(page), original, 'cancelling does not persist');
   evidence.checks.push('11-symbol draft opens and cancels without saving');
 
+  checkpoint('weekly weights and existing holdings');
   await automaticHoldings(page);
   const current = await plan(page);
   assert.equal(current.allocationContext.securitiesValue.toFixed(2), '200.00');
   assert.deepEqual(current.allocationContext.excludedSymbols.sort(), ['AEP.VN', 'GRID.TO']);
-  assert.equal(current.gapPlan.baseBudget, 50);
-  assert.equal(current.gapPlan.baseAmounts.SPY, 0);
-  assert.equal(current.items.find(row => row.symbol === 'SPY').finalAmount, 0);
+  assert.equal(current.contributionPlan.valid, true);
+  assert.equal(current.contributionPlan.allocationMode, 'weekly_contribution');
+  assert.equal(current.contributionPlan.baseBudget, 50);
+  assert.equal(current.contributionPlan.baseAmounts.SPY, 10);
+  assert.equal(current.items.find(row => row.symbol === 'SPY').baseAmount, 10, 'SPY weekly Base is 20% even when its holdings exceed 20%');
+  assert.equal(current.items.find(row => row.symbol === 'SPY').finalAmount, 10);
   assert.equal(current.totalPlanned, 50, 'affordable Base exceeds 30% of 100 account cash');
   assert.ok(current.totalPlanned > 100 * .3);
   const risk = await page.evaluate(() => window.__SUINVESTMENT_PORTFOLIO_RISK__);
   assert.equal(risk.positions.SPY.current_allocation, 21.43, 'legacy risk denominator stays plan securities plus cash');
-  assert.equal(Object.hasOwn(current.gapPlan.baseAmounts, 'WMT'), false, 'outside-plan US holdings affect weights without becoming buys');
+  assert.equal(Object.hasOwn(current.contributionPlan.baseAmounts, 'WMT'), false, 'outside-plan US holdings never become automatic weekly buys');
+  assert.equal(await page.locator('.weekly-decision-target').count(), 0, 'weekly operation rows omit current-to-target holdings percentages');
+  assert.equal(await page.locator('[data-weekly-allocation-symbol="SPY"]').getAttribute('aria-label'), 'SPY 每周基础投入比例');
   const unknown = await page.evaluate(() => window.__SUINVESTMENT_SIGNALS__.find(row => row.symbol === 'QNT'));
   assert.equal(unknown.risk_data_status, 'unknown');
   assert.equal(current.items.find(row => row.symbol === 'QNT').extraAmount, 0);
   assert.equal(current.items.find(row => row.symbol === 'QNT').crashFundAmount, 0);
   assert.match(await page.locator('[data-symbol="QNT"]').first().textContent(), /风险未知/);
   assert.match(await page.locator('#weeklyDecisionRows > [data-symbol="QNT"] .weekly-decision-status').textContent(), /风险未知/);
-  evidence.checks.push('complete automatic US holdings exclude CAD and cash; zero-SPY Base remains zero; full 50 Base funded; unknown history blocks enhancements');
-  evidence.syntheticPlan = { base: current.gapPlan.baseBudget, planned: current.totalPlanned, eligibleSecurities: current.allocationContext.securitiesValue, legacySpyPct: risk.positions.SPY.current_allocation };
+  evidence.checks.push('overweight SPY receives its 20% weekly Base of 10 from a funded Base of 50; holdings percentages do not appear in weekly rows; unknown history blocks enhancements');
+  evidence.syntheticPlan = { base: current.contributionPlan.baseBudget, spyBase: current.contributionPlan.baseAmounts.SPY, planned: current.totalPlanned, eligibleSecurities: current.allocationContext.securitiesValue, legacySpyPct: risk.positions.SPY.current_allocation };
   await automaticHoldings(page, false, '', 1000);
   const moreCash = await plan(page);
-  assert.deepEqual(moreCash.gapPlan.baseAmounts, current.gapPlan.baseAmounts);
+  assert.deepEqual(moreCash.contributionPlan.baseAmounts, current.contributionPlan.baseAmounts);
   assert.deepEqual(moreCash.allocationContext.allocationsPct, current.allocationContext.allocationsPct);
-  evidence.checks.push('additional account cash does not manufacture securities underweights or change affordable gap Base');
+  await automaticHoldings(page, false, '', 100, { ...usValues, SPY: 120 });
+  const changedHoldings = await plan(page);
+  assert.ok(await page.evaluate(() => window.__SUINVESTMENT_PORTFOLIO_RISK__.positions.SPY.current_allocation > 30), 'fixture exercises a material existing-holdings drift');
+  assert.deepEqual(changedHoldings.contributionPlan.baseAmounts, current.contributionPlan.baseAmounts);
+  assert.equal(changedHoldings.items.find(row => row.symbol === 'SPY').baseAmount, 10);
+  assert.equal(changedHoldings.items.find(row => row.symbol === 'SPY').finalAmount, 10, 'large holdings drift does not pause or halve SPY weekly Base');
+  evidence.checks.push('cash and holdings changes leave affordable weekly Base proportions unchanged');
+  checkpoint('incomplete holdings');
   await automaticHoldings(page);
   for (const anomaly of ['unknown-value', 'identity-conflict']) {
     await automaticHoldings(page, false, anomaly);
     const uncertain = await plan(page);
-    assert.equal(uncertain.gapPlan.valid, false);
+    assert.equal(uncertain.contributionPlan.valid, true);
+    assert.deepEqual(uncertain.contributionPlan.baseAmounts, current.contributionPlan.baseAmounts, 'uncertain holdings do not become a different weekly contribution allocation');
     assert.ok(uncertain.allocationContext.reasonCodes.some(code => code.startsWith(anomaly === 'unknown-value' ? 'HOLDING_VALUE_UNKNOWN:NVDA' : 'HOLDING_IDENTITY_CONFLICT:SPY')));
     assert.ok(uncertain.items.every(row => row.extraAmount === 0 && row.crashFundAmount === 0));
-    assert.ok(uncertain.items.every(row => row.reasonCodes.includes('HOLDINGS_GAP_UNAVAILABLE')));
+    assert.ok(uncertain.items.every(row => row.reasonCodes.includes('HOLDINGS_CONTEXT_UNAVAILABLE')));
   }
   await automaticHoldings(page);
-  evidence.checks.push('omitted null valuations and conflicting listing identities never become a valid zero-holdings gap plan');
+  evidence.checks.push('null valuations and conflicting listing identities retain configured weekly contributions and disable all enhancements');
 
+  checkpoint('draft save and reload');
   await openDraft(page);
   await page.locator('[data-draft-symbol="SPY"]').fill('19');
   await page.locator('#normalizeAllocationSuggestionBtn').click();
@@ -184,9 +203,11 @@ try {
   evidence.checks.push('storage failure retains draft and configuration; retry validates additions, saves SPY 19% and survives reload');
   await automaticHoldings(page, true);
   const emptyPlan = await plan(page);
-  assert.equal(emptyPlan.gapPlan.securitiesValue, 0);
+  assert.equal(emptyPlan.allocationContext.securitiesValue, 0);
+  assert.equal(emptyPlan.contributionPlan.baseAmounts.SPY, 9.5);
   assert.equal(emptyPlan.totalPlanned, 50, 'explicit complete empty holdings are distinct from unknown holdings');
-  evidence.checks.push('verified empty holdings preserve affordable scheduled Base');
+  evidence.checks.push('saved SPY 19% survives reload and receives 9.50 from Base 50 with verified empty holdings');
+  checkpoint('desktop and mobile layout');
   await fs.mkdir('output/playwright', { recursive: true });
   await page.screenshot({ path: 'output/playwright/dca-optimization-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -196,6 +217,7 @@ try {
   assert.deepEqual(main.errors, []);
   await main.context.close();
 
+  checkpoint('unpublished additions');
   const absent = await setup({ missingPublished: ['WMT'] });
   const beforeMissing = await stored(absent.page);
   await openDraft(absent.page); await absent.page.locator('#applyAllocationSuggestionBtn').click();
@@ -206,15 +228,29 @@ try {
   assert.deepEqual(absent.errors, []); await absent.context.close();
   evidence.checks.push('WMT missing from published index blocks application without changing saved configuration');
 
+  checkpoint('hard drawdown');
   const hard = await setup({ hardDrawdown: true }); await automaticHoldings(hard.page);
   const hardPlan = await plan(hard.page);
   const nvda = hardPlan.items.find(row => row.symbol === 'NVDA');
   assert.equal(nvda.finalAmount, 0);
   assert.ok(nvda.reasonCodes.includes('ACTION_REQUIRES_ZERO_AMOUNT'));
   assert.equal(hardPlan.spyRedirected, 0);
+  assert.equal(hardPlan.items.find(row => row.symbol === 'SPY').baseAmount, 10);
   assert.deepEqual(hard.errors, []); await hard.context.close();
-  evidence.checks.push('35%+ drawdown hard block survives gap allocation; blocked cash is not redirected to SPY');
+  evidence.checks.push('35%+ drawdown hard block survives weekly contribution allocation; blocked cash is not redirected to SPY');
 
+  checkpoint('zero weekly weight');
+  const zero = await setup({ weights: { ...weeklyWeights, SPY: 0, QQQ: .35 } });
+  await automaticHoldings(zero.page);
+  const zeroPlan = await plan(zero.page);
+  assert.equal(zeroPlan.contributionPlan.baseAmounts.SPY, 0);
+  assert.equal(zeroPlan.items.find(row => row.symbol === 'SPY').baseAmount, 0);
+  assert.equal(zeroPlan.items.find(row => row.symbol === 'SPY').finalAmount, 0);
+  assert.equal(zeroPlan.spyRedirected, 0);
+  assert.deepEqual(zero.errors, []); await zero.context.close();
+  evidence.checks.push('a configured 0% weekly SPY weight stays zero after rounding and final planning');
+
+  checkpoint('stale data');
   const badData = await setup({ stale: true }); await automaticHoldings(badData.page);
   const badPlan = await plan(badData.page);
   assert.equal(badPlan.safe, false);
