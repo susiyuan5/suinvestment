@@ -46,6 +46,42 @@
     return { rawDrawdownPct: dd, rawWeeklyVolatility: vol, trend: M.tickerTrend(closes, decisionChange),
       volatilityPct: vol === null ? null : money(vol * 100), drawdownPct: dd === null ? null : money(dd) };
   }
+  function affordableBaseCents(input) {
+    const base = input.baseBudget, normal = input.normalLimit == null ? base : input.normalLimit;
+    const feeBps = input.commissionBps == null ? 0 : input.commissionBps, cash = input.portfolioCashCap;
+    if (![base, normal, feeBps].every(value => typeof value === 'number' && Number.isFinite(value) && value >= 0)
+      || (cash != null && (typeof cash !== 'number' || !Number.isFinite(cash) || cash < 0))) return null;
+    const affordable = cash == null ? base : cash / (1 + feeBps / 10000);
+    const cents = Math.floor(Math.min(base, normal, affordable) * 100 + 1e-7);
+    return Number.isSafeInteger(cents) ? cents : null;
+  }
+  // Base is a weekly funding allocation. Holdings affect safety gates later,
+  // but cannot change these saved contribution weights.
+  function contributionBasePlan(options) {
+    const allocationMode = 'weekly_contribution';
+    const fail = code => ({ valid: false, reasonCodes: [code], baseBudget: 0, baseAmounts: null, allocationMode });
+    if (!options || typeof options !== 'object' || Array.isArray(options)) return fail('CONTRIBUTION_BUDGET_INVALID');
+    let preset;
+    try { preset = C.normalizedPreset(options.preset == null ? C.PRESET : options.preset); }
+    catch (_) { return fail('CONTRIBUTION_PRESET_INVALID'); }
+    if (!preset) return fail('CONTRIBUTION_PRESET_INVALID');
+    const cents = affordableBaseCents(options);
+    if (cents === null) return fail('CONTRIBUTION_BUDGET_INVALID');
+    const baseBudget = cents / 100;
+    const assets = C.rowsForPreset(preset), totalWeight = assets.reduce((sum, asset) => sum + Number(asset.target_allocation), 0);
+    const parts = assets.map(asset => {
+      const exact = Number(asset.target_allocation) / totalWeight * cents, amount = Math.floor(exact);
+      return { symbol: asset.symbol, weight: Number(asset.target_allocation), amount, remainder: exact - amount };
+    });
+    let tail = cents - parts.reduce((sum, part) => sum + part.amount, 0);
+    parts.slice().sort((a, b) => b.remainder - a.remainder || (a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0)).forEach(part => {
+      if (tail > 0 && part.weight > 0) { part.amount++; tail--; }
+    });
+    if (tail !== 0) return fail('CONTRIBUTION_BUDGET_INVALID');
+    const baseAmounts = Object.fromEntries(parts.map(part => [part.symbol, part.amount / 100]));
+    if (!C.validateBaseAmounts(baseAmounts, preset, baseBudget)) return fail('CONTRIBUTION_BUDGET_INVALID');
+    return { valid: true, reasonCodes: [], baseBudget, baseAmounts, allocationMode };
+  }
   // Callers supply a complete, verified US/USD holdings universe. It includes
   // held securities outside the buy list; cash never enters this denominator.
   function gapBasePlan(options) {
@@ -60,13 +96,9 @@
       if (!/^[A-Z][A-Z0-9.-]{0,14}$/.test(symbol) || typeof value !== 'number' || !Number.isFinite(value) || value < 0) return fail('GAP_HOLDINGS_INVALID');
       values[symbol] = value;
     }
-    const base = input.baseBudget, normal = input.normalLimit == null ? base : input.normalLimit;
-    const feeBps = input.commissionBps == null ? 0 : input.commissionBps, cash = input.portfolioCashCap;
-    if (![base, normal, feeBps].every(value => typeof value === 'number' && Number.isFinite(value) && value >= 0)
-      || (cash != null && (typeof cash !== 'number' || !Number.isFinite(cash) || cash < 0))) return fail('GAP_BUDGET_INVALID');
-    const affordable = cash == null ? base : cash / (1 + feeBps / 10000);
-    const cents = Math.floor(Math.min(base, normal, affordable) * 100 + 1e-7), baseBudget = cents / 100;
-    if (!Number.isSafeInteger(cents)) return fail('GAP_BUDGET_INVALID');
+    const cents = affordableBaseCents(input);
+    if (cents === null) return fail('GAP_BUDGET_INVALID');
+    const baseBudget = cents / 100;
     const totalSecurities = Object.values(values).reduce((sum, value) => sum + value, 0);
     if (!Number.isFinite(totalSecurities) || !Number.isSafeInteger(Math.round(totalSecurities * 100))) return fail('GAP_HOLDINGS_INVALID');
     const securitiesValue = money(totalSecurities);
@@ -172,5 +204,5 @@
       portfolioCashCap: core.portfolioCashCap, optionalCashCap: core.optionalCashCap, totalPlanned: core.totalPlanned,
       unallocatedCash: money(budget.normalPoolRemaining + budget.crashFundRemaining - core.totalPlanned) } };
   }
-  return Object.freeze({ plan, indicators, planWeeksInMonth, weeklyBudget, fundingPlan, gapBasePlan, version: 'weekly-dca-v2' });
+  return Object.freeze({ plan, indicators, planWeeksInMonth, weeklyBudget, fundingPlan, contributionBasePlan, gapBasePlan, version: 'weekly-dca-v2' });
 });

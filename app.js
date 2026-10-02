@@ -391,7 +391,7 @@ amountBreakdown: "Amount Breakdown",
       shares: "Shares",
       avgCost: "Avg Cost",
       currentValue: "Current Value",
-      targetPercent: "Target %",
+      targetPercent: "Weekly contribution %",
       notes: "Notes",
       manualPlanHeader: "MANUAL TRADE PLAN",
       actionStrongBuy: "STRONG_BUY",
@@ -651,7 +651,7 @@ amountBreakdown: "Amount Breakdown",
       shares: "股数",
       avgCost: "平均成本",
       currentValue: "当前价值",
-      targetPercent: "目标 %",
+      targetPercent: "每周投入比例 %",
       notes: "备注",
       manualPlanHeader: "手动操作计划",
       actionStrongBuy: "强烈买入",
@@ -1149,7 +1149,7 @@ amountBreakdown: "金额分解",
       identities[symbol] = identity;
       listings[symbol] = holding;
       // The existing adapter omits null valuations. Missing rows must never
-      // become zero holdings in a supposedly complete gap universe.
+      // become zero holdings in a supposedly complete risk context.
       if (!Object.hasOwn(positions, symbol)) positions[symbol] = { current_value: null };
       const rowContext = PortfolioRiskInput.allocationContext({ complete: true,
         positions: { [symbol]: { current_value: holding.market_value } }, listings: { [symbol]: holding } });
@@ -1206,12 +1206,12 @@ amountBreakdown: "金额分解",
   function applyWeeklyAllocation(symbol, percent, name, adding) {
     const status = document.getElementById('weeklyAllocationStatus');
     if (adding && state.portfolio.some(row => row.symbol === symbol)) {
-      status.textContent = symbol + ' 已在清单中，请直接修改该行目标比例。';
+      status.textContent = symbol + ' 已在清单中，请直接修改该行每周投入比例。';
       return false;
     }
     const adjusted = CoreSatellitePolicy.rebalanceAllocations(coreSatelliteAllocations(state.portfolio), symbol, percent);
     if (!adjusted.valid || (adding && Number(percent) <= 0)) {
-      status.textContent = adjusted.errors.join('；') || '新增股票的目标比例必须大于 0%。';
+      status.textContent = adjusted.errors.join('；') || '新增股票的每周投入比例必须大于 0%。';
       return false;
     }
     const backup = normalizePortfolio(state.portfolio, { allowCustom: true });
@@ -1226,7 +1226,7 @@ amountBreakdown: "金额分解",
     state.allocationUndoBackup = backup;
     state.allocationDraft = null;
     clearBacktestResult();
-    status.textContent = symbol + ' 目标 ' + Number(percent).toFixed(2) + '%；其余比例已自动调节，合计 100.00%。';
+    status.textContent = symbol + ' 每周基础投入 ' + Number(percent).toFixed(2) + '%；其余比例已自动调节，合计 100.00%。';
     return true;
   }
   function updateAllocationDraftMetrics() {
@@ -1242,7 +1242,7 @@ amountBreakdown: "金额分解",
     const isDefault = Object.keys(draft).length === CORE_SATELLITE_SYMBOLS.length && CORE_SATELLITE_SYMBOLS.every(function (symbol) { return Math.abs(Number(draft[symbol] || 0) - Number(DEFAULT_CORE_ALLOCATIONS[symbol])) < 1e-9; });
     const mode = isDefault ? "默认 40/60" : "自定义";
     const metrics = CoreSatellitePolicy.allocationMetrics(draft);
-    allocationEditorSummaryTextEl.textContent = mode + " · SPY " + metrics.core.toFixed(2) + "% · QQQ " + metrics.growthEtf.toFixed(2) + "% · 个股 " + metrics.satellite.toFixed(2) + "% · 科技及未分类 " + metrics.technology.toFixed(2) + "% · 调整比例";
+    allocationEditorSummaryTextEl.textContent = "每周基础投入 · " + mode + " · SPY " + metrics.core.toFixed(2) + "% · QQQ " + metrics.growthEtf.toFixed(2) + "% · 个股 " + metrics.satellite.toFixed(2) + "% · 科技及未分类 " + metrics.technology.toFixed(2) + "%";
     document.querySelectorAll("[data-core-allocation-preset]").forEach(function (button) {
       button.setAttribute("aria-pressed", String(Math.abs(Number(button.dataset.coreAllocationPreset) - Number(draft.SPY || 0) * 100) < 0.01));
     });
@@ -1254,11 +1254,9 @@ amountBreakdown: "金额分解",
     if (!state.allocationDraft) state.allocationDraft = Object.assign({}, draft);
     allocationEditorRowsEl.innerHTML = "";
     CoreSatellitePolicy.allocationSymbols(draft).forEach(function (symbol) {
-      const context = window.__SUINVESTMENT_PORTFOLIO_RISK__ && window.__SUINVESTMENT_PORTFOLIO_RISK__.allocation_context;
-      const actualPct = context && context.complete ? Number(context.allocationsPct[symbol] || 0) : null;
       const targetPct = Number(draft[symbol] || 0) * 100;
       const row = document.createElement("label"); row.className = "allocation-editor-row";
-      row.innerHTML = "<strong>" + symbol + "</strong><span>证券仓位 " + (actualPct === null ? "未知" : actualPct.toFixed(2) + "%") + "</span><span class=\"allocation-target-field\"><small>目标</small><input type=\"number\" min=\"0\" max=\"100\" step=\"0.01\" data-allocation-symbol=\"" + symbol + "\" aria-label=\"" + symbol + " 目标比例\"></span><span data-allocation-drift>偏离 " + (actualPct === null ? "未知" : (targetPct - actualPct).toFixed(2) + "%") + "</span>";
+      row.innerHTML = "<strong>" + symbol + "</strong><span class=\"allocation-target-field\"><small>每周基础投入 %</small><input type=\"number\" min=\"0\" max=\"100\" step=\"0.01\" data-allocation-symbol=\"" + symbol + "\" aria-label=\"" + symbol + " 每周基础投入比例\"></span>";
       const input = row.querySelector("input"); input.value = targetPct.toFixed(2); input.addEventListener("input", function () {
         const adjusted = CoreSatellitePolicy.rebalanceAllocations(state.allocationDraft, symbol, input.value);
         if (!adjusted.valid) { allocationEditorErrorsEl.textContent = adjusted.errors.join('；'); saveCustomAllocationBtn.disabled = true; return; }
@@ -1266,8 +1264,6 @@ amountBreakdown: "金额分解",
         allocationEditorRowsEl.querySelectorAll('[data-allocation-symbol]').forEach(function (other) {
           const ticker = other.dataset.allocationSymbol;
           if (other !== input) other.value = (state.allocationDraft[ticker] * 100).toFixed(2);
-          const context = window.__SUINVESTMENT_PORTFOLIO_RISK__?.allocation_context;
-          other.closest('.allocation-editor-row').querySelector('[data-allocation-drift]').textContent = '偏离 ' + (context?.complete ? (state.allocationDraft[ticker] * 100 - Number(context.allocationsPct[ticker] || 0)).toFixed(2) + '%' : '未知');
         });
         updateAllocationSummary(state.allocationDraft);
         updateAllocationDraftMetrics();
@@ -1290,7 +1286,7 @@ amountBreakdown: "金额分解",
     const preset = CoreSatellitePolicy.presetFromAllocations(state.allocationDraft, state.coreSatellitePreset);
     state.portfolio = normalizePortfolio(CoreSatellitePolicy.rowsForPreset(preset), { allowCustom: true });
     saveJson(STORAGE_KEYS.portfolio, state.portfolio); persistAllocationState("manual", state.allocationUndoBackup); state.allocationDraft = null;
-    if (allocationEditorStatusEl) allocationEditorStatusEl.textContent = "已按自定义比例重新计算本周定投决策。";
+    if (allocationEditorStatusEl) allocationEditorStatusEl.textContent = "已保存每周基础投入比例，并重新计算本周定投决策。";
     renderPortfolioTotal(); renderPortfolioRiskInputs(); render();
   }
   function restoreDefaultAllocations() {
@@ -3488,7 +3484,8 @@ allocWrapper.appendChild(editBtn);
         target_allocation: round2(targetAllocation),
         target_allocation_ratio: targetAllocation / 100,
         current_allocation: 0,
-        allocation_drift: 0,
+        weekly_contribution_pct: round2(entry.stock.allocation * 100),
+        allocation_drift: null,
         notes: String(input.notes || "")
       };
       totalStockValue += currentValue;
@@ -3501,7 +3498,6 @@ allocWrapper.appendChild(editBtn);
     symbols.forEach(function (symbol) {
       const position = positions[symbol];
       position.current_allocation = totalPortfolioValue > 0 ? round2((position.current_value / totalPortfolioValue) * 100) : 0;
-      position.allocation_drift = round2(position.current_allocation - position.target_allocation);
       if (position.current_allocation > largestPosition.current_allocation) {
         largestPosition = {
           symbol,
@@ -3524,8 +3520,8 @@ allocWrapper.appendChild(editBtn);
       total_planned_buy_amount: 0,
       planned_cash_usage_percentage: 0,
       portfolio_risk_level: "Low",
-      over_allocated_tickers: symbols.filter(function (symbol) { return positions[symbol].allocation_drift > 2; }),
-      under_allocated_tickers: symbols.filter(function (symbol) { return positions[symbol].allocation_drift < -2; }),
+      over_allocated_tickers: [],
+      under_allocated_tickers: [],
       risk_warnings: []
     };
   }
@@ -3538,56 +3534,29 @@ allocWrapper.appendChild(editBtn);
 
       signal.portfolio = {
         current_allocation: position.current_allocation,
-        target_allocation: position.target_allocation,
-        allocation_drift: position.allocation_drift,
+        weekly_contribution_pct: position.weekly_contribution_pct,
         current_value: position.current_value,
         available_cash: portfolioRisk.available_cash
       };
 
-      const originalAmount = signal.suggested_buy_amount;
-      const driftRatio = position.allocation_drift / 100;
+      // Weekly contribution weights are not holdings targets. Only absolute
+      // concentration gates may adjust the signal before the shared planner.
       const isDiversifiedEtf = ['core_etf', 'growth_etf'].includes(entry.stock.asset_type);
-      if (driftRatio >= LOW_FREQ_ALGO_PARAMS.overTargetBlockThreshold || (!isDiversifiedEtf && position.current_allocation >= 30)) {
+      if (!isDiversifiedEtf && position.current_allocation >= 30) {
         signal.signal_score = clamp(signal.signal_score - ALGORITHM_PARAMS.farOverAllocationScorePenalty, 0, 100);
         signal.suggested_buy_amount = 0;
         signal.portfolio_adjustment = 0;
         if (signal.algorithm) signal.algorithm.portfolio_adjustment = 0;
-        signal.suggested_action = driftRatio >= LOW_FREQ_ALGO_PARAMS.overTargetSellWatchThreshold ? "CONSIDER_SELL" : "DO_NOT_BUY";
+        signal.suggested_action = "DO_NOT_BUY";
         signal.signal_strength = getSignalStrength(signal);
-        addSignalReason(signal, t("farAboveTargetReason"));
-        addSignalWarning(signal, t("positionAboveTarget"));
+        addSignalReason(signal, "单一个股仓位达到30%，暂停新增投入");
+        addSignalWarning(signal, t("tickerAbove30"));
         addSignalWarning(signal, t("reducedByRiskRule"));
         return;
       }
 
-      if (driftRatio >= LOW_FREQ_ALGO_PARAMS.overTargetReduceThreshold) {
-        signal.signal_score = clamp(signal.signal_score - ALGORITHM_PARAMS.overAllocationScorePenalty, 0, 100);
-        signal.suggested_buy_amount = round2(Math.min(signal.suggested_buy_amount, signal.base_buy_amount * 0.5));
-        signal.portfolio_adjustment = 0.5;
-        if (signal.algorithm) signal.algorithm.portfolio_adjustment = 0.5;
-        if (["STRONG_BUY", "BUY", "NORMAL_BUY"].includes(signal.suggested_action)) {
-          signal.suggested_action = "REDUCE_BUY";
-          signal.signal_strength = getSignalStrength(signal);
-        }
-        addSignalReason(signal, t("aboveTargetReason"));
-        addSignalWarning(signal, t("positionAboveTarget"));
-      } else if (position.allocation_drift < -2 && ["STRONG_BUY", "BUY", "NORMAL_BUY"].includes(signal.suggested_action)) {
-        signal.signal_score = clamp(signal.signal_score + ALGORITHM_PARAMS.underAllocationScoreBonus, 0, 100);
-        signal.suggested_action = getSuggestedAction(signal);
-        signal.signal_strength = getSignalStrength(signal);
-        signal.suggested_buy_amount = calculateRiskAdjustedBuyAmount(signal);
-        signal.portfolio_adjustment = 1;
-        if (signal.algorithm) signal.algorithm.portfolio_adjustment = 1;
-        addSignalReason(signal, t("belowTargetReason"));
-      } else {
-        signal.portfolio_adjustment = 1;
-        if (signal.algorithm) signal.algorithm.portfolio_adjustment = 1;
-        addSignalReason(signal, t("portfolioNearTargetReason"));
-      }
-
-      if (signal.suggested_buy_amount < originalAmount) {
-        addSignalWarning(signal, t("reducedByRiskRule"));
-      }
+      signal.portfolio_adjustment = 1;
+      if (signal.algorithm) signal.algorithm.portfolio_adjustment = 1;
     });
 
     // Funding, fees and the optional cash cap are checked once by the shared
@@ -4785,7 +4754,7 @@ function equalizeAllocations() {
         orderLines.push(row.symbol + "：基础 " + formatCurrency(row.originalBaseAmount) + "；信号调整 " + formatCurrency(row.dcaAdjustedAmount - row.originalBaseAmount + row.crashFundEnhancement) + "；风控调整 " + formatCurrency(row.riskReduction) + "；最终人工计划 " + formatCurrency(row.finalAmount) + "；" + coreSatelliteReason(row));
       });
       orderLines.push("保留现金：" + formatCurrency(state.coreSatellitePlan.cashRetained));
-      orderLines.push("QQQ：纳斯达克成长 ETF，同时用于科技风险观察和按目标比例定投，不会重复计算。");
+      orderLines.push("QQQ：纳斯达克成长 ETF，同时用于科技风险观察和按每周投入比例定投，不会重复计算。");
     } else {
       entries.forEach(function (entry) { orderLines.push(formatManualTradePlanEntry(entry.signal, entry)); });
     }
@@ -4830,15 +4799,14 @@ function equalizeAllocations() {
     const activePreset = activeCoreSatellitePreset();
     const funding = WeeklyDcaEngine.fundingPlan(state.deployment.normalPool, normalUsed, plannedDate, state.deployment.weeklyDeployment, weekNormalUsed);
     const allocationContext = portfolioRisk.allocation_context;
-    const gap = WeeklyDcaEngine.gapBasePlan({ preset: activePreset || CoreSatellitePolicy.PRESET,
-      eligibleUSPositions: allocationContext.positions, holdingsComplete: allocationContext.complete,
+    const contribution = WeeklyDcaEngine.contributionBasePlan({ preset: activePreset || CoreSatellitePolicy.PRESET,
       baseBudget: funding.scheduledBase, normalLimit: funding.normalLimit,
       portfolioCashCap: portfolioRisk.available_cash_provided ? portfolioRisk.available_cash : null,
       commissionBps: 0 });
     const inputs = entries.map(function (entry) {
       const signal = entry.signal;
       const position = portfolioRisk.positions && portfolioRisk.positions[signal.symbol];
-      const baseAmount = gap.valid ? gap.baseAmounts[signal.symbol] || 0 : round2(state.deployment.weeklyDeployment * entry.stock.allocation);
+      const baseAmount = contribution.valid ? contribution.baseAmounts[signal.symbol] || 0 : 0;
       entry.baseManualAmount = baseAmount;
       return {
         entry,
@@ -4868,12 +4836,12 @@ function equalizeAllocations() {
     const result = WeeklyDcaEngine.plan({
       inputs: inputs.map(function (item) {
         const gate = WeeklySignalModel.weeklyDcaActionGate(item.entry.signal);
-        return { symbol: item.entry.signal.symbol, input: item.input, ...gate, extraBlocked: gate.extraBlocked || !gap.valid };
+        return { symbol: item.entry.signal.symbol, input: item.input, ...gate, extraBlocked: gate.extraBlocked || !contribution.valid || !allocationContext.complete };
       }),
       policyState: ledger, config: state.dcaL2ConfigReady ? state.dcaL2Config : { ...state.dcaL2Config, configValid: false },
       plannedDate,
-      preset: activePreset || CoreSatellitePolicy.PRESET, baseBudget: state.deployment.weeklyDeployment,
-      ...(gap.valid ? { baseAmounts: gap.baseAmounts } : {}),
+      preset: activePreset || CoreSatellitePolicy.PRESET, baseBudget: funding.scheduledBase,
+      baseAmounts: contribution.valid ? contribution.baseAmounts : Object.fromEntries(CoreSatellitePolicy.rowsForPreset(activePreset || CoreSatellitePolicy.PRESET).map(function (asset) { return [asset.symbol, 0]; })),
       budget: { normalPool: state.deployment.normalPool, normalPoolUsed: normalUsed,
         weekNormalUsed,
         weekCrashUsed: ledger.entries.filter(function (row) { return row.month === ledger.month && row.type === 'crash' && DcaPolicy.isoWeekId(row.date) === DcaPolicy.isoWeekId(currentPlanDate()); }).reduce(function (total, row) { return total + row.amount; }, 0),
@@ -4899,11 +4867,13 @@ function equalizeAllocations() {
     const exposure = window.EtfLookthrough ? window.EtfLookthrough.calculate(directExposure, state.etfHoldings, Date.now(), 30, exposureMode) : { status: "unknown", effectiveExposure: {} };
     state.etfExposure = exposure;
     state.coreSatellitePlan = result.plan;
-    state.coreSatellitePlan.gapPlan = gap;
+    state.coreSatellitePlan.contributionPlan = contribution;
+    state.coreSatellitePlan.allocationMode = "weekly_contribution";
     state.coreSatellitePlan.allocationContext = allocationContext;
     state.coreSatellitePlan.items.forEach(function (row) {
       const signal = inputs.find(function (item) { return item.entry.signal.symbol === row.symbol; })?.entry.signal;
-      const codes = gap.valid ? [gap.gaps[row.symbol] > 0 ? "HOLDINGS_TARGET_GAP" : "TARGET_GAP_ZERO"] : ["HOLDINGS_GAP_UNAVAILABLE"];
+      const codes = contribution.valid ? ["WEEKLY_CONTRIBUTION_WEIGHT"] : contribution.reasonCodes.slice();
+      if (!allocationContext.complete) codes.push("HOLDINGS_CONTEXT_UNAVAILABLE");
       if (WeeklySignalModel.riskDataStatus(signal) === "unknown") codes.push("RISK_HISTORY_UNKNOWN");
       row.reasonCodes = Array.from(new Set((row.reasonCodes || []).concat(codes)));
     });
@@ -4913,7 +4883,7 @@ function equalizeAllocations() {
     const cashGatePassed = !portfolioRisk.available_cash_provided || portfolioRisk.available_cash > 0;
     var planningSettings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : {};
     var currencyReady = planningCurrencyMigration.complete !== false && planningSettings.planningCurrency === "USD" && planningSettings.planningMigrationPending !== true;
-    state.coreSatellitePlan.safe = Boolean(activePreset) && complete && fresh && cashGatePassed && currencyReady && state.coreSatellitePlan.conservation && state.coreSatellitePlan.conservation.balanced === true;
+    state.coreSatellitePlan.safe = Boolean(activePreset) && contribution.valid && complete && fresh && cashGatePassed && currencyReady && state.coreSatellitePlan.conservation && state.coreSatellitePlan.conservation.balanced === true;
     if (!state.coreSatellitePlan.safe) {
       state.coreSatellitePlan.items.forEach(function (item) { item.baseAmount = item.extraAmount = item.crashFundAmount = item.finalAmount = 0; item.crashFundEnhancement = 0; item.redirectedToSpy = 0; item.cashRetained = 0; item.reasonCodes = Array.from(new Set((item.reasonCodes || []).concat([currencyReady ? "安全检查未通过" : "USD_BUDGET_MIGRATION_PENDING"]))); });
       state.coreSatellitePlan.spyRedirected = 0;
@@ -4946,14 +4916,14 @@ function equalizeAllocations() {
     if (!plan) return;
     const summary = plan.summary || {};
     if (coreSatellitePresetVersionEl) coreSatellitePresetVersionEl.textContent = state.coreSatellitePresetReady ? plan.version : "不可用";
-    if (coreTargetAllocationEl) coreTargetAllocationEl.textContent = (summary.coreTargetPct == null ? 40 : summary.coreTargetPct) + "% / " + (summary.spyActualPct || 0).toFixed(2) + "%";
-    if (satelliteTargetAllocationEl) satelliteTargetAllocationEl.textContent = (summary.satelliteTargetPct == null ? 60 : summary.satelliteTargetPct) + "% / " + (summary.satelliteActualPct || 0).toFixed(2) + "%";
-    if (techSatelliteAllocationEl) techSatelliteAllocationEl.textContent = (summary.technologyActualPct || 0).toFixed(2) + "%";
+    if (coreTargetAllocationEl) coreTargetAllocationEl.textContent = "SPY 每周基础投入 " + (summary.coreTargetPct == null ? 40 : summary.coreTargetPct) + "%";
+    if (satelliteTargetAllocationEl) satelliteTargetAllocationEl.textContent = "个股每周基础投入 " + (summary.satelliteTargetPct == null ? 60 : summary.satelliteTargetPct) + "%";
+    if (techSatelliteAllocationEl) techSatelliteAllocationEl.textContent = "科技风控占比 " + (summary.technologyActualPct || 0).toFixed(2) + "%";
     if (spyBasePlanEl) spyBasePlanEl.textContent = formatCurrency(plan.spyBase) + " / " + formatCurrency(plan.spyRedirected);
     if (satellitePlanTotalEl) satellitePlanTotalEl.textContent = formatCurrency(plan.items.filter(function (row) { return row.bucket === "satellite"; }).reduce(function (sum, row) { return sum + row.finalAmount; }, 0));
     if (cashRetainedPlanEl) cashRetainedPlanEl.textContent = formatCurrency(plan.cashRetained);
     if (coreSatelliteStatusEl) coreSatelliteStatusEl.textContent = state.coreSatellitePresetReady ? "仅供人工规划" : "需要人工复核";
-    if (coreSatelliteRebalanceNoticeEl) coreSatelliteRebalanceNoticeEl.textContent = plan.summary.spyActualPct >= 65 || plan.summary.satelliteActualPct >= 45 ? "偏离目标超过 5 个百分点，请人工考虑再平衡；不会自动卖出。" : "QQQ 同时用于科技风险观察和按目标比例定投，不会重复计算。";
+    if (coreSatelliteRebalanceNoticeEl) coreSatelliteRebalanceNoticeEl.textContent = "每周基础投入按已保存比例分配；持仓只用于风险检查，Extra＋Crash 独立计算。QQQ 同时用于科技风险观察，不会重复计算。";
   }
 
   function createDcaL2SafeFallback(baseAmount, detail) {
@@ -5924,7 +5894,7 @@ function equalizeAllocations() {
     renderWeeklyDecisionPlan(state.coreSatellitePlan, portfolioRisk);
     if (decisionSummaryStatusEl && state.coreSatellitePlan) {
       const planSafe = state.coreSatellitePlan.safe === true;
-      decisionSummaryStatusEl.textContent = planSafe ? (state.coreSatelliteState && state.coreSatelliteState.allocation_mode === "manual" ? "本周计划已按自定义比例计算。" : "本周资金与定投决策已完成，请人工核对后执行。") : "暂停买入";
+      decisionSummaryStatusEl.textContent = planSafe ? (state.coreSatelliteState && state.coreSatelliteState.allocation_mode === "manual" ? "本周计划已按已保存的每周投入比例计算。" : "本周资金与定投决策已完成，请人工核对后执行。") : "暂停买入";
       decisionSummaryStatusEl.dataset.state = planSafe ? "ready" : "blocked";
       if (!planSafe) {
         if (decisionActionEl) decisionActionEl.textContent = "暂停买入";
@@ -5941,10 +5911,9 @@ function equalizeAllocations() {
     if (codes.indexOf("USD_BUDGET_MIGRATION_PENDING") >= 0) return "等待有效 USD/CAD 汇率完成 USD 预算迁移，本周计划已停止";
     if (codes.indexOf("安全检查未通过") >= 0 || codes.indexOf("SPY_DATA_OR_SAFETY_BLOCK") >= 0) return "数据或计算未通过安全检查，请人工复核";
     if (codes.indexOf("ACTION_REQUIRES_ZERO_AMOUNT") >= 0) return "硬风控或人工暂停阻止买入，资金保留为现金";
-    if (codes.indexOf("SATELLITE_RISK_BLOCKED") >= 0) return "个股风控门禁阻止买入，缺口模式下资金保留为现金";
+    if (codes.indexOf("SATELLITE_RISK_BLOCKED") >= 0) return "个股风控门禁阻止买入，资金保留为现金";
     if (codes.indexOf("SATELLITE_BASE_REDIRECTED_TO_SPY") >= 0) return "个股基础金额已转入 SPY";
-    if (codes.indexOf("TARGET_GAP_ZERO") >= 0) return "投入后目标金额已被持仓覆盖，基础金额为零";
-    if (codes.indexOf("HOLDINGS_GAP_UNAVAILABLE") >= 0) return "完整美股持仓估值待确认，暂按目标比例规划基础投入，关闭 Extra＋Crash";
+    if (codes.indexOf("HOLDINGS_CONTEXT_UNAVAILABLE") >= 0) return "完整美股持仓估值待确认，关闭 Extra＋Crash；基础投入按每周比例分配并遵守硬风控";
     if (codes.indexOf("RISK_HISTORY_UNKNOWN") >= 0) return "风险未知：历史指标不足或过期，关闭 Extra＋Crash，基础投入仍受硬风控约束";
     if (codes.indexOf("SATELLITE_ENHANCEMENT_BLOCKED") >= 0) return "卫星仓位触及现有上限，关闭 Extra＋Crash，保留可通过门禁的基础投入";
     if (codes.indexOf("TECHNOLOGY_ENHANCEMENT_BLOCKED") >= 0) return "科技及未分类仓位触及现有上限，关闭 Extra＋Crash，保留可通过门禁的基础投入";
@@ -5953,7 +5922,7 @@ function equalizeAllocations() {
     if (codes.indexOf("FUTURE_BASE_RESERVED") >= 0) return "优先预留后续周基础定投，本周加仓受限";
     if (codes.indexOf("PRICE_SIGNAL_BLOCKS_EXTRA_ONLY") >= 0) return "短期信号偏弱，保留基础定投，暂停额外加仓";
     if (codes.indexOf("SCHEDULED_BASE_PRESERVED") >= 0) return "市场防御期保留基础定投，暂停额外加仓";
-    if (codes.indexOf("HOLDINGS_TARGET_GAP") >= 0) return "按投入后目标金额与当前证券市值的正缺口分配基础投入";
+    if (codes.indexOf("WEEKLY_CONTRIBUTION_WEIGHT") >= 0) return "基础投入按本周可负担预算 × 已保存的每周投入比例分配";
     if (row.symbol === "SPY") return "核心基础定投，不根据短期涨跌择时";
     return "按 DCA-L2 信号调整后供人工复核";
   }
@@ -5989,7 +5958,7 @@ function equalizeAllocations() {
       state.weeklyExcludedSymbols.forEach(function (symbol) {
         const label = document.createElement("span"); label.textContent = "已移除 " + symbol;
         const restore = document.createElement("button"); restore.type = "button"; restore.className = "secondary-button"; restore.textContent = "恢复"; restore.setAttribute("aria-label", "恢复 " + symbol + " 到定投清单");
-        restore.addEventListener("click", function () { state.weeklyExcludedSymbols = state.weeklyExcludedSymbols.filter(function (item) { return item !== symbol; }); saveJson(STORAGE_KEYS.weeklyExcludedSymbols, state.weeklyExcludedSymbols); render(); document.getElementById('weeklyAllocationStatus').textContent = symbol + ' 已恢复到定投清单，当前目标比例为 0%，可在该行重新设置。'; });
+        restore.addEventListener("click", function () { state.weeklyExcludedSymbols = state.weeklyExcludedSymbols.filter(function (item) { return item !== symbol; }); saveJson(STORAGE_KEYS.weeklyExcludedSymbols, state.weeklyExcludedSymbols); render(); document.getElementById('weeklyAllocationStatus').textContent = symbol + ' 已恢复到定投清单，每周投入比例为 0%，可在该行重新设置。'; });
         weeklyRemovedStocksEl.appendChild(label); weeklyRemovedStocksEl.appendChild(restore);
       });
     }
@@ -6003,7 +5972,8 @@ function equalizeAllocations() {
     const satelliteRows = rows.filter(function (row) { return row.bucket === "satellite"; });
     const techSymbols = state.portfolio.filter(row => ['NVDA', 'AAPL', 'ASML'].includes(row.symbol) || !CORE_SATELLITE_SYMBOLS.includes(row.symbol)).map(row => row.symbol);
     const techTotal = satelliteRows.filter(function (row) { return techSymbols.indexOf(row.symbol) >= 0; }).reduce(function (sum, row) { return sum + Number(row.finalAmount || 0); }, 0);
-    if (weeklyBaseBudgetEl) weeklyBaseBudgetEl.textContent = formatCurrency(plan && plan.gapPlan && plan.gapPlan.valid ? plan.gapPlan.baseBudget : state.deployment.weeklyDeployment);
+    const weeklyBaseBudget = plan && plan.contributionPlan && plan.contributionPlan.valid ? plan.contributionPlan.baseBudget : state.deployment.weeklyDeployment;
+    if (weeklyBaseBudgetEl) weeklyBaseBudgetEl.textContent = formatCurrency(weeklyBaseBudget);
     if (weeklyCrashFundEl) weeklyCrashFundEl.textContent = formatCurrency(plan && plan.plannedCrash || 0);
     if (weeklyAvailableFundsEl) weeklyAvailableFundsEl.textContent = formatCurrency(source);
     if (weeklyPlannedTotalEl) weeklyPlannedTotalEl.textContent = formatCurrency(plan && plan.totalPlanned || 0);
@@ -6024,9 +5994,9 @@ function equalizeAllocations() {
     weeklyDecisionSafetyEl.textContent = safe ? "✓ 本周计划已生成 · 请核对可用现金和上限后手动执行。" : "暂停买入：" + formatSafetyGateReasons(safetyReasons, window.__SUINVESTMENT_SIGNALS__ || []) + "请刷新并重新检查。";
     weeklyDecisionSafetyEl.dataset.state = safe ? "ready" : "blocked";
     if (copyBtn) copyBtn.disabled = !safe;
-    if (weeklyDecisionReasonEl) weeklyDecisionReasonEl.textContent = safe ? (plan.gapPlan && plan.gapPlan.valid ? "先按现金与月预算确定可负担基础预算，再按持仓正缺口分配；仓位分母为全部可定投美股／ETF市值，不含现金。清单外美股参与估值，不自动买入。" : "完整美股持仓估值待确认，暂按目标比例规划基础投入，关闭 Extra＋Crash。自动持仓解锁并完成有效估值后启用缺口分配。") + " Extra＋Crash 单独受可用现金30%限制，总计划另受真实现金与费用限制。" + (cashNotice ? " " + cashNotice : "") : formatSafetyGateReasons(safetyReasons, window.__SUINVESTMENT_SIGNALS__ || []);
+    if (weeklyDecisionReasonEl) weeklyDecisionReasonEl.textContent = safe ? "先按现金、费用与月预算确定本周可负担基础预算，再按已保存的每周投入比例分配。持仓占比不改变基础分配；硬风控阻断的金额保留为现金。Extra＋Crash 独立计算并受可用现金 30% 限制，总计划另受真实现金与费用限制。" + (cashNotice ? " " + cashNotice : "") : formatSafetyGateReasons(safetyReasons, window.__SUINVESTMENT_SIGNALS__ || []);
     if (weeklyDecisionRiskReasonsEl) weeklyDecisionRiskReasonsEl.textContent = safe ? "Extreme、35%深回撤、人工暂停、数据及集中度门禁继续生效；现有硬风控沿用原含现金口径。ETF底层重叠需依据可靠持仓资料核查。" : "请先检查上方阻断原因，再点击刷新并重新检查。";
-    if (weeklyDecisionQqqStatusEl) weeklyDecisionQqqStatusEl.textContent = "QQQ：纳斯达克成长 ETF，同时用于科技风险观察和按目标比例定投，不会重复计算。";
+    if (weeklyDecisionQqqStatusEl) weeklyDecisionQqqStatusEl.textContent = "QQQ：纳斯达克成长 ETF，基础投入按已保存的每周投入比例分配，同时用于科技风险观察，不会重复计算。";
     const sortedSymbols = WeeklyListSort.rows(expected.map(function (symbol) {
       const position = positions[symbol] || {}, signal = (window.__SUINVESTMENT_SIGNALS__ || []).find(function (item) { return item.symbol === symbol; }) || {}, row = bySymbol[symbol] || {};
       return { symbol: symbol, suggested: Number(row.finalAmount || 0), target: Number(targetBySymbol[symbol] || 0), current: allocationContext.complete ? Number(allocationContext.allocationsPct[symbol] || 0) : undefined, marketValue: isFiniteNumber(position.current_value) ? Number(position.current_value) : undefined, price: isFiniteNumber(signal.latest_price) ? Number(signal.latest_price) : undefined };
@@ -6037,19 +6007,18 @@ function equalizeAllocations() {
       const card = document.createElement("tr");
       card.className = "weekly-decision-row";
       card.dataset.symbol = symbol;
-      const current = allocationContext.complete ? Number(allocationContext.allocationsPct[symbol] || 0) : null;
       const signal = (window.__SUINVESTMENT_SIGNALS__ || []).find(function (item) { return item.symbol === symbol; }) || {};
       const base = Number(row.originalBaseAmount || 0);
       const signalAdjustment = Number(row.dcaAdjustedAmount || 0) - base + Number(row.crashFundEnhancement || 0);
       const riskAdjustment = Number(row.riskReduction || 0);
       const redirected = Number(row.redirectedToSpy || 0);
       const status = window.DashboardUiPolicy ? window.DashboardUiPolicy.decisionStatus(row.finalAmount, row.action || row.suggested_action) : (Number(row.finalAmount || 0) > 0 ? "可供人工核对" : "已阻止或保留现金");
-      card.innerHTML = '<td class="weekly-symbol-cell"><strong></strong><span class="weekly-manual-order"></span></td><td class="weekly-decision-value-pair"><span class="weekly-decision-price"></span><span class="weekly-decision-market-value"></span></td><td class="weekly-decision-target"></td><td class="weekly-decision-final"></td><td class="weekly-decision-state"><span class="weekly-decision-status"></span><p class="weekly-decision-reason" hidden></p></td><td class="weekly-decision-edit"></td><td class="weekly-row-actions"></td>';
+      card.innerHTML = '<td class="weekly-symbol-cell"><strong></strong><span class="weekly-manual-order"></span></td><td class="weekly-decision-value-pair"><span class="weekly-decision-price"></span><span class="weekly-decision-market-value"></span></td><td class="weekly-decision-final"></td><td class="weekly-decision-state"><span class="weekly-decision-status"></span><p class="weekly-decision-reason" hidden></p></td><td class="weekly-decision-edit"></td><td class="weekly-row-actions"></td>';
       const expandedRow = document.createElement('tr');
       expandedRow.className = 'weekly-decision-expanded';
       expandedRow.hidden = true;
       expandedRow.id = 'weekly-detail-' + symbol;
-      expandedRow.innerHTML = '<td colspan="7"><div class="weekly-decision-detail"><span></span><span></span><span></span><span></span><p></p></div></td>';
+      expandedRow.innerHTML = '<td colspan="6"><div class="weekly-decision-detail"><span></span><span></span><span></span><span></span><p></p></div></td>';
       const expandButton = document.createElement('button');
       expandButton.type = 'button'; expandButton.className = 'secondary-button weekly-expand-button';
       expandButton.textContent = '详情'; expandButton.setAttribute('aria-label', symbol + ' 详情');
@@ -6074,20 +6043,19 @@ function equalizeAllocations() {
       }
       card.querySelector(".weekly-decision-market-value").textContent = "持仓市值 " + (position && isFiniteNumber(position.current_value) ? formatCurrency(position.current_value) : "市值未知");
       card.querySelector(".weekly-decision-price").textContent = "单股价格 " + (isFiniteNumber(signal.latest_price) ? "USD " + formatPrice(signal.latest_price) : "价格未知");
-      card.querySelector(".weekly-decision-target").textContent = (current === null ? "仓位未知" : current.toFixed(2) + "%") + " → " + (targetBySymbol[symbol] || 0).toFixed(2) + "%";
       const allocationControl = document.createElement('div');
       allocationControl.className = 'weekly-allocation-control';
       const label = document.createElement('label');
-      label.textContent = '目标比例 %';
+      label.textContent = '每周投入 %';
       const allocationInput = document.createElement('input');
       allocationInput.type = 'number'; allocationInput.min = '0';
       allocationInput.max = '100';
       allocationInput.step = '0.01'; allocationInput.value = (targetBySymbol[symbol] || 0).toFixed(2);
       allocationInput.dataset.weeklyAllocationSymbol = symbol;
-      allocationInput.setAttribute('aria-label', symbol + ' 定投目标比例');
+      allocationInput.setAttribute('aria-label', symbol + ' 每周基础投入比例');
       label.appendChild(allocationInput); allocationControl.appendChild(label);
       const estimate = document.createElement('span');
-      const updateEstimate = function () { estimate.textContent = '按比例参考金额 ' + (allocationInput.value !== '' && Number.isFinite(Number(allocationInput.value)) ? formatCurrency(state.deployment.weeklyDeployment * Number(allocationInput.value) / 100) : '待填写') + '；实际基础金额见详情'; };
+      const updateEstimate = function () { estimate.textContent = '本周基础预算 × 比例 ' + (allocationInput.value !== '' && Number.isFinite(Number(allocationInput.value)) ? formatCurrency(weeklyBaseBudget * Number(allocationInput.value) / 100) : '待填写') + '；风控后的金额见详情'; };
       updateEstimate(); allocationControl.appendChild(estimate);
       allocationInput.addEventListener('input', function () { allocationInput.setCustomValidity(''); updateEstimate(); });
       const apply = document.createElement('button'); apply.type = 'button'; apply.className = 'secondary-button'; apply.textContent = '应用';
@@ -6114,7 +6082,7 @@ function equalizeAllocations() {
       const stale = ["stale", "expired"].includes(String(signal.data_freshness || "").toLowerCase()) || String(signal.data_validation_status || "").toLowerCase() === "stale";
       const riskUnknown = WeeklySignalModel.riskDataStatus(signal) === "unknown";
       card.querySelector(".weekly-decision-status").textContent = !safe ? (stale ? "数据过期" : "已暂停") : Number(row.finalAmount || 0) > 0 ? (riskUnknown ? "基础投入 · 风险未知" : "可执行") : (riskUnknown ? "保留现金 · 风险未知" : "保留现金");
-      expandedRow.querySelectorAll(".weekly-decision-detail span")[0].textContent = "基础金额 " + formatCurrency(base);
+      expandedRow.querySelectorAll(".weekly-decision-detail span")[0].textContent = "按每周比例分配的基础金额 " + formatCurrency(base);
       expandedRow.querySelectorAll(".weekly-decision-detail span")[1].textContent = "信号调整 " + formatCurrency(signalAdjustment);
       expandedRow.querySelectorAll(".weekly-decision-detail span")[2].textContent = "风控调整 " + formatCurrency(riskAdjustment);
       expandedRow.querySelectorAll(".weekly-decision-detail span")[3].textContent = "SPY 重定向 " + formatCurrency(redirected);
@@ -6139,7 +6107,7 @@ function equalizeAllocations() {
     });
     const cash = document.createElement("tr");
     cash.className = "weekly-decision-row weekly-decision-cash";
-    cash.innerHTML = '<td colspan="3"><strong>保留现金</strong></td><td><span></span></td><td colspan="3"><p>因数据、预算、集中度或恢复锁未分配的资金。</p></td>';
+    cash.innerHTML = '<td colspan="2"><strong>保留现金</strong></td><td><span></span></td><td colspan="3"><p>因数据、预算、集中度或恢复锁未分配的资金。</p></td>';
     cash.querySelector("span").textContent = formatCurrency(plan && plan.cashRetained || 0);
     weeklyDecisionRowsEl.appendChild(cash);
   }
@@ -6168,16 +6136,6 @@ function equalizeAllocations() {
     if (status === "stale") return "行情过期";
     if (status === "manual") return "人工行情";
     return "行情待核对";
-  }
-
-  function holdingAllocationLabel(value) {
-    return {
-      over: "高于目标",
-      under: "低于目标",
-      near: "接近目标",
-      outside_plan: "计划外持仓",
-      unknown: "配置待核对"
-    }[value] || "配置待核对";
   }
 
   function renderInlineHoldings(entries, portfolioRisk) {
@@ -6210,7 +6168,7 @@ function equalizeAllocations() {
     if (inlineHoldingsMetaEl) {
       const outside = model.summary.outsidePlanCount ? "；另有 " + model.summary.outsidePlanCount + " 项计划外持仓仅展示" : "";
       inlineHoldingsMetaEl.textContent = automatic
-        ? "同步数据只更新实际持仓，不改变目标比例，也不会下单或自动再平衡" + outside
+        ? "同步数据只更新实际持仓，不改变每周投入比例，也不会下单或自动再平衡" + outside
         : "人工录入用于本周计划核对；不会连接券商或自动执行";
     }
 
@@ -6248,7 +6206,7 @@ function equalizeAllocations() {
       action.textContent = "查看持仓同步设置";
       if (window.DashboardUiPolicy) {
         title.textContent = window.DashboardUiPolicy.emptyHoldingsState(automatic ? "automatic" : "manual", model.meta.status, model.summary.cashProvided && model.summary.availableCash > 0);
-        copy.textContent = automatic && model.meta.status === "ready" && model.summary.cashProvided && model.summary.availableCash > 0 ? "已检测到现金 " + formatCurrency(model.summary.availableCash) + "；不会生成自动买入。" : "持仓展示和同步状态不会修改目标比例或交易计划。";
+        copy.textContent = automatic && model.meta.status === "ready" && model.summary.cashProvided && model.summary.availableCash > 0 ? "已检测到现金 " + formatCurrency(model.summary.availableCash) + "；不会生成自动买入。" : "持仓展示和同步状态不会修改每周投入比例或交易计划。";
       } else if (automatic && model.meta.status === "ready") {
         title.textContent = "已同步 Wealthsimple，当前没有股票或 ETF 持仓";
         copy.textContent = "不会生成自动买入。";
@@ -6268,32 +6226,31 @@ function equalizeAllocations() {
       return;
     }
 
-    const displayRows = window.DashboardUiPolicy ? window.DashboardUiPolicy.sortHoldingsByDeviation(model.rows) : model.rows;
+    const displayRows = model.rows;
     displayRows.forEach(function (holding) {
       const row = document.createElement("article");
       row.className = "inline-holding-row";
-      row.dataset.allocationState = holding.allocationState;
+      row.dataset.allocationState = holding.planned ? "planned" : "outside_plan";
       const pnlClass = holding.pnl > 0 ? "is-positive" : holding.pnl < 0 ? "is-negative" : "";
       const pnlValue = holding.pnl === null ? "--" : (holding.pnl > 0 ? "+" : "") + formatHoldingMoney(holding.pnl, holding.currency);
       const pnlPercent = holding.pnlPercent === null ? "--" : (holding.pnlPercent > 0 ? "+" : "") + holding.pnlPercent.toFixed(2) + "%";
       const identityMeta = [holding.exchange, holding.currency].filter(function (value) { return value && value !== "--"; }).join(" · ") || "证券信息待核对";
-      const allocationValue = holding.planned && holding.currentAllocation !== null
-        ? holding.currentAllocation.toFixed(2) + "% / 目标 " + holding.targetAllocation.toFixed(2) + "%"
-        : "不参与本周目标组合";
-      const driftValue = holding.allocationDrift === null ? "--" : (holding.allocationDrift > 0 ? "+" : "") + holding.allocationDrift.toFixed(2) + " 个百分点";
+      const weeklyConfiguration = state.portfolio.find(function (stock) { return stock.symbol === holding.symbol; });
+      const contributionValue = weeklyConfiguration ? (Number(weeklyConfiguration.allocation || 0) * 100).toFixed(2) + "%" : "未纳入定投清单";
+      const positionWeight = holding.positionWeight === null ? null : Number(holding.positionWeight);
       row.innerHTML =
-        "<header class=\"inline-holding-row-heading\"><div class=\"inline-holding-identity\"><a class=\"inline-holding-symbol\" href=\"stock-detail.html?ticker=" + encodeURIComponent(holding.symbol) + "\">" + escapeHtml(holding.symbol) + "</a><span>" + escapeHtml(holding.description || (holding.planned ? "当前定投组合" : "同步持仓")) + "</span><small>" + escapeHtml(identityMeta) + "</small></div><div class=\"inline-holding-value\"><span>当前市值</span><strong>" + escapeHtml(formatHoldingMoney(holding.currentValue, holding.currency)) + "</strong></div><div class=\"inline-holding-badges\"><span class=\"inline-holding-status is-" + escapeHtml(String(holding.quoteStatus).replace(/[^a-z]/gi, "").toLowerCase()) + "\">" + escapeHtml(holdingQuoteLabel(holding.quoteStatus)) + "</span><span class=\"inline-holding-status is-allocation-" + escapeHtml(holding.allocationState) + "\">" + escapeHtml(holdingAllocationLabel(holding.allocationState)) + "</span></div></header>" +
+        "<header class=\"inline-holding-row-heading\"><div class=\"inline-holding-identity\"><a class=\"inline-holding-symbol\" href=\"stock-detail.html?ticker=" + encodeURIComponent(holding.symbol) + "\">" + escapeHtml(holding.symbol) + "</a><span>" + escapeHtml(holding.description || (holding.planned ? "当前定投组合" : "同步持仓")) + "</span><small>" + escapeHtml(identityMeta) + "</small></div><div class=\"inline-holding-value\"><span>当前市值</span><strong>" + escapeHtml(formatHoldingMoney(holding.currentValue, holding.currency)) + "</strong></div><div class=\"inline-holding-badges\"><span class=\"inline-holding-status is-" + escapeHtml(String(holding.quoteStatus).replace(/[^a-z]/gi, "").toLowerCase()) + "\">" + escapeHtml(holdingQuoteLabel(holding.quoteStatus)) + "</span><span class=\"inline-holding-status\">" + (holding.planned ? "定投清单内" : "计划外持仓") + "</span></div></header>" +
         "<div class=\"inline-holding-metrics\">" +
           holdingMetric("持仓数量", holding.shares > 0 ? holding.shares.toFixed(6).replace(/\.?0+$/, "") : "--") +
           holdingMetric("最新价格", holding.latestPrice && holding.latestPrice > 0 ? formatHoldingMoney(holding.latestPrice, holding.currency) : "--") +
           holdingMetric("平均成本", holding.averageCost !== null && holding.averageCost > 0 ? formatHoldingMoney(holding.averageCost, holding.currency) : "--") +
           holdingMetric("成本总额", holding.costBasis !== null ? formatHoldingMoney(holding.costBasis, holding.currency) : "--") +
-          holdingMetric("当前 / 目标", allocationValue) +
+          holdingMetric("每周基础投入比例", contributionValue) +
         "</div>" +
-        "<div class=\"inline-holding-allocation\"><div><span>配置偏差</span><strong>" + escapeHtml(driftValue) + "</strong></div><div class=\"inline-holding-allocation-track\" role=\"progressbar\" aria-label=\"" + escapeHtml(holding.symbol + " 当前配置") + "\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + escapeHtml(holding.currentAllocation === null ? "0" : String(Math.max(0, Math.min(100, holding.currentAllocation)))) + "\"><span></span></div></div>" +
+        "<div class=\"inline-holding-allocation\"><div><span>占总仓位（不含现金）</span><strong>" + escapeHtml(positionWeight === null ? "未知" : positionWeight.toFixed(2) + "%") + "</strong></div><div class=\"inline-holding-allocation-track\" role=\"progressbar\" aria-label=\"" + escapeHtml(holding.symbol + " 占总仓位") + "\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + escapeHtml(positionWeight === null ? "0" : String(Math.max(0, Math.min(100, positionWeight)))) + "\"><span></span></div></div>" +
         "<footer class=\"inline-holding-row-meta\"><span>账户：" + escapeHtml(holding.accountLabel) + "</span><span>持仓数据：" + escapeHtml(formatHoldingTimestamp(holding.dataAsOf)) + "</span>" + (holding.planned ? "" : "<span>仅展示，不进入本周定投算法</span>") + "</footer>";
       const bar = row.querySelector(".inline-holding-allocation-track span");
-      if (bar) bar.style.width = holding.currentAllocation === null ? "0%" : Math.max(0, Math.min(100, holding.currentAllocation)) + "%";
+      if (bar) bar.style.width = positionWeight === null ? "0%" : Math.max(0, Math.min(100, positionWeight)) + "%";
       const expanded = document.createElement("details");
       expanded.className = "inline-holding-details";
       expanded.innerHTML = "<summary aria-label=\"" + escapeHtml(holding.symbol + " 持仓详情") + "\">详情</summary>";
@@ -6466,7 +6423,6 @@ function equalizeAllocations() {
         "<label><span>" + escapeHtml(t("shares")) + "</span><input data-field=\"shares\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
         "<label><span>" + escapeHtml(t("avgCost")) + "</span><input data-field=\"average_cost\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
         "<label><span>" + escapeHtml(t("currentValue")) + "</span><input data-field=\"current_value\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
-        "<label><span>" + escapeHtml(t("targetPercent")) + "</span><input data-field=\"target_allocation\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\"></label>",
         "<label><span>" + escapeHtml(t("notes")) + "</span><input data-field=\"notes\" type=\"text\" autocomplete=\"off\"></label>",
         "</div>"
       ].join("");
@@ -6475,7 +6431,6 @@ function equalizeAllocations() {
       row.querySelector('[data-field="shares"]').value = input.shares || "";
       row.querySelector('[data-field="average_cost"]').value = input.average_cost || "";
       row.querySelector('[data-field="current_value"]').value = input.current_value || "";
-      row.querySelector('[data-field="target_allocation"]').value = input.target_allocation || "";
       row.querySelector('[data-field="notes"]').value = input.notes || "";
       row.querySelectorAll("input").forEach(function (field) {
         field.addEventListener("change", savePortfolioRiskForm);
@@ -6500,7 +6455,9 @@ function equalizeAllocations() {
         shares: readPositiveNumber(row.querySelector('[data-field="shares"]').value),
         average_cost: readPositiveNumber(row.querySelector('[data-field="average_cost"]').value),
         current_value: readPositiveNumber(row.querySelector('[data-field="current_value"]').value),
-        target_allocation: readPositiveNumber(row.querySelector('[data-field="target_allocation"]').value),
+        // Preserve the legacy saved field without presenting it as a holdings
+        // target. Weekly contribution weights are edited in the weekly plan.
+        target_allocation: readPositiveNumber((state.portfolioRiskInput.positions[symbol] || {}).target_allocation),
         notes: row.querySelector('[data-field="notes"]').value.trim()
       };
     });
@@ -6605,7 +6562,7 @@ function equalizeAllocations() {
       MARKET_CLOSED: "市场休市，当前为最近收盘价；按现有规则暂停买入，开市后刷新核对",
       AVAILABLE_CASH_ZERO: "可用现金明确为 0",
       CORE_SATELLITE_INCOMPLETE: "核心/卫星组合缺少必要标的",
-      TARGET_ALLOCATION_INVALID: "目标比例无效",
+      TARGET_ALLOCATION_INVALID: "每周投入比例无效",
       DCA_L2_CONFIG_UNAVAILABLE: "DCA-L2 配置不可用",
       CONSERVATION_FAILED: "资金守恒失败",
       SPY_DATA_UNAVAILABLE: "SPY 数据不可用",

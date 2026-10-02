@@ -29,8 +29,8 @@
   }
 
   function normalize(allocations) {
-    if (!Object.hasOwn(allocations, "SPY")) return failed("请保留 SPY，再调整其目标比例。");
-    if (Object.keys(allocations).some(symbol => !validSymbol(symbol) || allocations[symbol] == null || allocations[symbol] === "" || !Number.isFinite(Number(allocations[symbol])) || Number(allocations[symbol]) < 0 || Number(allocations[symbol]) > 1)) return failed("请先将各项目标比例填写为 0% 至 100% 的有效数字。");
+    if (!Object.hasOwn(allocations, "SPY")) return failed("请保留 SPY，再调整其每周基础投入比例。");
+    if (Object.keys(allocations).some(symbol => !validSymbol(symbol) || allocations[symbol] == null || allocations[symbol] === "" || !Number.isFinite(Number(allocations[symbol])) || Number(allocations[symbol]) < 0 || Number(allocations[symbol]) > 1)) return failed("请先将各项每周基础投入比例填写为 0% 至 100% 的有效数字。");
     return policy.rebalanceAllocations(allocations, "SPY", Number(allocations.SPY) * 100);
   }
 
@@ -81,7 +81,7 @@
       byId("allocationSuggestionTotal").textContent = result.metrics.allocated.toFixed(2) + "%";
       byId("allocationSuggestionSpy").textContent = percent(session.allocations.SPY);
       byId("allocationSuggestionSpeculative").textContent = result.speculativePct.toFixed(2) + "%";
-      byId("allocationSuggestionWarning").textContent = result.speculativeAboveSuggestion ? "QNT、CBRS、JOBY 合计超过建议的 15%；这是配置提示，不是强制比例上限。" : "QNT、CBRS、JOBY 建议合计 15%；可手动调整。";
+      byId("allocationSuggestionWarning").textContent = result.speculativeAboveSuggestion ? "QNT、CBRS、JOBY 每周基础投入合计超过建议的 15%；这是配置提示，不是强制比例上限。" : "QNT、CBRS、JOBY 每周基础投入建议合计 15%；可手动调整。";
       panel.querySelectorAll("input, select, button").forEach(control => {
         control.disabled = pending || control.dataset.anchor === "true";
       });
@@ -136,7 +136,7 @@
           input.type = "number"; input.min = "0"; input.max = "100"; input.step = ".01"; input.inputMode = "decimal";
           input.value = (session.allocations[symbol] * 100).toFixed(2);
           input.dataset.draftSymbol = symbol;
-          input.setAttribute("aria-label", symbol + " 草稿目标比例（百分比）");
+          input.setAttribute("aria-label", symbol + " 草稿每周基础投入比例（百分比）");
           input.addEventListener("input", function () {
             const result = edit(session.allocations, symbol, input.value);
             inputInvalid = !result.valid;
@@ -159,7 +159,7 @@
           actionCell.appendChild(removeButton);
         } else {
           nextCell.appendChild(doc.createTextNode("移出清单"));
-          actionCell.textContent = "持仓仍参与估值";
+          actionCell.textContent = "已有持仓继续保留";
         }
         [labelCell, currentCell, nextCell, actionCell].forEach(cell => tr.appendChild(cell));
         rows.appendChild(tr);
@@ -176,7 +176,7 @@
         inputInvalid = false;
         panel.hidden = false;
         opener.setAttribute("aria-expanded", "true");
-        showStatus("建议配置仅为草稿；编辑和取消均不会修改已保存比例。", false);
+        showStatus("每周基础投入建议仅为草稿；编辑和取消均不会修改已保存比例。", false);
         renderAll();
         byId("allocationSuggestionTitle").focus({ preventScroll: true });
         panel.scrollIntoView({ block: "nearest", behavior: "auto" });
@@ -194,7 +194,7 @@
     async function apply() {
       if (!session || pending || inputInvalid || !metrics(session.allocations).valid) return;
       const allocations = Object.assign({}, session.allocations), baselineAllocations = Object.assign({}, session.baseline);
-      showStatus("正在检查行情并保存目标比例…", false);
+      showStatus("正在检查行情并保存每周基础投入比例…", false);
       setPending(true);
       let result;
       try { result = await opts.onApply(allocations, { baselineAllocations, source: "optimization-draft" }); }
@@ -208,7 +208,7 @@
     byId("cancelAllocationSuggestionBtn").addEventListener("click", close);
     applyButton.addEventListener("click", apply);
     byId("normalizeAllocationSuggestionBtn").addEventListener("click", function () {
-      if (accept(normalize(session.allocations), "已按当前 SPY 比例归一化，其余标的合计调节至 100.00%。")) { syncInputs(); renderSummary(); }
+      if (accept(normalize(session.allocations), "已保留 SPY 每周基础投入比例，其余标的合计调节至 100.00%。")) { syncInputs(); renderSummary(); }
     });
     candidate.addEventListener("change", function () {
       addPercent.value = ((RECOMMENDED[candidate.value] || .01) * 100).toFixed(2);
