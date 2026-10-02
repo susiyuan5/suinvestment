@@ -921,14 +921,14 @@ body:has(.workspace-sidebar) > #liveDataStatus { order: 1; margin-left: 156px; b
 #weeklyDecisionPlan #weeklyPlanSettings > summary { min-height: 30px; padding: 6px; color: var(--dashboard-secondary); }
 #weeklyDecisionPlan .weekly-allocation-help { color: var(--dashboard-secondary); margin: 6px 0; line-height: 1.5; }
 #weeklyAllocationStatus:empty, #weeklyRemovedStocks:empty, #stockSearchResults:empty { display: none; }
-#weeklyDecisionPlan .stock-search-panel { width: 100%; max-width: 100%; padding: 0; background: none; border: 0; gap: 8px; margin: 10px 0; overflow: visible; }
+#weeklyDecisionPlan .stock-search-panel { width: 100%; max-width: 100%; grid-template-columns: minmax(0, 1fr); padding: 0; background: none; border: 0; gap: 8px; margin: 10px 0; overflow: visible; }
 #weeklyDecisionPlan .stock-search-grid { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto auto; align-items: end; gap: 8px; }
 #weeklyDecisionPlan .stock-search-grid label { font-size: 11px; color: var(--dashboard-secondary); gap: 4px; }
 #weeklyDecisionPlan .stock-search-grid input { height: 36px; padding: 7px 10px; }
 #weeklyDecisionPlan button { min-height: 32px; font-size: 12px; padding: 6px 10px; border-radius: 5px; }
 #weeklyDecisionPlan .secondary-button { color: #c2ccda; background: transparent; border: 1px solid var(--dashboard-border); box-shadow: none; }
 #weeklyDecisionPlan .primary-button { background: #2865b5; color: #fff; border: 1px solid #3976c6; }
-#portfolioTotal { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+#portfolioTotal { display: flex; flex-wrap: wrap; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
 #portfolioTotal .allocation-tools { position: relative; display: block; margin: 0; font-weight: 400; }
 .allocation-tools > summary { cursor: pointer; padding: 6px 10px; border: 1px solid var(--dashboard-border); border-radius: 5px; }
 #portfolioTotal .allocation-tools[open] { z-index: 20; }
@@ -1063,6 +1063,7 @@ body:has(.workspace-sidebar) > #liveDataStatus { order: 1; margin-left: 156px; b
   #weeklyDecisionPlan #weeklyDecisionRows .weekly-allocation-control { flex-wrap: wrap; }
   #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td { text-align: left; }
   #weeklyDecisionPlan .weekly-decision-actions, .weekly-controls-bar { flex-wrap: wrap; }
+  #weeklyDecisionPlan .weekly-list-toolbar { flex-wrap: wrap; min-width: 0; }
 }
 .summary-card > strong { overflow-wrap: anywhere; }
 #decisionSummary { container-type: inline-size; }

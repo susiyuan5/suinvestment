@@ -77,6 +77,8 @@ async function setup({ missingPublished = [], hardDrawdown = false, stale = fals
 
 async function ready(page) {
   await page.waitForFunction(() => document.querySelector('#refreshBtn')?.getAttribute('aria-busy') === 'false' && window.__SUINVESTMENT_SIGNALS__?.length > 0);
+  assert.match(await page.locator('label[for="stockAllocationInput"] span').textContent(), /每周投入比例\s*%/, 'stock search labels retain weekly contribution semantics after runtime translation');
+  assert.match(await page.locator('#portfolioTotal > span').first().textContent(), /每周基础投入合计/, 'rendered contribution total retains weekly Base semantics after runtime translation');
 }
 const stored = page => page.evaluate(key => localStorage.getItem(key), portfolioKey);
 const plan = page => page.evaluate(() => window.__SUINVESTMENT_WEALTHSIMPLE_PLAN__.plan);
@@ -120,7 +122,7 @@ try {
   assert.equal(await stored(page), original, 'opening a suggestion never persists it');
   await page.locator('#cancelAllocationSuggestionBtn').click();
   assert.equal(await stored(page), original, 'cancelling does not persist');
-  evidence.checks.push('11-symbol draft opens and cancels without saving');
+  evidence.checks.push('11-symbol draft opens and cancels without saving; search and allocation total labels retain weekly contribution semantics after runtime translation');
 
   checkpoint('weekly weights and existing holdings');
   await automaticHoldings(page);
