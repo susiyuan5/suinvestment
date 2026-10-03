@@ -1,22 +1,22 @@
 # Project Health
 
-- Status: **HEALTHY**
-- Generated: `2026-10-02T18:41:32.762880+00:00`
+- Status: **WARNING**
+- Generated: `2026-10-03T17:37:18.393305+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
-- `none`
+- `workflow_historical_update_failure`
 
 ## Historical Coverage
 
-- QQQ: 278 rows; latest `2026-09-25`; lag `7` days
-- SPY: 278 rows; latest `2026-09-25`; lag `7` days
+- QQQ: 278 rows; latest `2026-09-25`; lag `8` days
+- SPY: 278 rows; latest `2026-09-25`; lag `8` days
 
 ## Workflows
 
 - market_update: `completed` / `success`
-- historical_update: `completed` / `success`
+- historical_update: `completed` / `failure`
 - quality_checks: `completed` / `success`
 - pages_smoke: `completed` / `success`
 - shadow_update: `completed` / `success`
