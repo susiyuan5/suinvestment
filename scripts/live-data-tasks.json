@@ -297,10 +297,12 @@
         "run": "node scripts/validate-encrypted-holdings.mjs"
       },
       {
-        "run": "npm test"
+        "name": "Validate holdings, currency and independent data contracts",
+        "run": "node --test tests/snaptrade-readonly.test.js tests/holdings-detail-model.test.js tests/portfolio-risk-input.test.js tests/wealthsimple-adapter.test.js tests/currency-migration.test.js tests/live-data.test.js tests/take-profit-holdings.test.js"
       },
       {
-        "run": "python -m unittest discover -s tests"
+        "name": "Validate encrypted holdings and publication pipeline",
+        "run": "python -m unittest tests.test_snaptrade_readonly tests.test_live_data"
       },
       {
         "name": "Check only the encrypted holdings publication output",

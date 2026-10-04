@@ -1319,7 +1319,7 @@ amountBreakdown: "金额分解",
       const result = { sourceMode: state.portfolioRiskSource, requestedSourceMode,
         status: state.snaptradeHoldingsStatus,
         automaticStatus: state.snaptradeHoldingsStatus, usingManualFallback: false,
-        asOf: snapshot && (snapshot.positions_as_of || snapshot.generated_at) || null,
+        asOf: snapshot && snapshot.positions_as_of || null,
         rows: [] };
       if (result.status !== "ready" || result.sourceMode !== "snaptrade_automatic" || !snapshot || !window.HoldingsDetailModel) return freeze(result);
       const holdings = (snapshot.holdings || []).filter((item) => item && item.included_in_stock_plan === true && item.cash_equivalent !== true && Number.isFinite(Number(item.units)) && Number(item.units) > 0);

@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createPersonalClient, responseData, withRetry } from "./snaptrade-client.mjs";
-import { normalizeConnection, normalizeSnapshot } from "./snaptrade-normalizer.mjs";
+import { normalizeConnection, normalizeSnapshot, assertSnapshotSourceFreshness } from "./snaptrade-normalizer.mjs";
 import { decryptSnapshot, encryptSnapshot, writeEncryptedSnapshotAtomic } from "./encrypted-holdings-snapshot.mjs";
 
 const outputPath = path.resolve(process.env.HOLDINGS_OUTPUT || "data/private/wealthsimple-holdings.enc.json");
@@ -33,12 +33,13 @@ for (const account of accounts) {
 }
 const snapshot = normalizeSnapshot({ connections: rawConnections, accounts, accountDetails, positions, balances });
 if (!snapshot.accounts.length) throw new Error("SnapTrade 返回的 Wealthsimple 连接没有可同步投资账户；不覆盖最后有效快照。");
+assertSnapshotSourceFreshness(snapshot);
 const comparable = (value) => { const copy = JSON.parse(JSON.stringify(value)); delete copy.generated_at; return copy; };
 try {
   const existing = JSON.parse(await readFile(outputPath, "utf8"));
   const previous = decryptSnapshot(existing, key);
   if (JSON.stringify(comparable(previous)) === JSON.stringify(comparable(snapshot))) {
-    console.log(JSON.stringify({ changed: false, output: path.relative(process.cwd(), outputPath), accountCount: snapshot.accounts.length, positionCount: snapshot.holdings.length, generatedAt: existing.generated_at }, null, 2));
+    console.log(JSON.stringify({ changed: false, output: path.relative(process.cwd(), outputPath), accountCount: snapshot.accounts.length, positionCount: snapshot.holdings.length, generatedAt: existing.generated_at, positionsAsOf: snapshot.positions_as_of }, null, 2));
     process.exit(0);
   }
 } catch (_) {
@@ -46,4 +47,4 @@ try {
 }
 const envelope = encryptSnapshot(snapshot, key);
 await writeEncryptedSnapshotAtomic(outputPath, envelope);
-console.log(JSON.stringify({ changed: true, output: path.relative(process.cwd(), outputPath), accountCount: snapshot.accounts.length, positionCount: snapshot.holdings.length, generatedAt: snapshot.generated_at }, null, 2));
+console.log(JSON.stringify({ changed: true, output: path.relative(process.cwd(), outputPath), accountCount: snapshot.accounts.length, positionCount: snapshot.holdings.length, generatedAt: snapshot.generated_at, positionsAsOf: snapshot.positions_as_of }, null, 2));
