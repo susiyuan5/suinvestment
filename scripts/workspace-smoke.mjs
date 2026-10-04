@@ -150,7 +150,7 @@ try {
         true,
         `${name}/${route} overflow`,
       );
-      assert.equal(await page.locator(".workspace-nav a:visible").count(), 3);
+      assert.equal(await page.locator(".workspace-nav a:visible").count(), 4);
       await page.screenshot({
         path: `output/playwright/workspace-${name}-${route}.png`,
       });

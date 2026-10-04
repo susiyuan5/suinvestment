@@ -1,0 +1,1198 @@
+{
+  "source": "research/take_profit_indicator.py",
+  "sourceSha256": "594f51887ede509b73b8d7d0e93449f1406a9752a3179b9c05f34c767cd037ef",
+  "version": "take-profit-v1",
+  "states": [
+    {
+      "name": "default activation and gaps",
+      "entryPrice": 100,
+      "entryATR": 1,
+      "entryDate": "2020-01-01",
+      "parameters": {
+        "atrMultiple": 3.0,
+        "activationPct": 0.05,
+        "activationATR": 2.0,
+        "retainProfit": 0.5
+      },
+      "closes": [
+        104.99,
+        105,
+        110,
+        120,
+        119,
+        117,
+        90
+      ],
+      "atrs": [
+        2,
+        2,
+        2,
+        1,
+        4,
+        5,
+        15
+      ],
+      "dates": [
+        "2020-01-01",
+        "2020-01-02",
+        "2020-01-03",
+        "2020-01-04",
+        "2020-01-05",
+        "2020-01-06",
+        "2020-01-07"
+      ],
+      "states": [
+        {
+          "entryPrice": 100.0,
+          "entryATR": 1.0,
+          "peakClose": 104.99,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": false,
+          "line": null,
+          "signal": false,
+          "score": null,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-01"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 1.0,
+          "peakClose": 105.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 102.5,
+          "signal": false,
+          "score": 0.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-02"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 1.0,
+          "peakClose": 110.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 105.0,
+          "signal": false,
+          "score": 0.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-03"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 1.0,
+          "peakClose": 120.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 117.0,
+          "signal": false,
+          "score": 0.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-04"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 1.0,
+          "peakClose": 120.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 117.0,
+          "signal": false,
+          "score": 33.33333333333333,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-05"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 1.0,
+          "peakClose": 120.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 117.0,
+          "signal": true,
+          "score": 100.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-06"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 1.0,
+          "peakClose": 120.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 117.0,
+          "signal": true,
+          "score": 100.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-07"
+        }
+      ]
+    },
+    {
+      "name": "entry ATR binding threshold",
+      "entryPrice": 100,
+      "entryATR": 4,
+      "entryDate": "2020-01-01",
+      "parameters": {
+        "atrMultiple": 3.0,
+        "activationPct": 0.05,
+        "activationATR": 2.0,
+        "retainProfit": 0.5
+      },
+      "closes": [
+        107.99,
+        108,
+        107,
+        115,
+        114,
+        105
+      ],
+      "atrs": [
+        1,
+        1,
+        10,
+        2,
+        20,
+        20
+      ],
+      "dates": [
+        "2020-01-01",
+        "2020-01-02",
+        "2020-01-03",
+        "2020-01-04",
+        "2020-01-05",
+        "2020-01-06"
+      ],
+      "states": [
+        {
+          "entryPrice": 100.0,
+          "entryATR": 4.0,
+          "peakClose": 107.99,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": false,
+          "line": null,
+          "signal": false,
+          "score": null,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-01"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 4.0,
+          "peakClose": 108.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 105.0,
+          "signal": false,
+          "score": 0.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-02"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 4.0,
+          "peakClose": 108.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 105.0,
+          "signal": false,
+          "score": 33.33333333333333,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-03"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 4.0,
+          "peakClose": 115.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 109.0,
+          "signal": false,
+          "score": 0.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-04"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 4.0,
+          "peakClose": 115.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 109.0,
+          "signal": false,
+          "score": 16.666666666666664,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-05"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 4.0,
+          "peakClose": 115.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 109.0,
+          "signal": true,
+          "score": 100.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-06"
+        }
+      ]
+    },
+    {
+      "name": "custom parameters",
+      "entryPrice": 100,
+      "entryATR": 3,
+      "entryDate": "2020-01-01",
+      "parameters": {
+        "atrMultiple": 4.0,
+        "activationPct": 0.08,
+        "activationATR": 2.5,
+        "retainProfit": 0.65
+      },
+      "closes": [
+        101,
+        110,
+        130,
+        125,
+        120
+      ],
+      "atrs": [
+        3,
+        3,
+        3,
+        15,
+        30
+      ],
+      "dates": [
+        "2020-01-01",
+        "2020-01-02",
+        "2020-01-03",
+        "2020-01-04",
+        "2020-01-05"
+      ],
+      "states": [
+        {
+          "entryPrice": 100.0,
+          "entryATR": 3.0,
+          "peakClose": 101.0,
+          "parameters": {
+            "atrMultiple": 4.0,
+            "activationPct": 0.08,
+            "activationATR": 2.5,
+            "retainProfit": 0.65
+          },
+          "active": false,
+          "line": null,
+          "signal": false,
+          "score": null,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-01"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 3.0,
+          "peakClose": 110.0,
+          "parameters": {
+            "atrMultiple": 4.0,
+            "activationPct": 0.08,
+            "activationATR": 2.5,
+            "retainProfit": 0.65
+          },
+          "active": true,
+          "line": 106.5,
+          "signal": false,
+          "score": 0.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-02"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 3.0,
+          "peakClose": 130.0,
+          "parameters": {
+            "atrMultiple": 4.0,
+            "activationPct": 0.08,
+            "activationATR": 2.5,
+            "retainProfit": 0.65
+          },
+          "active": true,
+          "line": 119.5,
+          "signal": false,
+          "score": 0.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-03"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 3.0,
+          "peakClose": 130.0,
+          "parameters": {
+            "atrMultiple": 4.0,
+            "activationPct": 0.08,
+            "activationATR": 2.5,
+            "retainProfit": 0.65
+          },
+          "active": true,
+          "line": 119.5,
+          "signal": false,
+          "score": 47.61904761904761,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-04"
+        },
+        {
+          "entryPrice": 100.0,
+          "entryATR": 3.0,
+          "peakClose": 130.0,
+          "parameters": {
+            "atrMultiple": 4.0,
+            "activationPct": 0.08,
+            "activationATR": 2.5,
+            "retainProfit": 0.65
+          },
+          "active": true,
+          "line": 119.5,
+          "signal": false,
+          "score": 95.23809523809523,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-05"
+        }
+      ]
+    },
+    {
+      "name": "zero current ATR",
+      "entryPrice": 100,
+      "entryATR": 1,
+      "entryDate": "2020-01-01",
+      "parameters": {
+        "atrMultiple": 3.0,
+        "activationPct": 0.05,
+        "activationATR": 2.0,
+        "retainProfit": 0.5
+      },
+      "closes": [
+        106
+      ],
+      "atrs": [
+        0
+      ],
+      "dates": [
+        "2020-01-01"
+      ],
+      "states": [
+        {
+          "entryPrice": 100.0,
+          "entryATR": 1.0,
+          "peakClose": 106.0,
+          "parameters": {
+            "atrMultiple": 3.0,
+            "activationPct": 0.05,
+            "activationATR": 2.0,
+            "retainProfit": 0.5
+          },
+          "active": true,
+          "line": 106.0,
+          "signal": true,
+          "score": 100.0,
+          "entryDate": "2020-01-01",
+          "lastDate": "2020-01-01"
+        }
+      ]
+    }
+  ],
+  "barCases": [
+    {
+      "rows": [
+        {
+          "date": "2020-01-01",
+          "open": 99.8,
+          "high": 101.0,
+          "low": 98.5,
+          "close": 100.0,
+          "adjusted_close": 90.0
+        },
+        {
+          "date": "2020-01-02",
+          "open": 100.8,
+          "high": 102.2,
+          "low": 99.5,
+          "close": 101.0,
+          "adjusted_close": 90.9
+        },
+        {
+          "date": "2020-01-03",
+          "open": 101.8,
+          "high": 103.4,
+          "low": 100.5,
+          "close": 102.0,
+          "adjusted_close": 91.8
+        },
+        {
+          "date": "2020-01-04",
+          "open": 102.8,
+          "high": 104.0,
+          "low": 101.5,
+          "close": 103.0,
+          "adjusted_close": 92.7
+        },
+        {
+          "date": "2020-01-05",
+          "open": 102.6,
+          "high": 104.0,
+          "low": 101.3,
+          "close": 102.8,
+          "adjusted_close": 92.52
+        },
+        {
+          "date": "2020-01-06",
+          "open": 103.6,
+          "high": 105.2,
+          "low": 102.3,
+          "close": 103.8,
+          "adjusted_close": 93.42
+        },
+        {
+          "date": "2020-01-07",
+          "open": 104.6,
+          "high": 105.8,
+          "low": 103.3,
+          "close": 104.8,
+          "adjusted_close": 94.32
+        },
+        {
+          "date": "2020-01-08",
+          "open": 105.60000000000001,
+          "high": 107.00000000000001,
+          "low": 104.30000000000001,
+          "close": 105.80000000000001,
+          "adjusted_close": 95.22000000000001
+        },
+        {
+          "date": "2020-01-09",
+          "open": 105.39999999999999,
+          "high": 107.0,
+          "low": 104.1,
+          "close": 105.6,
+          "adjusted_close": 95.03999999999999
+        },
+        {
+          "date": "2020-01-10",
+          "open": 106.39999999999999,
+          "high": 107.6,
+          "low": 105.1,
+          "close": 106.6,
+          "adjusted_close": 95.94
+        },
+        {
+          "date": "2020-01-11",
+          "open": 107.39999999999999,
+          "high": 108.8,
+          "low": 106.1,
+          "close": 107.6,
+          "adjusted_close": 96.84
+        },
+        {
+          "date": "2020-01-12",
+          "open": 108.4,
+          "high": 110.00000000000001,
+          "low": 107.10000000000001,
+          "close": 108.60000000000001,
+          "adjusted_close": 97.74000000000001
+        },
+        {
+          "date": "2020-01-13",
+          "open": 108.2,
+          "high": 109.4,
+          "low": 106.9,
+          "close": 108.4,
+          "adjusted_close": 97.56
+        },
+        {
+          "date": "2020-01-14",
+          "open": 109.19999999999999,
+          "high": 110.6,
+          "low": 107.89999999999999,
+          "close": 109.39999999999999,
+          "adjusted_close": 98.46
+        },
+        {
+          "date": "2020-01-15",
+          "open": 110.19999999999999,
+          "high": 111.8,
+          "low": 108.89999999999999,
+          "close": 110.39999999999999,
+          "adjusted_close": 99.36
+        },
+        {
+          "date": "2020-01-16",
+          "open": 111.2,
+          "high": 112.4,
+          "low": 109.9,
+          "close": 111.4,
+          "adjusted_close": 100.26
+        },
+        {
+          "date": "2020-01-17",
+          "open": 111.0,
+          "high": 112.4,
+          "low": 109.7,
+          "close": 111.2,
+          "adjusted_close": 100.08
+        },
+        {
+          "date": "2020-01-18",
+          "open": 112.0,
+          "high": 113.60000000000001,
+          "low": 110.7,
+          "close": 112.2,
+          "adjusted_close": 100.98
+        },
+        {
+          "date": "2020-01-19",
+          "open": 112.99999999999999,
+          "high": 114.19999999999999,
+          "low": 111.69999999999999,
+          "close": 113.19999999999999,
+          "adjusted_close": 101.88
+        },
+        {
+          "date": "2020-01-20",
+          "open": 114.0,
+          "high": 115.4,
+          "low": 112.7,
+          "close": 114.2,
+          "adjusted_close": 102.78
+        },
+        {
+          "date": "2020-01-21",
+          "open": 113.8,
+          "high": 115.4,
+          "low": 112.5,
+          "close": 114.0,
+          "adjusted_close": 114.0
+        },
+        {
+          "date": "2020-01-22",
+          "open": 114.8,
+          "high": 116.0,
+          "low": 113.5,
+          "close": 115.0,
+          "adjusted_close": 115.0
+        },
+        {
+          "date": "2020-01-23",
+          "open": 115.8,
+          "high": 117.2,
+          "low": 114.5,
+          "close": 116.0,
+          "adjusted_close": 116.0
+        },
+        {
+          "date": "2020-01-24",
+          "open": 116.8,
+          "high": 118.4,
+          "low": 115.5,
+          "close": 117.0,
+          "adjusted_close": 117.0
+        },
+        {
+          "date": "2020-01-25",
+          "open": 116.6,
+          "high": 117.8,
+          "low": 115.3,
+          "close": 116.8,
+          "adjusted_close": 116.8
+        },
+        {
+          "date": "2020-01-26",
+          "open": 117.6,
+          "high": 119.0,
+          "low": 116.3,
+          "close": 117.8,
+          "adjusted_close": 117.8
+        },
+        {
+          "date": "2020-01-27",
+          "open": 118.6,
+          "high": 120.2,
+          "low": 117.3,
+          "close": 118.8,
+          "adjusted_close": 118.8
+        },
+        {
+          "date": "2020-01-28",
+          "open": 119.60000000000001,
+          "high": 120.80000000000001,
+          "low": 118.30000000000001,
+          "close": 119.80000000000001,
+          "adjusted_close": 119.80000000000001
+        },
+        {
+          "date": "2020-01-29",
+          "open": 119.39999999999999,
+          "high": 120.8,
+          "low": 118.1,
+          "close": 119.6,
+          "adjusted_close": 119.6
+        },
+        {
+          "date": "2020-01-30",
+          "open": 120.39999999999999,
+          "high": 122.0,
+          "low": 119.1,
+          "close": 120.6,
+          "adjusted_close": 120.6
+        },
+        {
+          "date": "2020-01-31",
+          "open": 121.39999999999999,
+          "high": 122.6,
+          "low": 120.1,
+          "close": 121.6,
+          "adjusted_close": 121.6
+        },
+        {
+          "date": "2020-02-01",
+          "open": 122.4,
+          "high": 123.80000000000001,
+          "low": 121.10000000000001,
+          "close": 122.60000000000001,
+          "adjusted_close": 122.60000000000001
+        },
+        {
+          "date": "2020-02-02",
+          "open": 122.2,
+          "high": 123.80000000000001,
+          "low": 120.9,
+          "close": 122.4,
+          "adjusted_close": 122.4
+        },
+        {
+          "date": "2020-02-03",
+          "open": 123.19999999999999,
+          "high": 124.39999999999999,
+          "low": 121.89999999999999,
+          "close": 123.39999999999999,
+          "adjusted_close": 123.39999999999999
+        },
+        {
+          "date": "2020-02-04",
+          "open": 124.19999999999999,
+          "high": 125.6,
+          "low": 122.89999999999999,
+          "close": 124.39999999999999,
+          "adjusted_close": 124.39999999999999
+        },
+        {
+          "date": "2020-02-05",
+          "open": 125.2,
+          "high": 126.80000000000001,
+          "low": 123.9,
+          "close": 125.4,
+          "adjusted_close": 125.4
+        },
+        {
+          "date": "2020-02-06",
+          "open": 125.0,
+          "high": 126.2,
+          "low": 123.7,
+          "close": 125.2,
+          "adjusted_close": 125.2
+        },
+        {
+          "date": "2020-02-07",
+          "open": 126.0,
+          "high": 127.4,
+          "low": 124.7,
+          "close": 126.2,
+          "adjusted_close": 126.2
+        },
+        {
+          "date": "2020-02-08",
+          "open": 126.99999999999999,
+          "high": 128.6,
+          "low": 125.69999999999999,
+          "close": 127.19999999999999,
+          "adjusted_close": 127.19999999999999
+        },
+        {
+          "date": "2020-02-09",
+          "open": 127.99999999999999,
+          "high": 129.2,
+          "low": 126.69999999999999,
+          "close": 128.2,
+          "adjusted_close": 128.2
+        },
+        {
+          "date": "2020-02-10",
+          "open": 127.8,
+          "high": 129.2,
+          "low": 126.5,
+          "close": 128.0,
+          "adjusted_close": 128.0
+        },
+        {
+          "date": "2020-02-11",
+          "open": 128.8,
+          "high": 130.4,
+          "low": 127.5,
+          "close": 129.0,
+          "adjusted_close": 129.0
+        },
+        {
+          "date": "2020-02-12",
+          "open": 129.8,
+          "high": 131.0,
+          "low": 128.5,
+          "close": 130.0,
+          "adjusted_close": 130.0
+        },
+        {
+          "date": "2020-02-13",
+          "open": 130.8,
+          "high": 132.2,
+          "low": 129.5,
+          "close": 131.0,
+          "adjusted_close": 131.0
+        },
+        {
+          "date": "2020-02-14",
+          "open": 130.60000000000002,
+          "high": 132.20000000000002,
+          "low": 129.3,
+          "close": 130.8,
+          "adjusted_close": 130.8
+        }
+      ],
+      "normalized": [
+        {
+          "date": "2020-01-01",
+          "open": 89.82,
+          "high": 90.9,
+          "low": 88.65,
+          "close": 90.0
+        },
+        {
+          "date": "2020-01-02",
+          "open": 90.72,
+          "high": 91.98,
+          "low": 89.55,
+          "close": 90.9
+        },
+        {
+          "date": "2020-01-03",
+          "open": 91.62,
+          "high": 93.06,
+          "low": 90.45,
+          "close": 91.8
+        },
+        {
+          "date": "2020-01-04",
+          "open": 92.52,
+          "high": 93.60000000000001,
+          "low": 91.35000000000001,
+          "close": 92.7
+        },
+        {
+          "date": "2020-01-05",
+          "open": 92.34,
+          "high": 93.60000000000001,
+          "low": 91.17,
+          "close": 92.52
+        },
+        {
+          "date": "2020-01-06",
+          "open": 93.24,
+          "high": 94.68,
+          "low": 92.07,
+          "close": 93.42
+        },
+        {
+          "date": "2020-01-07",
+          "open": 94.13999999999999,
+          "high": 95.21999999999998,
+          "low": 92.96999999999998,
+          "close": 94.32
+        },
+        {
+          "date": "2020-01-08",
+          "open": 95.04,
+          "high": 96.30000000000001,
+          "low": 93.87000000000002,
+          "close": 95.22000000000001
+        },
+        {
+          "date": "2020-01-09",
+          "open": 94.86,
+          "high": 96.3,
+          "low": 93.69,
+          "close": 95.03999999999999
+        },
+        {
+          "date": "2020-01-10",
+          "open": 95.75999999999999,
+          "high": 96.84,
+          "low": 94.59,
+          "close": 95.94
+        },
+        {
+          "date": "2020-01-11",
+          "open": 96.66000000000001,
+          "high": 97.92000000000002,
+          "low": 95.49000000000001,
+          "close": 96.84
+        },
+        {
+          "date": "2020-01-12",
+          "open": 97.56,
+          "high": 99.00000000000001,
+          "low": 96.39000000000001,
+          "close": 97.74000000000001
+        },
+        {
+          "date": "2020-01-13",
+          "open": 97.38000000000001,
+          "high": 98.46000000000001,
+          "low": 96.21000000000001,
+          "close": 97.56
+        },
+        {
+          "date": "2020-01-14",
+          "open": 98.27999999999999,
+          "high": 99.53999999999999,
+          "low": 97.11,
+          "close": 98.46
+        },
+        {
+          "date": "2020-01-15",
+          "open": 99.17999999999999,
+          "high": 100.62,
+          "low": 98.00999999999999,
+          "close": 99.36
+        },
+        {
+          "date": "2020-01-16",
+          "open": 100.08,
+          "high": 101.16000000000001,
+          "low": 98.91000000000001,
+          "close": 100.26
+        },
+        {
+          "date": "2020-01-17",
+          "open": 99.89999999999999,
+          "high": 101.16,
+          "low": 98.72999999999999,
+          "close": 100.08
+        },
+        {
+          "date": "2020-01-18",
+          "open": 100.8,
+          "high": 102.24000000000001,
+          "low": 99.63000000000001,
+          "close": 100.98
+        },
+        {
+          "date": "2020-01-19",
+          "open": 101.69999999999999,
+          "high": 102.77999999999999,
+          "low": 100.52999999999999,
+          "close": 101.88
+        },
+        {
+          "date": "2020-01-20",
+          "open": 102.60000000000001,
+          "high": 103.86000000000001,
+          "low": 101.43,
+          "close": 102.78
+        },
+        {
+          "date": "2020-01-21",
+          "open": 113.8,
+          "high": 115.4,
+          "low": 112.5,
+          "close": 114.0
+        },
+        {
+          "date": "2020-01-22",
+          "open": 114.8,
+          "high": 116.0,
+          "low": 113.5,
+          "close": 115.0
+        },
+        {
+          "date": "2020-01-23",
+          "open": 115.8,
+          "high": 117.2,
+          "low": 114.5,
+          "close": 116.0
+        },
+        {
+          "date": "2020-01-24",
+          "open": 116.8,
+          "high": 118.4,
+          "low": 115.5,
+          "close": 117.0
+        },
+        {
+          "date": "2020-01-25",
+          "open": 116.6,
+          "high": 117.8,
+          "low": 115.3,
+          "close": 116.8
+        },
+        {
+          "date": "2020-01-26",
+          "open": 117.6,
+          "high": 119.0,
+          "low": 116.3,
+          "close": 117.8
+        },
+        {
+          "date": "2020-01-27",
+          "open": 118.6,
+          "high": 120.2,
+          "low": 117.3,
+          "close": 118.8
+        },
+        {
+          "date": "2020-01-28",
+          "open": 119.60000000000001,
+          "high": 120.80000000000001,
+          "low": 118.30000000000001,
+          "close": 119.80000000000001
+        },
+        {
+          "date": "2020-01-29",
+          "open": 119.39999999999999,
+          "high": 120.8,
+          "low": 118.1,
+          "close": 119.6
+        },
+        {
+          "date": "2020-01-30",
+          "open": 120.39999999999999,
+          "high": 122.0,
+          "low": 119.1,
+          "close": 120.6
+        },
+        {
+          "date": "2020-01-31",
+          "open": 121.39999999999999,
+          "high": 122.6,
+          "low": 120.1,
+          "close": 121.6
+        },
+        {
+          "date": "2020-02-01",
+          "open": 122.4,
+          "high": 123.80000000000001,
+          "low": 121.10000000000001,
+          "close": 122.60000000000001
+        },
+        {
+          "date": "2020-02-02",
+          "open": 122.2,
+          "high": 123.80000000000001,
+          "low": 120.9,
+          "close": 122.4
+        },
+        {
+          "date": "2020-02-03",
+          "open": 123.19999999999999,
+          "high": 124.39999999999999,
+          "low": 121.89999999999999,
+          "close": 123.39999999999999
+        },
+        {
+          "date": "2020-02-04",
+          "open": 124.19999999999999,
+          "high": 125.6,
+          "low": 122.89999999999999,
+          "close": 124.39999999999999
+        },
+        {
+          "date": "2020-02-05",
+          "open": 125.2,
+          "high": 126.80000000000001,
+          "low": 123.9,
+          "close": 125.4
+        },
+        {
+          "date": "2020-02-06",
+          "open": 125.0,
+          "high": 126.2,
+          "low": 123.7,
+          "close": 125.2
+        },
+        {
+          "date": "2020-02-07",
+          "open": 126.0,
+          "high": 127.4,
+          "low": 124.7,
+          "close": 126.2
+        },
+        {
+          "date": "2020-02-08",
+          "open": 126.99999999999999,
+          "high": 128.6,
+          "low": 125.69999999999999,
+          "close": 127.19999999999999
+        },
+        {
+          "date": "2020-02-09",
+          "open": 127.99999999999999,
+          "high": 129.2,
+          "low": 126.69999999999999,
+          "close": 128.2
+        },
+        {
+          "date": "2020-02-10",
+          "open": 127.8,
+          "high": 129.2,
+          "low": 126.5,
+          "close": 128.0
+        },
+        {
+          "date": "2020-02-11",
+          "open": 128.8,
+          "high": 130.4,
+          "low": 127.5,
+          "close": 129.0
+        },
+        {
+          "date": "2020-02-12",
+          "open": 129.8,
+          "high": 131.0,
+          "low": 128.5,
+          "close": 130.0
+        },
+        {
+          "date": "2020-02-13",
+          "open": 130.8,
+          "high": 132.2,
+          "low": 129.5,
+          "close": 131.0
+        },
+        {
+          "date": "2020-02-14",
+          "open": 130.60000000000002,
+          "high": 132.20000000000002,
+          "low": 129.3,
+          "close": 130.8
+        }
+      ],
+      "period": 14,
+      "atr": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        2.4171428571428586,
+        2.430918367346941,
+        2.4179956268221594,
+        2.4188530820491483,
+        2.432506433331352,
+        2.4194702595219697,
+        2.4202223838418293,
+        3.1487779278531276,
+        3.10243664729219,
+        3.0736911724856055,
+        3.0612846601652057,
+        3.0211928987248338,
+        2.9982505488159172,
+        2.9912326524719237,
+        2.956144605866786,
+        2.9378485625905872,
+        2.9351450938341173,
+        2.9040633014173944,
+        2.889487351316152,
+        2.8902382547935703,
+        2.8623640937368866,
+        2.8507666584699662,
+        2.854283325722112,
+        2.8289773738848183,
+        2.819764704321617,
+        2.8254957968700736,
+        2.8022460970936396,
+        2.7949428044440934,
+        2.8024468898409447,
+        2.7808435405665914,
+        2.7750690019546913,
+        2.783992644672214
+      ]
+    }
+  ]
+}

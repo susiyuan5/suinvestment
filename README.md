@@ -2,6 +2,29 @@
 
 Su Investment Pro is a weekly investment calculator, historical backtesting toolkit, and live market decision-support assistant. It is not an automatic trading bot. It never places real orders, never logs in to a brokerage account, and never submits buy or sell instructions through a broker API.
 
+## Take-profit workspace (2026-10-04)
+
+The workspace's **止盈** view monitors individual USD long entries using the
+fixed research indicator. Enter the symbol, buy date and per-share cost in the
+current share basis; saved monitors remain in this browser under their own
+storage key. The view shows the completed daily close, activation threshold,
+monotonic profit/ATR line and first historical trigger. An earlier trigger stays
+visible after a rebound until the entry is explicitly reset. It never records a
+sell, changes a holding, or debits a funding pool.
+
+Missing entry history, invalid inputs, unavailable calendars and stale daily bars
+show a blocked status. Data is loaded only on first opening this view, then only
+for watched symbols, using the existing immutable `live-data` publication flow.
+The daily and universe refresh jobs build validated compact snapshots after
+their shared daily-price refresh. USD costs must use the same current-share
+split basis as the listing's historical prices; multi-entry lots require a new
+explicit monitoring basis. See the [historical indicator comparison](research/results/take_profit_v1/REPORT.md):
+the first version reduced sampled drawdown while sacrificing average return.
+
+Validation: `npm run audit:take-profit`, `npm test`, and
+`python -m unittest discover -s tests`. The 63-day research cohorts are overlapping
+exit experiments, not live portfolio return forecasts.
+
 ## Weekly contribution percentages (2026-10-01)
 
 Every configured percentage in **本周操作** is a share of that week's Base contribution. It is not a target for the value of existing holdings. The planner first determines affordable Base from the weekly Normal allowance, remaining budget, real account cash and fees, then distributes integer cents by the saved contribution weights. For example, a 20% SPY setting receives 10 from a Base budget of 50 even when SPY exceeds 20% of existing holdings. A 0% setting stays at zero, and a hard-blocked asset's Base stays in cash rather than being redirected. Weekly rows show the contribution percentage and Base preview without a **当前 → 目标** holdings comparison.

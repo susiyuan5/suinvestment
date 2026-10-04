@@ -14,6 +14,8 @@ class DailyShortTermWorkflowTests(unittest.TestCase):
         task = json.loads((ROOT / 'scripts/live-data-tasks.json').read_text(encoding='utf-8'))['update-short-term-signals']
         commands = json.dumps(task)
         self.assertIn('refresh_short_term_daily_bars', commands)
+        self.assertIn('build_take_profit_data', commands)
+        self.assertIn('data/take-profit-v1/**', task['outputs'])
         self.assertIn('short-term-trade-plans-v1_3', commands)
         self.assertNotIn('gh pr merge', workflow)
         self.assertNotIn('run_idea_engine_v3', commands)

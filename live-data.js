@@ -12,6 +12,7 @@
   const nativeFetch = options.fetch;
   const timeoutMs = options.timeoutMs || 12000;
   const patterns = [
+    "data/take-profit-v1/",
     "results/",
     "research/results/",
     "data/research-universe/v2/",
