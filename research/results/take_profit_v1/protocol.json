@@ -1,0 +1,26 @@
+{
+  "schema_version": "take-profit-experiment-v1",
+  "research_only": true,
+  "parameters": {
+    "atr_multiple": 3.0,
+    "activation_pct": 0.05,
+    "activation_atr": 2.0,
+    "retain_profit": 0.5
+  },
+  "horizon_sessions": 63,
+  "cost_bps_per_side": 15,
+  "common_initial_stop_atr": 3,
+  "development": [
+    "2016-01-01",
+    "2020-12-31"
+  ],
+  "test": [
+    "2021-01-01",
+    "2026-10-02"
+  ],
+  "entry": "First observed session each month: prior close > SMA50 > SMA200; next observed open",
+  "exit": "Completed close trigger; next observed session open; no intraday stop/limit assumptions",
+  "cash": "After exit, zero-interest USD cash until shared 63-session end; no re-entry",
+  "inference": "Paired monthly cohorts with overlapping 63-session windows; bootstrap all symbols together by entry calendar half-year",
+  "claim_limit": "Chronological historical validation, not blind OOS or portfolio performance; no parameter fitting"
+}
