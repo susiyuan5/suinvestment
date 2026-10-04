@@ -15,8 +15,13 @@ visible after a rebound until the entry is explicitly reset. It never records a
 sell, changes a holding, or debits a funding pool.
 
 Missing entry history, invalid inputs, unavailable calendars and stale daily bars
-show a blocked status. Locked, unavailable or stale automatic holdings do not
-fall back to an old watch list. Quantity, cost or source changes require an
+show a blocked status. The view follows the holdings page's effective source:
+when automatic holdings are locked, unavailable or stale, the app's saved manual
+holdings remain selectable and are clearly labelled for manual review. Empty
+manual holdings explain how to unlock or enter actual holdings. Old watch lists
+and stale automatic rows are never substituted. Value-only manual holdings stay
+visible but cannot produce a signal until their quantity is supplied.
+Quantity, cost or source changes require an
 explicit review and entry reset; sold positions leave the displayed list.
 Non-USD listings, unknown listing identities and symbols outside the verified
 daily index remain visible with a blocked reason. CAD or mixed-currency source

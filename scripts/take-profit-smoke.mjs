@@ -30,14 +30,7 @@ for (const symbol of symbols) {
   index.symbols[symbol] = { path: `data/take-profit-v1/symbols/${symbol}.json`, first_date: daily[0].date, last_date: daily.at(-1).date, rows: daily.length };
   payloads[symbol] = { schema_version: "take-profit-browser-bars-v1", research_only: true, currency: "USD", as_of: expected, symbol: symbol === "TSLA" ? "MSFT" : symbol, rows: daily };
 }
-const browser = await chromium.launch({ headless: true });
-try {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
-  await context.addInitScript(() => {
-    localStorage.setItem("su-investment-pro:holdings-source-mode", "manual");
-    if (!localStorage.getItem("su-investment-pro:portfolio-risk")) localStorage.setItem("su-investment-pro:portfolio-risk", JSON.stringify({ available_cash: 1000,
-      positions: Object.fromEntries(["AAPL","MSFT","SPY","NVDA","META","TSLA"].map(symbol => [symbol,{shares:2,average_cost:100,current_value:200}])) }));
-  });
+async function installFixtures(context, requests, isStale = () => false) {
   await context.route(/https:\/\/(finnhub\.io|query1\.finance\.yahoo\.com|www\.bankofcanada\.ca)\//, (route) => route.abort());
   await context.route("https://raw.githubusercontent.com/susiyuan5/suinvestment/**", async (route) => {
     const name = new URL(route.request().url()).pathname.split("/").slice(4).join("/");
@@ -46,24 +39,107 @@ try {
     try { await route.fulfill({ body: await fs.readFile(path.join(root, name)), contentType: "application/json" }); }
     catch { await route.fulfill({ status: 404, body: "missing fixture" }); }
   });
-  // Preserve the existing calendar interface while making expectedClose changeable
-  // for clock/freshness tests. The production pure indicator is not mocked.
+  // Preserve the actual calendar interface and pure indicator. Only the clock's
+  // expected session and network snapshots are controlled by this test fixture.
   await context.route("**/market-calendar.js*", async (route) => {
     const source = await fs.readFile(path.join(root, "market-calendar.js"), "utf8");
     await route.fulfill({ contentType: "text/javascript", body: source + `\nwindow.__TP_EXPECTED__=${JSON.stringify(expected)}; const originalAssess=MarketCalendar.assess; MarketCalendar.assess=(q,n)=>Object.assign({},originalAssess(q,n),{known:!window.__TP_CALENDAR_DOWN__,expectedClose:window.__TP_CALENDAR_DOWN__?null:window.__TP_EXPECTED__+'T20:00:00Z'});` });
   });
-  const requests = [];
-  let staleIndex = false;
   await context.route("**/data/take-profit-v1/**", async (route) => {
     const url = new URL(route.request().url());
     const name = url.pathname.slice(url.pathname.indexOf("data/take-profit-v1/"));
     requests.push(name);
-    if (name === "data/take-profit-v1/index.json") return route.fulfill({ json: staleIndex ? { ...index, as_of: "2026-10-01" } : index });
+    if (name === "data/take-profit-v1/index.json") return route.fulfill({ json: isStale() ? { ...index, as_of: "2026-10-01" } : index });
     const symbol = path.basename(name, ".json");
     if (symbol === "META") return route.fulfill({ status: 503, body: "fixture unavailable" });
     if (!payloads[symbol]) return route.fulfill({ status: 404, body: "unknown symbol" });
     return route.fulfill({ json: payloads[symbol] });
   });
+}
+const financialSnapshotOf = (page) => page.evaluate(async (ownKey) => ({
+  ledger: await DipLedger.transact(indexedDB, (value) => value),
+  storage: Object.fromEntries(Object.entries(localStorage).filter(([name]) => name !== ownKey)),
+}), key);
+const browser = await chromium.launch({ headless: true });
+try {
+  // These isolated contexts deliberately omit the source preference, matching a
+  // default installation with automatic holdings still locked. Use the real
+  // app getter rather than substituting a take-profit-only holdings API.
+  for (const [name, manualPositions] of [
+    ["default-manual-fallback", { AAPL: { shares: 2, average_cost: 100, current_value: 200 }, WMT: { average_cost: 100, current_value: 250 } }],
+    ["default-empty-locked", {}],
+  ]) {
+    const fallbackContext = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
+    try {
+      await fallbackContext.addInitScript((positions) => {
+        localStorage.setItem("su-investment-pro:portfolio-risk", JSON.stringify({ available_cash: 1000, positions }));
+        localStorage.setItem("su-investment-pro:wealthsimple-currency-v1", JSON.stringify({ planningCurrency: "USD", planningMigrationVersion: "usd-planning-v2" }));
+      }, manualPositions);
+      const initialRequests = [], initialErrors = [];
+      await installFixtures(fallbackContext, initialRequests);
+      const fallbackPage = await fallbackContext.newPage();
+      fallbackPage.on("pageerror", (error) => initialErrors.push(error.message));
+      await fallbackPage.clock.setFixedTime("2026-10-04T12:00:00Z");
+      await fallbackPage.goto(base, { waitUntil: "domcontentloaded" });
+      await fallbackPage.waitForFunction(() => document.querySelector("#refreshBtn")?.getAttribute("aria-busy") === "false" && document.querySelector("#snaptradeSyncStatus")?.dataset.state === "locked");
+      assert.equal(await fallbackPage.evaluate(() => localStorage.getItem("su-investment-pro:holdings-source-mode")), null, name + " retains the default automatic preference");
+      assert.equal(initialRequests.length, 0, name + " does not eagerly load stop-profit data");
+      const originalFinancialState = await financialSnapshotOf(fallbackPage);
+      await fallbackPage.locator('.workspace-nav a[href="#take-profit"]').click();
+      await fallbackPage.waitForFunction(() => document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy") === "false");
+      const actualSource = await fallbackPage.evaluate(() => __SUINVESTMENT_HOLDINGS_API__.current());
+      assert.equal(actualSource.sourceMode, "manual");
+      assert.equal(actualSource.requestedSourceMode, "automatic");
+      assert.equal(actualSource.automaticStatus, "locked");
+      assert.equal(actualSource.usingManualFallback, true);
+      assert.equal(await fallbackPage.evaluate((name) => localStorage.getItem(name), key), null, name + " never auto-imports observations into storage");
+      if (Object.keys(manualPositions).length) {
+        assert.deepEqual(await fallbackPage.locator(".take-profit-card").evaluateAll((cards) => cards.map((card) => card.dataset.symbol).sort()), ["AAPL", "WMT"]);
+        assert.deepEqual(await fallbackPage.locator("#takeProfitSymbol option").evaluateAll((options) => options.map((option) => option.value).filter(Boolean).sort()), ["AAPL", "WMT"]);
+        assert.equal(await fallbackPage.locator("#takeProfitSymbol").isEnabled(), true, "actual manual holdings remain selectable while automatic source is locked");
+        assert.match(await fallbackPage.locator("#takeProfitHoldingsStatus").textContent(), /人工持仓/);
+        const unknownQuantity = fallbackPage.locator('.take-profit-card[data-symbol="WMT"]');
+        assert.match(await unknownQuantity.textContent(), /股数待补充|数量待补充/);
+        assert.equal(await unknownQuantity.locator("progress").count(), 0);
+        assert.equal(actualSource.rows.find((row) => row.symbol === "WMT").shares, null, "current market value cannot fabricate a held share quantity");
+        await fallbackPage.locator("#takeProfitSymbol").selectOption("AAPL");
+        assert.equal(await fallbackPage.locator("#takeProfitCost").inputValue(), "100");
+        assert.equal(await fallbackPage.locator("#takeProfitCost").getAttribute("readonly"), "");
+        assert.equal(await fallbackPage.locator("#takeProfitDate").inputValue(), "", "no current holding imports an invented entry date");
+        await fallbackPage.locator("#takeProfitSymbol").selectOption("WMT");
+        await fallbackPage.locator("#takeProfitDate").fill(dates[20]);
+        await fallbackPage.locator("#takeProfitSave").click();
+        await fallbackPage.waitForFunction(() => document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy") === "false");
+        assert.equal(await unknownQuantity.locator("progress").count(), 0, "saving a date does not remove the unknown-quantity block");
+        assert.match(await unknownQuantity.textContent(), /数量待补充/);
+      } else {
+        assert.equal(await fallbackPage.locator(".take-profit-card").count(), 0, "empty actual holdings do not import target-list stocks");
+        assert.equal(await fallbackPage.locator("#takeProfitSymbol").isDisabled(), true);
+        assert.equal(await fallbackPage.locator("#takeProfitSave").isDisabled(), true);
+        assert.match(await fallbackPage.locator("#takeProfitRows").textContent(), /解锁|锁定/);
+        assert.match(await fallbackPage.locator("#takeProfitSymbolHelp").textContent(), /解锁持仓/);
+        assert.equal(await fallbackPage.locator("#takeProfitHoldingsSettings").textContent(), "解锁持仓");
+        await fallbackPage.locator("#takeProfitHoldingsSettings").click();
+        assert.equal(await fallbackPage.locator("#settingsModal").isVisible(), true, "unlock guidance opens the existing account settings");
+        await fallbackPage.waitForFunction(() => document.activeElement?.id === "snaptradeSnapshotKeyInput");
+        await fallbackPage.locator("#closeSettingsBtn").click();
+        assert.equal(await fallbackPage.locator("#settingsModal").isVisible(), false);
+        assert.equal(new URL(fallbackPage.url()).hash, "#take-profit", "unlock guidance retains the stop-profit route");
+      }
+      assert.deepEqual(initialRequests, ["data/take-profit-v1/index.json"], name + " fetches no histories without a usable entry basis");
+      assert.deepEqual(await financialSnapshotOf(fallbackPage), originalFinancialState, name + " preserves all other financial state");
+      assert.deepEqual(initialErrors, []);
+    } finally { await fallbackContext.close(); }
+  }
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
+  await context.addInitScript(() => {
+    localStorage.setItem("su-investment-pro:holdings-source-mode", "manual");
+    if (!localStorage.getItem("su-investment-pro:portfolio-risk")) localStorage.setItem("su-investment-pro:portfolio-risk", JSON.stringify({ available_cash: 1000,
+      positions: Object.fromEntries(["AAPL","MSFT","SPY","NVDA","META","TSLA"].map(symbol => [symbol,{shares:2,average_cost:100,current_value:200}])) }));
+  });
+  const requests = [];
+  let staleIndex = false;
+  await installFixtures(context, requests, () => staleIndex);
   const page = await context.newPage(), errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.clock.setFixedTime("2026-10-04T12:00:00Z");
@@ -71,10 +147,7 @@ try {
   await page.waitForFunction(() => document.querySelector("#refreshBtn")?.getAttribute("aria-busy") === "false");
   assert.equal(requests.length, 0, "take-profit data must not load on weekly route");
   assert.equal(await page.locator("#view-take-profit").isVisible(), false);
-  const financialSnapshot = () => page.evaluate(async (ownKey) => ({
-    ledger: await DipLedger.transact(indexedDB, (value) => value),
-    storage: Object.fromEntries(Object.entries(localStorage).filter(([name]) => name !== ownKey)),
-  }), key);
+  const financialSnapshot = () => financialSnapshotOf(page);
   const before = await financialSnapshot();
   await page.locator('.workspace-nav a[href="#take-profit"]').click();
   await page.waitForFunction(() => document.querySelector("#takeProfitSave")?.disabled === false);
@@ -208,16 +281,38 @@ try {
   assert.equal(await page.locator("#takeProfitCost").getAttribute("readonly"),"");
   await page.locator("#takeProfitSave").click();
   await page.waitForFunction(() => ['active','inactive','triggered'].includes(document.querySelector('.take-profit-card[data-symbol="AAPL"]')?.dataset.state));
+  const beforeSourceFallback = await financialSnapshot();
+  const savedBeforeSourceFallback = JSON.stringify(await saved());
   await publishAutomatic({stale:true});
-  assert.equal(await page.locator(".take-profit-card").count(),0,"stale automatic snapshots cannot show stale signals or fallback manual holdings");
+  assert.equal(await page.locator(".take-profit-card").count(),0,"a stale snapshot still selected as the actual automatic source cannot generate signals");
   assert.match(await page.locator("#takeProfitHoldingsStatus").textContent(),/超过 3 天/);
+  const assertManualFallback = async (automaticStatus) => {
+    const actual = await page.evaluate(() => __SUINVESTMENT_HOLDINGS_API__.current());
+    assert.equal(actual.sourceMode,"manual","the take-profit panel follows the app's actual manual fallback");
+    assert.equal(actual.requestedSourceMode,"automatic");
+    assert.equal(actual.automaticStatus,automaticStatus);
+    assert.equal(actual.usingManualFallback,true);
+    assert.deepEqual(await page.locator(".take-profit-card").evaluateAll(cards=>cards.map(card=>card.dataset.symbol).sort()),["AAPL","META","MSFT","NVDA","SPY","TSLA"]);
+    for (const symbol of ["WMT","NEWT","SHOP"]) assert.equal(await watch(symbol).count(),0,"automatic-only holding "+symbol+" must disappear from manual fallback");
+    assert.match(await page.locator("#takeProfitHoldingsStatus").textContent(),/人工持仓/);
+    assert.equal(await watch("AAPL").getAttribute("data-state"),"review","a different actual source requires explicit confirmation of its entry basis");
+    assert.equal(await watch("AAPL").locator("progress").count(),0,"unreviewed source changes cannot reuse an automatic profit line");
+    assert.equal(actual.rows.find(row=>row.symbol==="AAPL").shares,2,"fallback quantity comes from actual manual holdings");
+    assert.equal(JSON.stringify(await saved()),savedBeforeSourceFallback,"source fallback preserves all saved entry observations");
+    assert.deepEqual(await financialSnapshot(),beforeSourceFallback,"source fallback changes no saved financial data or ledger");
+  };
+  await publishAutomatic({status:"warning",stale:true});
+  await assertManualFallback("warning");
+  assert.match(await page.locator("#takeProfitHoldingsStatus").textContent(),/时效/);
   await publishAutomatic({empty:true});
   assert.equal(await page.locator(".take-profit-card").count(),0,"sold holdings disappear without deleting saved entry information");
   await publishAutomatic();
   await page.locator("#takeProfitSymbol").selectOption("AAPL");
   await page.evaluate(() => window.dispatchEvent(new CustomEvent("snaptrade:holdings-forgotten")));
-  await page.waitForFunction(() => document.querySelectorAll(".take-profit-card").length===0 && document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy")==="false");
-  assert.equal(await page.locator("#takeProfitCost").inputValue(),"","forgetting the key clears the imported form cost too");
+  await page.waitForFunction(() => document.querySelectorAll(".take-profit-card").length===6 && document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy")==="false");
+  await assertManualFallback("locked");
+  assert.equal(await page.locator("#takeProfitCost").inputValue(),"100","forgetting the key replaces imported cost with actual manual holding cost");
+  assert.equal(await page.locator("#takeProfitCost").getAttribute("readonly"),"");
   assert.match(await page.locator("#takeProfitHoldingsStatus").textContent(),/锁定/);
   await page.evaluate(() => {
     localStorage.setItem("su-investment-pro:holdings-source-mode","manual");
@@ -242,6 +337,6 @@ try {
   assert.match(await page.locator("#takeProfitDataStatus").textContent(), /行情过期/);
   assert.equal(await watch("AAPL").getAttribute("data-state"), "blocked", "mixed file/index releases cannot expose a line");
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(root, "output/playwright/take-profit-smoke.json"), JSON.stringify({ passed: true, checks: ["route-lazy-load", "symbol-lazy-load", "current-held-stocks-only", "outside-plan-holdings", "no-automatic-holdings-persistence", "source-cost-readonly", "date-input-validation", "entry-persistence", "source-and-cost-review", "sold-and-forgotten-clearing", "stale-holdings-block", "nonheld-record-preservation", "sticky-first-trigger", "active-inactive", "missing-stale-corrupt-identity", "calendar-unavailable", "new-close-revalidation", "cross-release-block", "ledger-invariance", "hidden-focus", "mobile-and-200-percent-zoom", "no-page-errors"] }, null, 2));
-  console.log("Take-profit smoke passed: current holdings, source costs, missing dates, source/quantity changes, stale/sold/forgotten state, isolated storage, lazy data, sticky trigger, calendar, ledger and responsive layouts.");
+  await fs.writeFile(path.join(root, "output/playwright/take-profit-smoke.json"), JSON.stringify({ passed: true, checks: ["default-locked-manual-fallback", "default-locked-empty-guidance", "unknown-manual-quantity-block", "route-lazy-load", "symbol-lazy-load", "current-held-stocks-only", "outside-plan-holdings", "no-automatic-holdings-persistence", "source-cost-readonly", "date-input-validation", "entry-persistence", "source-and-cost-review", "sold-holdings-clearing", "stale-automatic-source-block", "warning-and-forgotten-manual-fallback", "nonheld-record-preservation", "sticky-first-trigger", "active-inactive", "missing-stale-corrupt-identity", "calendar-unavailable", "new-close-revalidation", "cross-release-block", "ledger-invariance", "hidden-focus", "mobile-and-200-percent-zoom", "no-page-errors"] }, null, 2));
+  console.log("Take-profit smoke passed: default and changed manual fallback, unknown quantity, current holdings, source cost/date review, stale/sold state, isolated storage, lazy data, sticky trigger, calendar, ledger and responsive layouts.");
 } finally { await browser.close(); }
