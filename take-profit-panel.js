@@ -42,8 +42,9 @@
     refresh.setAttribute("aria-busy", String(busy));
     refresh.textContent = busy ? "核对持仓与行情中…" : "更新持仓与行情";
     const position = positions.find((p) => p.symbol === select.value);
-    select.disabled = !index || !holdings.available || editing !== null;
-    save.disabled = !index || !holdings.available || !storageWritable || Boolean(position && !index.symbols[position.symbol]);
+    select.disabled = !index || !holdings.available || !positions.length || editing !== null;
+    byId("takeProfitSymbolHelp").textContent = editing !== null ? "正在编辑 " + editing + "；点击取消编辑后可选择其他持仓。" : !holdings.available ? holdings.reason : !positions.length ? holdings.reason || "当前没有股票持仓，请先在持仓页面解锁自动持仓或录入实际人工持仓。" : !index ? "正在加载行情清单，完成后可选择当前持仓。" : "与持仓页使用同一来源；选择股票后补充实际买入日期。";
+    save.disabled = !index || !holdings.available || !positions.length || !storageWritable || Boolean(position && !index.symbols[position.symbol]);
     const reset = editing !== null || observations.some((p) => p.symbol === select.value);
     save.textContent = reset ? "保存并重置观察" : "保存观察";
     cancelEdit.hidden = editing === null;
@@ -105,8 +106,9 @@
       { available: false, reason: "持仓读取模块不可用，请刷新页面。", sourceLabel: "当前持仓", positions: [] };
     holdingsFingerprint = JSON.stringify({ source, available: holdings.available, reason: holdings.reason });
     positions = holdings.positions;
-    byId("takeProfitHoldingsStatus").textContent = holdings.available ? holdings.sourceLabel + " · 当前持仓 " + positions.length + " 只" + (holdings.asOf ? " · 持仓时间 " + holdings.asOf : "") + "；买入日期需自行核对。" : holdings.reason;
-    byId("takeProfitHoldingsStatus").dataset.state = holdings.available ? "ready" : "error";
+    byId("takeProfitHoldingsStatus").textContent = holdings.available ? holdings.sourceLabel + " · 当前持仓 " + positions.length + " 只" + (holdings.asOf ? " · 持仓时间 " + holdings.asOf : "") + (holdings.reason ? "；" + holdings.reason : "；买入日期需自行核对。") : holdings.reason;
+    byId("takeProfitHoldingsStatus").dataset.state = holdings.available && !holdings.reason ? "ready" : "error";
+    byId("takeProfitHoldingsSettings").textContent = source?.requestedSourceMode === "automatic" && source?.automaticStatus === "locked" ? "解锁持仓" : "持仓设置";
     if ((editing && !positions.some((p) => p.symbol === editing)) || (select.value && !positions.some((p) => p.symbol === select.value))) resetForm();
   }
   function fillEntry(symbol) {
@@ -212,7 +214,7 @@
     container.replaceChildren();
     byId("takeProfitCount").textContent = String(positions.length);
     if (!positions.length) {
-      container.append(node("p", "take-profit-empty", holdings.available ? "当前没有可观察的股票或 ETF 持仓。请先在持仓页面核对实际持仓。" : holdings.reason));
+      container.append(node("p", "take-profit-empty", holdings.reason || "当前没有可观察的股票或 ETF 持仓。请先在持仓页面核对实际持仓。"));
       return;
     }
     for (const position of positions) {
@@ -223,7 +225,7 @@
       card.dataset.state = state;
       const heading = node("div", "take-profit-card-heading"), identity = node("div");
       identity.append(node("h4", "", position.symbol));
-      identity.append(node("p", "", "持有 " + position.shares + " 股 · 买入 " + (position.date || "日期待补充") + " · 成本 USD " + price(position.cost)));
+      identity.append(node("p", "", (Number.isFinite(position.shares) ? "持有 " + position.shares + " 股" : "持有股数待补充") + " · 买入 " + (position.date || "日期待补充") + " · 成本 USD " + price(position.cost)));
       heading.append(identity, node("span", "take-profit-state", { inactive: "未激活", active: "跟踪中", triggered: "已触发 · 请核对", pending: "待补充", review: "持仓变化 · 待复核", blocked: "数据不可用", loading: "核对中" }[state] || "数据不可用"));
       card.append(heading);
       let reason = result ? result.reason : "正在读取这只股票的完整日线…";
@@ -278,7 +280,7 @@
           if (position.blockedReason) {
             result = unavailable(position.blockedReason);
             if (position.needsReview) result.status = "review";
-            else if (["date_missing", "date_invalid", "date_and_cost_missing", "usd_cost_missing"].includes(position.blockedReasonCode)) result.status = "pending";
+            else if (["date_missing", "date_invalid", "date_and_cost_missing", "usd_cost_missing", "quantity_missing"].includes(position.blockedReasonCode)) result.status = "pending";
           }
           else if (!index.symbols[position.symbol]) result = unavailable("当前已验证日线未覆盖这只持仓，暂时无法计算止盈。");
           else if (expected && index.as_of !== expected) result = unavailable("行情快照未覆盖最新完整交易日或含未来日期，暂停计算。", index.symbols[position.symbol].last_date);
@@ -444,7 +446,19 @@
     if (!view.hidden && !refreshingHoldings) activate();
   }
   for (const event of ["wealthsimple:plan-updated", "snaptrade:holdings-updated", "snaptrade:holdings-mode", "snaptrade:holdings-forgotten"]) root.addEventListener(event, holdingsChanged);
-  byId("takeProfitHoldingsSettings").addEventListener("click", () => root.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "accounts" } })));
+  byId("takeProfitHoldingsSettings").addEventListener("click", () => {
+    root.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "accounts" } }));
+    const source = currentHoldings();
+    if (source?.requestedSourceMode === "automatic" && source?.automaticStatus === "locked") {
+      // The settings center first focuses its category tab on the next task.
+      root.setTimeout(() => {
+        const keyInput = byId("snaptradeSnapshotKeyInput");
+        if (keyInput && !byId("settingsModal").classList.contains("hidden")) {
+          keyInput.focus(); keyInput.scrollIntoView({ block: "center" });
+        }
+      }, 0);
+    }
+  });
   root.TakeProfitPanel = Object.freeze({ storageKey: KEY, refresh: () => activate(true) });
   // The script can also load after navigation during testing or future bundling.
   if (root.WorkspaceNavigation?.current === "take-profit") {

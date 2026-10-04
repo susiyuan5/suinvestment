@@ -75,25 +75,36 @@
     if (status === "error") return "自动持仓读取失败，请先在持仓页面更新。";
     return "自动持仓尚未就绪，请先解锁或更新持仓。";
   }
+  function manualFallbackReason(status) {
+    if (status === "locked") return "自动持仓已锁定，当前使用人工持仓。请核对人工持仓是否最新。";
+    if (status === "stale" || status === "warning") return "自动持仓未通过时效核对，当前使用人工持仓。请核对人工持仓是否最新。";
+    if (status === "checking" || status === "loading") return "自动持仓正在读取，当前使用人工持仓。请核对人工持仓是否最新。";
+    if (status === "error") return "自动持仓读取失败，当前使用人工持仓。请核对人工持仓是否最新。";
+    if (status === "idb_unavailable") return "自动持仓存储不可用，当前使用人工持仓。请核对人工持仓是否最新。";
+    return "自动持仓尚未就绪，当前使用人工持仓。请核对人工持仓是否最新。";
+  }
 
   function build(input = {}) {
     if (!input || typeof input !== "object" || Array.isArray(input)) input = {};
     const holdings = input.holdings;
     if (!holdings || typeof holdings !== "object" || Array.isArray(holdings)) return unavailable("持仓来源未就绪", null, "当前持仓来源不可用，请先在持仓页面设置。" );
-    const automatic = holdings.requestedSourceMode === "automatic";
-    const manual = holdings.requestedSourceMode === "manual";
-    const sourceLabel = automatic ? "自动持仓（只读）" : manual ? "手动持仓" : "持仓来源未就绪";
+    // The app's actual active source is authoritative. A preference for the
+    // automatic source does not make current manual rows automatic data.
+    const automatic = holdings.sourceMode === "snaptrade_automatic";
+    const manual = holdings.sourceMode === "manual";
+    const usingManualFallback = manual && (holdings.requestedSourceMode === "automatic" || holdings.usingManualFallback === true);
+    const fallbackReason = usingManualFallback ? manualFallbackReason(holdings.automaticStatus) : null;
+    const sourceLabel = automatic ? "自动持仓（只读）" : manual ? (usingManualFallback ? "人工持仓（自动来源未就绪）" : "人工持仓") : "持仓来源未就绪";
     const asOf = typeof holdings.asOf === "string" || typeof holdings.asOf === "number" ? holdings.asOf : null;
     if (automatic) {
       if (holdings.status !== "ready") return unavailable(sourceLabel, asOf, sourceReason(holdings.status));
-      if (holdings.sourceMode !== "snaptrade_automatic") return unavailable(sourceLabel, asOf, "当前选择自动持仓，但自动来源尚未就绪；请先解锁或更新持仓。" );
       const now = timestamp(input.now === undefined ? Date.now() : input.now);
       const snapshotTime = timestamp(asOf);
       if (now === null || snapshotTime === null) return unavailable(sourceLabel, asOf, "自动持仓时间缺失或无效，请先更新持仓。" );
       if (snapshotTime > now) return unavailable(sourceLabel, asOf, "自动持仓时间晚于当前时间，暂停止盈计算。" );
       if (now - snapshotTime > MAX_AGE_MS) return unavailable(sourceLabel, asOf, "自动持仓已超过 3 天，请先更新持仓。" );
     } else if (manual) {
-      if (holdings.sourceMode !== "manual" || holdings.status !== "ready") return unavailable(sourceLabel, asOf, "手动持仓尚未就绪，请先在持仓页面完成设置。" );
+      if (holdings.status !== "ready") return unavailable(sourceLabel, asOf, "人工持仓尚未就绪，请先在持仓页面完成设置。" );
     } else return unavailable(sourceLabel, asOf, "当前持仓来源模式无效，请先在持仓页面设置。" );
     if (!Array.isArray(holdings.rows)) return unavailable(sourceLabel, asOf, "当前持仓明细缺失，请先更新持仓。" );
 
@@ -102,10 +113,12 @@
     const rows = new Map();
     for (const raw of holdings.rows) {
       if (!raw || typeof raw !== "object" || Array.isArray(raw) || raw.cashEquivalent === true) continue;
-      const key = symbol(raw.symbol), shares = positive(raw.shares);
-      // Missing quantity is never coerced into a current holding. Shorts and
-      // cash are excluded even if an old observation remains in local storage.
-      if (!key || shares === null) continue;
+      const key = symbol(raw.symbol), quantity = finite(raw.shares);
+      if (!key || (quantity !== null && quantity <= 0)) continue;
+      const shares = positive(raw.shares);
+      // A manual value-only holding stays visible for correction, but cannot
+      // produce a signal. Automatic quantities must be strictly positive.
+      if (shares === null && (!manual || positive(raw.currentValue) === null)) continue;
       if (rows.has(key)) rows.get(key).duplicate = true;
       else rows.set(key, { raw, shares, duplicate: false });
     }
@@ -128,11 +141,12 @@
 
       if (duplicate) block("duplicate_holding", "同一股票存在重复持仓记录，请先核对持仓来源。" );
       if (!supported.has(key)) block("unsupported_symbol", "当前已验证日线未覆盖这只持仓，暂时无法计算止盈。" );
+      if (shares === null) block("quantity_missing", "持仓数量待补充，请先在持仓页面补齐数量；当前不生成止盈提示。" );
       if (automatic) {
         if (listingCurrency !== "USD") block("unsupported_listing_currency", listingCurrency ? "该持仓不是美元上市标的，暂时无法计算美股止盈。" : "该持仓的上市币种未知，请先核对标的身份。" );
         if (!INVESTMENT_KINDS.has(kind)) block("unsupported_instrument", "该持仓的产品类型不受支持，请先核对标的身份。" );
         if (!exchanges.length || !exchanges.every((value) => US_EXCHANGES.has(value))) block("unsupported_exchange", "该持仓的美国交易所身份未确认，暂时无法计算止盈。" );
-      } else if (!INVESTMENT_KINDS.has(kind)) block("unsupported_instrument", "该手动持仓的产品类型不受支持。" );
+      } else if (!INVESTMENT_KINDS.has(kind)) block("unsupported_instrument", "该人工持仓的产品类型不受支持。" );
 
       if (saved) {
         if (own(saved, "holdingBasis")) needsReview = typeof saved.holdingBasis !== "string" || saved.holdingBasis !== holdingBasis;
@@ -148,7 +162,16 @@
         blockedReason, blockedReasonCode, currency: sourceCurrency, costCurrency: "USD",
       }));
     }
-    return Object.freeze({ available: true, reason: null, sourceLabel, asOf: asOf || null, positions: Object.freeze(positions) });
+    let reason = fallbackReason;
+    if (manual && positions.length === 0) {
+      if (usingManualFallback) {
+        const action = holdings.automaticStatus === "locked"
+          ? "点击「解锁持仓」导入已有本机密钥，或在持仓页录入实际人工持仓。"
+          : "点击「持仓设置」检查自动来源，或在持仓页录入实际人工持仓。";
+        reason = sourceReason(holdings.automaticStatus) + "当前没有已录入的人工股票持仓。" + action;
+      } else reason = "当前没有已录入的人工股票持仓，请在持仓页录入实际人工持仓。";
+    }
+    return Object.freeze({ available: true, reason, sourceLabel, asOf: asOf || null, positions: Object.freeze(positions) });
   }
 
   return Object.freeze({ build });

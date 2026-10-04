@@ -37,7 +37,7 @@
       rel="stylesheet"
     />
   <link rel="stylesheet" href="live-data.css?v=live-data-v1">
-    <link href="take-profit-panel.css?v=take-profit-holdings-v1" rel="stylesheet" />
+    <link href="take-profit-panel.css?v=take-profit-holdings-selection-v1" rel="stylesheet" />
   </head>
   <body>
     <div class="app-shell">
@@ -945,7 +945,8 @@
               <section class="take-profit-entry" aria-labelledby="takeProfitEntryTitle">
                 <h3 id="takeProfitEntryTitle">补充持仓入场信息</h3>
                 <form id="takeProfitForm" novalidate>
-                  <label for="takeProfitSymbol">当前持仓股票<select id="takeProfitSymbol" required disabled><option value="">读取持仓后选择</option></select></label>
+                  <label for="takeProfitSymbol">当前持仓股票<select id="takeProfitSymbol" required disabled aria-describedby="takeProfitSymbolHelp takeProfitSymbolError"><option value="">读取持仓后选择</option></select></label>
+                  <p class="take-profit-field-help" id="takeProfitSymbolHelp">正在读取当前持仓。</p>
                   <p class="take-profit-field-error" id="takeProfitSymbolError" hidden></p>
                   <label for="takeProfitDate">买入日期<input id="takeProfitDate" type="date" required aria-describedby="takeProfitDateHelp takeProfitDateError" /></label>
                   <p class="take-profit-field-help" id="takeProfitDateHelp">填写实际买入日；缺少日期无法重建持有后的峰值。</p>
@@ -2496,7 +2497,7 @@
     <script src="portfolio-risk-input.js?v=weekly-contribution-v1"></script>
     <script src="weekly-dca-engine.js?v=weekly-contribution-v1"></script>
     <script src="weekly-signal-model.js?v=risk-history-v1"></script>
-    <script src="app.js?v=take-profit-holdings-v1"></script>
+    <script src="app.js?v=take-profit-holdings-selection-v1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>
@@ -2513,8 +2514,8 @@
     <script src="dip-ledger.js?v=independent-dip-v1"></script>
     <script src="dip-panel.js?v=workspace-v1-independent-dip-v1"></script>
     <script src="take-profit-indicator.js?v=take-profit-v1"></script>
-    <script src="take-profit-holdings.js?v=take-profit-holdings-v1"></script>
-    <script src="take-profit-panel.js?v=take-profit-holdings-v1"></script>
+    <script src="take-profit-holdings.js?v=take-profit-holdings-selection-v1"></script>
+    <script src="take-profit-panel.js?v=take-profit-holdings-selection-v1"></script>
     <script src="workspace-navigation.js?v=take-profit-v1"></script>
   </body>
 </html>

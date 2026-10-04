@@ -1312,10 +1312,13 @@ amountBreakdown: "金额分解",
     const freeze = (result) => Object.freeze(Object.assign({}, result, {
       rows: Object.freeze(result.rows.map((row) => Object.freeze(row)))
     }));
-    if (requestedSourceMode === "automatic") {
+    // Follow the effective source used by the holdings page. The preferred
+    // automatic mode can be locked while the app uses saved manual holdings.
+    if (state.portfolioRiskSource === "snaptrade_automatic") {
       const snapshot = state.snaptradeHoldingsSnapshot;
       const result = { sourceMode: state.portfolioRiskSource, requestedSourceMode,
         status: state.snaptradeHoldingsStatus,
+        automaticStatus: state.snaptradeHoldingsStatus, usingManualFallback: false,
         asOf: snapshot && (snapshot.positions_as_of || snapshot.generated_at) || null,
         rows: [] };
       if (result.status !== "ready" || result.sourceMode !== "snaptrade_automatic" || !snapshot || !window.HoldingsDetailModel) return freeze(result);
@@ -1335,13 +1338,15 @@ amountBreakdown: "金额分解",
       return freeze(result);
     }
     const settings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : { planningCurrency: null };
-    const input = state.portfolioRiskSource === "snaptrade_automatic" ? state.manualPortfolioRiskInput : state.portfolioRiskInput;
+    const input = state.portfolioRiskInput;
     const model = window.HoldingsDetailModel ? window.HoldingsDetailModel.build({
       entries: [], portfolioRisk: input, actualPositions: input.positions,
       snapshot: null, status: "manual", sourceMode: "manual", planningCurrency: settings.planningCurrency
     }) : { rows: [] };
     return freeze({ sourceMode: "manual", requestedSourceMode, status: "ready", asOf: null,
-      rows: model.rows.map((row) => ({ symbol: row.symbol, shares: row.shares,
+      automaticStatus: state.snaptradeHoldingsStatus, usingManualFallback: requestedSourceMode === "automatic",
+      rows: model.rows.map((row) => ({ symbol: row.symbol, shares: row.shares > 0 ? row.shares : null,
+        currentValue: row.currentValue,
         averageCost: row.averageCost, currency: settings.planningCurrency,
         listingCurrency: null, exchange: "", instrumentKind: "stock", cashEquivalent: false })) });
   }
