@@ -44,6 +44,8 @@ jobs:
           exit 1
       - name: Run workspace navigation smoke
         run: npm run audit:workspace
+      - name: Check take-profit workspace and local monitoring state
+        run: npm run audit:take-profit
       - name: Check weekly stock and allocation editing
         run: node scripts/weekly-allocation-smoke.mjs
       - name: Check weekly contribution funding and allocation draft

@@ -5,6 +5,7 @@
     "weekly",
     "holdings",
     "dip",
+    "take-profit",
     "tools-watchlist",
     "tools-research",
     "tools-data",

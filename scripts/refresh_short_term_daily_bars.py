@@ -23,7 +23,7 @@ def verified_rows(points):
 
 def main() -> None:
     parser = argparse.ArgumentParser(); parser.add_argument("--output", type=Path, default=Path("data/short-term-daily-bars-v1.json")); parser.add_argument("--universe", type=Path, default=Path("data/research-universe-sector-balanced-80.json")); parser.add_argument("--start", default=""); parser.add_argument("--end", default=""); args = parser.parse_args()
-    universe = json.loads(args.universe.read_text(encoding="utf-8")); symbols = list(universe["research_universe_symbols"]) + ["QQQ"]
+    universe = json.loads(args.universe.read_text(encoding="utf-8")); symbols = list(dict.fromkeys([*universe["research_universe_symbols"], *universe.get("reference_symbols", ["QQQ"])]))
     end = args.end or datetime.now(timezone.utc).date().isoformat(); start = args.start or (datetime.fromisoformat(end).date() - timedelta(days=500)).isoformat(); payload = {"schema_version": "short-term-daily-bars-v1", "research_only": True, "status": "ready", "frequency": "1d", "adjustment": "split_and_dividend_adjusted", "timezone": "America/New_York", "currency": "USD", "source": "Yahoo Finance chart adapter via data_loader.load_yahoo_daily_prices", "as_of": end, "symbols": {}, "refresh_warnings": {}}
     failures = {}
     for symbol in symbols:

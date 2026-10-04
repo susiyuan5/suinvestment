@@ -80,6 +80,22 @@ test("published stock search index is pinned to the live-data commit", async () 
   await session.fetch("data/us-equity-search-index.json");
   assert.match(calls.at(-1), new RegExp(session.manifest.dataCommit + "/data/us-equity-search-index\\.json"));
 });
+
+test("take-profit index and lazy symbol data use the same immutable data commit", async () => {
+  const calls = [];
+  const source = create({
+    fetch: async (url) => {
+      calls.push(String(url));
+      return Response.json(String(url).includes("manifest") ? manifest(1) : {});
+    },
+  });
+  const session = await source.session().ready;
+  for (const path of ["data/take-profit-v1/index.json", "data/take-profit-v1/symbols/AAPL.json"]) {
+    await session.fetch(path);
+    assert.ok(calls.at(-1).includes(session.manifest.dataCommit + "/" + path));
+  }
+  assert.equal(source.pathOf("data/take-profit-v1/../private/key.json"), null);
+});
 test("data timeout rejects instead of leaving an executable stale snapshot", async () => {
   const source = create({
     timeoutMs: 10,
