@@ -10,8 +10,10 @@
   const dateInput = byId("takeProfitDate"), costInput = byId("takeProfitCost");
   const save = byId("takeProfitSave"), refresh = byId("takeProfitRefresh");
   const cancelEdit = byId("takeProfitCancelEdit"), status = byId("takeProfitDataStatus");
-  let started = false, positions = [], index = null, expected = null;
+  let started = false, observations = [], positions = [], index = null, expected = null;
   let editing = null, pendingRemove = null, attempt = 0, busy = false, storageWritable = true;
+  let holdings = { available: false, reason: "正在读取当前持仓。", sourceLabel: "当前持仓", positions: [] };
+  let holdingsFingerprint = "", refreshingHoldings = false;
   const symbolCache = new Map(), controllers = new Set(), results = new Map();
 
   function node(tag, className, text) {
@@ -38,15 +40,19 @@
   function updateControls() {
     refresh.disabled = busy;
     refresh.setAttribute("aria-busy", String(busy));
-    refresh.textContent = busy ? "核对行情中…" : "更新行情";
-    select.disabled = !index || editing !== null;
-    save.disabled = !index || !storageWritable;
-    const reset = editing !== null || positions.some((p) => p.symbol === select.value);
+    refresh.textContent = busy ? "核对持仓与行情中…" : "更新持仓与行情";
+    const position = positions.find((p) => p.symbol === select.value);
+    select.disabled = !index || !holdings.available || editing !== null;
+    save.disabled = !index || !holdings.available || !storageWritable || Boolean(position && !index.symbols[position.symbol]);
+    const reset = editing !== null || observations.some((p) => p.symbol === select.value);
     save.textContent = reset ? "保存并重置观察" : "保存观察";
     cancelEdit.hidden = editing === null;
-    byId("takeProfitEntryTitle").textContent = editing ? "编辑 " + editing + " 观察" : "添加观察";
+    byId("takeProfitEntryTitle").textContent = editing ? "核对 " + editing + " 入场信息" : "补充持仓入场信息";
     const coverage = index && index.symbols[select.value];
     byId("takeProfitDateHelp").textContent = coverage ? "日线覆盖 " + coverage.first_date + "—" + coverage.last_date + "；入场前须有至少 14 根完整日线。填写实际买入日。" : "填写实际买入日；缺少日期无法重建持有后的峰值。";
+    costInput.readOnly = Boolean(position && position.costFromHolding);
+    if (costInput.readOnly) costInput.value = position.cost;
+    byId("takeProfitCostHelp").textContent = !position ? "选择持仓股票后自动读取可用美元成本；缺少成本时请补充。" : costInput.readOnly ? "已读取当前持仓的美元每股平均成本；请在持仓来源中更正成本。" : "当前持仓没有可直接使用的美元成本，请按当前股数口径补充美元每股成本。";
   }
   function readPositions() {
     try {
@@ -64,7 +70,9 @@
         seen.add(p.symbol);
         // Do not invent missing entry information: evaluator blocks it, and the
         // edit form lets the owner supply the actual date/cost.
-        return { symbol: p.symbol, date: typeof p.date === "string" ? p.date : "", cost: p.cost };
+        const result = { symbol: p.symbol, date: typeof p.date === "string" ? p.date : "", cost: p.cost };
+        if (Object.prototype.hasOwnProperty.call(p, "holdingBasis")) result.holdingBasis = p.holdingBasis;
+        return result;
       });
     } catch (_) {
       storageWritable = false;
@@ -74,13 +82,39 @@
   }
   function writePositions(next) {
     try {
-      root.localStorage.setItem(KEY, JSON.stringify({ version: 1, positions: next.map((p) => ({ symbol: p.symbol, date: p.date, cost: p.cost })) }));
-      positions = next;
+      root.localStorage.setItem(KEY, JSON.stringify({ version: 1, positions: next.map((p) => {
+        const record = { symbol: p.symbol, date: p.date, cost: p.cost };
+        if (Object.prototype.hasOwnProperty.call(p, "holdingBasis")) record.holdingBasis = p.holdingBasis;
+        return record;
+      }) }));
+      observations = next;
       return true;
     } catch (_) {
       byId("takeProfitFormStatus").textContent = "本浏览器无法保存观察，请检查浏览器存储设置；原观察未改动。";
       return false;
     }
+  }
+  function currentHoldings() {
+    try { return root.__SUINVESTMENT_HOLDINGS_API__?.current() || null; }
+    catch (_) { return null; }
+  }
+  function syncHoldings() {
+    const source = currentHoldings();
+    holdings = root.TakeProfitHoldings ? root.TakeProfitHoldings.build({ holdings: source, observations,
+      supportedSymbols: index ? Object.keys(index.symbols) : [], now: Date.now() }) :
+      { available: false, reason: "持仓读取模块不可用，请刷新页面。", sourceLabel: "当前持仓", positions: [] };
+    holdingsFingerprint = JSON.stringify({ source, available: holdings.available, reason: holdings.reason });
+    positions = holdings.positions;
+    byId("takeProfitHoldingsStatus").textContent = holdings.available ? holdings.sourceLabel + " · 当前持仓 " + positions.length + " 只" + (holdings.asOf ? " · 持仓时间 " + holdings.asOf : "") + "；买入日期需自行核对。" : holdings.reason;
+    byId("takeProfitHoldingsStatus").dataset.state = holdings.available ? "ready" : "error";
+    if ((editing && !positions.some((p) => p.symbol === editing)) || (select.value && !positions.some((p) => p.symbol === select.value))) resetForm();
+  }
+  function fillEntry(symbol) {
+    const position = positions.find((p) => p.symbol === symbol);
+    dateInput.value = position && validDate(position.date) ? position.date : "";
+    costInput.value = position && Number.isFinite(position.cost) ? position.cost : "";
+    clearErrors();
+    updateControls();
   }
   function abortPending() {
     for (const controller of controllers) controller.abort();
@@ -141,14 +175,14 @@
   }
   function fillSymbols() {
     const selected = select.value;
-    select.replaceChildren(node("option", "", "选择股票"));
+    select.replaceChildren(node("option", "", "选择当前持仓"));
     select.firstChild.value = "";
-    for (const symbol of Object.keys(index.symbols).sort()) {
-      const option = node("option", "", symbol);
-      option.value = symbol;
+    for (const position of positions) {
+      const option = node("option", "", position.symbol + (index.symbols[position.symbol] ? "" : "（日线未覆盖）"));
+      option.value = position.symbol;
       select.append(option);
     }
-    if (index.symbols[selected]) select.value = selected;
+    if (positions.some((p) => p.symbol === selected)) select.value = selected;
     if (expected) dateInput.max = expected;
     else dateInput.removeAttribute("max");
     updateControls();
@@ -178,7 +212,7 @@
     container.replaceChildren();
     byId("takeProfitCount").textContent = String(positions.length);
     if (!positions.length) {
-      container.append(node("p", "take-profit-empty", "选择股票，填写买入日期与成本，保存后查看止盈线。"));
+      container.append(node("p", "take-profit-empty", holdings.available ? "当前没有可观察的股票或 ETF 持仓。请先在持仓页面核对实际持仓。" : holdings.reason));
       return;
     }
     for (const position of positions) {
@@ -189,8 +223,8 @@
       card.dataset.state = state;
       const heading = node("div", "take-profit-card-heading"), identity = node("div");
       identity.append(node("h4", "", position.symbol));
-      identity.append(node("p", "", "买入 " + (position.date || "日期待补充") + " · 成本 USD " + price(Number(position.cost))));
-      heading.append(identity, node("span", "take-profit-state", { inactive: "未激活", active: "跟踪中", triggered: "已触发 · 请核对", blocked: "数据不可用", loading: "核对中" }[state] || "数据不可用"));
+      identity.append(node("p", "", "持有 " + position.shares + " 股 · 买入 " + (position.date || "日期待补充") + " · 成本 USD " + price(position.cost)));
+      heading.append(identity, node("span", "take-profit-state", { inactive: "未激活", active: "跟踪中", triggered: "已触发 · 请核对", pending: "待补充", review: "持仓变化 · 待复核", blocked: "数据不可用", loading: "核对中" }[state] || "数据不可用"));
       card.append(heading);
       let reason = result ? result.reason : "正在读取这只股票的完整日线…";
       const firstSignal = result && (result.firstSignalDate || result.signalDate);
@@ -223,8 +257,11 @@
       if (!expected) freshness += " · 交易日历不可用";
       footer.append(node("p", "take-profit-card-data", freshness));
       const actions = node("div", "take-profit-card-actions");
-      if (pendingRemove === position.symbol) actions.append(node("span", "take-profit-confirm-text", "移除此观察？"), button("确认移除", "confirm-remove", position.symbol, "take-profit-remove-confirm"), button("取消", "cancel-remove", position.symbol));
-      else actions.append(button("编辑 / 重置", "edit", position.symbol), button("移除", "remove", position.symbol));
+      if (pendingRemove === position.symbol) actions.append(node("span", "take-profit-confirm-text", "清除入场信息？持仓仍会显示。"), button("确认清除", "confirm-remove", position.symbol, "take-profit-remove-confirm"), button("取消", "cancel-remove", position.symbol));
+      else {
+        if (index && index.symbols[position.symbol]) actions.append(button(position.date ? "编辑 / 重置" : "补充买入日期", "edit", position.symbol));
+        if (observations.some((p) => p.symbol === position.symbol)) actions.append(button("清除入场信息", "remove", position.symbol));
+      }
       footer.append(actions);
       card.append(footer);
       container.append(card);
@@ -238,7 +275,12 @@
         const position = queue[cursor++];
         let result;
         try {
-          if (!index.symbols[position.symbol]) result = unavailable("此股票不在当前日线覆盖清单中，请编辑或移除观察。");
+          if (position.blockedReason) {
+            result = unavailable(position.blockedReason);
+            if (position.needsReview) result.status = "review";
+            else if (["date_missing", "date_invalid", "date_and_cost_missing", "usd_cost_missing"].includes(position.blockedReasonCode)) result.status = "pending";
+          }
+          else if (!index.symbols[position.symbol]) result = unavailable("当前已验证日线未覆盖这只持仓，暂时无法计算止盈。");
           else if (expected && index.as_of !== expected) result = unavailable("行情快照未覆盖最新完整交易日或含未来日期，暂停计算。", index.symbols[position.symbol].last_date);
           else {
             const rows = await loadSymbol(position.symbol);
@@ -262,6 +304,7 @@
     if (busy || force) symbolCache.clear();
     busy = true;
     results.clear();
+    syncHoldings();
     updateControls();
     renderCards();
     setStatus("正在核对日线快照与最新完整交易日…", "loading");
@@ -270,22 +313,29 @@
         index = null;
         updateControls();
         if (root.LiveData) await root.LiveData.refresh();
+        if (currentHoldings()?.requestedSourceMode === "automatic" && root.SnaptradeHoldingsView) {
+          refreshingHoldings = true;
+          try { await root.SnaptradeHoldingsView.refresh(); } finally { refreshingHoldings = false; }
+        }
       }
       if (token !== attempt) return;
       const [nextIndex, session] = await Promise.all([loadIndex(), expectedSession()]);
       if (token !== attempt) return;
       index = nextIndex;
       expected = session;
+      syncHoldings();
       fillSymbols();
       const fresh = expected && index.as_of === expected;
       let summary = "行情快照 " + index.as_of;
       if (!expected) summary += " · 交易日历不可用；当前不生成有效止盈提示。";
       else if (!fresh) summary += (index.as_of < expected ? " · 行情过期" : " · 含未完成或未来交易日") + "，最新完整日线应为 " + expected + "；未通过时效核对。";
-      else summary += " · 最新完整日线已核对 · 仅加载已保存观察的股票";
+      else summary += " · 最新完整日线已核对 · 仅加载入场信息已补齐的当前持仓";
       setStatus(summary, fresh ? "ready" : "error");
       await evaluateWatches(token);
     } catch (_) {
       if (token !== attempt) return;
+      syncHoldings();
+      if (index) fillSymbols();
       for (const position of positions) results.set(position.symbol, unavailable("股票行情清单读取失败，请更新行情重试。"));
       setStatus("股票行情清单读取失败；未生成止盈提示。请更新行情重试。", "error");
       renderCards();
@@ -310,21 +360,23 @@
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     clearErrors();
-    const symbol = select.value, date = dateInput.value, cost = Number(costInput.value);
+    syncHoldings();
+    const symbol = select.value, position = positions.find((p) => p.symbol === symbol);
+    const date = dateInput.value, cost = position?.costFromHolding ? position.cost : Number(costInput.value);
     let firstError;
-    if (!index || !index.symbols[symbol]) { fieldError("Symbol", "请选择当前清单中的股票。"); firstError = select; }
+    if (!holdings.available || !position || !index || !index.symbols[symbol]) { fieldError("Symbol", "请选择日线已覆盖的当前持仓股票。"); firstError = select; }
     if (!validDate(date)) { fieldError("Date", "请填写实际买入日期。"); firstError ||= dateInput; }
     else if (expected && date > expected) { fieldError("Date", "买入日期晚于最新完整交易日，请待当日日线完成后再保存。"); firstError ||= dateInput; }
     if (!Number.isFinite(cost) || cost <= 0 || !costInput.value.trim()) { fieldError("Cost", "每股成本必须是大于 0 的美元金额。"); firstError ||= costInput; }
     if (firstError) { firstError.focus(); return; }
-    const next = positions.filter((p) => p.symbol !== symbol).concat({ symbol, date, cost });
+    const next = observations.filter((p) => p.symbol !== symbol).concat({ symbol, date, cost, holdingBasis: position.holdingBasis });
     if (!writePositions(next)) return;
     pendingRemove = null;
     resetForm();
     byId("takeProfitFormStatus").textContent = symbol + " 观察已保存，峰值与首次触发按本次入场重新计算。";
     activate();
   });
-  select.addEventListener("change", () => { fieldError("Symbol", ""); updateControls(); });
+  select.addEventListener("change", () => { fillEntry(select.value); });
   cancelEdit.addEventListener("click", () => { resetForm(); byId("takeProfitFormStatus").textContent = "已取消编辑，保存的观察未改动。"; });
   refresh.addEventListener("click", () => activate(true));
   byId("takeProfitRows").addEventListener("click", (event) => {
@@ -334,25 +386,22 @@
     const position = positions.find((p) => p.symbol === symbol);
     if (!position) return;
     if (action === "edit") {
-      if (!index || !index.symbols[symbol]) { byId("takeProfitFormStatus").textContent = "此股票不在当前行情清单中，请更新行情或移除观察。"; return; }
+      if (!index || !index.symbols[symbol]) { byId("takeProfitFormStatus").textContent = "当前日线未覆盖此持仓，暂时无法计算止盈。"; return; }
       editing = symbol;
       select.value = symbol;
-      dateInput.value = validDate(position.date) ? position.date : "";
-      costInput.value = Number.isFinite(Number(position.cost)) ? position.cost : "";
-      clearErrors();
-      updateControls();
+      fillEntry(symbol);
       byId("takeProfitFormStatus").textContent = "修改入场信息后重新计算；保存前不会改变观察。";
       dateInput.focus();
       form.scrollIntoView({ block: "nearest" });
     } else if (action === "remove") { pendingRemove = symbol; renderCards(); }
     else if (action === "cancel-remove") { pendingRemove = null; renderCards(); }
     else if (action === "confirm-remove") {
-      if (!writePositions(positions.filter((p) => p.symbol !== symbol))) return;
+      if (!writePositions(observations.filter((p) => p.symbol !== symbol))) return;
       pendingRemove = null;
       results.delete(symbol);
       if (editing === symbol) resetForm();
-      renderCards();
-      byId("takeProfitFormStatus").textContent = symbol + " 观察已移除。";
+      activate();
+      byId("takeProfitFormStatus").textContent = symbol + " 入场信息已清除；实际持仓仍保留在列表。";
     }
   });
   root.addEventListener("workspace:view-changed", (event) => {
@@ -364,27 +413,43 @@
       updateControls();
       return;
     }
-    if (!started) { started = true; positions = readPositions(); }
+    if (!started) { started = true; observations = readPositions(); }
     activate();
   });
   root.addEventListener("storage", (event) => {
     if (event.key !== KEY || !started) return;
-    positions = readPositions();
+    observations = readPositions();
     if (!view.hidden) activate();
   });
   async function checkFreshness() {
     if (!started || view.hidden || busy) return;
+    const previous = holdingsFingerprint;
+    syncHoldings();
+    if (previous !== holdingsFingerprint) { activate(); return; }
     const token = attempt, session = await expectedSession();
     if (token !== attempt || view.hidden) return;
     if (session !== expected) activate();
   }
   document.addEventListener("visibilitychange", () => { if (!document.hidden) checkFreshness(); });
   root.setInterval(checkFreshness, 60000);
+  function holdingsChanged() {
+    if (!started) return;
+    const previous = holdingsFingerprint;
+    syncHoldings();
+    if (previous === holdingsFingerprint) return;
+    results.clear();
+    if (index) fillSymbols();
+    updateControls();
+    renderCards();
+    if (!view.hidden && !refreshingHoldings) activate();
+  }
+  for (const event of ["wealthsimple:plan-updated", "snaptrade:holdings-updated", "snaptrade:holdings-mode", "snaptrade:holdings-forgotten"]) root.addEventListener(event, holdingsChanged);
+  byId("takeProfitHoldingsSettings").addEventListener("click", () => root.dispatchEvent(new CustomEvent("settings-center:open", { detail: { category: "accounts" } })));
   root.TakeProfitPanel = Object.freeze({ storageKey: KEY, refresh: () => activate(true) });
   // The script can also load after navigation during testing or future bundling.
   if (root.WorkspaceNavigation?.current === "take-profit") {
     started = true;
-    positions = readPositions();
+    observations = readPositions();
     activate();
   }
 })(window);

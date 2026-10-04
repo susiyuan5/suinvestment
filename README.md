@@ -4,17 +4,26 @@ Su Investment Pro is a weekly investment calculator, historical backtesting tool
 
 ## Take-profit workspace (2026-10-04)
 
-The workspace's **止盈** view monitors individual USD long entries using the
-fixed research indicator. Enter the symbol, buy date and per-share cost in the
-current share basis; saved monitors remain in this browser under their own
-storage key. The view shows the completed daily close, activation threshold,
+The workspace's **止盈** view monitors the actual stocks and ETFs from the
+selected current holdings source, including holdings outside the weekly plan.
+It reuses the app's read-only holdings state and original USD average costs;
+it does not unlock accounts independently or persist imported holdings. Buy
+dates are absent from the source and must be explicitly supplied. Saved entry
+information remains in this browser under its own storage key. The view shows the completed daily close, activation threshold,
 monotonic profit/ATR line and first historical trigger. An earlier trigger stays
 visible after a rebound until the entry is explicitly reset. It never records a
 sell, changes a holding, or debits a funding pool.
 
 Missing entry history, invalid inputs, unavailable calendars and stale daily bars
-show a blocked status. Data is loaded only on first opening this view, then only
-for watched symbols, using the existing immutable `live-data` publication flow.
+show a blocked status. Locked, unavailable or stale automatic holdings do not
+fall back to an old watch list. Quantity, cost or source changes require an
+explicit review and entry reset; sold positions leave the displayed list.
+Non-USD listings, unknown listing identities and symbols outside the verified
+daily index remain visible with a blocked reason. CAD or mixed-currency source
+costs are never relabelled as USD or converted using today's FX rate; a verified
+US listing needs an explicit USD cost when its source cost is unavailable.
+Data is loaded only on first opening this view, then only for current holdings
+with complete entry information, using the existing immutable `live-data` publication flow.
 The daily and universe refresh jobs build validated compact snapshots after
 their shared daily-price refresh. USD costs must use the same current-share
 split basis as the listing's historical prices; multi-entry lots require a new

@@ -22,7 +22,7 @@ function rows(symbol) {
     return { date, open: close, high: close + 1, low: close - 1, close, adjusted_close: close };
   }).filter((_, index) => symbol !== "NVDA" || index < 34);
 }
-const symbols = ["AAPL", "MSFT", "SPY", "NVDA", "META", "TSLA"];
+const symbols = ["AAPL", "MSFT", "SPY", "NVDA", "META", "TSLA", "WMT"];
 const index = { schema_version: "take-profit-browser-index-v1", research_only: true, currency: "USD", as_of: expected, symbol_count: symbols.length, symbols: {} };
 const payloads = {};
 for (const symbol of symbols) {
@@ -33,6 +33,11 @@ for (const symbol of symbols) {
 const browser = await chromium.launch({ headless: true });
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
+  await context.addInitScript(() => {
+    localStorage.setItem("su-investment-pro:holdings-source-mode", "manual");
+    if (!localStorage.getItem("su-investment-pro:portfolio-risk")) localStorage.setItem("su-investment-pro:portfolio-risk", JSON.stringify({ available_cash: 1000,
+      positions: Object.fromEntries(["AAPL","MSFT","SPY","NVDA","META","TSLA"].map(symbol => [symbol,{shares:2,average_cost:100,current_value:200}])) }));
+  });
   await context.route(/https:\/\/(finnhub\.io|query1\.finance\.yahoo\.com|www\.bankofcanada\.ca)\//, (route) => route.abort());
   await context.route("https://raw.githubusercontent.com/susiyuan5/suinvestment/**", async (route) => {
     const name = new URL(route.request().url()).pathname.split("/").slice(4).join("/");
@@ -74,6 +79,11 @@ try {
   await page.locator('.workspace-nav a[href="#take-profit"]').click();
   await page.waitForFunction(() => document.querySelector("#takeProfitSave")?.disabled === false);
   assert.deepEqual(requests, ["data/take-profit-v1/index.json"], "index loads first, no unselected symbol history");
+  assert.equal(await page.locator(".take-profit-card").count(), 6, "actual held stocks appear without manual import");
+  assert.equal(await page.locator("#takeProfitSymbol option").count(), 7, "selection is restricted to the six held stocks");
+  assert.equal(await page.locator('.take-profit-card[data-symbol="WMT"]').count(), 0, "unheld index stocks do not enter the list");
+  assert.equal(await page.locator('.take-profit-card[data-state="pending"]').count(), 6, "missing dates cannot infer entry peaks");
+  assert.equal(await page.evaluate(name => localStorage.getItem(name), key), null, "automatic display never persists imported holdings");
   assert.deepEqual(await page.locator("[data-workspace-view]:visible").evaluateAll((items) => items.map((item) => item.dataset.workspaceView)), ["take-profit"]);
   assert.equal(await page.locator('.workspace-nav a[href="#take-profit"]').getAttribute("aria-current"), "page");
   const watch = (symbol) => page.locator(`.take-profit-card[data-symbol="${symbol}"]`);
@@ -81,7 +91,8 @@ try {
   const savePosition = async (symbol, cost = "100", entryDate = dates[20]) => {
     await page.locator("#takeProfitSymbol").selectOption(symbol);
     await page.locator("#takeProfitDate").fill(entryDate);
-    await page.locator("#takeProfitCost").fill(cost);
+    assert.equal(await page.locator("#takeProfitCost").getAttribute("readonly"), "", "source USD cost is read-only");
+    assert.equal(await page.locator("#takeProfitCost").inputValue(), cost);
     await page.locator("#takeProfitSave").click();
     await watch(symbol).waitFor({ state: "visible" });
     await page.waitForFunction((symbol) => document.querySelector(`.take-profit-card[data-symbol="${symbol}"]`)?.dataset.state !== "loading", symbol);
@@ -91,11 +102,7 @@ try {
   assert.equal(await saved(), null, "missing actual date/cost cannot save a fabricated position");
   assert.equal(await page.locator("#takeProfitDate").getAttribute("aria-invalid"), "true");
   await page.locator("#takeProfitDate").fill(dates[20]);
-  await page.locator("#takeProfitCost").fill("0");
-  await page.locator("#takeProfitSave").click();
-  assert.equal(await saved(), null, "zero cost cannot generate observation");
   await page.locator("#takeProfitDate").fill("2026-10-05");
-  await page.locator("#takeProfitCost").fill("100");
   await page.locator("#takeProfitSave").click();
   assert.equal(await saved(), null, "future entry date is rejected");
 
@@ -104,7 +111,8 @@ try {
   const firstTriggerText = await watch("AAPL").locator(".take-profit-card-reason").textContent();
   assert.match(firstTriggerText, /首次触发/);
   assert.equal(await watch("AAPL").locator("progress").count(), 1);
-  assert.deepEqual((await saved()).positions, [{ symbol: "AAPL", date: dates[20], cost: 100 }], "only explicit position inputs are persisted");
+  assert.deepEqual((await saved()).positions.map(({holdingBasis,...entry})=>entry), [{ symbol: "AAPL", date: dates[20], cost: 100 }], "only explicit entry inputs are persisted");
+  assert.equal(typeof (await saved()).positions[0].holdingBasis, "string");
   await savePosition("MSFT");
   assert.equal(await watch("MSFT").getAttribute("data-state"), "inactive");
   assert.equal(await watch("MSFT").locator("progress").count(), 0);
@@ -121,20 +129,22 @@ try {
 
   await watch("MSFT").getByRole("button", { name: "编辑 / 重置" }).click();
   assert.equal(await page.locator("#takeProfitDate").inputValue(), dates[20]);
-  await page.locator("#takeProfitCost").fill("95");
+  await page.locator("#takeProfitCost").evaluate(input => { input.value = "95"; });
   await page.locator("#takeProfitSave").click();
-  await page.waitForFunction((name) => JSON.parse(localStorage.getItem(name)).positions.find((p) => p.symbol === "MSFT").cost === 95, key);
-  await watch("META").getByRole("button", { name: "移除", exact: true }).click();
+  await page.waitForFunction((name) => JSON.parse(localStorage.getItem(name)).positions.find((p) => p.symbol === "MSFT").cost === 100, key);
+  await watch("META").getByRole("button", { name: "清除入场信息", exact: true }).click();
   assert.equal((await saved()).positions.length, 6, "remove request waits for inline confirmation");
   await watch("META").getByRole("button", { name: "取消", exact: true }).click();
   assert.equal((await saved()).positions.length, 6);
-  await watch("META").getByRole("button", { name: "移除", exact: true }).click();
-  await watch("META").getByRole("button", { name: "确认移除" }).click();
+  await watch("META").getByRole("button", { name: "清除入场信息", exact: true }).click();
+  await watch("META").getByRole("button", { name: "确认清除" }).click();
   assert.equal((await saved()).positions.length, 5);
+  await page.waitForFunction(() => document.querySelector('.take-profit-card[data-symbol="META"]')?.dataset.state === "pending");
+  assert.equal(await watch("META").count(), 1, "clearing an entry never hides actual holdings");
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy") === "false" && document.querySelectorAll(".take-profit-card").length === 5);
+  await page.waitForFunction(() => document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy") === "false" && document.querySelectorAll(".take-profit-card").length === 6);
   assert.equal(await watch("AAPL").locator(".take-profit-card-reason").textContent(), firstTriggerText, "first trigger remains after reload and recovery");
-  assert.equal((await saved()).positions.find((p) => p.symbol === "MSFT").cost, 95);
+  assert.equal((await saved()).positions.find((p) => p.symbol === "MSFT").cost, 100, "DOM tampering cannot override source cost");
   assert.deepEqual(await financialSnapshot(), before, "monitor CRUD never changes any other saved financial inputs or dip ledger");
   for (let count = 0; count < 30; count++) {
     await page.keyboard.press("Tab");
@@ -146,8 +156,76 @@ try {
     await page.evaluate((zoom) => { document.documentElement.style.zoom = zoom; }, zoom);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, name + " horizontal overflow");
     assert.equal(await page.locator(".workspace-nav a:visible").count(), 4);
+    await page.evaluate(() => window.scrollTo(0,0));
     await page.screenshot({ path: path.join(root, `output/playwright/take-profit-${name}.png`), fullPage: true });
   }
+  await page.evaluate((name) => {
+    document.documentElement.style.zoom = 1;
+    const records = JSON.parse(localStorage.getItem(name));
+    records.positions.push({symbol:"GOOG",date:"2026-09-14",cost:100});
+    localStorage.setItem(name,JSON.stringify(records));
+    window.dispatchEvent(new StorageEvent("storage",{key:name}));
+  },key);
+  await page.waitForFunction(() => document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy") === "false");
+  assert.equal(await watch("GOOG").count(),0,"saved nonheld observations do not become current holdings");
+  const publishAutomatic = async ({changed=false,status="ready",empty=false,stale=false}={}) => {
+    await page.evaluate(({changed,status,empty,stale}) => {
+      localStorage.setItem("su-investment-pro:holdings-source-mode","automatic");
+      const at = stale ? "2026-09-30T12:00:00Z" : new Date().toISOString();
+      const holding = (symbol,units,cost=100,fields={}) => ({symbol,units,cost_basis:cost,price:100,market_value:units*100,
+        position_currency:"USD",listing_currency:"USD",exchange:"NASDAQ",instrument_kind:"stock",included_in_stock_plan:true,...fields});
+      const snapshot={schema_version:"wealthsimple-holdings-v1",generated_at:at,positions_as_of:at,
+        accounts:[{account_name:"Synthetic test",balances:[{currency:"USD",cash:100}]}],holdings:empty?[]:[
+          holding("AAPL",changed?3:2,changed?105:100),holding("AAPL",.5),holding("WMT",1),holding("NEWT",1),
+          holding("SHOP",1,100,{listing_currency:"CAD",exchange:"TSX"}),holding("SPY",0),holding("META",-2),
+          holding("USD",100,1,{cash_equivalent:true,included_in_stock_plan:false,instrument_kind:"cash"})]};
+      window.dispatchEvent(new CustomEvent("snaptrade:holdings-updated",{detail:{status,sourceMode:"automatic",snapshot,portfolioRisk:SnaptradeHoldingsView.portfolioRisk(snapshot)}}));
+    },{changed,status,empty,stale});
+    await page.waitForFunction(() => document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy") === "false");
+  };
+  const beforeImport = JSON.stringify(await saved()), beforeImportRequests=requests.length;
+  await publishAutomatic();
+  assert.equal(await page.locator(".take-profit-card").count(),4,"outside-plan stocks are included; cash, shorts and zeros are excluded");
+  assert.equal(await watch("WMT").getAttribute("data-state"),"pending");
+  assert.equal(await watch("AAPL").getAttribute("data-state"),"review","switching holding source requires explicit review");
+  assert.equal(await watch("NEWT").getAttribute("data-state"),"blocked");
+  assert.equal(await watch("SHOP").getAttribute("data-state"),"blocked");
+  assert.match(await watch("AAPL").textContent(),/持有 2.5 股/);
+  assert.equal(JSON.stringify(await saved()),beforeImport,"importing current holdings never writes a plaintext holdings cache");
+  assert.equal(requests.length,beforeImportRequests,"unconfirmed source changes and missing dates do not fetch price histories");
+  const automaticFinancialBefore = await financialSnapshot();
+  await savePosition("WMT");
+  assert.equal(await watch("WMT").getAttribute("data-state"),"inactive");
+  await savePosition("AAPL");
+  assert.equal(await watch("AAPL").getAttribute("data-state"),"triggered");
+  assert.deepEqual(await financialSnapshot(),automaticFinancialBefore,"saving automatic holding entry information leaves broker, cash and ledger state unchanged");
+  assert.ok((await saved()).positions.some(p=>p.symbol==="GOOG"),"unheld saved records survive current holding entry changes");
+  await publishAutomatic({changed:true});
+  assert.equal(await watch("AAPL").getAttribute("data-state"),"review","new quantity/cost cannot reuse an old profit line");
+  assert.equal(await watch("AAPL").locator("progress").count(),0);
+  await watch("AAPL").getByRole("button",{name:"编辑 / 重置"}).click();
+  assert.equal(await page.locator("#takeProfitDate").inputValue(),dates[20]);
+  assert.equal(await page.locator("#takeProfitCost").getAttribute("readonly"),"");
+  await page.locator("#takeProfitSave").click();
+  await page.waitForFunction(() => ['active','inactive','triggered'].includes(document.querySelector('.take-profit-card[data-symbol="AAPL"]')?.dataset.state));
+  await publishAutomatic({stale:true});
+  assert.equal(await page.locator(".take-profit-card").count(),0,"stale automatic snapshots cannot show stale signals or fallback manual holdings");
+  assert.match(await page.locator("#takeProfitHoldingsStatus").textContent(),/超过 3 天/);
+  await publishAutomatic({empty:true});
+  assert.equal(await page.locator(".take-profit-card").count(),0,"sold holdings disappear without deleting saved entry information");
+  await publishAutomatic();
+  await page.locator("#takeProfitSymbol").selectOption("AAPL");
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("snaptrade:holdings-forgotten")));
+  await page.waitForFunction(() => document.querySelectorAll(".take-profit-card").length===0 && document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy")==="false");
+  assert.equal(await page.locator("#takeProfitCost").inputValue(),"","forgetting the key clears the imported form cost too");
+  assert.match(await page.locator("#takeProfitHoldingsStatus").textContent(),/锁定/);
+  await page.evaluate(() => {
+    localStorage.setItem("su-investment-pro:holdings-source-mode","manual");
+    window.dispatchEvent(new CustomEvent("snaptrade:holdings-mode",{detail:{mode:"manual"}}));
+  });
+  await page.waitForFunction(() => document.querySelectorAll(".take-profit-card").length===6 && document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy")==="false");
+  await savePosition("AAPL");
+  assert.equal(await watch("AAPL").locator(".take-profit-card-reason").textContent(),firstTriggerText);
   await page.evaluate(() => { document.documentElement.style.zoom = 1; window.__TP_EXPECTED__ = "2026-10-05"; document.dispatchEvent(new Event("visibilitychange")); });
   await page.waitForFunction(() => document.querySelector('.take-profit-card[data-symbol="SPY"]')?.dataset.state === "blocked");
   assert.match(await page.locator("#takeProfitDataStatus").textContent(), /行情过期/);
@@ -164,6 +242,6 @@ try {
   assert.match(await page.locator("#takeProfitDataStatus").textContent(), /行情过期/);
   assert.equal(await watch("AAPL").getAttribute("data-state"), "blocked", "mixed file/index releases cannot expose a line");
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(root, "output/playwright/take-profit-smoke.json"), JSON.stringify({ passed: true, checks: ["route-lazy-load", "symbol-lazy-load", "manual-input-validation", "CRUD-persistence", "sticky-first-trigger", "active-inactive", "missing-stale-corrupt-identity", "calendar-unavailable", "new-close-revalidation", "cross-release-block", "ledger-invariance", "hidden-focus", "mobile-and-200-percent-zoom", "no-page-errors"] }, null, 2));
-  console.log("Take-profit smoke passed: isolated storage, lazy data, CRUD, first trigger, freshness, identity, existing ledger, keyboard and responsive layouts.");
+  await fs.writeFile(path.join(root, "output/playwright/take-profit-smoke.json"), JSON.stringify({ passed: true, checks: ["route-lazy-load", "symbol-lazy-load", "current-held-stocks-only", "outside-plan-holdings", "no-automatic-holdings-persistence", "source-cost-readonly", "date-input-validation", "entry-persistence", "source-and-cost-review", "sold-and-forgotten-clearing", "stale-holdings-block", "nonheld-record-preservation", "sticky-first-trigger", "active-inactive", "missing-stale-corrupt-identity", "calendar-unavailable", "new-close-revalidation", "cross-release-block", "ledger-invariance", "hidden-focus", "mobile-and-200-percent-zoom", "no-page-errors"] }, null, 2));
+  console.log("Take-profit smoke passed: current holdings, source costs, missing dates, source/quantity changes, stale/sold/forgotten state, isolated storage, lazy data, sticky trigger, calendar, ledger and responsive layouts.");
 } finally { await browser.close(); }
