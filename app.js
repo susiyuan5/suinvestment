@@ -1304,6 +1304,49 @@ amountBreakdown: "金额分解",
     if (allocationEditorStatusEl) allocationEditorStatusEl.textContent = "已撤销本次比例修改。";
     renderPortfolioTotal(); renderPortfolioRiskInputs(); render();
   }
+  // Share the same actual holdings used by the workspace. Take-profit needs the
+  // original cost currency, so automatic rows use the existing raw aggregation
+  // rather than the weekly plan's FX-converted, planned-symbol subset.
+  function currentTakeProfitHoldings() {
+    const requestedSourceMode = localStorage.getItem("su-investment-pro:holdings-source-mode") === "manual" ? "manual" : "automatic";
+    const freeze = (result) => Object.freeze(Object.assign({}, result, {
+      rows: Object.freeze(result.rows.map((row) => Object.freeze(row)))
+    }));
+    if (requestedSourceMode === "automatic") {
+      const snapshot = state.snaptradeHoldingsSnapshot;
+      const result = { sourceMode: state.portfolioRiskSource, requestedSourceMode,
+        status: state.snaptradeHoldingsStatus,
+        asOf: snapshot && (snapshot.positions_as_of || snapshot.generated_at) || null,
+        rows: [] };
+      if (result.status !== "ready" || result.sourceMode !== "snaptrade_automatic" || !snapshot || !window.HoldingsDetailModel) return freeze(result);
+      const holdings = (snapshot.holdings || []).filter((item) => item && item.included_in_stock_plan === true && item.cash_equivalent !== true && Number.isFinite(Number(item.units)) && Number(item.units) > 0);
+      const grouped = window.HoldingsDetailModel.aggregateSnapshotHoldings({ holdings });
+      const combinedLabel = (items, field) => {
+        const values = [...new Set(items.map((item) => String(item[field] || "").trim().toUpperCase()))];
+        return values.length === 1 && values[0] ? values[0] : "MIXED";
+      };
+      result.rows = Object.values(grouped).map((row) => {
+        const items = holdings.filter((item) => String(item.symbol || "").trim().toUpperCase() === row.symbol);
+        return { symbol: row.symbol, shares: row.shares, averageCost: row.averageCost,
+          currency: row.currency, listingCurrency: combinedLabel(items, "listing_currency"),
+          exchange: [...new Set(items.map((item) => String(item.exchange || "").trim()))].join(" / "),
+          instrumentKind: combinedLabel(items, "instrument_kind").toLowerCase(), cashEquivalent: false };
+      });
+      return freeze(result);
+    }
+    const settings = window.WealthsimpleCurrency ? window.WealthsimpleCurrency.load(localStorage) : { planningCurrency: null };
+    const input = state.portfolioRiskSource === "snaptrade_automatic" ? state.manualPortfolioRiskInput : state.portfolioRiskInput;
+    const model = window.HoldingsDetailModel ? window.HoldingsDetailModel.build({
+      entries: [], portfolioRisk: input, actualPositions: input.positions,
+      snapshot: null, status: "manual", sourceMode: "manual", planningCurrency: settings.planningCurrency
+    }) : { rows: [] };
+    return freeze({ sourceMode: "manual", requestedSourceMode, status: "ready", asOf: null,
+      rows: model.rows.map((row) => ({ symbol: row.symbol, shares: row.shares,
+        averageCost: row.averageCost, currency: settings.planningCurrency,
+        listingCurrency: null, exchange: "", instrumentKind: "stock", cashEquivalent: false })) });
+  }
+  window.__SUINVESTMENT_HOLDINGS_API__ = Object.freeze({ current: currentTakeProfitHoldings });
+
   window.__SUINVESTMENT_SETTINGS_API__ = {
     validateAllocation: function (draft) { return CoreSatellitePolicy.validateAllocations(draft); },
     applyAllocation: function (mode, draft) {

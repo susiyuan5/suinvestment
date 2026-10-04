@@ -37,7 +37,7 @@
       rel="stylesheet"
     />
   <link rel="stylesheet" href="live-data.css?v=live-data-v1">
-    <link href="take-profit-panel.css?v=take-profit-v1" rel="stylesheet" />
+    <link href="take-profit-panel.css?v=take-profit-holdings-v1" rel="stylesheet" />
   </head>
   <body>
     <div class="app-shell">
@@ -936,15 +936,16 @@
         <section aria-labelledby="takeProfitTitle" data-workspace-view="take-profit" hidden id="view-take-profit">
           <div id="takeProfitWorkspace" class="take-profit-workspace">
             <header class="take-profit-heading">
-              <div><h2 id="takeProfitTitle" tabindex="-1">止盈</h2><p>保护已达到门槛的浮盈，给出完整日线的退出提示。</p></div>
-              <button class="secondary-button" id="takeProfitRefresh" type="button">更新行情</button>
+              <div><h2 id="takeProfitTitle" tabindex="-1">止盈</h2><p>使用当前持仓与美元平均成本，保护已达到门槛的浮盈。</p></div>
+              <button class="secondary-button" id="takeProfitRefresh" type="button">更新持仓与行情</button>
             </header>
+            <div class="take-profit-holdings-source"><p id="takeProfitHoldingsStatus" role="status" aria-live="polite">正在读取当前持仓。</p><button class="secondary-button" id="takeProfitHoldingsSettings" type="button">持仓设置</button></div>
             <p class="take-profit-data-status" id="takeProfitDataStatus" role="status" aria-live="polite">进入后加载日线行情。</p>
             <div class="take-profit-layout">
               <section class="take-profit-entry" aria-labelledby="takeProfitEntryTitle">
-                <h3 id="takeProfitEntryTitle">添加观察</h3>
+                <h3 id="takeProfitEntryTitle">补充持仓入场信息</h3>
                 <form id="takeProfitForm" novalidate>
-                  <label for="takeProfitSymbol">股票<select id="takeProfitSymbol" required disabled><option value="">加载股票清单后选择</option></select></label>
+                  <label for="takeProfitSymbol">当前持仓股票<select id="takeProfitSymbol" required disabled><option value="">读取持仓后选择</option></select></label>
                   <p class="take-profit-field-error" id="takeProfitSymbolError" hidden></p>
                   <label for="takeProfitDate">买入日期<input id="takeProfitDate" type="date" required aria-describedby="takeProfitDateHelp takeProfitDateError" /></label>
                   <p class="take-profit-field-help" id="takeProfitDateHelp">填写实际买入日；缺少日期无法重建持有后的峰值。</p>
@@ -953,7 +954,7 @@
                   <p class="take-profit-field-help" id="takeProfitCostHelp">按当前股数口径填写美元成本；发生拆股时请先换算。</p>
                   <p class="take-profit-field-error" id="takeProfitCostError" hidden></p>
                   <div class="take-profit-form-actions"><button class="primary-button" id="takeProfitSave" type="submit" disabled>保存观察</button><button class="secondary-button" id="takeProfitCancelEdit" type="button" hidden>取消编辑</button></div>
-                  <p id="takeProfitFormStatus" class="take-profit-field-help" role="status" aria-live="polite">每只股票保存一组入场信息，仅保存在本浏览器。</p>
+                  <p id="takeProfitFormStatus" class="take-profit-field-help" role="status" aria-live="polite">股票与可用美元成本取自当前持仓。买入日期不会自动推测；补充的入场信息仅保存在本浏览器。</p>
                 </form>
                 <details class="take-profit-rules">
                   <summary>固定规则与使用说明</summary>
@@ -962,11 +963,12 @@
                   <p>收盘跌至止盈线或以下提示退出；首次触发会保留，重新买入后请修改入场信息并重置观察。</p>
                   <p>接近度是回落到止盈线的距离，不是下跌概率。刚激活时，50% 浮盈保留线通常较紧，历史测试也可能牺牲上涨收益。</p>
                   <p>次日跳空可能低于止盈线成交。这一观察不含初始止损，你自行核对并决定交易。</p>
+                  <p>加仓、减仓或平均成本变化后，请重新核对入场信息。多次买入需自行确认统一的观察起点。</p>
                 </details>
               </section>
               <section class="take-profit-watch" aria-labelledby="takeProfitWatchTitle">
-                <div class="take-profit-list-heading"><h3 id="takeProfitWatchTitle">观察清单 <span id="takeProfitCount">0</span></h3><span>完整日线 · 人工决定</span></div>
-                <div id="takeProfitRows" aria-live="polite"><p class="take-profit-empty">选择股票，填写买入日期与成本，保存后查看止盈线。</p></div>
+                <div class="take-profit-list-heading"><h3 id="takeProfitWatchTitle">当前持仓 <span id="takeProfitCount">0</span></h3><span>完整日线 · 人工决定</span></div>
+                <div id="takeProfitRows" aria-live="polite"><p class="take-profit-empty">读取当前持仓后，补充实际买入日期即可查看止盈线。</p></div>
               </section>
             </div>
           </div>
@@ -2494,7 +2496,7 @@
     <script src="portfolio-risk-input.js?v=weekly-contribution-v1"></script>
     <script src="weekly-dca-engine.js?v=weekly-contribution-v1"></script>
     <script src="weekly-signal-model.js?v=risk-history-v1"></script>
-    <script src="app.js?v=weekly-contribution-v2"></script>
+    <script src="app.js?v=take-profit-holdings-v1"></script>
     <script src="signal-detail.js?v=phase3-i18n-1"></script>
     <script src="order-panel.js?v=phase3-i18n-1"></script>
     <script src="watchlist.js?v=watchlist-4"></script>
@@ -2511,7 +2513,8 @@
     <script src="dip-ledger.js?v=independent-dip-v1"></script>
     <script src="dip-panel.js?v=workspace-v1-independent-dip-v1"></script>
     <script src="take-profit-indicator.js?v=take-profit-v1"></script>
-    <script src="take-profit-panel.js?v=take-profit-v1"></script>
+    <script src="take-profit-holdings.js?v=take-profit-holdings-v1"></script>
+    <script src="take-profit-panel.js?v=take-profit-holdings-v1"></script>
     <script src="workspace-navigation.js?v=take-profit-v1"></script>
   </body>
 </html>
