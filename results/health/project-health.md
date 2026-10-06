@@ -1,17 +1,20 @@
 # Project Health
 
-- Status: **WARNING**
-- Generated: `2026-10-05T21:19:07.564961+00:00`
+- Status: **BLOCKED**
+- Generated: `2026-10-06T19:04:53.465547+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
+- `qqq_history_unhealthy`
+- `spy_history_unhealthy`
 - `workflow_historical_update_failure`
+- `workflow_idea_engine_update_failure`
 
 ## Historical Coverage
 
-- QQQ: 278 rows; latest `2026-09-25`; lag `10` days
-- SPY: 278 rows; latest `2026-09-25`; lag `10` days
+- QQQ: 278 rows; latest `2026-09-25`; lag `11` days
+- SPY: 278 rows; latest `2026-09-25`; lag `11` days
 
 ## Workflows
 
@@ -20,7 +23,7 @@
 - quality_checks: `completed` / `success`
 - pages_smoke: `completed` / `success`
 - shadow_update: `completed` / `success`
-- idea_engine_update: `completed` / `success`
+- idea_engine_update: `completed` / `failure`
 
 ## Pending Automated Updates
 
@@ -81,7 +84,7 @@
 - Schema: `short-term-trade-plan-v1.3`
 - Style fusion: `global-style-fusion-v1.3`
 - Candidates / strategies: `10` / `30`
-- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 0, 'waiting_trigger': 9, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 1}`
+- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 1, 'waiting_trigger': 8, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 1}`
 - Historical OOS: `preliminary_no_reliable_edge` / samples `154` / passed models `[]`
 - Shadow preliminary / formal review: `False` / `False`
 - Scope: research-only simulation; no orders or automatic trading.
