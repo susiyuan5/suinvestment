@@ -2,6 +2,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
+const path = require('node:path');
+const { gunzipSync } = require('node:zlib');
+const frozenPricesPath = path.join(__dirname, 'fixtures/weekly-dca-v2/adjusted-daily.json.gz');
+const frozenSummaryPath = path.join(__dirname, 'fixtures/weekly-dca-v2/summary.json');
 const { run } = require('../scripts/weekly-dca-backtest');
 const { coverage, compare, VARIANTS, EXAMPLE_NINE, DRAFT_ELEVEN } = require('../scripts/weekly-dca-optimization-research');
 const C = require('../core-satellite-policy');
@@ -66,15 +70,15 @@ test('research rejects invalid budgets, duplicate variants and nonfinite executi
   assert.equal(compare(data, { start: '2026-01-01' }).valid, false);
 });
 test('read-only research run preserves frozen price input and prior v2 result', () => {
-  const files = ['data/v2/backtest-adjusted-daily.json', 'results/weekly_dca_v2/summary.json'];
+  const files = ['data/v2/backtest-adjusted-daily.json', frozenPricesPath, frozenSummaryPath];
   const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
   const before = files.map(hash);
   compare(fixture(), { start: '2026-01-01', asOf: '2026-01-30' });
   assert.deepEqual(files.map(hash), before);
 });
 test('explicit legacy cash baseline reproduces the frozen six-asset v2 evidence', () => {
-  const payload = JSON.parse(fs.readFileSync('data/v2/backtest-adjusted-daily.json'));
-  const frozen = JSON.parse(fs.readFileSync('results/weekly_dca_v2/summary.json'));
+  const payload = JSON.parse(gunzipSync(fs.readFileSync(frozenPricesPath)));
+  const frozen = JSON.parse(fs.readFileSync(frozenSummaryPath));
   const result = compare(payload, { start: '2022-06-01' });
   for (const name of ['balanced_weekly_v2', 'fixed_same_reserve']) {
     for (const field of ['externalDeposits', 'invested', 'finalValue', 'xirr', 'maxDrawdown']) assert.ok(Math.abs(result.summaries[name][field] - frozen.summaries[name][field]) < 1e-9, name + ' ' + field);
