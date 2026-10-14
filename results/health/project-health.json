@@ -1,7 +1,7 @@
 {
   "version": "project-health-v1",
-  "generated_at": "2026-10-13T19:57:22.403064+00:00",
-  "status": "blocked",
+  "generated_at": "2026-10-14T12:09:43.018051+00:00",
+  "status": "warning",
   "status_scope": "Operational data and workflow health only; not strategy validation or trading approval.",
   "manual_decision_only": true,
   "broker_connected": false,
@@ -19,70 +19,69 @@
     "note": "\u6d4f\u89c8\u5668\u53ea\u6709\u5728\u7528\u6237\u5bfc\u5165\u672c\u5730\u5bc6\u94a5\u540e\u624d\u89e3\u5bc6\uff1b\u5065\u5eb7\u72b6\u6001\u4e0d\u4ee3\u8868\u53ef\u4ea4\u6613\u3002"
   },
   "issues": [
-    "qqq_history_unhealthy",
-    "spy_history_unhealthy",
-    "workflow_historical_update_failure",
-    "workflow_idea_engine_update_failure"
+    "workflow_idea_engine_update_failure",
+    "workflow_market_update_pending",
+    "workflow_pages_smoke_pending"
   ],
   "market_snapshot": {
-    "generated_at": "2026-10-13T14:25:18.312097Z",
+    "generated_at": "2026-10-14T01:17:34.351266Z",
     "lag_days": 0,
     "fresh_symbols": 8,
     "stale_symbols": 0
   },
   "historical_snapshot": {
-    "generated_at": "2026-09-26T15:30:42.661567+00:00",
+    "generated_at": "2026-10-14T12:08:48.671157+00:00",
     "symbols": {
       "QQQ": {
-        "row_count": 278,
-        "latest_date": "2026-09-25",
-        "lag_days": 18
+        "row_count": 281,
+        "latest_date": "2026-10-13",
+        "lag_days": 1
       },
       "SPY": {
-        "row_count": 278,
-        "latest_date": "2026-09-25",
-        "lag_days": 18
+        "row_count": 281,
+        "latest_date": "2026-10-13",
+        "lag_days": 1
       }
     }
   },
   "watchlist": {
-    "status": "ready",
+    "status": "unknown",
     "static_fallback_status": "ready",
-    "synthetic_probe_status": "ready",
+    "synthetic_probe_status": "unknown",
     "runtime_primary": "Yahoo Finance chart API",
     "same_origin_fallback": "data/backtest-prices.json",
     "fallback_symbol_rows": {
-      "AAPL": 278,
-      "MSFT": 278,
-      "NVDA": 278,
-      "QQQ": 278
+      "AAPL": 281,
+      "MSFT": 281,
+      "NVDA": 281,
+      "QQQ": 281
     },
     "note": "The browser reports the actual per-session source separately at runtime."
   },
   "workflows": {
     "market_update": {
-      "status": "completed",
-      "conclusion": "success",
-      "updated_at": "2026-10-13T14:25:30Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/38413163021"
+      "status": "in_progress",
+      "conclusion": "pending",
+      "updated_at": "2026-10-14T12:09:33Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/38561719301"
     },
     "historical_update": {
       "status": "completed",
-      "conclusion": "failure",
-      "updated_at": "2026-10-10T16:44:45Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/38068861404"
+      "conclusion": "success",
+      "updated_at": "2026-10-14T12:09:09Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/38561579840"
     },
     "quality_checks": {
       "status": "completed",
       "conclusion": "success",
-      "updated_at": "2026-10-04T21:10:48Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/37235001706"
+      "updated_at": "2026-10-14T12:08:50Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/38561579033"
     },
     "pages_smoke": {
-      "status": "completed",
-      "conclusion": "success",
-      "updated_at": "2026-10-04T21:15:25Z",
-      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/37235052782"
+      "status": "in_progress",
+      "conclusion": "pending",
+      "updated_at": "2026-10-14T12:09:09Z",
+      "url": "https://github.com/susiyuan5/suinvestment/actions/runs/38561670223"
     },
     "shadow_update": {
       "status": "completed",
@@ -111,13 +110,13 @@
   },
   "research_pipeline": {
     "dca_l2_v2_valid": true,
-    "schedule_event_count": 277,
-    "executed_trade_count": 4986,
+    "schedule_event_count": 280,
+    "executed_trade_count": 5040,
     "research_only": true
   },
   "core_satellite": {
     "preset_version": "core-satellite-v4",
-    "spy_data_status": "unavailable",
+    "spy_data_status": "fresh",
     "qqq_risk_signal_status": "available",
     "core_target_pct": 40.0,
     "satellite_target_pct": 60.0,
@@ -174,14 +173,14 @@
   },
   "short_term_trade_plan": {
     "schema_version": "short-term-trade-plan-v1.3",
-    "last_successful_run": "2026-10-13T03:38:42.585068+00:00",
+    "last_successful_run": "2026-10-14T01:59:24.426851+00:00",
     "candidate_count": 10,
     "strategy_count": 30,
     "status_counts": {
       "conditional_review": 0,
       "manual_review_ready": 0,
-      "simulation_only": 1,
-      "waiting_trigger": 8,
+      "simulation_only": 0,
+      "waiting_trigger": 9,
       "waiting_breakout": 0,
       "waiting_pullback": 0,
       "chase_blocked": 0,
@@ -202,16 +201,16 @@
   },
   "operational_metrics": {
     "data_delay_count": 2,
-    "workflow_failure_rate": 0.3333333333333333,
-    "workflow_unknown_count": 0,
-    "watchlist_degradation_ratio": 0,
+    "workflow_failure_rate": 0.25,
+    "workflow_unknown_count": 2,
+    "watchlist_degradation_ratio": null,
     "shadow_missing_rate": 0.0,
     "page_js_error_count": null,
     "data_source_response_ms": null
   },
   "versions": {
-    "market_input": "2026-10-13T14:25:18.312097Z",
-    "historical_input": "2026-09-26T15:30:42.661567+00:00",
+    "market_input": "2026-10-14T01:17:34.351266Z",
+    "historical_input": "2026-10-14T12:08:48.671157+00:00",
     "shadow_model": "phase6s-candidate-ranking-v1",
     "v2_research": "v2-causal-baseline"
   }
