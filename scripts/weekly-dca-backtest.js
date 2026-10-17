@@ -42,9 +42,16 @@ function run(payload, options = {}) {
   const crashFund = options.crashFund ?? config.budget.defaultCrashFund;
   if (![normalPool, crashFund].every(x => Number.isFinite(x) && x >= 0) || normalPool + crashFund <= 0) throw new Error('Invalid research budget');
   const monthlyDeposit = normalPool + crashFund;
-  const { indexDrawdownLadder: _ladder, ...withoutIndexLadder } = config;
+  const { indexDrawdownLadder: _ladder, stockBasePreservation: _stockBase, ...withoutIndexLadder } = config;
+  // v3 evidence runs the ladder only; v4 strategies add stock Base preservation and/or the Crash reserve.
+  const { stockBasePreservation: _v4StockBase, ...ladderOnly } = config;
+  const noGuard = { ...config, stockBasePreservation: { ...(config.stockBasePreservation || {}), enabled: true, maxDrawdownPct: null } };
+  const v4 = { stock_base_v4: { config, reserve: false }, stock_base_no_guard_v4: { config: noGuard, reserve: false },
+    base_reserve_v4: { config, reserve: true }, base_reserve_no_guard_v4: { config: noGuard, reserve: true },
+    ladder_reserve_v4: { config: ladderOnly, reserve: true } };
+  const reserveCapMonths = Number(config.crashFund && config.crashFund.reserveCapMonths) || 0;
   const variants = options.variants || [];
-  const standardNames = ['fixed_full_budget', 'fixed_same_reserve', 'current_v5_price_only', 'no_redirection', 'underweight_contributions', 'stable_base_limited_extra', 'balanced_weekly_v2', 'index_ladder_v3'];
+  const standardNames = ['fixed_full_budget', 'fixed_same_reserve', 'current_v5_price_only', 'no_redirection', 'underweight_contributions', 'stable_base_limited_extra', 'balanced_weekly_v2', 'index_ladder_v3', ...Object.keys(v4)];
   if (!Array.isArray(variants) || variants.some(v => !v || typeof v.name !== 'string' || !/^[a-z][a-z0-9_]*$/.test(v.name)
     || standardNames.includes(v.name) || !['legacy', 'base_priority'].includes(v.cashPolicyMode) || !['target', 'gap'].includes(v.allocationMode))) throw new Error('Invalid research variant');
   if (new Set(variants.map(v => v.name)).size !== variants.length) throw new Error('Duplicate research variant');
@@ -84,12 +91,23 @@ function run(payload, options = {}) {
   if (!Array.isArray(names) || !names.length || new Set(names).size !== names.length || names.some(name => !availableNames.includes(name))) throw new Error('Invalid research strategy selection');
   const variantByName = Object.fromEntries(variants.map(v => [v.name, v]));
   const strategies = Object.fromEntries(names.map(name => [name, { cash: 0, holdings: Object.fromEntries(symbols.map(s => [s, 0])), invested: 0,
-    fees: 0, slippage: 0, normalUsed: 0, crashUsed: 0, policyState: {}, deposits: 0, flows: [], curve: [], decisions: [], trades: [] }]));
+    fees: 0, slippage: 0, normalUsed: 0, crashUsed: 0, policyState: {}, deposits: 0, flows: [], curve: [], decisions: [], trades: [],
+    monthNormal: normalPool, monthCrash: crashFund, carried: 0, overflowTotal: 0, crashUsedByMonth: {}, reserveStart: '' }]));
   let lastMonth = '';
   for (const date of dates) {
     const month = date.slice(0, 7), deposit = month !== lastMonth ? monthlyDeposit : 0;
+    const lastMonthSeen = lastMonth;
     lastMonth = month;
-    for (const strategy of Object.values(strategies)) {
+    for (const [name, strategy] of Object.entries(strategies)) {
+      if (deposit && v4[name] && v4[name].reserve && lastMonthSeen) {
+        // Close the previous month with the live helper: unused Crash carries over up to the cap, the rest overflows to Normal.
+        strategy.crashUsedByMonth[lastMonthSeen] = strategy.crashUsed;
+        strategy.reserveStart = strategy.reserveStart || lastMonthSeen;
+        const reserve = W.crashReserve({ crashFund, reserveCapMonths, startMonth: strategy.reserveStart, month, usedByMonth: strategy.crashUsedByMonth });
+        if (!reserve.valid) throw new Error('Invalid crash reserve: ' + month + ' ' + reserve.reasonCodes.join(','));
+        strategy.carried = reserve.carried; strategy.overflowTotal += reserve.overflow;
+        strategy.monthNormal = C.money(normalPool + reserve.overflow); strategy.monthCrash = reserve.crashPool;
+      }
       if (deposit) { strategy.cash += deposit; strategy.deposits += deposit; strategy.flows.push({ date, amount: -deposit }); strategy.normalUsed = 0; strategy.crashUsed = 0; }
     }
     const event = events.get(date);
@@ -98,7 +116,8 @@ function run(payload, options = {}) {
       const regime = M.marketRegime(weekly.QQQ) || M.marketRegime(weekly.SPY) || { type: 'Neutral' };
       const signals = Object.fromEntries(symbols.map(s => [s, signal(all[s], weekly[s], event.signalDate, regime)]));
       for (const [name, strategy] of Object.entries(strategies)) {
-        const baseBudget = W.weeklyBudget(normalPool, event.plannedDate);
+        const nPool = strategy.monthNormal, cPool = strategy.monthCrash;
+        const baseBudget = W.weeklyBudget(nPool, event.plannedDate);
         const values = Object.fromEntries(symbols.map(s => [s, strategy.holdings[s] * lookup[s][event.signalDate].adjusted_close]));
         const assetValue = sum(Object.values(values));
         const actual = Object.fromEntries(symbols.map(s => [s, assetValue + strategy.cash > 0 ? C.money(values[s] / (assetValue + strategy.cash) * 100) : 0]));
@@ -113,13 +132,13 @@ function run(payload, options = {}) {
           }
           orders = assets.map((asset, i) => ({ symbol: asset.symbol, baseAmount: Math.max(0, amount * weights[i]), extraAmount: 0, crashFundAmount: 0, finalAmount: Math.max(0, amount * weights[i]) }));
         } else {
-          const variant = variantByName[name], ladder = name === 'index_ladder_v3', balanced = name === 'balanced_weekly_v2' || ladder || !!variant;
+          const variant = variantByName[name], ladder = name === 'index_ladder_v3' || !!v4[name], balanced = name === 'balanced_weekly_v2' || ladder || !!variant;
           const cashPolicyMode = variant ? variant.cashPolicyMode : 'legacy';
           const fullCash = balanced && cashPolicyMode === 'base_priority';
           const portfolioCashCap = strategy.cash * (fullCash ? 1 : config.cashUsageCap);
           let baseAmounts;
           if (variant && variant.allocationMode === 'gap') {
-            const funding = W.fundingPlan(normalPool, strategy.normalUsed, event.plannedDate, baseBudget);
+            const funding = W.fundingPlan(nPool, strategy.normalUsed, event.plannedDate, baseBudget);
             const gap = W.gapBasePlan({ preset, holdingsComplete: true,
               eligibleUSPositions: values,
               baseBudget, normalLimit: funding.normalLimit, portfolioCashCap, commissionBps });
@@ -134,12 +153,12 @@ function run(payload, options = {}) {
               dataStatus: 'fresh', marketRegime: regime.type, panicActive: false,
               drawdownPct: sig.algorithm.drawdown, volatilityPct: sig.algorithm.realized_weekly_volatility,
               trendStatus: sig.algorithm.trend.status, currentAllocationPct: actual[asset.symbol],
-              normalPool, normalPoolUsed: strategy.normalUsed, crashFundInitial: crashFund,
-              crashFundUsed: strategy.crashUsed, crashFundBalance: Math.max(0, crashFund - strategy.crashUsed),
+              normalPool: nPool, normalPoolUsed: strategy.normalUsed, crashFundInitial: cPool,
+              crashFundUsed: strategy.crashUsed, crashFundBalance: Math.max(0, cPool - strategy.crashUsed),
               date: event.signalDate, availableCashProvided: true, availableCash: strategy.cash } };
           });
           // Frozen v2 evidence and its named variants run without the v3 index ladder.
-          let policyConfig = ladder ? config : withoutIndexLadder;
+          let policyConfig = v4[name] ? v4[name].config : ladder ? ladderOnly : withoutIndexLadder;
           if (name === 'stable_base_limited_extra') {
             // Research-only ablation: price action labels do not cancel Base, defensive Base remains 100%.
             policyConfig = { ...withoutIndexLadder, base: { ...withoutIndexLadder.base, defensive: 1 } };
@@ -148,7 +167,7 @@ function run(payload, options = {}) {
           const result = W.plan({ inputs, config: policyConfig, policyState: strategy.policyState, preset, baseBudget, commissionBps,
             plannedDate: event.plannedDate, policyMode: balanced ? undefined : 'legacy', cashPolicyMode,
             ...(baseAmounts ? { baseAmounts } : {}),
-            budget: { normalPool, normalPoolUsed: strategy.normalUsed, crashFund, crashFundUsed: strategy.crashUsed,
+            budget: { normalPool: nPool, normalPoolUsed: strategy.normalUsed, crashFund: cPool, crashFundUsed: strategy.crashUsed,
               portfolioCashCap, ...(fullCash ? { optionalCashCap: strategy.cash * config.cashUsageCap } : {}) },
             core: { actualAllocations: actual, spyDataValid: true, qqqDataValid: true, cashOnlySymbols: name === 'no_redirection' ? symbols : [] } });
           strategy.policyState = result.policyState;
@@ -159,8 +178,8 @@ function run(payload, options = {}) {
             if (!plan.conservation.balanced || plan.plannedNormal > funding.normalLimit + 1e-7
               || plan.plannedNormal > Math.max(0, funding.normalRemaining - funding.futureReserved) + 1e-7
               || plan.plannedCrash > funding.crashLimit + 1e-7
-              || strategy.normalUsed + plan.plannedNormal > normalPool + 1e-7
-              || strategy.crashUsed + plan.plannedCrash > crashFund + 1e-7) throw new Error('Weekly funding invariant failed: ' + date);
+              || strategy.normalUsed + plan.plannedNormal > nPool + 1e-7
+              || strategy.crashUsed + plan.plannedCrash > cPool + 1e-7) throw new Error('Weekly funding invariant failed: ' + date);
           }
           strategy.decisions.push({ date, signalDate: event.signalDate, plannedDate: event.plannedDate, inputs, plan: result.plan });
         }
@@ -185,6 +204,7 @@ function run(payload, options = {}) {
   const summaries = Object.fromEntries(Object.entries(strategies).map(([name, strategy]) => [name, {
     externalDeposits: strategy.deposits, invested: C.money(strategy.invested), finalValue: C.money(strategy.curve.at(-1).value), cash: C.money(strategy.cash),
     investmentRatio: strategy.invested / strategy.deposits, costs: C.money(strategy.fees + strategy.slippage), trades: strategy.trades.length,
+    ...(v4[name] && v4[name].reserve ? { crashReserveCarried: strategy.carried, crashReserveOverflow: C.money(strategy.overflowTotal) } : {}),
     ...Metrics.performance(strategy.curve, strategy.flows) }]));
   return { researchOnly: true, valid: events.size > 0 && Object.values(strategies).some(strategy => strategy.trades.length > 0) && !issues.some(x => x.reason === 'missing_adjusted_open'),
     engineVersion: W.version, configVersion: config.version, presetVersion: preset.version, allocations: Object.fromEntries(assets.map(a => [a.symbol, a.allocation])),
