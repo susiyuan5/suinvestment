@@ -23,7 +23,9 @@
     "veryHighPct": 35
   },
   "crashFund": {
-    "weeklyReleaseInitialMonthlyBudgetPct": 0.25
+    "weeklyReleaseInitialMonthlyBudgetPct": 0.25,
+    "reserveCapMonths": 3,
+    "reserveNote": "Unused monthly Crash Fund carries over up to reserveCapMonths x the monthly Crash Fund; the excess overflows into the next month's Normal pool. Weekly release is a share of this month's Crash pool (monthly Crash Fund + carried reserve). Counting starts from the ledger's reserveStartMonth."
   },
   "recovery": {
     "requiredDistinctPlanWeeks": 2,
@@ -60,5 +62,10 @@
     ],
     "maxSpyCurrentPct": 70,
     "maxQqqCurrentPct": 25
+  },
+  "stockBasePreservation": {
+    "enabled": true,
+    "maxDrawdownPct": 35,
+    "note": "Individual-stock price and market-risk labels stop Extra and Crash but keep scheduled Base. Data errors, manual panic/pauses and a 52-week drawdown at or above maxDrawdownPct (value-trap guard) still cancel Base."
   }
 }

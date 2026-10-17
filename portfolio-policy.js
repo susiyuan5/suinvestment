@@ -132,7 +132,8 @@
       }),
       defensiveLatched: raw.defensiveLatched === true,
       recoveryConfirmations: Number.isFinite(Number(raw.recoveryConfirmations)) ? Number(raw.recoveryConfirmations) : 0,
-      lastRecoveryWeek: typeof raw.lastRecoveryWeek === "string" ? raw.lastRecoveryWeek : ""
+      lastRecoveryWeek: typeof raw.lastRecoveryWeek === "string" ? raw.lastRecoveryWeek : "",
+      reserveStartMonth: typeof raw.reserveStartMonth === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(raw.reserveStartMonth) ? raw.reserveStartMonth : ""
     };
   }
 

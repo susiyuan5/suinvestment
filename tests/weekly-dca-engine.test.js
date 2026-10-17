@@ -470,9 +470,72 @@ test('index ladder at 35%+ keeps index Base through market-risk blocks and relea
   assert.ok(spy.baseAmount > 0 && spy.baseAmount === spy.originalBaseAmount);
   assert.ok(spy.reasonCodes.includes('INDEX_LADDER_CRASH_PLANNED'));
   assert.ok(result.decisions.QQQ.reasonCodes.includes('INDEX_BASE_PRESERVED_MARKET_RISK'));
-  // Individual stocks keep the existing action blocks.
-  assert.equal(result.decisions.NVDA.finalAmount, 0);
-  assert.ok(result.decisions.NVDA.reasonCodes.includes('ACTION_REQUIRES_ZERO_AMOUNT'));
+  // Individual stocks above the value-trap guard keep Base but get no Extra or Crash.
+  const nvda = result.plan.items.find(row => row.symbol === 'NVDA');
+  assert.ok(nvda.baseAmount > 0 && nvda.extraAmount === 0 && nvda.crashFundAmount === 0);
+  assert.ok(result.decisions.NVDA.reasonCodes.includes('STOCK_BASE_PRESERVED_PRICE_SIGNAL'));
+});
+
+test('stock Base survives price labels but not data errors, manual pauses or the value-trap guard', () => {
+  const blocked = (options, symbol) => W.plan(options).decisions[symbol];
+  let options = ladderInput(5, 20);
+  options.inputs.forEach(row => { row.actionBlocked = true; row.extraBlocked = true; });
+  let nvda = blocked(options, 'NVDA');
+  assert.ok(nvda.baseAmount > 0 && nvda.finalAmount === nvda.baseAmount);
+  assert.equal(nvda.extraAmount + nvda.crashFundAmount, 0);
+  assert.ok(nvda.reasonCodes.includes('STOCK_BASE_PRESERVED_PRICE_SIGNAL'));
+  options = ladderInput(5, 40);
+  options.inputs.forEach(row => { row.actionBlocked = true; row.extraBlocked = true; });
+  nvda = blocked(options, 'NVDA');
+  assert.equal(nvda.finalAmount, 0, '52-week drawdown at or above 35% keeps the value-trap block');
+  assert.ok(nvda.reasonCodes.includes('ACTION_REQUIRES_ZERO_AMOUNT'));
+  for (const patch of [{ dataBlocked: true }, { manualBlocked: true }]) {
+    options = ladderInput(5, 20);
+    options.inputs.forEach(row => Object.assign(row, { actionBlocked: true, extraBlocked: true }, patch));
+    assert.equal(blocked(options, 'NVDA').finalAmount, 0);
+  }
+  options = ladderInput(5, 20);
+  options.inputs.forEach(row => { row.actionBlocked = true; row.extraBlocked = true; delete row.dataBlocked; });
+  assert.equal(blocked(options, 'NVDA').finalAmount, 0, 'callers without the gate detail keep the legacy block');
+  options = ladderInput(5, null);
+  options.inputs.forEach(row => { row.actionBlocked = true; row.extraBlocked = true; });
+  assert.equal(blocked(options, 'NVDA').finalAmount, 0, 'unknown drawdown cannot pass the guard');
+  options = ladderInput(5, 20);
+  options.config = { ...D.getL2Config(), stockBasePreservation: { enabled: false } };
+  options.inputs.forEach(row => { row.actionBlocked = true; row.extraBlocked = true; });
+  assert.equal(blocked(options, 'NVDA').finalAmount, 0, 'disabled config restores the previous behaviour');
+  options = ladderInput(5, 60);
+  options.config = { ...D.getL2Config(), stockBasePreservation: { enabled: true, maxDrawdownPct: null } };
+  options.inputs.forEach(row => { row.actionBlocked = true; row.extraBlocked = true; });
+  assert.ok(blocked(options, 'NVDA').finalAmount > 0, 'a null guard keeps Base at any drawdown');
+  assert.equal(W.stockBasePreservation({ stockBasePreservation: { enabled: true, maxDrawdownPct: -1 } }), null);
+});
+
+test('crash reserve carries unused Crash up to the cap and overflows the rest to Normal', () => {
+  let r = W.crashReserve({ crashFund: 100, reserveCapMonths: 3, startMonth: '2026-10', month: '2026-10' });
+  assert.deepEqual([r.valid, r.carried, r.overflow, r.crashPool, r.cap], [true, 0, 0, 100, 300]);
+  r = W.crashReserve({ crashFund: 100, reserveCapMonths: 3, startMonth: '2026-10', month: '2027-03', usedByMonth: { '2026-11': 40 } });
+  // Oct +100, Nov +60, Dec +100 -> 260; Jan reaches the 300 cap with 60 overflow; Feb overflows 100.
+  assert.deepEqual(r.history.map(h => [h.month, h.carriedOut, h.overflow]),
+    [['2026-10', 100, 0], ['2026-11', 160, 0], ['2026-12', 260, 0], ['2027-01', 300, 60], ['2027-02', 300, 100]]);
+  assert.deepEqual([r.carried, r.overflow, r.crashPool], [300, 100, 400]);
+  r = W.crashReserve({ crashFund: 100, reserveCapMonths: 3, startMonth: '2026-10', month: '2027-01', usedByMonth: { '2026-12': 250 } });
+  assert.deepEqual([r.carried, r.overflow], [50, 0], 'spending from the reserve draws it down');
+  r = W.crashReserve({ crashFund: 100, reserveCapMonths: 0, startMonth: '2026-10', month: '2026-12' });
+  assert.deepEqual([r.carried, r.overflow, r.crashPool], [0, 100, 100]);
+  r = W.crashReserve({ crashFund: 100, reserveCapMonths: 3, startMonth: '2026-11', month: '2026-12', usedByMonth: { '2026-10': 999 } });
+  assert.equal(r.carried, 100, 'months before the start month never count');
+  for (const bad of [{ month: '2026-13' }, { startMonth: '2027-01' }, { crashFund: -1 }, { reserveCapMonths: NaN }, { usedByMonth: { '2026-10': -5 } }])
+    assert.equal(W.crashReserve({ crashFund: 100, reserveCapMonths: 3, startMonth: '2026-10', month: '2026-12', ...bad }).valid, false);
+});
+
+test('a larger Crash pool from the reserve raises the weekly release cap', () => {
+  const options = ladderInput(28);
+  options.budget.crashFund = 400;
+  options.inputs.forEach(row => Object.assign(row.input, { crashFundInitial: 400, crashFundBalance: 400 }));
+  const result = W.plan(options);
+  assert.equal(result.plan.funding.crashLimit, 100);
+  assert.equal(result.plan.plannedCrash, 100);
 });
 test('manual panic, data errors and unknown holdings still stop the index ladder', () => {
   let options = ladderInput(30);

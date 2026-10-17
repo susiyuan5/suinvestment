@@ -2,6 +2,17 @@
 
 Su Investment Pro is a weekly investment calculator, historical backtesting toolkit, and live market decision-support assistant. It is not an automatic trading bot. It never places real orders, never logs in to a brokerage account, and never submits buy or sell instructions through a broker API.
 
+## Stock Base preservation and Crash reserve (weekly-dca-v4, 2026-10-17)
+
+Individual-stock price and market-risk labels now stop only Extra and Crash; scheduled Base continues
+(`STOCK_BASE_PRESERVED_PRICE_SIGNAL`). Data errors, manual panic/pauses and a 52-week drawdown of 35% or more
+(value-trap guard, `stockBasePreservation.maxDrawdownPct`) still cancel Base. Unused monthly Crash Fund now
+carries over up to `crashFund.reserveCapMonths` (3) months; anything above the cap joins the next month's Normal
+pool, and weekly Crash release is a share of the month's Crash pool (monthly amount + carried reserve). Counting
+starts the first month this version runs (`reserveStartMonth`); earlier months are never back-filled. In the
+2022-06 to 2026-09 replay XIRR rises from 20.80% to 25.93% and capital utilisation from 72% to 94%. See
+[the report](docs/WEEKLY_DCA_V4_BASE_RESERVE_2026-10-17.md); evidence in `results/weekly_dca_v4_base_reserve/`.
+
 ## Index drawdown ladder (2026-10-17)
 
 SPY and QQQ now receive the monthly Crash Fund by their own 52-week drawdown
