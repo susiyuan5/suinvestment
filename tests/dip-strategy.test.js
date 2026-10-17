@@ -79,7 +79,10 @@ test("exact tier boundaries and stabilization gates", () => {
 test("market and ticker risk gates, raw thresholds and overweight", () => {
   for (const [mutate, blocked] of [
     [(x) => (x.panic = true), 6],
-    [(x) => (x.signals.QQQ.volatility = 6), 6],
+    // Market volatility pauses the four stocks; SPY/QQQ keep buying on their own drawdown.
+    [(x) => (x.signals.QQQ.volatility = 6), 4],
+    [(x) => (x.signals.QQQ.regime = "Panic"), 4],
+    [(x) => (x.signals.SPY.volatility = 7), 4],
     [(x) => (x.signals.NVDA.volatility = 6), 1],
     [(x) => (x.signals.QQQ.regime = "Bear"), 4],
     [(x) => (x.signals.SPY.valid = false), 6],

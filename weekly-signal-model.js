@@ -261,17 +261,26 @@
      || !algorithm.trend || !algorithm.trend.status ? 'unknown' : 'known';
  }
 
+ // Data and explicit owner blocks, separated from price/market-risk labels so
+ // index ETFs can keep their scheduled Base through market drawdowns.
+ function weeklyDcaGateDetail(signal) {
+   const s = signal || {}, algorithm = s.algorithm || {};
+   const dataBlocked = s.data_source === 'Unavailable' || ['missing', 'stale', 'invalid', 'future'].includes(s.data_freshness)
+     || s.data_validation_status === 'invalid' || !isFiniteNumber(s.decision_change);
+   const manualBlocked = s.panic_active === true || s.portfolio_adjustment === 0 || algorithm.portfolio_adjustment === 0;
+   return { dataBlocked, manualBlocked };
+ }
+
  function weeklyDcaActionGate(signal) {
    const s = signal || {}, algorithm = s.algorithm || {};
    const action = s.suggested_action || getSuggestedAction(s);
-   const actionBlocked = s.data_source === 'Unavailable' || ['missing', 'stale', 'invalid', 'future'].includes(s.data_freshness)
-     || s.data_validation_status === 'invalid' || !isFiniteNumber(s.decision_change)
+   const detail = weeklyDcaGateDetail(s);
+   const actionBlocked = detail.dataBlocked || detail.manualBlocked
      || s.risk_level === 'Extreme' || (isFiniteNumber(algorithm.drawdown) && algorithm.drawdown >= 35)
-     || s.panic_active === true || s.portfolio_adjustment === 0 || algorithm.portfolio_adjustment === 0
      || action === 'HOLD' || action === 'CONSIDER_SELL';
    return { actionBlocked, extraBlocked: actionBlocked || riskDataStatus(s) === 'unknown' || action === 'DO_NOT_BUY' || action === 'REDUCE_BUY'
      || getActionLabelFromMultiplier(s).cls === 'action-pause-buy' };
  }
  return Object.freeze({ ALGORITHM_PARAMS, LOW_FREQ_ALGO_PARAMS, calculateSmoothMultiplier, getMarketRegimeMultiplierCap,
-   calculateRiskLevel, getSuggestedAction, getActionLabelFromMultiplier, calculateEnhancedLowFrequencyMultiplier, weeklyDcaActionGate, riskDataStatus });
+   calculateRiskLevel, getSuggestedAction, getActionLabelFromMultiplier, calculateEnhancedLowFrequencyMultiplier, weeklyDcaActionGate, weeklyDcaGateDetail, riskDataStatus });
 });

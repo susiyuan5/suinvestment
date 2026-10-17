@@ -2,6 +2,21 @@
 
 Su Investment Pro is a weekly investment calculator, historical backtesting toolkit, and live market decision-support assistant. It is not an automatic trading bot. It never places real orders, never logs in to a brokerage account, and never submits buy or sell instructions through a broker API.
 
+## Index drawdown ladder (2026-10-17)
+
+SPY and QQQ now receive the monthly Crash Fund by their own 52-week drawdown
+(`indexDrawdownLadder` in `data/dca-l2-policy-config.json`): below 10% none,
+10–20% half of the weekly allowance, 20%+ the full allowance, and 35%+ raises
+the weekly allowance from 25% to 50% of the monthly Crash Fund. Index claims are
+funded before individual stocks. Market regime, volatility and price-model
+labels no longer cancel index Base or index ladder buys; data errors, manual
+panic/pauses, unknown holdings and SPY ≥ 70% / QQQ ≥ 25% still block. In the
+independent dip panel, market-wide volatility and regime gates now pause only
+individual stocks. Individual-stock rules and the dip ledger are unchanged.
+`npm run backtest:weekly` adds the `index_ladder_v3` strategy; frozen
+`balanced_weekly_v2` evidence still reproduces with the ladder disabled. See
+[the report](INDEX_DRAWDOWN_LADDER_2026-10-17.md).
+
 ## Take-profit workspace (2026-10-04)
 
 The workspace's **止盈** view monitors the actual stocks and ETFs from the

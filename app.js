@@ -4884,7 +4884,8 @@ function equalizeAllocations() {
     const result = WeeklyDcaEngine.plan({
       inputs: inputs.map(function (item) {
         const gate = WeeklySignalModel.weeklyDcaActionGate(item.entry.signal);
-        return { symbol: item.entry.signal.symbol, input: item.input, ...gate, extraBlocked: gate.extraBlocked || !contribution.valid || !allocationContext.complete };
+        const detail = WeeklySignalModel.weeklyDcaGateDetail ? WeeklySignalModel.weeklyDcaGateDetail(item.entry.signal) : {};
+        return { symbol: item.entry.signal.symbol, input: item.input, ...gate, ...detail, extraBlocked: gate.extraBlocked || !contribution.valid || !allocationContext.complete };
       }),
       policyState: ledger, config: state.dcaL2ConfigReady ? state.dcaL2Config : { ...state.dcaL2Config, configValid: false },
       plannedDate,
@@ -5958,6 +5959,8 @@ function equalizeAllocations() {
     if (codes.indexOf("ETF_LOOKTHROUGH_DATA_PENDING") >= 0) return "穿透数据待更新，暂不生成该标的新增金额，金额保留为现金";
     if (codes.indexOf("USD_BUDGET_MIGRATION_PENDING") >= 0) return "等待有效 USD/CAD 汇率完成 USD 预算迁移，本周计划已停止";
     if (codes.indexOf("安全检查未通过") >= 0 || codes.indexOf("SPY_DATA_OR_SAFETY_BLOCK") >= 0) return "数据或计算未通过安全检查，请人工复核";
+    if (codes.indexOf("INDEX_LADDER_CRASH_PLANNED") >= 0) return "指数回撤阶梯：按该指数离 52 周高点的回撤，动用暴跌备用金加仓";
+    if (codes.indexOf("INDEX_BASE_PRESERVED_MARKET_RISK") >= 0) return "指数基础定投不因下跌或市场风险标签暂停，仅数据异常或人工暂停会停止";
     if (codes.indexOf("ACTION_REQUIRES_ZERO_AMOUNT") >= 0) return "硬风控或人工暂停阻止买入，资金保留为现金";
     if (codes.indexOf("SATELLITE_RISK_BLOCKED") >= 0) return "个股风控门禁阻止买入，资金保留为现金";
     if (codes.indexOf("SATELLITE_BASE_REDIRECTED_TO_SPY") >= 0) return "个股基础金额已转入 SPY";
@@ -5968,6 +5971,7 @@ function equalizeAllocations() {
     if (codes.indexOf("OPTIONAL_CASH_CAP_APPLIED") >= 0) return "Extra＋Crash 已按可用现金的 30% 上限削减";
     if (codes.indexOf("NORMAL_POOL_BUDGET_APPLIED") >= 0) return "已按常规资金池上限削减";
     if (codes.indexOf("FUTURE_BASE_RESERVED") >= 0) return "优先预留后续周基础定投，本周加仓受限";
+    if (codes.indexOf("CRASH_FUND_INDEX_PRIORITY") >= 0) return "暴跌备用金优先给 SPY/QQQ，个股只用剩余额度";
     if (codes.indexOf("PRICE_SIGNAL_BLOCKS_EXTRA_ONLY") >= 0) return "短期信号偏弱，保留基础定投，暂停额外加仓";
     if (codes.indexOf("SCHEDULED_BASE_PRESERVED") >= 0) return "市场防御期保留基础定投，暂停额外加仓";
     if (codes.indexOf("WEEKLY_CONTRIBUTION_WEIGHT") >= 0) return "基础投入按本周可负担预算 × 已保存的每周投入比例分配";

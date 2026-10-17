@@ -169,6 +169,7 @@
     var p = normalizedPreset(input && input.preset) || clone(PRESET), budget = input || {}, baseBudget = money(budget.baseBudget == null ? budget.base_budget : budget.baseBudget), crashBudget = money(budget.crashFundRemaining == null ? budget.crash_fund_remaining : budget.crashFundRemaining), actual = budget.actualAllocations || budget.actual_allocations || {}, decisions = budget.satelliteDecisions || budget.satellite_decisions || {}, cashOnly = budget.cashOnlySymbols || [], spy = p.core.symbol, spyUsable = (budget.spyDataValid == null ? budget.spy_data_valid !== false : budget.spyDataValid !== false) && budget.safetyBlocked !== true, qqqUsable = budget.qqqDataValid == null ? true : budget.qqqDataValid !== false, spyActual = finite(actual[spy]) || 0, stockActual = p.satellites.map(row => row.symbol).reduce(function (s, x) { return s + (finite(actual[x]) || 0); }, 0), techActual = p.satellites.filter(row => technologySymbol(row.symbol)).map(row => row.symbol).reduce(function (s, x) { return s + (finite(actual[x]) || 0); }, 0);
     const hasBaseAmounts = Object.hasOwn(budget, 'baseAmounts'), baseAmountsValid = !hasBaseAmounts || validateBaseAmounts(budget.baseAmounts, p, baseBudget);
     if (!baseAmountsValid) { budget.safetyBlocked = true; spyUsable = false; }
+    var indexCrash = budget.indexCrashEnhancements && typeof budget.indexCrashEnhancements === 'object' && !Array.isArray(budget.indexCrashEnhancements) ? budget.indexCrashEnhancements : null;
     var spyDecision = decisions[spy] || {};
     spyUsable = spyUsable && !coreDecisionBlocked(spyDecision) && !(budget.blockedSymbols || []).includes(spy);
     var rawBase = allAssets(p).map(function (asset) { return { asset: asset, amount: hasBaseAmounts ? baseAmountsValid ? budget.baseAmounts[asset.symbol] : 0 : baseBudget * Number(asset.target_allocation) }; }), roundedBase = rawBase.map(function (x) { return money(x.amount); }), baseTail = hasBaseAmounts ? 0 : Math.round((baseBudget - roundedBase.reduce(function (s, n) { return s + n; }, 0)) * 100) / 100;
@@ -176,6 +177,8 @@
     function addAsset(asset, amount) {
       var isQqq = asset.symbol === "QQQ", decision = decisions[asset.symbol] || {}, adjusted = money(decision.finalAmount == null ? amount : decision.finalAmount);
       var row = { symbol: asset.symbol, bucket: asset.bucket, asset_type: asset.asset_type, originalBaseAmount: amount, dcaAdjustedAmount: adjusted, extraAmount: money(decision.extraAmount), crashFundEnhancement: isQqq ? 0 : money(decision.crashFundAmount || 0), riskReduction: 0, redirectedToSpy: 0, cashRetained: 0, finalAmount: adjusted, reasonCodes: (decision.reasonCodes || []).slice(), factorChain: [] };
+      // Index ladder Crash Fund for QQQ is added on top of its own Base/Extra decision.
+      if (isQqq && indexCrash && adjusted > 0) { row.crashFundEnhancement = money(Math.min(crashBudget, money(indexCrash.QQQ))); row.finalAmount = money(adjusted + row.crashFundEnhancement); row.dcaAdjustedAmount = row.finalAmount; }
       var blocked = (isQqq && !qqqUsable) || (adjusted <= 0 && amount > 0) || (!isQqq && (finite(actual[asset.symbol]) || 0) >= p.limits.single_stock_block_pct) || (budget.blockedSymbols && budget.blockedSymbols.indexOf(asset.symbol) >= 0);
       if (blocked) {
         row.riskReduction = adjusted; row.finalAmount = 0;
@@ -196,7 +199,8 @@
     }
     allAssets(p).slice(1).forEach(function (asset, i) { addAsset(asset, roundedBase[i + 1]); });
     var redirected = spyUsable && spyActual < p.limits.spy_max_current_pct ? money(redirect) : 0; if (redirected) { rows[0].redirectedToSpy = redirected; rows[0].finalAmount = money(rows[0].finalAmount + redirected); reason(rows[0], "SATELLITE_BASE_REDIRECTED_TO_SPY"); }
-    var enhancement = spyUsable ? money(Math.min(crashBudget, Math.max(0, spyBase * (p.limits.spy_enhancement_max_multiple - 1)), money(budget.spyCrashEnhancement))) : 0; rows[0].crashFundEnhancement = enhancement; rows[0].finalAmount = money(rows[0].finalAmount + enhancement);
+    var enhancement = !spyUsable ? 0 : indexCrash ? (spyActual < p.limits.spy_max_current_pct ? money(Math.min(crashBudget, money(indexCrash[spy]))) : 0)
+      : money(Math.min(crashBudget, Math.max(0, spyBase * (p.limits.spy_enhancement_max_multiple - 1)), money(budget.spyCrashEnhancement))); rows[0].crashFundEnhancement = enhancement; rows[0].finalAmount = money(rows[0].finalAmount + enhancement);
     if (!baseAmountsValid) rows.forEach(row => reason(row, 'BASE_AMOUNTS_INVALID'));
     return finalize(rows, budget, p, spyBase, spyActual, stockActual, techActual, baseBudget, crashBudget);
 

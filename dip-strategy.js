@@ -107,16 +107,17 @@
               : "over35";
     if (finite(dd) && dd < (etf ? 10 : 15))
       reasons.push("BELOW_DRAWDOWN_THRESHOLD");
-    if (s.volatility >= 6) reasons.push("EXTREME_TICKER_VOLATILITY");
+    // Index ETFs are not paused by volatility or market regime: historically the
+    // deepest index drawdowns were the best entry points. Stocks keep these gates.
+    if (!etf && s.volatility >= 6) reasons.push("EXTREME_TICKER_VOLATILITY");
     if (!["strong", "preliminary"].includes(s.stabilization))
       reasons.push("NO_STABILIZATION");
     if (dd >= 25 && s.stabilization !== "strong")
       reasons.push("STRONG_STABILIZATION_REQUIRED");
     if (etf && tier === "10-15" && s.trend?.status === "strong_downtrend")
       reasons.push("SHALLOW_STRONG_DOWNTREND");
-    if (regime === "Bear" && (!etf || s.stabilization !== "strong"))
-      reasons.push("BEAR_RESTRICTION");
-    if (dd > 35 && ["Bear", "Panic"].includes(regime))
+    if (!etf && regime === "Bear") reasons.push("BEAR_RESTRICTION");
+    if (!etf && dd > 35 && ["Bear", "Panic"].includes(regime))
       reasons.push("DEEP_MARKET_RESTRICTION");
     if (!finite(target) || target <= 0 || target > 1)
       reasons.push("INVALID_TARGET");
@@ -162,10 +163,14 @@
       )
     )
       global.push("MARKET_DATA_UNAVAILABLE");
+    // Market-wide volatility/panic regimes pause individual stocks only; a
+    // manual panic switch still pauses everything.
+    const stockOnly = [];
     if (etfs.some((s) => signals[s]?.volatility >= 6))
-      global.push("EXTREME_MARKET_VOLATILITY");
+      stockOnly.push("EXTREME_MARKET_VOLATILITY");
     const regime = input.panic ? "Panic" : signals.QQQ?.regime;
-    if (regime === "Panic") global.push("PANIC");
+    if (input.panic) global.push("PANIC");
+    else if (regime === "Panic") stockOnly.push("PANIC");
     if (!["Bull", "Neutral", "Correction", "Bear", "Panic"].includes(regime))
       global.push("MARKET_DATA_UNAVAILABLE");
     if (
@@ -205,7 +210,7 @@
           targets[symbol],
           totalValue ? values[symbol] / totalValue : 0,
           regime,
-          global,
+          etfs.includes(symbol) ? global : global.concat(stockOnly),
         );
         if (signals[symbol]?.week !== previousWeek(now))
           r.reasons.push("WEEKLY_HISTORY_MISSING_OR_STALE");
@@ -439,7 +444,7 @@
             targets[r.symbol],
             totalValue ? values[r.symbol] / totalValue : 0,
             regime,
-            global,
+            etfs.includes(r.symbol) ? global : global.concat(stockOnly),
           ).reasons.length && signals[r.symbol]?.week === previousWeek(now),
         accountId: r.accountId,
         amountUSD: r.spent / 100,
