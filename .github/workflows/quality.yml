@@ -2,9 +2,9 @@ name: Quality checks
 
 on:
   pull_request:
-    branches: [main, "codex/**"]
+    branches: [main, "codex/**", "claude/**"]
   push:
-    branches: [main, "codex/**"]
+    branches: [main, "codex/**", "claude/**"]
 
 permissions:
   contents: read
@@ -29,3 +29,5 @@ jobs:
         run: node --test tests/*.test.js
       - name: Static dashboard contracts
         run: python scripts/check_static_contracts.py
+      - name: JavaScript syntax check
+        run: npm run check:js
