@@ -121,6 +121,24 @@
     }
     return { valid: true, reasonCodes: totalGap > 0 || !cents ? [] : ['GAP_NO_POSITIVE_DEFICIT'], baseBudget, securitiesValue, gaps, baseAmounts };
   }
+  // Index drawdown ladder: broad index ETFs receive Crash Fund by their own
+  // 52-week drawdown. Individual stocks keep the existing value-trap gates.
+  function indexLadder(config) {
+    const raw = config && config.indexDrawdownLadder;
+    if (!raw || raw.enabled !== true || !Array.isArray(raw.symbols) || !Array.isArray(raw.tiers) || !raw.tiers.length) return null;
+    const tiers = raw.tiers.map(t => ({ minDrawdownPct: Number(t && t.minDrawdownPct), crashReleaseFactor: Number(t && t.crashReleaseFactor),
+      weeklyReleasePct: Number(t && t.weeklyReleasePct) }));
+    if (tiers.some(t => !(Number.isFinite(t.minDrawdownPct) && t.minDrawdownPct >= 0 && Number.isFinite(t.crashReleaseFactor)
+      && t.crashReleaseFactor >= 0 && t.crashReleaseFactor <= 1 && Number.isFinite(t.weeklyReleasePct) && t.weeklyReleasePct > 0 && t.weeklyReleasePct <= 1))) return null;
+    const limit = (value, fallback) => Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : fallback;
+    return { symbols: raw.symbols.map(String), tiers: tiers.sort((a, b) => b.minDrawdownPct - a.minDrawdownPct),
+      maxCurrentPct: { SPY: limit(raw.maxSpyCurrentPct, 70), QQQ: limit(raw.maxQqqCurrentPct, 25) } };
+  }
+  function indexTier(ladder, drawdownPct) {
+    const value = Number(drawdownPct);
+    if (!ladder || drawdownPct == null || !Number.isFinite(value)) return null;
+    return ladder.tiers.find(tier => value >= tier.minDrawdownPct) || null;
+  }
   function plan(options) {
     const rawConfig = options.config || D.getL2Config();
     const config = { ...rawConfig, configValid: rawConfig.configValid !== false && D.validateL2Config(rawConfig) };
@@ -161,6 +179,11 @@
     const eligible = initial.map((row, i) => row.crashFundAmount > 0 && !inputs[i].actionBlocked && !inputs[i].extraBlocked
       && (!balanced || assets.some(asset => asset.symbol === inputs[i].symbol && asset.bucket === 'satellite')) ? inputs[i].input.baseAmount : 0);
     const deepBase = eligible.reduce((a, b) => a + b, 0);
+    const ladder = balanced && config.configValid ? indexLadder(config) : null;
+    const isIndex = item => !!ladder && ladder.symbols.includes(item.symbol) && assets.some(asset => asset.symbol === item.symbol && asset.bucket !== 'satellite');
+    // Index Base is only cancelled by data errors or explicit owner blocks, never by price/market-risk labels.
+    const indexBaseAllowed = item => isIndex(item) && typeof item.dataBlocked === 'boolean'
+      && !item.dataBlocked && item.manualBlocked !== true && item.input.panicActive !== true;
     const rows = inputs.map((item, i) => {
       const decision = evaluate({ input: { ...item.input, crashFundWeight: deepBase > 0 ? eligible[i] / deepBase : 0 } });
       if (balanced && item.extraBlocked) {
@@ -168,7 +191,9 @@
         decision.finalAmount = decision.baseAmount;
         decision.reasonCodes.push('PRICE_SIGNAL_BLOCKS_EXTRA_ONLY');
       }
-      if (item.actionBlocked) {
+      if (item.actionBlocked && indexBaseAllowed(item)) {
+        decision.reasonCodes.push('INDEX_BASE_PRESERVED_MARKET_RISK');
+      } else if (item.actionBlocked) {
         decision.baseAmount = decision.extraAmount = decision.crashFundAmount = decision.finalAmount = 0;
         decision.reasonCodes.push('ACTION_REQUIRES_ZERO_AMOUNT');
       }
@@ -176,15 +201,52 @@
     });
     // Account funding is applied once in Core, after any asset redirection.
     const budget = P.allocateDcaL2Plan(rows, cashBasePriority ? { ...options.budget, portfolioCashCap: null } : options.budget);
+    const ladderRows = ladder ? inputs.filter(isIndex).map(item => {
+      const tier = indexTier(ladder, item.input.drawdownPct), current = Number(item.input.currentAllocationPct);
+      const base = money(item.input.baseAmount), reasons = [];
+      if (!tier) reasons.push('INDEX_LADDER_BELOW_THRESHOLD');
+      if (item.input.dataStatus !== 'fresh' || (typeof item.dataBlocked === 'boolean' ? item.dataBlocked : item.actionBlocked)) reasons.push('INDEX_LADDER_DATA_BLOCKED');
+      if (item.manualBlocked === true || item.input.panicActive === true) reasons.push('INDEX_LADDER_MANUAL_BLOCK');
+      if (item.input.currentAllocationPct == null || !Number.isFinite(current)) reasons.push('INDEX_LADDER_HOLDINGS_UNKNOWN');
+      else if (current >= (ladder.maxCurrentPct[item.symbol] || 25)) reasons.push('INDEX_LADDER_CONCENTRATION');
+      if (!(base > 0)) reasons.push('INDEX_LADDER_NO_BASE');
+      return { symbol: item.symbol, base, drawdownPct: item.input.drawdownPct == null ? null : money(item.input.drawdownPct), tier, reasons, claim: 0 };
+    }) : [];
+    const activeLadder = ladderRows.filter(row => !row.reasons.length);
+    const weeklyReleasePct = Math.max(Number(config.crashFund.weeklyReleaseInitialMonthlyBudgetPct),
+      ...activeLadder.map(row => row.tier.weeklyReleasePct));
     const crashLimit = balanced ? money(Math.min(budget.crashFundRemaining,
-      Math.max(0, Number(options.budget.crashFund) * Number(config.crashFund.weeklyReleaseInitialMonthlyBudgetPct) - money(options.budget.weekCrashUsed)))) : budget.crashFundRemaining;
+      Math.max(0, Number(options.budget.crashFund) * weeklyReleasePct - money(options.budget.weekCrashUsed)))) : budget.crashFundRemaining;
     if (funding) funding.crashLimit = crashLimit;
+    let indexCrashEnhancements;
+    if (ladder) {
+      // Split by each index's Base share; index claims are funded before satellites.
+      const indexBase = ladderRows.reduce((sum, row) => sum + row.base, 0);
+      activeLadder.forEach(row => {
+        row.claim = Math.floor(crashLimit * row.tier.crashReleaseFactor * row.base / indexBase * 100 + 1e-7) / 100;
+      });
+      indexCrashEnhancements = Object.fromEntries(ladderRows.map(row => [row.symbol, row.claim]));
+      const satelliteRoom = money(crashLimit - ladderRows.reduce((sum, row) => sum + row.claim, 0));
+      const satelliteRows = budget.items.filter(row => !ladderRows.some(index => index.symbol === row.symbol));
+      const satelliteCrash = satelliteRows.reduce((sum, row) => sum + row.decision.crashFundAmount, 0);
+      if (satelliteCrash > satelliteRoom + 1e-7) {
+        const ratio = satelliteCrash > 0 ? satelliteRoom / satelliteCrash : 0;
+        satelliteRows.forEach(row => {
+          if (!(row.decision.crashFundAmount > 0)) return;
+          const reduced = Math.floor(row.decision.crashFundAmount * ratio * 100 + 1e-7) / 100;
+          row.decision.finalAmount = money(row.decision.finalAmount - row.decision.crashFundAmount + reduced);
+          row.decision.crashFundAmount = reduced;
+          row.decision.reasonCodes.push('CRASH_FUND_INDEX_PRIORITY');
+        });
+      }
+    }
     const decisions = Object.fromEntries(budget.items.map(row => [row.symbol, row.decision]));
     const core = C.plan({ ...options.core, preset: options.preset || C.PRESET, baseBudget: options.baseBudget,
       ...(hasBaseAmounts ? { baseAmounts: options.baseAmounts } : {}),
       normalPoolRemaining: funding ? Math.min(budget.normalPoolRemaining, funding.normalLimit) : budget.normalPoolRemaining, crashFundRemaining: crashLimit,
       portfolioCashCap: options.budget.portfolioCashCap, optionalCashCap: cashBasePriority ? options.budget.optionalCashCap : null,
-      commissionBps: options.commissionBps || 0, satelliteDecisions: decisions });
+      commissionBps: options.commissionBps || 0, satelliteDecisions: decisions,
+      ...(indexCrashEnhancements ? { indexCrashEnhancements } : {}) });
     for (const row of core.items) {
       const decision = decisions[row.symbol];
       if (!decision) continue;
@@ -198,11 +260,27 @@
       }
     }
     budget.items.forEach(row => { row.finalAmount = row.decision.finalAmount; });
+    ladderRows.forEach(row => {
+      const decision = decisions[row.symbol];
+      if (!decision) return;
+      decision.indexLadder = { drawdownPct: row.drawdownPct, tierMinDrawdownPct: row.tier ? row.tier.minDrawdownPct : null,
+        plannedCrash: row.claim, reasonCodes: row.reasons.slice() };
+      const item = core.items.find(candidate => candidate.symbol === row.symbol);
+      const codes = [];
+      if (decision.crashFundAmount > 0) codes.push('INDEX_LADDER_CRASH_PLANNED');
+      if (decision.reasonCodes.includes('INDEX_BASE_PRESERVED_MARKET_RISK') && decision.baseAmount > 0) codes.push('INDEX_BASE_PRESERVED_MARKET_RISK');
+      codes.forEach(code => {
+        if (!decision.reasonCodes.includes(code)) decision.reasonCodes.push(code);
+        if (item && !item.reasonCodes.includes(code)) item.reasonCodes.push(code);
+      });
+    });
     core.funding = funding;
+    core.indexLadder = ladder ? { weeklyReleasePct, rows: ladderRows.map(row => ({ symbol: row.symbol, drawdownPct: row.drawdownPct,
+      tierMinDrawdownPct: row.tier ? row.tier.minDrawdownPct : null, plannedCrash: row.claim, reasonCodes: row.reasons })) } : null;
     return { plan: core, decisions, policyState: state, budgetReport: { ...budget, funding,
       plannedNormal: core.plannedNormal, plannedCrash: core.plannedCrash, plannedOptional: core.plannedOptional,
       portfolioCashCap: core.portfolioCashCap, optionalCashCap: core.optionalCashCap, totalPlanned: core.totalPlanned,
       unallocatedCash: money(budget.normalPoolRemaining + budget.crashFundRemaining - core.totalPlanned) } };
   }
-  return Object.freeze({ plan, indicators, planWeeksInMonth, weeklyBudget, fundingPlan, contributionBasePlan, gapBasePlan, version: 'weekly-dca-v2' });
+  return Object.freeze({ plan, indicators, planWeeksInMonth, weeklyBudget, fundingPlan, contributionBasePlan, gapBasePlan, indexLadder, indexTier, version: 'weekly-dca-v3' });
 });

@@ -111,7 +111,12 @@ test('market defence preserves Base while explicit action and data blocks still 
   options.inputs.forEach(row => { row.input.marketRegime = 'Bear'; row.extraBlocked = true; });
   let result = W.plan(options);
   assert.equal(result.plan.plannedNormal, 75);
-  assert.equal(result.plan.plannedCrash, 0);
+  // A 12% index drawdown releases half of the weekly Crash allowance to SPY/QQQ even in a Bear regime;
+  // individual stocks stay blocked from Crash Fund.
+  assert.equal(result.plan.plannedCrash, 12.5);
+  assert.equal(result.decisions.SPY.crashFundAmount, 10);
+  assert.equal(result.decisions.QQQ.crashFundAmount, 2.5);
+  for (const symbol of ['NVDA', 'AAPL', 'ASML', 'KO']) assert.equal(result.decisions[symbol].crashFundAmount, 0);
   assert.ok(result.decisions.NVDA.reasonCodes.includes('SCHEDULED_BASE_PRESERVED'));
   assert.ok(!result.decisions.NVDA.reasonCodes.includes('DEFENSIVE_BASE_50'));
   for (const row of options.inputs) row.actionBlocked = true;
@@ -132,12 +137,14 @@ test('weekly funding remains affordable over fractional cash caps and keeps repo
   }
 });
 
-test('Crash funding excludes ETF allocations and confirmed use cannot reopen the same weekly allowance', () => {
+test('index ladder funds SPY/QQQ before stocks and confirmed use cannot reopen the same weekly allowance', () => {
   const options = input('2026-02-03'); options.budget.portfolioCashCap = null;
   options.inputs.forEach(row => { row.input.drawdownPct = 25; row.input.trendStatus = 'above_sma'; row.input.crashFundBalance = 100; });
   let result = W.plan(options);
   assert.equal(result.plan.plannedCrash, 25);
-  for (const symbol of ['SPY', 'QQQ']) assert.equal(result.decisions[symbol].crashFundAmount, 0);
+  assert.equal(result.decisions.SPY.crashFundAmount, 20);
+  assert.equal(result.decisions.QQQ.crashFundAmount, 5);
+  for (const symbol of ['NVDA', 'AAPL', 'ASML', 'KO']) assert.equal(result.decisions[symbol].crashFundAmount, 0);
   options.budget.weekCrashUsed = 20;
   options.budget.crashFundUsed = 20;
   result = W.plan(options);
@@ -433,4 +440,72 @@ test('browser and Node allocate the same weekly contribution cents', () => {
     vm.runInContext(fs.readFileSync(file, 'utf8'), context);
   const options = { preset: contributionInput().preset, baseBudget: 53.74, normalLimit: 53.74, portfolioCashCap: 100 };
   assert.deepEqual(JSON.parse(JSON.stringify(context.WeeklyDcaEngine.contributionBasePlan(options))), W.contributionBasePlan(options));
+});
+
+function ladderInput(spyDrawdown, stockDrawdown = 5) {
+  const options = input('2026-02-03'); options.budget.portfolioCashCap = null;
+  options.inputs.forEach(row => {
+    const index = ['SPY', 'QQQ'].includes(row.symbol);
+    Object.assign(row.input, { drawdownPct: index ? spyDrawdown : stockDrawdown, trendStatus: 'above_sma', crashFundBalance: 100 });
+    Object.assign(row, { dataBlocked: false, manualBlocked: false });
+  });
+  return options;
+}
+test('index ladder tiers: below 10% no Crash, 10-20% half, 20%+ full weekly allowance', () => {
+  assert.equal(W.plan(ladderInput(8)).plan.plannedCrash, 0);
+  assert.equal(W.plan(ladderInput(15)).plan.plannedCrash, 12.5);
+  assert.equal(W.plan(ladderInput(28)).plan.plannedCrash, 25);
+  const tier = W.indexTier(W.indexLadder(D.getL2Config()), 36);
+  assert.equal(tier.minDrawdownPct, 35);
+  assert.equal(W.indexTier(W.indexLadder(D.getL2Config()), null), null);
+});
+test('index ladder at 35%+ keeps index Base through market-risk blocks and releases 50% weekly', () => {
+  const options = ladderInput(40);
+  options.inputs.forEach(row => { row.input.marketRegime = 'Bear'; row.input.volatilityPct = 7; row.actionBlocked = true; row.extraBlocked = true; });
+  const result = W.plan(options);
+  assert.equal(result.plan.funding.crashLimit, 50);
+  assert.equal(result.decisions.SPY.crashFundAmount, 40);
+  assert.equal(result.decisions.QQQ.crashFundAmount, 10);
+  const spy = result.plan.items.find(row => row.symbol === 'SPY');
+  assert.ok(spy.baseAmount > 0 && spy.baseAmount === spy.originalBaseAmount);
+  assert.ok(spy.reasonCodes.includes('INDEX_LADDER_CRASH_PLANNED'));
+  assert.ok(result.decisions.QQQ.reasonCodes.includes('INDEX_BASE_PRESERVED_MARKET_RISK'));
+  // Individual stocks keep the existing action blocks.
+  assert.equal(result.decisions.NVDA.finalAmount, 0);
+  assert.ok(result.decisions.NVDA.reasonCodes.includes('ACTION_REQUIRES_ZERO_AMOUNT'));
+});
+test('manual panic, data errors and unknown holdings still stop the index ladder', () => {
+  let options = ladderInput(30);
+  options.inputs.forEach(row => { row.manualBlocked = true; row.actionBlocked = true; });
+  let result = W.plan(options);
+  assert.equal(result.plan.totalPlanned, 0);
+  options = ladderInput(30);
+  options.inputs.forEach(row => { row.dataBlocked = true; row.actionBlocked = true; });
+  assert.equal(W.plan(options).plan.totalPlanned, 0);
+  options = ladderInput(30);
+  options.inputs.forEach(row => { row.input.currentAllocationPct = null; });
+  result = W.plan(options);
+  assert.equal(result.decisions.SPY.crashFundAmount, 0);
+  assert.ok(result.decisions.SPY.indexLadder.reasonCodes.includes('INDEX_LADDER_HOLDINGS_UNKNOWN'));
+  options = ladderInput(30);
+  options.inputs.find(row => row.symbol === 'SPY').input.currentAllocationPct = 75;
+  result = W.plan(options);
+  assert.equal(result.decisions.SPY.crashFundAmount, 0);
+  assert.equal(result.decisions.QQQ.crashFundAmount, 5);
+});
+test('stocks use the Crash allowance left after the index ladder; disabled ladder restores stock-only Crash', () => {
+  let result = W.plan(ladderInput(5, 25));
+  assert.equal(result.decisions.SPY.crashFundAmount, 0);
+  assert.equal(result.plan.plannedCrash, 25);
+  result = W.plan(ladderInput(15, 25));
+  assert.equal(result.decisions.SPY.crashFundAmount + result.decisions.QQQ.crashFundAmount, 12.5);
+  assert.ok(result.plan.plannedCrash <= 25 + 1e-9);
+  assert.ok(result.decisions.NVDA.reasonCodes.includes('CRASH_FUND_INDEX_PRIORITY'));
+  const options = ladderInput(28, 25);
+  const { indexDrawdownLadder, ...legacy } = D.getL2Config();
+  options.config = legacy;
+  result = W.plan(options);
+  assert.equal(result.decisions.SPY.crashFundAmount, 0);
+  assert.equal(result.decisions.QQQ.crashFundAmount, 0);
+  assert.equal(result.plan.plannedCrash, 25);
 });

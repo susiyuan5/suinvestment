@@ -33,5 +33,32 @@
     "defaultNormalPool": 300,
     "defaultCrashFund": 100,
     "schedule": "weekly_tuesday"
+  },
+  "indexDrawdownLadder": {
+    "enabled": true,
+    "symbols": [
+      "SPY",
+      "QQQ"
+    ],
+    "note": "Index drawdown ladder: Crash Fund goes to SPY/QQQ by each index's own 52-week drawdown. Market regime, volatility and drawdown labels never cancel index Base; data errors and manual panic still block.",
+    "tiers": [
+      {
+        "minDrawdownPct": 10,
+        "crashReleaseFactor": 0.5,
+        "weeklyReleasePct": 0.25
+      },
+      {
+        "minDrawdownPct": 20,
+        "crashReleaseFactor": 1.0,
+        "weeklyReleasePct": 0.25
+      },
+      {
+        "minDrawdownPct": 35,
+        "crashReleaseFactor": 1.0,
+        "weeklyReleasePct": 0.5
+      }
+    ],
+    "maxSpyCurrentPct": 70,
+    "maxQqqCurrentPct": 25
   }
 }

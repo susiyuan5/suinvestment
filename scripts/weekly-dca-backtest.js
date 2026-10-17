@@ -42,8 +42,9 @@ function run(payload, options = {}) {
   const crashFund = options.crashFund ?? config.budget.defaultCrashFund;
   if (![normalPool, crashFund].every(x => Number.isFinite(x) && x >= 0) || normalPool + crashFund <= 0) throw new Error('Invalid research budget');
   const monthlyDeposit = normalPool + crashFund;
+  const { indexDrawdownLadder: _ladder, ...withoutIndexLadder } = config;
   const variants = options.variants || [];
-  const standardNames = ['fixed_full_budget', 'fixed_same_reserve', 'current_v5_price_only', 'no_redirection', 'underweight_contributions', 'stable_base_limited_extra', 'balanced_weekly_v2'];
+  const standardNames = ['fixed_full_budget', 'fixed_same_reserve', 'current_v5_price_only', 'no_redirection', 'underweight_contributions', 'stable_base_limited_extra', 'balanced_weekly_v2', 'index_ladder_v3'];
   if (!Array.isArray(variants) || variants.some(v => !v || typeof v.name !== 'string' || !/^[a-z][a-z0-9_]*$/.test(v.name)
     || standardNames.includes(v.name) || !['legacy', 'base_priority'].includes(v.cashPolicyMode) || !['target', 'gap'].includes(v.allocationMode))) throw new Error('Invalid research variant');
   if (new Set(variants.map(v => v.name)).size !== variants.length) throw new Error('Duplicate research variant');
@@ -112,7 +113,7 @@ function run(payload, options = {}) {
           }
           orders = assets.map((asset, i) => ({ symbol: asset.symbol, baseAmount: Math.max(0, amount * weights[i]), extraAmount: 0, crashFundAmount: 0, finalAmount: Math.max(0, amount * weights[i]) }));
         } else {
-          const variant = variantByName[name], balanced = name === 'balanced_weekly_v2' || !!variant;
+          const variant = variantByName[name], ladder = name === 'index_ladder_v3', balanced = name === 'balanced_weekly_v2' || ladder || !!variant;
           const cashPolicyMode = variant ? variant.cashPolicyMode : 'legacy';
           const fullCash = balanced && cashPolicyMode === 'base_priority';
           const portfolioCashCap = strategy.cash * (fullCash ? 1 : config.cashUsageCap);
@@ -127,7 +128,7 @@ function run(payload, options = {}) {
           }
           const inputs = assets.map(asset => {
             const sig = signals[asset.symbol];
-            const gate = balanced ? Model.weeklyDcaActionGate(sig) : { actionBlocked: sig.actionBlocked };
+            const gate = balanced ? { ...Model.weeklyDcaActionGate(sig), ...(ladder ? Model.weeklyDcaGateDetail(sig) : {}) } : { actionBlocked: sig.actionBlocked };
             return { symbol: asset.symbol, ...gate, input: {
               baseAmount: C.money(baseBudget * asset.allocation), price: lookup[asset.symbol][event.signalDate].adjusted_close,
               dataStatus: 'fresh', marketRegime: regime.type, panicActive: false,
@@ -137,10 +138,11 @@ function run(payload, options = {}) {
               crashFundUsed: strategy.crashUsed, crashFundBalance: Math.max(0, crashFund - strategy.crashUsed),
               date: event.signalDate, availableCashProvided: true, availableCash: strategy.cash } };
           });
-          let policyConfig = config;
+          // Frozen v2 evidence and its named variants run without the v3 index ladder.
+          let policyConfig = ladder ? config : withoutIndexLadder;
           if (name === 'stable_base_limited_extra') {
             // Research-only ablation: price action labels do not cancel Base, defensive Base remains 100%.
-            policyConfig = { ...config, base: { ...config.base, defensive: 1 } };
+            policyConfig = { ...withoutIndexLadder, base: { ...withoutIndexLadder.base, defensive: 1 } };
             inputs.forEach(item => { item.actionBlocked = false; });
           }
           const result = W.plan({ inputs, config: policyConfig, policyState: strategy.policyState, preset, baseBudget, commissionBps,
@@ -190,7 +192,7 @@ function run(payload, options = {}) {
     assumptions: { signal: 'prior raw close and weekly raw closes as on dashboard (adjusted fallback in synthetic fixtures); adjusted OHLC for total-return execution and valuation', execution: 'Tuesday open, holiday through Friday',
       deposits: monthlyDeposit + ' at first trading day of each calendar month, before returns; weekly DCA pools only, excluding the separate independent Dip pool',
       budget: normalPool + ' normal + ' + crashFund + ' Crash per month; calendar Tuesdays identified by plannedDate; missing execution does not redistribute its budget',
-      strategies: 'balanced_weekly_v2 freezes the prior 30% cash policy with current hard gates; named variants use the shared planner with explicit cash/allocation modes; legacy comparisons are research ablations only',
+      strategies: 'balanced_weekly_v2 freezes the prior 30% cash policy with current hard gates; index_ladder_v3 adds the SPY/QQQ drawdown ladder and keeps index Base through market-risk labels; named variants use the shared planner with explicit cash/allocation modes; legacy comparisons are research ablations only',
       commissionBps, slippageBps, cashYield: 0, currency: 'constant currency research units; no historical CAD FX series',
       exclusions: ['historical news and fundamentals overlays', 'manual panic/overrides', 'broker execution restrictions', 'live portfolio overlay history'],
       promotionAllowed: false }, strategies };
