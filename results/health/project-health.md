@@ -1,7 +1,7 @@
 # Project Health
 
 - Status: **WARNING**
-- Generated: `2026-10-19T19:29:07.806322+00:00`
+- Generated: `2026-10-20T18:06:48.203599+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
@@ -10,8 +10,8 @@
 
 ## Historical Coverage
 
-- QQQ: 281 rows; latest `2026-10-16`; lag `3` days
-- SPY: 281 rows; latest `2026-10-16`; lag `3` days
+- QQQ: 281 rows; latest `2026-10-16`; lag `4` days
+- SPY: 281 rows; latest `2026-10-16`; lag `4` days
 
 ## Workflows
 
@@ -81,7 +81,7 @@
 - Schema: `short-term-trade-plan-v1.3`
 - Style fusion: `global-style-fusion-v1.3`
 - Candidates / strategies: `10` / `30`
-- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 1, 'waiting_trigger': 8, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 1}`
+- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 0, 'waiting_trigger': 9, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 1}`
 - Historical OOS: `preliminary_no_reliable_edge` / samples `154` / passed models `[]`
 - Shadow preliminary / formal review: `False` / `False`
 - Scope: research-only simulation; no orders or automatic trading.
