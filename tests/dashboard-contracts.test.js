@@ -44,6 +44,12 @@ test("v1 Crash Fund ledger records migrate to typed reversible v2 crash entries"
   assert.equal(portfolio.dcaL2LedgerUsed(ledger, "crash"), 12.5);
 });
 
+test("Crash reserve start month survives ledger normalization and rejects invalid values", function () {
+  assert.equal(portfolio.normalizeDcaL2Ledger({ month: "2026-10", reserveStartMonth: "2026-10" }, "2026-10").reserveStartMonth, "2026-10");
+  assert.equal(portfolio.normalizeDcaL2Ledger({ month: "2026-10" }, "2026-10").reserveStartMonth, "", "existing ledgers start counting only when the new version first runs");
+  assert.equal(portfolio.normalizeDcaL2Ledger({ month: "2026-10", reserveStartMonth: "2026-13" }, "2026-10").reserveStartMonth, "");
+});
+
 test("backtest metric golden fixtures", function () {
   const row = fixture.backtest;
   close(backtest.cagr(row.final_value, row.total_invested, row.weeks), row.expected.cagr);

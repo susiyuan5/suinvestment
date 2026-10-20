@@ -139,6 +139,44 @@
     if (!ladder || drawdownPct == null || !Number.isFinite(value)) return null;
     return ladder.tiers.find(tier => value >= tier.minDrawdownPct) || null;
   }
+  // Stock Base preservation: price/market-risk labels stop Extra and Crash for
+  // individual stocks but keep their scheduled Base. Data errors, manual
+  // pauses and an optional deep-drawdown value-trap guard still cancel Base.
+  function stockBasePreservation(config) {
+    const raw = config && config.stockBasePreservation;
+    if (!raw || raw.enabled !== true) return null;
+    const limit = raw.maxDrawdownPct == null ? null : Number(raw.maxDrawdownPct);
+    if (limit !== null && !(Number.isFinite(limit) && limit > 0 && limit <= 100)) return null;
+    return { maxDrawdownPct: limit };
+  }
+  function nextMonth(month) {
+    const [y, m] = month.split('-').map(Number);
+    return `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, '0')}`;
+  }
+  // Crash reserve carry-over: unused monthly Crash Fund accumulates up to a
+  // cap; anything above the cap overflows into the next month's Normal pool.
+  // Months before startMonth never count, so enabling it never back-fills.
+  function crashReserve(options) {
+    const input = options || {}, monthRe = /^\d{4}-(0[1-9]|1[0-2])$/;
+    const crashFund = Number(input.crashFund), capMonths = Number(input.reserveCapMonths);
+    const fail = code => ({ valid: false, reasonCodes: [code], carried: 0, overflow: 0, cap: 0, history: [] });
+    if (!(Number.isFinite(crashFund) && crashFund >= 0) || !(Number.isFinite(capMonths) && capMonths >= 0)) return fail('CRASH_RESERVE_CONFIG_INVALID');
+    if (!monthRe.test(String(input.month)) || !monthRe.test(String(input.startMonth))) return fail('CRASH_RESERVE_MONTH_INVALID');
+    if (input.startMonth > input.month) return fail('CRASH_RESERVE_MONTH_INVALID');
+    const used = input.usedByMonth || {}, cap = money(crashFund * capMonths), history = [];
+    let carried = 0, overflow = 0, n = 0;
+    for (let month = input.startMonth; month < input.month; month = nextMonth(month)) {
+      if (++n > 1200) return fail('CRASH_RESERVE_MONTH_INVALID');
+      const spent = Number(used[month] || 0);
+      if (!(Number.isFinite(spent) && spent >= 0)) return fail('CRASH_RESERVE_USAGE_INVALID');
+      const unused = money(Math.max(0, carried + crashFund - spent));
+      const next = money(Math.min(cap, unused));
+      overflow = money(unused - next);
+      history.push({ month, available: money(carried + crashFund), used: money(spent), carriedOut: next, overflow });
+      carried = next;
+    }
+    return { valid: true, reasonCodes: [], cap, carried, overflow, crashPool: money(crashFund + carried), history };
+  }
   function plan(options) {
     const rawConfig = options.config || D.getL2Config();
     const config = { ...rawConfig, configValid: rawConfig.configValid !== false && D.validateL2Config(rawConfig) };
@@ -184,6 +222,12 @@
     // Index Base is only cancelled by data errors or explicit owner blocks, never by price/market-risk labels.
     const indexBaseAllowed = item => isIndex(item) && typeof item.dataBlocked === 'boolean'
       && !item.dataBlocked && item.manualBlocked !== true && item.input.panicActive !== true;
+    const stockBase = balanced && config.configValid ? stockBasePreservation(config) : null;
+    const stockBaseAllowed = item => !!stockBase && !isIndex(item) && typeof item.dataBlocked === 'boolean'
+      && !item.dataBlocked && item.manualBlocked !== true && item.input.panicActive !== true
+      && assets.some(asset => asset.symbol === item.symbol && asset.bucket === 'satellite')
+      && (stockBase.maxDrawdownPct === null || (item.input.drawdownPct != null && Number.isFinite(Number(item.input.drawdownPct))
+        && Number(item.input.drawdownPct) < stockBase.maxDrawdownPct));
     const rows = inputs.map((item, i) => {
       const decision = evaluate({ input: { ...item.input, crashFundWeight: deepBase > 0 ? eligible[i] / deepBase : 0 } });
       if (balanced && item.extraBlocked) {
@@ -193,6 +237,10 @@
       }
       if (item.actionBlocked && indexBaseAllowed(item)) {
         decision.reasonCodes.push('INDEX_BASE_PRESERVED_MARKET_RISK');
+      } else if (item.actionBlocked && stockBaseAllowed(item)) {
+        decision.extraAmount = decision.crashFundAmount = 0;
+        decision.finalAmount = decision.baseAmount;
+        decision.reasonCodes.push('STOCK_BASE_PRESERVED_PRICE_SIGNAL');
       } else if (item.actionBlocked) {
         decision.baseAmount = decision.extraAmount = decision.crashFundAmount = decision.finalAmount = 0;
         decision.reasonCodes.push('ACTION_REQUIRES_ZERO_AMOUNT');
@@ -260,6 +308,10 @@
       }
     }
     budget.items.forEach(row => { row.finalAmount = row.decision.finalAmount; });
+    core.items.forEach(row => {
+      const decision = decisions[row.symbol];
+      if (decision && decision.reasonCodes.includes('STOCK_BASE_PRESERVED_PRICE_SIGNAL') && row.baseAmount > 0 && !row.reasonCodes.includes('STOCK_BASE_PRESERVED_PRICE_SIGNAL')) row.reasonCodes.push('STOCK_BASE_PRESERVED_PRICE_SIGNAL');
+    });
     ladderRows.forEach(row => {
       const decision = decisions[row.symbol];
       if (!decision) return;
@@ -282,5 +334,5 @@
       portfolioCashCap: core.portfolioCashCap, optionalCashCap: core.optionalCashCap, totalPlanned: core.totalPlanned,
       unallocatedCash: money(budget.normalPoolRemaining + budget.crashFundRemaining - core.totalPlanned) } };
   }
-  return Object.freeze({ plan, indicators, planWeeksInMonth, weeklyBudget, fundingPlan, contributionBasePlan, gapBasePlan, indexLadder, indexTier, version: 'weekly-dca-v3' });
+  return Object.freeze({ plan, indicators, planWeeksInMonth, weeklyBudget, fundingPlan, contributionBasePlan, gapBasePlan, indexLadder, indexTier, stockBasePreservation, crashReserve, version: 'weekly-dca-v4' });
 });

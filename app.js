@@ -4841,11 +4841,13 @@ function equalizeAllocations() {
     const ledger = ensureDcaL2Ledger();
     const crashUsed = getDcaL2LedgerUsed(ledger, "crash");
     const normalUsed = getDcaL2LedgerUsed(ledger, "base") + getDcaL2LedgerUsed(ledger, "extra");
-    const balance = round2(Math.max(0, ledger.initial - crashUsed));
+    const pools = getDcaL2EffectivePools(ledger);
+    const balance = round2(Math.max(0, pools.crashFund - crashUsed));
     const plannedDate = currentPlanDate();
     const weekNormalUsed = ledger.entries.filter(function (row) { return row.month === ledger.month && ['base', 'extra'].includes(row.type) && DcaPolicy.isoWeekId(row.date) === DcaPolicy.isoWeekId(plannedDate); }).reduce(function (total, row) { return total + row.amount; }, 0);
     const activePreset = activeCoreSatellitePreset();
-    const funding = WeeklyDcaEngine.fundingPlan(state.deployment.normalPool, normalUsed, plannedDate, state.deployment.weeklyDeployment, weekNormalUsed);
+    const overflowBase = pools.normalPool > state.deployment.normalPool ? WeeklyDcaEngine.weeklyBudget(round2(pools.normalPool - state.deployment.normalPool), plannedDate) : 0;
+    const funding = WeeklyDcaEngine.fundingPlan(pools.normalPool, normalUsed, plannedDate, round2(state.deployment.weeklyDeployment + overflowBase), weekNormalUsed);
     const allocationContext = portfolioRisk.allocation_context;
     const contribution = WeeklyDcaEngine.contributionBasePlan({ preset: activePreset || CoreSatellitePolicy.PRESET,
       baseBudget: funding.scheduledBase, normalLimit: funding.normalLimit,
@@ -4870,8 +4872,8 @@ function equalizeAllocations() {
           volatilityPct: signal.algorithm && signal.algorithm.realized_weekly_volatility,
           currentAllocationPct: position ? position.current_allocation : null,
            monthlyBudget: state.deployment.monthlyBudget,
-           normalPool: state.deployment.normalPool,
-           crashFundInitial: state.deployment.crashFund,
+           normalPool: pools.normalPool,
+           crashFundInitial: pools.crashFund,
            normalPoolUsed: normalUsed,
            crashFundUsed: crashUsed,
            crashFundBalance: balance,
@@ -4891,10 +4893,10 @@ function equalizeAllocations() {
       plannedDate,
       preset: activePreset || CoreSatellitePolicy.PRESET, baseBudget: funding.scheduledBase,
       baseAmounts: contribution.valid ? contribution.baseAmounts : Object.fromEntries(CoreSatellitePolicy.rowsForPreset(activePreset || CoreSatellitePolicy.PRESET).map(function (asset) { return [asset.symbol, 0]; })),
-      budget: { normalPool: state.deployment.normalPool, normalPoolUsed: normalUsed,
+      budget: { normalPool: pools.normalPool, normalPoolUsed: normalUsed,
         weekNormalUsed,
         weekCrashUsed: ledger.entries.filter(function (row) { return row.month === ledger.month && row.type === 'crash' && DcaPolicy.isoWeekId(row.date) === DcaPolicy.isoWeekId(currentPlanDate()); }).reduce(function (total, row) { return total + row.amount; }, 0),
-        crashFund: state.deployment.crashFund, crashFundUsed: crashUsed,
+        crashFund: pools.crashFund, crashFundUsed: crashUsed,
         highPct: state.dcaL2Config.concentration.highPct, veryHighPct: state.dcaL2Config.concentration.veryHighPct,
         portfolioCashCap: portfolioRisk.available_cash_provided ? portfolioRisk.available_cash : null,
         optionalCashCap: portfolioRisk.available_cash_provided ? portfolioRisk.available_cash * state.dcaL2Config.cashUsageCap : null },
@@ -5010,9 +5012,39 @@ function equalizeAllocations() {
 
   function ensureDcaL2Ledger() {
     const month = currentPlanDate().slice(0, 7);
-    if (state.dcaL2Ledger.month !== month) state.dcaL2Ledger.month = month;
-    if (!isFiniteNumber(state.dcaL2Ledger.initial) || state.dcaL2Ledger.initial !== state.deployment.crashFund) state.dcaL2Ledger.initial = state.deployment.crashFund;
-    return state.dcaL2Ledger;
+    const ledger = state.dcaL2Ledger;
+    if (ledger.month !== month) ledger.month = month;
+    // Crash reserve counting starts the first month this version runs; earlier months are never back-filled.
+    if (!ledger.reserveStartMonth || ledger.reserveStartMonth > month) ledger.reserveStartMonth = month;
+    ledger.reserve = getDcaL2CrashReserve(ledger, month);
+    const crashPool = ledger.reserve.valid ? ledger.reserve.crashPool : state.deployment.crashFund;
+    if (!isFiniteNumber(ledger.initial) || ledger.initial !== crashPool) ledger.initial = crashPool;
+    return ledger;
+  }
+
+  // Unused Crash Fund carries over up to the configured cap; the excess joins
+  // this month's Normal pool. Without a configured cap the legacy monthly reset applies.
+  function getDcaL2CrashReserve(ledger, month) {
+    const capMonths = state.dcaL2Config && state.dcaL2Config.crashFund && state.dcaL2Config.crashFund.reserveCapMonths;
+    const legacy = { valid: false, enabled: false, carried: 0, overflow: 0, cap: 0, crashPool: state.deployment.crashFund, reasonCodes: ["CRASH_RESERVE_DISABLED"] };
+    if (!state.dcaL2ConfigReady || !isFiniteNumber(Number(capMonths)) || capMonths === null || !WeeklyDcaEngine.crashReserve) return legacy;
+    const usedByMonth = {};
+    (ledger.entries || []).forEach(function (row) { if (row.type === "crash" && row.month) usedByMonth[row.month] = round2((usedByMonth[row.month] || 0) + Number(row.amount || 0)); });
+    const reserve = WeeklyDcaEngine.crashReserve({ crashFund: state.deployment.crashFund, reserveCapMonths: Number(capMonths),
+      startMonth: ledger.reserveStartMonth || month, month: month, usedByMonth: usedByMonth });
+    return reserve.valid ? { ...reserve, enabled: true } : { ...legacy, reasonCodes: reserve.reasonCodes };
+  }
+
+  function formatDcaL2ReserveNote(reserve) {
+    if (!reserve || !reserve.valid) return "";
+    return " · 暴跌储备结转 " + formatCurrency(reserve.carried) + " / 上限 " + formatCurrency(reserve.cap)
+      + (reserve.overflow > 0 ? " · 上月超出上限 " + formatCurrency(reserve.overflow) + " 已并入本月常规资金" : "");
+  }
+
+  function getDcaL2EffectivePools(ledger) {
+    const reserve = ledger && ledger.reserve && ledger.reserve.valid ? ledger.reserve : null;
+    return { normalPool: round2(state.deployment.normalPool + (reserve ? reserve.overflow : 0)),
+      crashFund: reserve ? reserve.crashPool : state.deployment.crashFund };
   }
 
   function getDcaL2CrashFundUsed(ledger) {
@@ -5329,7 +5361,7 @@ function equalizeAllocations() {
     if (dcaBudgetSummaryEl) {
       const report = state.dcaBudgetReport;
       dcaBudgetSummaryEl.textContent = report
-        ? "常规资金：已用 " + formatCurrency(report.normalPoolUsed) + " · 本周计划 " + formatCurrency(report.plannedNormal) + " · 余额 " + formatCurrency(report.normalPoolRemaining) + (report.funding ? " · 后续周基础预留 " + formatCurrency(report.funding.futureReserved) + " · 本周常规上限 " + formatCurrency(report.funding.normalLimit) : "") + " · Crash 本周 " + formatCurrency(report.plannedCrash) + " / 余额 " + formatCurrency(report.crashFundRemaining) + " · 未投入 " + formatCurrency(report.unallocatedCash) + (state.dcaL2ConfigReady ? "" : " · 配置不可用，请人工复核")
+        ? "常规资金：已用 " + formatCurrency(report.normalPoolUsed) + " · 本周计划 " + formatCurrency(report.plannedNormal) + " · 余额 " + formatCurrency(report.normalPoolRemaining) + (report.funding ? " · 后续周基础预留 " + formatCurrency(report.funding.futureReserved) + " · 本周常规上限 " + formatCurrency(report.funding.normalLimit) : "") + " · Crash 本周 " + formatCurrency(report.plannedCrash) + " / 余额 " + formatCurrency(report.crashFundRemaining) + " · 未投入 " + formatCurrency(report.unallocatedCash) + formatDcaL2ReserveNote(state.dcaL2Ledger && state.dcaL2Ledger.reserve) + (state.dcaL2ConfigReady ? "" : " · 配置不可用，请人工复核")
         : "Monthly Base / Extra / Crash budget report unavailable; manual review required.";
     }
     dcaLedgerEntriesEl.innerHTML = "";
@@ -5961,6 +5993,7 @@ function equalizeAllocations() {
     if (codes.indexOf("安全检查未通过") >= 0 || codes.indexOf("SPY_DATA_OR_SAFETY_BLOCK") >= 0) return "数据或计算未通过安全检查，请人工复核";
     if (codes.indexOf("INDEX_LADDER_CRASH_PLANNED") >= 0) return "指数回撤阶梯：按该指数离 52 周高点的回撤，动用暴跌备用金加仓";
     if (codes.indexOf("INDEX_BASE_PRESERVED_MARKET_RISK") >= 0) return "指数基础定投不因下跌或市场风险标签暂停，仅数据异常或人工暂停会停止";
+    if (codes.indexOf("STOCK_BASE_PRESERVED_PRICE_SIGNAL") >= 0) return "个股价格信号偏弱：只暂停 Extra＋Crash，基础定投照常；离 52 周高点跌超 35% 时才暂停基础定投";
     if (codes.indexOf("ACTION_REQUIRES_ZERO_AMOUNT") >= 0) return "硬风控或人工暂停阻止买入，资金保留为现金";
     if (codes.indexOf("SATELLITE_RISK_BLOCKED") >= 0) return "个股风控门禁阻止买入，资金保留为现金";
     if (codes.indexOf("SATELLITE_BASE_REDIRECTED_TO_SPY") >= 0) return "个股基础金额已转入 SPY";

@@ -102,6 +102,8 @@ Policy and design documents:
 
 - `DCA_STRATEGY_POLICY_LAYER.md`: primary policy document for a proposed three-layer Manual Trade Plan: Base DCA Amount, Extra Dip-Buy Amount, and Risk Cap / Cash Reserve Guard.
 - `DCA1_MANUAL_TRADE_PLAN_DESIGN.md`: design-only proposal for presenting those layers in the Manual Trade Plan without changing current behavior.
+- `INDEX_DRAWDOWN_LADDER_2026-10-17.md`: weekly-dca-v3 SPY/QQQ drawdown ladder for the Crash Fund (live).
+- `docs/WEEKLY_DCA_V4_BASE_RESERVE_2026-10-17.md`: weekly-dca-v4 stock Base preservation (35% value-trap guard) and Crash reserve cap with overflow to Normal (live), with backtest evidence in `results/weekly_dca_v4_base_reserve/`.
 
 Important policy status:
 
