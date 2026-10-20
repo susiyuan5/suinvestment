@@ -1,7 +1,7 @@
 (function (root) {
   "use strict";
   if (root.BtcTrendPanel) return;
-  const view = document.getElementById("view-tools-btc");
+  const view = document.getElementById("view-crypto");
   if (!view || !root.BtcTrendSignal) return;
   const DATA_PATH = "data/btc-weekly-v1.json";
   const CHART_WEEKS = 104;
@@ -203,7 +203,7 @@
     load();
   });
   root.addEventListener("workspace:view-changed", (event) => {
-    if (event.detail && event.detail.view === "tools-btc") start();
+    if (event.detail && event.detail.view === "crypto") start();
   });
   if (!view.hidden) start();
   root.BtcTrendPanel = { load };

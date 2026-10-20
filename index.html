@@ -38,7 +38,7 @@
     />
   <link rel="stylesheet" href="live-data.css?v=live-data-v1">
     <link href="take-profit-panel.css?v=take-profit-holdings-selection-v1" rel="stylesheet" />
-    <link href="btc-trend-panel.css?v=btc-trend-v1" rel="stylesheet" />
+    <link href="btc-trend-panel.css?v=crypto-view-v1" rel="stylesheet" />
   </head>
   <body>
     <div class="app-shell">
@@ -56,8 +56,7 @@
             <nav aria-label="更多工具">
               <a href="#tools-watchlist">盯盘</a
               ><a href="#tools-research">研究与回测</a
-              ><a href="#tools-data">数据质量</a
-              ><a href="#tools-btc">BTC 周线</a>
+              ><a href="#tools-data">数据质量</a>
             </nav>
           </details>
           <div aria-label="Execution schedule" class="schedule-card">
@@ -79,7 +78,8 @@
           <a data-view-link="weekly" href="#weekly">本周操作</a
           ><a data-view-link="holdings" href="#holdings">持仓</a
           ><a data-view-link="dip" href="#dip">抄底</a
-          ><a data-view-link="take-profit" href="#take-profit">止盈</a>
+          ><a data-view-link="take-profit" href="#take-profit">止盈</a
+          ><a data-view-link="crypto" href="#crypto">虚拟货币</a>
         </nav>
         <div class="sidebar-tools">
           <p class="sidebar-label">研究工具</p>
@@ -87,8 +87,7 @@
             <a data-view-link="tools-watchlist" href="#tools-watchlist">盯盘</a
             ><a data-view-link="tools-research" href="#tools-research"
               >研究与回测</a
-            ><a data-view-link="tools-data" href="#tools-data">数据质量</a
-            ><a data-view-link="tools-btc" href="#tools-btc">BTC 周线</a>
+            ><a data-view-link="tools-data" href="#tools-data">数据质量</a>
           </nav>
         </div>
         <div class="sidebar-note">
@@ -978,6 +977,46 @@
           </div>
         </section>
         <section
+          aria-labelledby="btcTrendTitle"
+          class="btc-trend-workspace"
+          data-workspace-view="crypto"
+          hidden=""
+          id="view-crypto"
+        >
+          <header class="btc-trend-heading">
+            <h2 id="btcTrendTitle" tabindex="-1">虚拟货币</h2>
+            <p>BTC 周线趋势 · 20 周均线，连续 2 个完整周收盘站上记为持有，1 个完整周收盘跌破记为空仓。独立于股票定投、抄底和止盈资金，仅作参考，不会下单。</p>
+          </header>
+          <div class="btc-trend-toolbar">
+            <p class="btc-trend-status" id="btcTrendStatus" role="status" aria-live="polite">进入后读取 BTC 周线数据。</p>
+            <button class="secondary-button" id="btcTrendRefresh" type="button">重新读取</button>
+          </div>
+          <div id="btcTrendContent" hidden>
+            <div class="btc-trend-summary">
+              <section class="btc-trend-state" id="btcTrendState" aria-labelledby="btcTrendStateHeading">
+                <h3 id="btcTrendStateHeading">规则状态</h3>
+                <strong id="btcTrendStateLabel">—</strong>
+                <p id="btcTrendStateSince"></p>
+              </section>
+              <div class="btc-trend-metrics" id="btcTrendMetrics"></div>
+            </div>
+            <p class="btc-trend-next" id="btcTrendNext"></p>
+            <p class="btc-trend-partial" id="btcTrendPartial"></p>
+            <div id="btcTrendChartWrap"></div>
+            <section class="btc-trend-history-wrap" aria-labelledby="btcTrendHistoryTitle">
+              <h3 id="btcTrendHistoryTitle">最近信号</h3>
+              <ol class="btc-trend-history" id="btcTrendHistory"></ol>
+            </section>
+            <details class="btc-trend-rules">
+              <summary>规则与回测依据</summary>
+              <p><strong>周线口径：</strong>UTC 周一至周日，周收盘取周日 UTC 日线收盘；进行中的周不参与判断。</p>
+              <p><strong>规则：</strong>空仓时连续 2 个完整周收盘高于 20 周简单均线转为持有；持有时任 1 个完整周收盘低于均线转为空仓。信号在周收盘形成，按下一周执行。</p>
+              <p><strong>回测（2015-08 至 2026-10，Yahoo 数据，单边 0.1% 成本）：</strong>年化约 74%，最大回撤约 -57%，15 次交易；同期买入持有年化约 69%，最大回撤约 -83%。Kraken 数据（2014 起）年化约 69%，最大回撤约 -53%。</p>
+              <p><strong>局限：</strong>参数在同一段历史中选出，存在过拟合；2023—2026 震荡期规则年化约 21%，低于买入持有约 52%。规则的主要作用是减小熊市回撤，不保证收益。详见 docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md。</p>
+            </details>
+          </div>
+        </section>
+        <section
           aria-label="盯盘"
           data-workspace-view="tools-watchlist"
           hidden=""
@@ -1612,49 +1651,6 @@
               日变化中的较低值；单只股票的手动覆盖始终优先。
             </p>
           </details>
-        </section>
-        <section
-          aria-labelledby="btcTrendTitle"
-          class="btc-trend-workspace"
-          data-workspace-view="tools-btc"
-          hidden=""
-          id="view-tools-btc"
-        >
-          <header class="tool-view-heading">
-            <h2 id="btcTrendTitle" tabindex="-1">BTC 周线趋势</h2>
-            <a href="#weekly">返回本周操作</a>
-          </header>
-          <p class="btc-trend-intro">
-            20 周均线 · 连续 2 个完整周收盘站上记为持有，1 个完整周收盘跌破记为空仓。仅作参考，不进入每周定投计划，也不会下单。
-          </p>
-          <div class="btc-trend-toolbar">
-            <p class="btc-trend-status" id="btcTrendStatus" role="status" aria-live="polite">进入后读取 BTC 周线数据。</p>
-            <button class="secondary-button" id="btcTrendRefresh" type="button">重新读取</button>
-          </div>
-          <div id="btcTrendContent" hidden>
-            <div class="btc-trend-summary">
-              <section class="btc-trend-state" id="btcTrendState" aria-labelledby="btcTrendStateHeading">
-                <h3 id="btcTrendStateHeading">规则状态</h3>
-                <strong id="btcTrendStateLabel">—</strong>
-                <p id="btcTrendStateSince"></p>
-              </section>
-              <div class="btc-trend-metrics" id="btcTrendMetrics"></div>
-            </div>
-            <p class="btc-trend-next" id="btcTrendNext"></p>
-            <p class="btc-trend-partial" id="btcTrendPartial"></p>
-            <div id="btcTrendChartWrap"></div>
-            <section class="btc-trend-history-wrap" aria-labelledby="btcTrendHistoryTitle">
-              <h3 id="btcTrendHistoryTitle">最近信号</h3>
-              <ol class="btc-trend-history" id="btcTrendHistory"></ol>
-            </section>
-            <details class="btc-trend-rules">
-              <summary>规则与回测依据</summary>
-              <p><strong>周线口径：</strong>UTC 周一至周日，周收盘取周日 UTC 日线收盘；进行中的周不参与判断。</p>
-              <p><strong>规则：</strong>空仓时连续 2 个完整周收盘高于 20 周简单均线转为持有；持有时任 1 个完整周收盘低于均线转为空仓。信号在周收盘形成，按下一周执行。</p>
-              <p><strong>回测（2015-08 至 2026-10，Yahoo 数据，单边 0.1% 成本）：</strong>年化约 74%，最大回撤约 -57%，15 次交易；同期买入持有年化约 69%，最大回撤约 -83%。Kraken 数据（2014 起）年化约 69%，最大回撤约 -53%。</p>
-              <p><strong>局限：</strong>参数在同一段历史中选出，存在过拟合；2023—2026 震荡期规则年化约 21%，低于买入持有约 52%。规则的主要作用是减小熊市回撤，不保证收益。详见 docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md。</p>
-            </details>
-          </div>
         </section>
       </main>
       <div aria-hidden="true" class="visually-hidden" id="coreSatelliteSummary">
@@ -2563,7 +2559,7 @@
     <script src="take-profit-holdings.js?v=take-profit-holdings-selection-v1"></script>
     <script src="take-profit-panel.js?v=take-profit-holdings-selection-v1"></script>
     <script src="btc-trend-signal.js?v=btc-trend-v1"></script>
-    <script src="btc-trend-panel.js?v=btc-trend-v1"></script>
-    <script src="workspace-navigation.js?v=btc-trend-v1"></script>
+    <script src="btc-trend-panel.js?v=crypto-view-v1"></script>
+    <script src="workspace-navigation.js?v=crypto-view-v1"></script>
   </body>
 </html>

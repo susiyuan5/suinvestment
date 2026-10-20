@@ -46,7 +46,7 @@ REQUIRED_IDS = {
     "ideaEngineFitFilter",
     "ideaEngineSort",
     "ideaEngineClearFilters",
-    "view-tools-btc",
+    "view-crypto",
     "btcTrendStatus",
     "btcTrendRefresh",
     "btcTrendContent",
