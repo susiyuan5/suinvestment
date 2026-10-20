@@ -1,6 +1,6 @@
 # BTC Weekly Trend Signal (20W MA, enter 2 / exit 1) — 2026-10-20
 
-Research-only, manual decision support. Adds a read-only `BTC 周线` view under 研究工具. BTC is not added to the weekly DCA plan, Manual Trade Plan, holdings logic or any broker flow.
+Research-only, manual decision support. Adds a read-only `虚拟货币` view to the workspace main nav (below 止盈), separate from the stock pools. BTC is not added to the weekly DCA plan, Manual Trade Plan, holdings logic or any broker flow.
 
 ## Rule
 
@@ -39,7 +39,7 @@ Sub-periods (Yahoo CAGR, 20W 2/1 vs buy & hold): 2015–2019 149% vs 123%; 2020�
 ## Files
 
 - `btc-trend-signal.js` — pure logic (browser + Node), tests `tests/btc-trend-signal.test.js` with frozen fixture `tests/fixtures/btc-weekly-v1.json`.
-- `btc-trend-panel.js`, `btc-trend-panel.css`, view `#view-tools-btc` in `index.html`.
+- `btc-trend-panel.js`, `btc-trend-panel.css`, view `#view-crypto` in `index.html`.
 - `scripts/update_btc_weekly.py` (tests `tests/test_btc_weekly.py`), live-data task `update-btc-weekly`, workflow `.github/workflows/update-btc-weekly.yml` (Mon/Tue 01:40 UTC + manual dispatch). Output `data/btc-weekly-v1.json` is published only to `live-data`.
 
 ## Rollout
