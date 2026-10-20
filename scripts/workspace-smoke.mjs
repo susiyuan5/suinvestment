@@ -106,6 +106,7 @@ try {
     ["inlineHoldingsSection", "holdings"],
     ["research-panel", "tools-research"],
     ["dataQualityPanel", "tools-data", "dataQualityPanel"],
+    ["btcTrendHistory", "tools-btc"],
   ]) {
     await page.evaluate((h) => {
       location.hash = h;

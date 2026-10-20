@@ -20,6 +20,7 @@
   ];
   const files = new Set([
     "data/market-data.json",
+    "data/btc-weekly-v1.json",
     "data/backtest-prices.json",
     "data/v2/backtest-adjusted-daily.json",
     "data/short-term-daily-bars-v1.json",

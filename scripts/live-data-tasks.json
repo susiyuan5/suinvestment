@@ -309,5 +309,20 @@
         "run": "git diff --check -- data/private/wealthsimple-holdings.enc.json"
       }
     ]
+  },
+  "update-btc-weekly": {
+    "outputs": [
+      "data/btc-weekly-v1.json"
+    ],
+    "commands": [
+      {
+        "name": "Update BTC weekly closes",
+        "run": "python scripts/update_btc_weekly.py"
+      },
+      {
+        "name": "Validate BTC weekly snapshot and trend signal",
+        "run": "python -m unittest tests.test_btc_weekly\nnode --test tests/btc-trend-signal.test.js"
+      }
+    ]
   }
 }

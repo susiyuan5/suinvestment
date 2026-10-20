@@ -54,6 +54,14 @@ Important warning:
 - It does not execute orders.
 - All suggestions require manual user review and manual brokerage action.
 
+## A.2 BTC Weekly Trend (research tool)
+
+Entry: workspace sidebar → 研究工具 → `BTC 周线` (`index.html#tools-btc`).
+
+- Read-only 20-week MA trend state for BTC (enter after 2 consecutive complete weekly closes above, exit after 1 below). Not part of the weekly DCA plan or Manual Trade Plan; no trade controls.
+- Logic `btc-trend-signal.js`, panel `btc-trend-panel.js` / `btc-trend-panel.css`, data `data/btc-weekly-v1.json` on the `live-data` branch (task `update-btc-weekly`, workflow `update-btc-weekly.yml`, script `scripts/update_btc_weekly.py`).
+- Design and backtest: [`docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md`](docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md).
+
 ## B. Research Sandbox
 
 Entry:

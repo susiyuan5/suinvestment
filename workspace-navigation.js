@@ -9,6 +9,7 @@
     "tools-watchlist",
     "tools-research",
     "tools-data",
+    "tools-btc",
   ];
   const byId = (id) => document.getElementById(id),
     menu = byId("moreTools");

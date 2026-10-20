@@ -46,6 +46,14 @@ REQUIRED_IDS = {
     "ideaEngineFitFilter",
     "ideaEngineSort",
     "ideaEngineClearFilters",
+    "view-tools-btc",
+    "btcTrendStatus",
+    "btcTrendRefresh",
+    "btcTrendContent",
+    "btcTrendState",
+    "btcTrendMetrics",
+    "btcTrendNext",
+    "btcTrendHistory",
 }
 REQUIRED_PRE_APP_SCRIPTS = {
     "market-data.js", "market-analysis.js", "signal-engine.js", "portfolio-policy.js",

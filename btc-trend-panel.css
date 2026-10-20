@@ -1,0 +1,46 @@
+.btc-trend-workspace { container-type: inline-size; color: var(--text); }
+.btc-trend-intro, .btc-trend-status, .btc-trend-partial { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 8px 0; }
+.btc-trend-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 4px 0 16px; }
+.btc-trend-toolbar .btc-trend-status { flex: 1 1 260px; margin: 0; overflow-wrap: anywhere; }
+.btc-trend-status[data-state="error"] { color: var(--warning); }
+.btc-trend-workspace button { min-height: 44px; padding: 9px 14px; font-size: 13px; touch-action: manipulation; }
+.btc-trend-workspace button:disabled { opacity: .5; cursor: not-allowed; }
+.btc-trend-workspace button:focus-visible, .btc-trend-workspace summary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; }
+.btc-trend-workspace h3 { font-size: 15px; margin: 0 0 10px; }
+.btc-trend-summary { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(0, 2fr); gap: 12px; align-items: stretch; }
+.btc-trend-state, .btc-trend-metric, .btc-trend-history-wrap, .btc-trend-figure { background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 16px; min-width: 0; }
+.btc-trend-state strong { display: block; font-size: 28px; line-height: 1.2; }
+.btc-trend-state[data-state="holding"] strong { color: var(--accent); }
+.btc-trend-state[data-state="cash"] strong { color: var(--warning); }
+.btc-trend-state p { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.btc-trend-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.btc-trend-metric span, .btc-trend-metric small { display: block; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.btc-trend-metric strong { display: block; font-size: 20px; margin: 4px 0; font-variant-numeric: tabular-nums; }
+.btc-trend-next { margin: 14px 0 0; padding: 12px 14px; border-left: 3px solid var(--accent-2); background: var(--panel-2); border-radius: 0 6px 6px 0; font-size: 14px; line-height: 1.7; color: var(--soft); }
+.btc-trend-figure { margin: 12px 0; }
+.btc-trend-chart { display: block; width: 100%; height: auto; }
+.btc-trend-held { fill: var(--accent); opacity: .08; }
+.btc-trend-line-close, .btc-trend-line-ma { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.btc-trend-line-close { stroke: var(--accent-2); }
+.btc-trend-line-ma { stroke: var(--warning); stroke-dasharray: 5 4; }
+.btc-trend-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; color: var(--muted); font-size: 12px; }
+.btc-trend-legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; }
+.btc-trend-key-close::before { background: var(--accent-2); }
+.btc-trend-key-ma::before { border-top: 2px dashed var(--warning); height: 0 !important; }
+.btc-trend-key-held::before { background: var(--accent); opacity: .35; height: 10px !important; }
+.btc-trend-legend span:last-child::before { display: none; }
+.btc-trend-history { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.btc-trend-event { display: grid; grid-template-columns: 100px 80px minmax(0, 1fr); gap: 10px; font-size: 13px; padding: 8px 0; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.btc-trend-event:first-child { border-top: 0; }
+.btc-trend-event span { color: var(--muted); overflow-wrap: anywhere; }
+.btc-trend-event[data-event="enter"] strong { color: var(--accent); }
+.btc-trend-event[data-event="exit"] strong { color: var(--warning); }
+.btc-trend-rules { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 16px; }
+.btc-trend-rules summary { cursor: pointer; color: var(--soft); font-size: 13px; min-height: 44px; padding: 10px 0; }
+.btc-trend-rules p { font-size: 12px; color: var(--muted); line-height: 1.8; margin: 8px 0; }
+.btc-trend-rules strong { color: var(--soft); }
+@container (max-width: 720px) {
+  .btc-trend-summary, .btc-trend-metrics { grid-template-columns: minmax(0, 1fr); }
+  .btc-trend-event { grid-template-columns: 92px minmax(0, 1fr); }
+  .btc-trend-event span:last-child { grid-column: 1 / -1; }
+}

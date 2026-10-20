@@ -1,0 +1,32 @@
+name: Update BTC weekly closes
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: update-btc-weekly
+  cancel-in-progress: true
+jobs:
+  update-btc-weekly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Generate, validate and publish BTC weekly snapshot
+        run: python scripts/live_data.py --task update-btc-weekly
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+"on":
+  schedule:
+    # Weekly BTC bars close Sunday 23:59 UTC; refresh Monday and retry Tuesday.
+    - cron: 40 1 * * 1,2
+  workflow_dispatch: null
