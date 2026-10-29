@@ -62,6 +62,10 @@ Entry: workspace main nav → `虚拟货币`, below 止盈 (`index.html#crypto`)
 - Logic `btc-trend-signal.js`, panel `btc-trend-panel.js` / `btc-trend-panel.css`, data `data/btc-weekly-v1.json` on the `live-data` branch (task `update-btc-weekly`, workflow `update-btc-weekly.yml`, script `scripts/update_btc_weekly.py`).
 - Design and backtest: [`docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md`](docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md).
 
+## A.3 Weekly history for added stocks
+
+- `docs/WEEKLY_HISTORY_EXTRA_SYMBOLS_2026-10-28.md`: weekly history for stocks added in the browser (`data/weekly-history-symbols.json`), fixing 「风险未知」.
+
 ## B. Research Sandbox
 
 Entry:
