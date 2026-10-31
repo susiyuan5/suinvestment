@@ -1,9 +1,9 @@
 {
   "schema_version": "short-term-trade-plan-v1.3",
   "methodology_version": "global-style-short-term-v1.3.1",
-  "generated_at": "2026-10-30T02:41:09.562945+00:00",
-  "as_of": "2026-10-30",
-  "price_as_of": "2026-10-30",
+  "generated_at": "2026-10-31T02:30:29.570387+00:00",
+  "as_of": "2026-10-31",
+  "price_as_of": "2026-10-31",
   "research_only": true,
   "no_trade": true,
   "benchmark": "QQQ",
@@ -65,57 +65,57 @@
     "coverage": {
       "QCOM": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       },
       "MU": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       },
       "TMO": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       },
       "AMD": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       },
       "TSM": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       },
       "NVDA": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       },
       "PFE": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       },
       "INTC": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       },
       "DE": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       },
       "AAPL": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       },
       "QQQ": {
         "rows": 345,
-        "latest_date": "2026-10-29",
+        "latest_date": "2026-10-30",
         "valid": true
       }
     },
@@ -127,49 +127,19 @@
       "ticker": "QCOM",
       "research_only": true,
       "no_trade": true,
-      "status": "simulation_only",
-      "status_label": "已有策略触发，但仅作模拟",
+      "status": "waiting_trigger",
+      "status_label": "三种策略均在等待触发",
       "reason_codes": [
-        "event_date_unknown"
+        "event_date_unknown",
+        "trend_template_failed",
+        "no_trigger"
       ],
       "warnings": [
         "历史 OOS 候选通道已启用；公司研究等级仍为 C_SCREEN，仅可研究观察",
         "三种策略均为条件情景，不是上涨概率",
         "未通过历史 OOS 的策略只能记录模拟结果"
       ],
-      "signal": {
-        "signal_date": "2026-10-29",
-        "earliest_execution_date": "2026-10-30",
-        "entry_reference": 185.41000366210938,
-        "entry_range": [
-          184.50764634268626,
-          186.91393252781458
-        ],
-        "chase_limit": 188.41786139351981,
-        "stop": 176.38643046787806,
-        "targets": [
-          198.94536345345637,
-          207.96893664768766
-        ],
-        "risk_per_share": 9.023573194231318,
-        "model": "trend_pullback",
-        "holding_window_days": [
-          1,
-          20
-        ],
-        "trigger_price": 184.11000610351562,
-        "prediction_calibrated": false,
-        "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
-        "exit_rules": {
-          "partial_target_fraction": 0.5,
-          "time_review_days": 10,
-          "time_review_minimum_r": 0.5,
-          "maximum_holding_days": 20,
-          "failed_breakout_review_days": 2,
-          "failed_breakout_action": "exit_review"
-        },
-        "style_fusion_version": "global-style-fusion-v1.3"
-      },
+      "signal": null,
       "strategies": [
         {
           "strategy_id": "oneil_volume_breakout",
@@ -181,36 +151,36 @@
             {
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
-              "passed": true,
-              "current": 185.41000366210938,
-              "required": "> 177.89"
+              "passed": false,
+              "current": 164.7899932861328,
+              "required": "> 176.89"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
-              "passed": true,
-              "current": 177.8914993286133,
-              "required": "> 177.75"
+              "passed": false,
+              "current": 176.88749923706055,
+              "required": "> 177.83"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 177.75399993896485,
+              "current": 177.8349996948242,
               "required": "> 169.52"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 0.2892501068115223,
+              "current": 0.2624501037597611,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
-              "passed": true,
-              "current": 0.0542016806467136,
+              "passed": false,
+              "current": -0.02978603272771352,
               "required": "> 0"
             },
             {
@@ -224,49 +194,52 @@
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 185.41000366210938,
-              "required": ">= 189.25"
+              "current": 164.7899932861328,
+              "required": ">= 189.32"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 0.8196275185797173,
+              "passed": true,
+              "current": 2.4470786177803654,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
-              "passed": true,
-              "current": 0.05735817893899475,
+              "passed": false,
+              "current": -0.04346685075710344,
               "required": "> 0"
             }
           ],
           "missing_conditions": [
+            "close_above_sma20",
+            "sma20_above_sma50",
+            "relative_qqq_20_positive",
             "breakout_price",
-            "breakout_volume"
+            "relative_qqq_5_positive"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 189.25078272138322,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 189.32346131461009,
             "entry_range": [
-              188.3484254019601,
-              190.75471158708842
+              188.20306821550642,
+              191.19078314644952
             ],
-            "chase_limit": 192.25864045279366,
-            "stop": 180.2272095271519,
+            "chase_limit": 193.05810497828892,
+            "stop": 178.11953032357354,
             "targets": [
-              202.78614251273018,
-              211.80971570696153
+              206.1293578011649,
+              217.33328879220144
             ],
-            "risk_per_share": 9.023573194231318,
+            "risk_per_share": 11.203930991036543,
             "model": "oneil_volume_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 189.25078272138322,
+            "trigger_price": 189.32346131461009,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -301,43 +274,43 @@
         {
           "strategy_id": "trend_pullback",
           "label": "策略二：趋势回踩",
-          "status": "historical_edge_failed",
-          "status_label": "已触发但历史优势未通过",
-          "triggered": true,
+          "status": "waiting",
+          "status_label": "等待全部条件触发",
+          "triggered": false,
           "condition_checks": [
             {
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
-              "passed": true,
-              "current": 185.41000366210938,
-              "required": "> 177.89"
+              "passed": false,
+              "current": 164.7899932861328,
+              "required": "> 176.89"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
-              "passed": true,
-              "current": 177.8914993286133,
-              "required": "> 177.75"
+              "passed": false,
+              "current": 176.88749923706055,
+              "required": "> 177.83"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 177.75399993896485,
+              "current": 177.8349996948242,
               "required": "> 169.52"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 0.2892501068115223,
+              "current": 0.2624501037597611,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
-              "passed": true,
-              "current": 0.0542016806467136,
+              "passed": false,
+              "current": -0.02978603272771352,
               "required": "> 0"
             },
             {
@@ -351,53 +324,60 @@
               "code": "pullback_touch",
               "label": "盘中回踩 SMA20 附近",
               "passed": true,
-              "current": 179.47000122070312,
-              "required": "<= 181.45"
+              "current": 161.72000122070312,
+              "required": "<= 180.43"
             },
             {
               "code": "pullback_reclaim",
               "label": "收盘重新站上 SMA20",
-              "passed": true,
-              "current": 185.41000366210938,
-              "required": ">= 177.89"
+              "passed": false,
+              "current": 164.7899932861328,
+              "required": ">= 176.89"
             },
             {
               "code": "pullback_confirmation",
               "label": "收盘高于前一日高点",
-              "passed": true,
-              "current": 185.41000366210938,
-              "required": "> 184.10"
+              "passed": false,
+              "current": 164.7899932861328,
+              "required": "> 185.59"
             },
             {
               "code": "pullback_volume",
               "label": "回踩成交量不过热",
-              "passed": true,
-              "current": 0.8196275185797173,
+              "passed": false,
+              "current": 2.4470786177803654,
               "required": "<= 1.20x"
             }
           ],
-          "missing_conditions": [],
+          "missing_conditions": [
+            "close_above_sma20",
+            "sma20_above_sma50",
+            "relative_qqq_20_positive",
+            "pullback_reclaim",
+            "pullback_confirmation",
+            "pullback_volume"
+          ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 185.41000366210938,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 185.59999633789062,
             "entry_range": [
-              184.50764634268626,
-              186.91393252781458
+              184.47960323878695,
+              187.46731816973005
             ],
-            "chase_limit": 188.41786139351981,
-            "stop": 176.38643046787806,
+            "chase_limit": 189.33464000156945,
+            "stop": 174.39606534685407,
             "targets": [
-              198.94536345345637,
-              207.96893664768766
+              202.40589282444543,
+              213.60982381548197
             ],
-            "risk_per_share": 9.023573194231318,
+            "risk_per_share": 11.203930991036543,
             "model": "trend_pullback",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 184.11000610351562,
+            "trigger_price": 185.59999633789062,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -439,36 +419,36 @@
             {
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
-              "passed": true,
-              "current": 185.41000366210938,
-              "required": "> 177.89"
+              "passed": false,
+              "current": 164.7899932861328,
+              "required": "> 176.89"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
-              "passed": true,
-              "current": 177.8914993286133,
-              "required": "> 177.75"
+              "passed": false,
+              "current": 176.88749923706055,
+              "required": "> 177.83"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 177.75399993896485,
+              "current": 177.8349996948242,
               "required": "> 169.52"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 0.2892501068115223,
+              "current": 0.2624501037597611,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
-              "passed": true,
-              "current": 0.0542016806467136,
+              "passed": false,
+              "current": -0.02978603272771352,
               "required": "> 0"
             },
             {
@@ -482,72 +462,76 @@
               "code": "vcp_range_contract",
               "label": "波动区间收缩",
               "passed": false,
-              "current": 0.07546071124218096,
+              "current": 0.08228365384829286,
               "required": "<= 0.0566"
             },
             {
               "code": "vcp_volume_dryup",
               "label": "收缩期成交量萎缩",
               "passed": false,
-              "current": 1.0731486312227456,
+              "current": 0.9485706273755566,
               "required": "<= 0.85x"
             },
             {
               "code": "vcp_near_high",
               "label": "价格接近箱体上沿",
-              "passed": true,
-              "current": 0.5884575671856743,
+              "passed": false,
+              "current": 3.2345794991201795,
               "required": "<= 1.00 ATR"
             },
             {
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 185.41000366210938,
-              "required": ">= 189.25"
+              "current": 164.7899932861328,
+              "required": ">= 189.32"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 0.8196275185797173,
+              "passed": true,
+              "current": 2.4470786177803654,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
-              "passed": true,
-              "current": 0.05735817893899475,
+              "passed": false,
+              "current": -0.04346685075710344,
               "required": "> 0"
             }
           ],
           "missing_conditions": [
+            "close_above_sma20",
+            "sma20_above_sma50",
+            "relative_qqq_20_positive",
             "vcp_range_contract",
             "vcp_volume_dryup",
+            "vcp_near_high",
             "breakout_price",
-            "breakout_volume"
+            "relative_qqq_5_positive"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 189.25078272138322,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 189.32346131461009,
             "entry_range": [
-              188.3484254019601,
-              190.75471158708842
+              188.20306821550642,
+              191.19078314644952
             ],
-            "chase_limit": 192.25864045279366,
-            "stop": 180.2272095271519,
+            "chase_limit": 193.05810497828892,
+            "stop": 178.11953032357354,
             "targets": [
-              202.78614251273018,
-              211.80971570696153
+              206.1293578011649,
+              217.33328879220144
             ],
-            "risk_per_share": 9.023573194231318,
+            "risk_per_share": 11.203930991036543,
             "model": "vcp_darvas_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 189.25078272138322,
+            "trigger_price": 189.32346131461009,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -621,39 +605,39 @@
         "note": "三种策略是条件情景，不是上涨概率，也不声称复制任何专有方法。"
       },
       "indicators": {
-        "signal_date": "2026-10-29",
-        "current_close": 185.41000366210938,
-        "current_low": 179.47000122070312,
-        "previous_high": 184.10000610351562,
-        "atr14": 6.015715462820871,
-        "sma10": 178.02000274658204,
-        "sma20": 177.8914993286133,
-        "sma50": 177.75399993896485,
-        "sma200": 169.5201000213623,
-        "sma200_slope_20": 0.2892501068115223,
-        "ema10": 180.04787038512563,
-        "ema20": 179.3749435775364,
-        "ema50": 178.51941130681894,
+        "signal_date": "2026-10-30",
+        "current_close": 164.7899932861328,
+        "current_low": 161.72000122070312,
+        "previous_high": 185.58999633789062,
+        "atr14": 7.4692873273577005,
+        "sma10": 177.28800201416016,
+        "sma20": 176.88749923706055,
+        "sma50": 177.8349996948242,
+        "sma200": 169.5213500213623,
+        "sma200_slope_20": 0.2624501037597611,
+        "ema10": 177.2737109125815,
+        "ema20": 177.98590069264083,
+        "ema50": 177.98100220663636,
         "prior20_high": 188.9499969482422,
-        "recent10_low": 171.1300048828125,
-        "stock_return_5": 0.07278829889356775,
-        "stock_return_20": 0.018232782640393186,
-        "qqq_return_5": 0.015430119954572996,
-        "qqq_return_20": -0.035968898006320416,
-        "relative_return_5": 0.05735817893899475,
-        "relative_return_20": 0.0542016806467136,
-        "volume_ratio": 0.8196275185797173,
-        "contraction_volume_ratio": 1.0731486312227456,
-        "recent_contraction_range_pct": 0.07546071124218096,
+        "recent10_low": 161.72000122070312,
+        "stock_return_5": -0.06321420126473332,
+        "stock_return_20": -0.10861687867912884,
+        "qqq_return_5": -0.01974735050762988,
+        "qqq_return_20": -0.07883084595141532,
+        "relative_return_5": -0.04346685075710344,
+        "relative_return_20": -0.02978603272771352,
+        "volume_ratio": 2.4470786177803654,
+        "contraction_volume_ratio": 0.9485706273755566,
+        "recent_contraction_range_pct": 0.08228365384829286,
         "prior_contraction_range_pct": 0.07071785536829407,
-        "distance_sma20_atr": 1.249810497182413,
-        "distance_prior_high_atr": 0.5884575671856743,
-        "qqq_close": 715.3400268554688,
-        "qqq_sma20": 731.1420013427735,
-        "qqq_sma50": 725.409599609375,
-        "qqq_sma200": 679.1646002197266,
-        "qqq_sma200_slope_20": 11.255750732421916,
-        "qqq_close_vs_sma20": -15.801974487304733
+        "distance_sma20_atr": -1.6196332288113082,
+        "distance_prior_high_atr": 3.2345794991201795,
+        "qqq_close": 690.489990234375,
+        "qqq_sma20": 728.1875,
+        "qqq_sma50": 725.0007995605469,
+        "qqq_sma200": 679.5193002319336,
+        "qqq_sma200_slope_20": 10.915250549316397,
+        "qqq_close_vs_sma20": -37.697509765625
       },
       "event_status": "unknown",
       "market_regime": {
@@ -667,14 +651,12 @@
           "risk_scale": 0.5,
           "passed": true
         },
-        "trend_template": true,
+        "trend_template": false,
         "vcp_contraction": false,
         "volume_breakout": false,
-        "trend_pullback": true,
-        "triggered_models": [
-          "trend_pullback"
-        ],
-        "triggered_model": "trend_pullback"
+        "trend_pullback": false,
+        "triggered_models": [],
+        "triggered_model": null
       }
     },
     {
@@ -707,35 +689,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 934.27001953125,
-              "required": "> 960.12"
+              "current": 884.739990234375,
+              "required": "> 950.61"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": false,
-              "current": 960.1165008544922,
-              "required": "> 980.50"
+              "current": 950.608999633789,
+              "required": "> 978.71"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 980.50080078125,
-              "required": "> 744.07"
+              "current": 978.7090002441406,
+              "required": "> 746.83"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 66.64465019226066,
+              "current": 65.21465003967285,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.11267469537414698,
+              "current": -0.09807099686294418,
               "required": "> 0"
             },
             {
@@ -749,21 +731,21 @@
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 934.27001953125,
-              "required": ">= 1110.47"
+              "current": 884.739990234375,
+              "required": ">= 1110.55"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
               "passed": false,
-              "current": 0.8146087534380595,
+              "current": 1.1868517003485248,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.07538241747577201,
+              "current": 0.027940618744678125,
               "required": "> 0"
             }
           ],
@@ -775,26 +757,26 @@
             "breakout_volume"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 1110.470678274972,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 1110.5498925345285,
             "entry_range": [
-              1103.0586434500558,
-              1122.8240696498324
+              1102.900214930943,
+              1123.2993552071707
             ],
-            "chase_limit": 1135.177461024693,
-            "stop": 1036.350330025809,
+            "chase_limit": 1136.048817879813,
+            "stop": 1034.0531164986746,
             "targets": [
-              1221.6512006487164,
-              1295.7715488978797
+              1225.2950565883093,
+              1301.791832624163
             ],
-            "risk_per_share": 74.12034824916304,
+            "risk_per_share": 76.49677603585383,
             "model": "oneil_volume_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 1110.470678274972,
+            "trigger_price": 1110.5498925345285,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -837,35 +819,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 934.27001953125,
-              "required": "> 960.12"
+              "current": 884.739990234375,
+              "required": "> 950.61"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": false,
-              "current": 960.1165008544922,
-              "required": "> 980.50"
+              "current": 950.608999633789,
+              "required": "> 978.71"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 980.50080078125,
-              "required": "> 744.07"
+              "current": 978.7090002441406,
+              "required": "> 746.83"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 66.64465019226066,
+              "current": 65.21465003967285,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.11267469537414698,
+              "current": -0.09807099686294418,
               "required": "> 0"
             },
             {
@@ -879,28 +861,28 @@
               "code": "pullback_touch",
               "label": "盘中回踩 SMA20 附近",
               "passed": true,
-              "current": 927.239990234375,
-              "required": "<= 979.32"
+              "current": 861.5900268554688,
+              "required": "<= 969.62"
             },
             {
               "code": "pullback_reclaim",
               "label": "收盘重新站上 SMA20",
               "passed": false,
-              "current": 934.27001953125,
-              "required": ">= 960.12"
+              "current": 884.739990234375,
+              "required": ">= 950.61"
             },
             {
               "code": "pullback_confirmation",
               "label": "收盘高于前一日高点",
               "passed": false,
-              "current": 934.27001953125,
-              "required": "> 990.00"
+              "current": 884.739990234375,
+              "required": "> 971.01"
             },
             {
               "code": "pullback_volume",
               "label": "回踩成交量不过热",
               "passed": true,
-              "current": 0.8146087534380595,
+              "current": 1.1868517003485248,
               "required": "<= 1.20x"
             }
           ],
@@ -912,26 +894,26 @@
             "pullback_confirmation"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 990.01,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 971.020009765625,
             "entry_range": [
-              982.5979651750837,
-              1002.3633913748605
+              963.3703321620396,
+              983.7694724382673
             ],
-            "chase_limit": 1014.716782749721,
-            "stop": 915.8896517508371,
+            "chase_limit": 996.5189351109096,
+            "stop": 894.5232337297712,
             "targets": [
-              1101.1905223737444,
-              1175.3108706229073
+              1085.7651738194058,
+              1162.2619498552594
             ],
-            "risk_per_share": 74.12034824916293,
+            "risk_per_share": 76.49677603585383,
             "model": "trend_pullback",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 990.01,
+            "trigger_price": 971.020009765625,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -974,35 +956,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 934.27001953125,
-              "required": "> 960.12"
+              "current": 884.739990234375,
+              "required": "> 950.61"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": false,
-              "current": 960.1165008544922,
-              "required": "> 980.50"
+              "current": 950.608999633789,
+              "required": "> 978.71"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 980.50080078125,
-              "required": "> 744.07"
+              "current": 978.7090002441406,
+              "required": "> 746.83"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 66.64465019226066,
+              "current": 65.21465003967285,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.11267469537414698,
+              "current": -0.09807099686294418,
               "required": "> 0"
             },
             {
@@ -1016,42 +998,42 @@
               "code": "vcp_range_contract",
               "label": "波动区间收缩",
               "passed": true,
-              "current": 0.1657344715925817,
-              "required": "<= 0.2149"
+              "current": 0.15338906380361633,
+              "required": "<= 0.1930"
             },
             {
               "code": "vcp_volume_dryup",
               "label": "收缩期成交量萎缩",
               "passed": false,
-              "current": 0.9612242260904879,
+              "current": 0.9290031403306693,
               "required": "<= 0.85x"
             },
             {
               "code": "vcp_near_high",
               "label": "价格接近箱体上沿",
               "passed": false,
-              "current": 3.5158357571001826,
+              "current": 4.377831746680091,
               "required": "<= 1.00 ATR"
             },
             {
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 934.27001953125,
-              "required": ">= 1110.47"
+              "current": 884.739990234375,
+              "required": ">= 1110.55"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
               "passed": false,
-              "current": 0.8146087534380595,
+              "current": 1.1868517003485248,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.07538241747577201,
+              "current": 0.027940618744678125,
               "required": "> 0"
             }
           ],
@@ -1065,26 +1047,26 @@
             "breakout_volume"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 1110.470678274972,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 1110.5498925345285,
             "entry_range": [
-              1103.0586434500558,
-              1122.8240696498324
+              1102.900214930943,
+              1123.2993552071707
             ],
-            "chase_limit": 1135.177461024693,
-            "stop": 1036.350330025809,
+            "chase_limit": 1136.048817879813,
+            "stop": 1034.0531164986746,
             "targets": [
-              1221.6512006487164,
-              1295.7715488978797
+              1225.2950565883093,
+              1301.791832624163
             ],
-            "risk_per_share": 74.12034824916304,
+            "risk_per_share": 76.49677603585383,
             "model": "vcp_darvas_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 1110.470678274972,
+            "trigger_price": 1110.5498925345285,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -1158,39 +1140,39 @@
         "note": "三种策略是条件情景，不是上涨概率，也不声称复制任何专有方法。"
       },
       "indicators": {
-        "signal_date": "2026-10-29",
-        "current_close": 934.27001953125,
-        "current_low": 927.239990234375,
-        "previous_high": 990.0,
-        "atr14": 49.413565499441965,
-        "sma10": 907.7480041503907,
-        "sma20": 960.1165008544922,
-        "sma50": 980.50080078125,
-        "sma200": 744.0720010375976,
-        "sma200_slope_20": 66.64465019226066,
-        "ema10": 930.2109235950371,
-        "ema20": 948.6394043169179,
-        "ema50": 961.7933206163639,
+        "signal_date": "2026-10-30",
+        "current_close": 884.739990234375,
+        "current_low": 861.5900268554688,
+        "previous_high": 971.010009765625,
+        "atr14": 50.997850690569194,
+        "sma10": 908.3380004882813,
+        "sma20": 950.608999633789,
+        "sma50": 978.7090002441406,
+        "sma200": 746.828950958252,
+        "sma200_slope_20": 65.21465003967285,
+        "ema10": 921.9434811658258,
+        "ema20": 942.5537458328662,
+        "ema50": 958.7716205261761,
         "prior20_high": 1108.0,
         "recent10_low": 849.25,
-        "stock_return_5": 0.09081253743034501,
-        "stock_return_20": -0.1486435933804674,
-        "qqq_return_5": 0.015430119954572996,
-        "qqq_return_20": -0.035968898006320416,
-        "relative_return_5": 0.07538241747577201,
-        "relative_return_20": -0.11267469537414698,
-        "volume_ratio": 0.8146087534380595,
-        "contraction_volume_ratio": 0.9612242260904879,
-        "recent_contraction_range_pct": 0.1657344715925817,
-        "prior_contraction_range_pct": 0.2686480186480186,
-        "distance_sma20_atr": -0.5230644876968871,
-        "distance_prior_high_atr": 3.5158357571001826,
-        "qqq_close": 715.3400268554688,
-        "qqq_sma20": 731.1420013427735,
-        "qqq_sma50": 725.409599609375,
-        "qqq_sma200": 679.1646002197266,
-        "qqq_sma200_slope_20": 11.255750732421916,
-        "qqq_close_vs_sma20": -15.801974487304733
+        "stock_return_5": 0.008193268237048246,
+        "stock_return_20": -0.1769018428143595,
+        "qqq_return_5": -0.01974735050762988,
+        "qqq_return_20": -0.07883084595141532,
+        "relative_return_5": 0.027940618744678125,
+        "relative_return_20": -0.09807099686294418,
+        "volume_ratio": 1.1868517003485248,
+        "contraction_volume_ratio": 0.9290031403306693,
+        "recent_contraction_range_pct": 0.15338906380361633,
+        "prior_contraction_range_pct": 0.24129531227001766,
+        "distance_sma20_atr": -1.2916036363782464,
+        "distance_prior_high_atr": 4.377831746680091,
+        "qqq_close": 690.489990234375,
+        "qqq_sma20": 728.1875,
+        "qqq_sma50": 725.0007995605469,
+        "qqq_sma200": 679.5193002319336,
+        "qqq_sma200_slope_20": 10.915250549316397,
+        "qqq_close_vs_sma20": -37.697509765625
       },
       "event_status": "unknown",
       "market_regime": {
@@ -1241,35 +1223,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 709.1799926757812,
-              "required": "> 677.38"
+              "current": 697.0,
+              "required": "> 679.49"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 677.377001953125,
-              "required": "> 653.26"
+              "current": 679.4870025634766,
+              "required": "> 654.65"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 653.257001953125,
-              "required": "> 550.99"
+              "current": 654.6460021972656,
+              "required": "> 551.37"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 8.778749999999945,
+              "current": 8.76014984130859,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.1228181142053355,
+              "current": 0.14327802523324173,
               "required": "> 0"
             },
             {
@@ -1283,21 +1265,21 @@
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 709.1799926757812,
-              "required": ">= 711.85"
+              "current": 697.0,
+              "required": ">= 712.89"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
               "passed": false,
-              "current": 0.6111048859340048,
+              "current": 0.8846529607558693,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.032815387640720006,
+              "current": 0.054148217836919366,
               "required": "> 0"
             }
           ],
@@ -1306,26 +1288,26 @@
             "breakout_volume"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 711.8458840506418,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 712.8915828159877,
             "entry_range": [
-              708.8283124651227,
-              716.8751700265067
+              709.766761125837,
+              718.0996189662388
             ],
-            "chase_limit": 721.9044560023717,
-            "stop": 681.670168195452,
+            "chase_limit": 723.30765511649,
+            "stop": 681.643365914481,
             "targets": [
-              757.1094578334264,
-              787.2851736886162
+              759.7639081682478,
+              791.0121250697543
             ],
-            "risk_per_share": 30.175715855189765,
+            "risk_per_share": 31.24821690150668,
             "model": "oneil_volume_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 711.8458840506418,
+            "trigger_price": 712.8915828159877,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -1368,35 +1350,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 709.1799926757812,
-              "required": "> 677.38"
+              "current": 697.0,
+              "required": "> 679.49"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 677.377001953125,
-              "required": "> 653.26"
+              "current": 679.4870025634766,
+              "required": "> 654.65"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 653.257001953125,
-              "required": "> 550.99"
+              "current": 654.6460021972656,
+              "required": "> 551.37"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 8.778749999999945,
+              "current": 8.76014984130859,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.1228181142053355,
+              "current": 0.14327802523324173,
               "required": "> 0"
             },
             {
@@ -1409,57 +1391,56 @@
             {
               "code": "pullback_touch",
               "label": "盘中回踩 SMA20 附近",
-              "passed": false,
-              "current": 699.9000244140625,
-              "required": "<= 690.92"
+              "passed": true,
+              "current": 691.739990234375,
+              "required": "<= 693.08"
             },
             {
               "code": "pullback_reclaim",
               "label": "收盘重新站上 SMA20",
               "passed": true,
-              "current": 709.1799926757812,
-              "required": ">= 677.38"
+              "current": 697.0,
+              "required": ">= 679.49"
             },
             {
               "code": "pullback_confirmation",
               "label": "收盘高于前一日高点",
               "passed": false,
-              "current": 709.1799926757812,
-              "required": "> 710.84"
+              "current": 697.0,
+              "required": "> 711.85"
             },
             {
               "code": "pullback_volume",
               "label": "回踩成交量不过热",
               "passed": true,
-              "current": 0.6111048859340048,
+              "current": 0.8846529607558693,
               "required": "<= 1.20x"
             }
           ],
           "missing_conditions": [
-            "pullback_touch",
             "pullback_confirmation"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 710.8500268554687,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 711.8599755859375,
             "entry_range": [
-              707.8324552699497,
-              715.8793128313337
+              708.7351538957868,
+              717.0680117361886
             ],
-            "chase_limit": 720.9085988071987,
-            "stop": 680.674311000279,
+            "chase_limit": 722.2760478864398,
+            "stop": 680.6117586844308,
             "targets": [
-              756.1136006382534,
-              786.2893164934432
+              758.7323009381976,
+              789.9805178397041
             ],
-            "risk_per_share": 30.175715855189765,
+            "risk_per_share": 31.24821690150668,
             "model": "trend_pullback",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 710.8500268554687,
+            "trigger_price": 711.8599755859375,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -1502,35 +1483,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 709.1799926757812,
-              "required": "> 677.38"
+              "current": 697.0,
+              "required": "> 679.49"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 677.377001953125,
-              "required": "> 653.26"
+              "current": 679.4870025634766,
+              "required": "> 654.65"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 653.257001953125,
-              "required": "> 550.99"
+              "current": 654.6460021972656,
+              "required": "> 551.37"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 8.778749999999945,
+              "current": 8.76014984130859,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.1228181142053355,
+              "current": 0.14327802523324173,
               "required": "> 0"
             },
             {
@@ -1544,71 +1525,70 @@
               "code": "vcp_range_contract",
               "label": "波动区间收缩",
               "passed": true,
-              "current": 0.07296607827240566,
-              "required": "<= 0.0887"
+              "current": 0.07449052918632075,
+              "required": "<= 0.0765"
             },
             {
               "code": "vcp_volume_dryup",
               "label": "收缩期成交量萎缩",
-              "passed": false,
-              "current": 0.9183962283726972,
+              "passed": true,
+              "current": 0.7559792423543941,
               "required": "<= 0.85x"
             },
             {
               "code": "vcp_near_high",
               "label": "价格接近箱体上沿",
               "passed": true,
-              "current": 0.08251838271147431,
+              "current": 0.7128395021423516,
               "required": "<= 1.00 ATR"
             },
             {
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 709.1799926757812,
-              "required": ">= 711.85"
+              "current": 697.0,
+              "required": ">= 712.89"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
               "passed": false,
-              "current": 0.6111048859340048,
+              "current": 0.8846529607558693,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.032815387640720006,
+              "current": 0.054148217836919366,
               "required": "> 0"
             }
           ],
           "missing_conditions": [
-            "vcp_volume_dryup",
             "breakout_price",
             "breakout_volume"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 711.8458840506418,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 712.8915828159877,
             "entry_range": [
-              708.8283124651227,
-              716.8751700265067
+              709.766761125837,
+              718.0996189662388
             ],
-            "chase_limit": 721.9044560023717,
-            "stop": 681.670168195452,
+            "chase_limit": 723.30765511649,
+            "stop": 681.643365914481,
             "targets": [
-              757.1094578334264,
-              787.2851736886162
+              759.7639081682478,
+              791.0121250697543
             ],
-            "risk_per_share": 30.175715855189765,
+            "risk_per_share": 31.24821690150668,
             "model": "vcp_darvas_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 711.8458840506418,
+            "trigger_price": 712.8915828159877,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -1682,39 +1662,39 @@
         "note": "三种策略是条件情景，不是上涨概率，也不声称复制任何专有方法。"
       },
       "indicators": {
-        "signal_date": "2026-10-29",
-        "current_close": 709.1799926757812,
-        "current_low": 699.9000244140625,
-        "previous_high": 710.8400268554688,
-        "atr14": 20.117143903459823,
-        "sma10": 689.2370056152344,
-        "sma20": 677.377001953125,
-        "sma50": 653.257001953125,
-        "sma200": 550.9922001647949,
-        "sma200_slope_20": 8.778749999999945,
-        "ema10": 690.1736925208429,
-        "ema20": 680.1583261473774,
-        "ema50": 651.134895797069,
-        "prior20_high": 710.8400268554688,
+        "signal_date": "2026-10-30",
+        "current_close": 697.0,
+        "current_low": 691.739990234375,
+        "previous_high": 711.8499755859375,
+        "atr14": 20.832144601004465,
+        "sma10": 689.9370056152344,
+        "sma20": 679.4870025634766,
+        "sma50": 654.6460021972656,
+        "sma200": 551.3680500793457,
+        "sma200_slope_20": 8.76014984130859,
+        "ema10": 691.4148393352351,
+        "ema20": 681.7622950857224,
+        "ema50": 652.9335298926135,
+        "prior20_high": 711.8499755859375,
         "recent10_low": 661.2999877929688,
-        "stock_return_5": 0.048245507595293,
-        "stock_return_20": 0.08684921619901509,
-        "qqq_return_5": 0.015430119954572996,
-        "qqq_return_20": -0.035968898006320416,
-        "relative_return_5": 0.032815387640720006,
-        "relative_return_20": 0.1228181142053355,
-        "volume_ratio": 0.6111048859340048,
-        "contraction_volume_ratio": 0.9183962283726972,
-        "recent_contraction_range_pct": 0.07296607827240566,
-        "prior_contraction_range_pct": 0.11092043362513297,
-        "distance_sma20_atr": 1.580889955118659,
-        "distance_prior_high_atr": 0.08251838271147431,
-        "qqq_close": 715.3400268554688,
-        "qqq_sma20": 731.1420013427735,
-        "qqq_sma50": 725.409599609375,
-        "qqq_sma200": 679.1646002197266,
-        "qqq_sma200_slope_20": 11.255750732421916,
-        "qqq_close_vs_sma20": -15.801974487304733
+        "stock_return_5": 0.034400867329289486,
+        "stock_return_20": 0.06444717928182642,
+        "qqq_return_5": -0.01974735050762988,
+        "qqq_return_20": -0.07883084595141532,
+        "relative_return_5": 0.054148217836919366,
+        "relative_return_20": 0.14327802523324173,
+        "volume_ratio": 0.8846529607558693,
+        "contraction_volume_ratio": 0.7559792423543941,
+        "recent_contraction_range_pct": 0.07449052918632075,
+        "prior_contraction_range_pct": 0.09567499914960484,
+        "distance_sma20_atr": 0.8406718449755272,
+        "distance_prior_high_atr": 0.7128395021423516,
+        "qqq_close": 690.489990234375,
+        "qqq_sma20": 728.1875,
+        "qqq_sma50": 725.0007995605469,
+        "qqq_sma200": 679.5193002319336,
+        "qqq_sma200_slope_20": 10.915250549316397,
+        "qqq_close_vs_sma20": -37.697509765625
       },
       "event_status": "unknown",
       "market_regime": {
@@ -1729,7 +1709,7 @@
           "passed": true
         },
         "trend_template": true,
-        "vcp_contraction": false,
+        "vcp_contraction": true,
         "volume_breakout": false,
         "trend_pullback": false,
         "triggered_models": [],
@@ -1765,35 +1745,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 566.4199829101562,
-              "required": "> 576.90"
+              "current": 504.79998779296875,
+              "required": "> 570.44"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 576.8959930419921,
-              "required": "> 547.58"
+              "current": 570.4404937744141,
+              "required": "> 548.29"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 547.5833978271485,
-              "required": "> 409.08"
+              "current": 548.2901977539062,
+              "required": "> 410.49"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 36.49074935913086,
+              "current": 35.76509941101074,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.04411490353450187,
+              "current": -0.12484158518436284,
               "required": "> 0"
             },
             {
@@ -1807,21 +1787,21 @@
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 566.4199829101562,
-              "required": ">= 659.94"
+              "current": 504.79998779296875,
+              "required": ">= 660.13"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 0.849146667506392,
+              "passed": true,
+              "current": 2.0284637063790356,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
-              "passed": true,
-              "current": 0.09972352538589813,
+              "passed": false,
+              "current": -0.003453544912483286,
               "required": "> 0"
             }
           ],
@@ -1829,29 +1809,29 @@
             "close_above_sma20",
             "relative_qqq_20_positive",
             "breakout_price",
-            "breakout_volume"
+            "relative_qqq_5_positive"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 659.9416975838798,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 660.1297332763672,
             "entry_range": [
-              655.6766634259906,
-              667.0500878470285
+              655.3005920410156,
+              668.1783020019532
             ],
-            "chase_limit": 674.1584781101772,
-            "stop": 617.2913560049875,
+            "chase_limit": 676.2268707275391,
+            "stop": 611.8383209228516,
             "targets": [
-              723.9172099522182,
-              766.5675515311104
+              732.5668518066407,
+              780.8582641601563
             ],
-            "risk_per_share": 42.65034157889227,
+            "risk_per_share": 48.291412353515625,
             "model": "oneil_volume_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 659.9416975838798,
+            "trigger_price": 660.1297332763672,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -1886,43 +1866,43 @@
         {
           "strategy_id": "trend_pullback",
           "label": "策略二：趋势回踩",
-          "status": "waiting",
-          "status_label": "等待全部条件触发",
+          "status": "blocked",
+          "status_label": "研究条件阻断",
           "triggered": false,
           "condition_checks": [
             {
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 566.4199829101562,
-              "required": "> 576.90"
+              "current": 504.79998779296875,
+              "required": "> 570.44"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 576.8959930419921,
-              "required": "> 547.58"
+              "current": 570.4404937744141,
+              "required": "> 548.29"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 547.5833978271485,
-              "required": "> 409.08"
+              "current": 548.2901977539062,
+              "required": "> 410.49"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 36.49074935913086,
+              "current": 35.76509941101074,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.04411490353450187,
+              "current": -0.12484158518436284,
               "required": "> 0"
             },
             {
@@ -1936,28 +1916,28 @@
               "code": "pullback_touch",
               "label": "盘中回踩 SMA20 附近",
               "passed": true,
-              "current": 560.5700073242188,
-              "required": "<= 588.43"
+              "current": 492.2099914550781,
+              "required": "<= 581.85"
             },
             {
               "code": "pullback_reclaim",
               "label": "收盘重新站上 SMA20",
               "passed": false,
-              "current": 566.4199829101562,
-              "required": ">= 576.90"
+              "current": 504.79998779296875,
+              "required": ">= 570.44"
             },
             {
               "code": "pullback_confirmation",
               "label": "收盘高于前一日高点",
               "passed": false,
-              "current": 566.4199829101562,
-              "required": "> 579.18"
+              "current": 504.79998779296875,
+              "required": "> 575.10"
             },
             {
               "code": "pullback_volume",
               "label": "回踩成交量不过热",
-              "passed": true,
-              "current": 0.849146667506392,
+              "passed": false,
+              "current": 2.0284637063790356,
               "required": "<= 1.20x"
             }
           ],
@@ -1965,29 +1945,31 @@
             "close_above_sma20",
             "relative_qqq_20_positive",
             "pullback_reclaim",
-            "pullback_confirmation"
+            "pullback_confirmation",
+            "pullback_volume",
+            "risk_distance_out_of_bounds"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 579.1899926757812,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 575.1099755859375,
             "entry_range": [
-              574.924958517892,
-              586.29838293893
+              570.2808343505859,
+              583.1585443115234
             ],
-            "chase_limit": 593.4067732020786,
-            "stop": 536.539651096889,
+            "chase_limit": 591.2071130371094,
+            "stop": 526.8185632324219,
             "targets": [
-              643.1655050441196,
-              685.8158466230119
+              647.5470941162109,
+              695.8385064697266
             ],
-            "risk_per_share": 42.65034157889227,
+            "risk_per_share": 48.291412353515625,
             "model": "trend_pullback",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 579.1899926757812,
+            "trigger_price": 575.1099755859375,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -2013,7 +1995,7 @@
             "status": "failed_or_insufficient"
           },
           "prediction_calibrated": false,
-          "research_selection_allowed": true,
+          "research_selection_allowed": false,
           "execution_ready": false,
           "shadow_validation_status": "monitoring",
           "research_eligibility_mode": "research_grade",
@@ -2030,35 +2012,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 566.4199829101562,
-              "required": "> 576.90"
+              "current": 504.79998779296875,
+              "required": "> 570.44"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 576.8959930419921,
-              "required": "> 547.58"
+              "current": 570.4404937744141,
+              "required": "> 548.29"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 547.5833978271485,
-              "required": "> 409.08"
+              "current": 548.2901977539062,
+              "required": "> 410.49"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 36.49074935913086,
+              "current": 35.76509941101074,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.04411490353450187,
+              "current": -0.12484158518436284,
               "required": "> 0"
             },
             {
@@ -2072,42 +2054,42 @@
               "code": "vcp_range_contract",
               "label": "波动区间收缩",
               "passed": true,
-              "current": 0.15236765945540637,
-              "required": "<= 0.1819"
+              "current": 0.1393107431050898,
+              "required": "<= 0.1986"
             },
             {
               "code": "vcp_volume_dryup",
               "label": "收缩期成交量萎缩",
               "passed": false,
-              "current": 1.0182243444061874,
+              "current": 0.9048100553692947,
               "required": "<= 0.85x"
             },
             {
               "code": "vcp_near_high",
               "label": "价格接近箱体上沿",
               "passed": false,
-              "current": 3.239131266419007,
+              "current": 4.774762972751109,
               "required": "<= 1.00 ATR"
             },
             {
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 566.4199829101562,
-              "required": ">= 659.94"
+              "current": 504.79998779296875,
+              "required": ">= 660.13"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 0.849146667506392,
+              "passed": true,
+              "current": 2.0284637063790356,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
-              "passed": true,
-              "current": 0.09972352538589813,
+              "passed": false,
+              "current": -0.003453544912483286,
               "required": "> 0"
             }
           ],
@@ -2117,29 +2099,29 @@
             "vcp_volume_dryup",
             "vcp_near_high",
             "breakout_price",
-            "breakout_volume"
+            "relative_qqq_5_positive"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 659.9416975838798,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 660.1297332763672,
             "entry_range": [
-              655.6766634259906,
-              667.0500878470285
+              655.3005920410156,
+              668.1783020019532
             ],
-            "chase_limit": 674.1584781101772,
-            "stop": 617.2913560049875,
+            "chase_limit": 676.2268707275391,
+            "stop": 611.8383209228516,
             "targets": [
-              723.9172099522182,
-              766.5675515311104
+              732.5668518066407,
+              780.8582641601563
             ],
-            "risk_per_share": 42.65034157889227,
+            "risk_per_share": 48.291412353515625,
             "model": "vcp_darvas_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 659.9416975838798,
+            "trigger_price": 660.1297332763672,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -2213,39 +2195,39 @@
         "note": "三种策略是条件情景，不是上涨概率，也不声称复制任何专有方法。"
       },
       "indicators": {
-        "signal_date": "2026-10-29",
-        "current_close": 566.4199829101562,
-        "current_low": 560.5700073242188,
-        "previous_high": 579.1799926757812,
-        "atr14": 28.433561052594865,
-        "sma10": 541.5379943847656,
-        "sma20": 576.8959930419921,
-        "sma50": 547.5833978271485,
-        "sma200": 409.08269996643065,
-        "sma200_slope_20": 36.49074935913086,
-        "ema10": 555.9033161867287,
-        "ema20": 562.5084351125457,
-        "ema50": 551.6152099354629,
+        "signal_date": "2026-10-30",
+        "current_close": 504.79998779296875,
+        "current_low": 492.2099914550781,
+        "previous_high": 575.0999755859375,
+        "atr14": 32.19427490234375,
+        "sma10": 539.1429931640625,
+        "sma20": 570.4404937744141,
+        "sma50": 548.2901977539062,
+        "sma200": 410.4886998748779,
+        "sma200_slope_20": 35.76509941101074,
+        "ema10": 546.6118019333178,
+        "ema20": 557.0123925106813,
+        "ema50": 549.7793218603971,
         "prior20_high": 658.52001953125,
-        "recent10_low": 502.6000061035156,
-        "stock_return_5": 0.11515364534047112,
-        "stock_return_20": -0.08008380154082229,
-        "qqq_return_5": 0.015430119954572996,
-        "qqq_return_20": -0.035968898006320416,
-        "relative_return_5": 0.09972352538589813,
-        "relative_return_20": -0.04411490353450187,
-        "volume_ratio": 0.849146667506392,
-        "contraction_volume_ratio": 1.0182243444061874,
-        "recent_contraction_range_pct": 0.15236765945540637,
-        "prior_contraction_range_pct": 0.22731606090298992,
-        "distance_sma20_atr": -0.3684382027442125,
-        "distance_prior_high_atr": 3.239131266419007,
-        "qqq_close": 715.3400268554688,
-        "qqq_sma20": 731.1420013427735,
-        "qqq_sma50": 725.409599609375,
-        "qqq_sma200": 679.1646002197266,
-        "qqq_sma200_slope_20": 11.255750732421916,
-        "qqq_close_vs_sma20": -15.801974487304733
+        "recent10_low": 492.2099914550781,
+        "stock_return_5": -0.023200895420113166,
+        "stock_return_20": -0.20367243113577815,
+        "qqq_return_5": -0.01974735050762988,
+        "qqq_return_20": -0.07883084595141532,
+        "relative_return_5": -0.003453544912483286,
+        "relative_return_20": -0.12484158518436284,
+        "volume_ratio": 2.0284637063790356,
+        "contraction_volume_ratio": 0.9048100553692947,
+        "recent_contraction_range_pct": 0.1393107431050898,
+        "prior_contraction_range_pct": 0.2482490797820926,
+        "distance_sma20_atr": -2.0388875407368383,
+        "distance_prior_high_atr": 4.774762972751109,
+        "qqq_close": 690.489990234375,
+        "qqq_sma20": 728.1875,
+        "qqq_sma50": 725.0007995605469,
+        "qqq_sma200": 679.5193002319336,
+        "qqq_sma200_slope_20": 10.915250549316397,
+        "qqq_close_vs_sma20": -37.697509765625
       },
       "event_status": "unknown",
       "market_regime": {
@@ -2296,35 +2278,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 431.80999755859375,
-              "required": "> 440.97"
+              "current": 406.1300048828125,
+              "required": "> 437.63"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 440.965998840332,
-              "required": "> 435.12"
+              "current": 437.6334991455078,
+              "required": "> 434.92"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 435.115400390625,
-              "required": "> 399.77"
+              "current": 434.9180004882812,
+              "required": "> 400.16"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 13.526350097656291,
+              "current": 12.99625015258789,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.023678344851523092,
+              "current": -0.062143802021368155,
               "required": "> 0"
             },
             {
@@ -2338,21 +2320,21 @@
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 431.80999755859375,
-              "required": ">= 488.11"
+              "current": 406.1300048828125,
+              "required": ">= 488.19"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 0.7375234516625283,
+              "passed": true,
+              "current": 1.9247986462491138,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
-              "passed": true,
-              "current": 0.03176277726147059,
+              "passed": false,
+              "current": -0.009833793536560553,
               "required": "> 0"
             }
           ],
@@ -2360,29 +2342,29 @@
             "close_above_sma20",
             "relative_qqq_20_positive",
             "breakout_price",
-            "breakout_volume"
+            "relative_qqq_5_positive"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 488.1133586338588,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 488.19064440046037,
             "entry_range": [
-              486.18328639439176,
-              491.3301456996373
+              486.02871486118863,
+              491.79386029924666
             ],
-            "chase_limit": 494.5469327654157,
-            "stop": 468.81263623918807,
+            "chase_limit": 495.3970761980329,
+            "stop": 466.57134900774275,
             "targets": [
-              517.0644422258649,
-              536.3651646205357
+              520.6195874895368,
+              542.2388828822544
             ],
-            "risk_per_share": 19.300722394670743,
+            "risk_per_share": 21.619295392717618,
             "model": "oneil_volume_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 488.1133586338588,
+            "trigger_price": 488.19064440046037,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -2425,35 +2407,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 431.80999755859375,
-              "required": "> 440.97"
+              "current": 406.1300048828125,
+              "required": "> 437.63"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 440.965998840332,
-              "required": "> 435.12"
+              "current": 437.6334991455078,
+              "required": "> 434.92"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 435.115400390625,
-              "required": "> 399.77"
+              "current": 434.9180004882812,
+              "required": "> 400.16"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 13.526350097656291,
+              "current": 12.99625015258789,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.023678344851523092,
+              "current": -0.062143802021368155,
               "required": "> 0"
             },
             {
@@ -2467,28 +2449,28 @@
               "code": "pullback_touch",
               "label": "盘中回踩 SMA20 附近",
               "passed": true,
-              "current": 428.42999267578125,
-              "required": "<= 449.79"
+              "current": 400.1199951171875,
+              "required": "<= 446.39"
             },
             {
               "code": "pullback_reclaim",
               "label": "收盘重新站上 SMA20",
               "passed": false,
-              "current": 431.80999755859375,
-              "required": ">= 440.97"
+              "current": 406.1300048828125,
+              "required": ">= 437.63"
             },
             {
               "code": "pullback_confirmation",
               "label": "收盘高于前一日高点",
               "passed": false,
-              "current": 431.80999755859375,
-              "required": "> 440.88"
+              "current": 406.1300048828125,
+              "required": "> 436.24"
             },
             {
               "code": "pullback_volume",
               "label": "回踩成交量不过热",
-              "passed": true,
-              "current": 0.7375234516625283,
+              "passed": false,
+              "current": 1.9247986462491138,
               "required": "<= 1.20x"
             }
           ],
@@ -2496,29 +2478,30 @@
             "close_above_sma20",
             "relative_qqq_20_positive",
             "pullback_reclaim",
-            "pullback_confirmation"
+            "pullback_confirmation",
+            "pullback_volume"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 440.965998840332,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 437.6334991455078,
             "entry_range": [
-              439.03592660086497,
-              444.1827859061105
+              435.4715696062361,
+              441.2367150442941
             ],
-            "chase_limit": 447.3995729718889,
-            "stop": 421.6652764456613,
+            "chase_limit": 444.83993094308033,
+            "stop": 416.0142037527902,
             "targets": [
-              469.91708243233813,
-              489.2178048270089
+              470.06244223458424,
+              491.68173762730186
             ],
-            "risk_per_share": 19.300722394670743,
+            "risk_per_share": 21.619295392717618,
             "model": "trend_pullback",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 440.965998840332,
+            "trigger_price": 437.6334991455078,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -2561,35 +2544,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 431.80999755859375,
-              "required": "> 440.97"
+              "current": 406.1300048828125,
+              "required": "> 437.63"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 440.965998840332,
-              "required": "> 435.12"
+              "current": 437.6334991455078,
+              "required": "> 434.92"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 435.115400390625,
-              "required": "> 399.77"
+              "current": 434.9180004882812,
+              "required": "> 400.16"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 13.526350097656291,
+              "current": 12.99625015258789,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.023678344851523092,
+              "current": -0.062143802021368155,
               "required": "> 0"
             },
             {
@@ -2603,74 +2586,73 @@
               "code": "vcp_range_contract",
               "label": "波动区间收缩",
               "passed": true,
-              "current": 0.07474039191378662,
-              "required": "<= 0.1259"
+              "current": 0.07241375931502135,
+              "required": "<= 0.1134"
             },
             {
               "code": "vcp_volume_dryup",
               "label": "收缩期成交量萎缩",
-              "passed": false,
-              "current": 0.926306586343898,
+              "passed": true,
+              "current": 0.7845446773815182,
               "required": "<= 0.85x"
             },
             {
               "code": "vcp_near_high",
               "label": "价格接近箱体上沿",
               "passed": false,
-              "current": 4.3257451087020975,
+              "current": 5.643569426778566,
               "required": "<= 1.00 ATR"
             },
             {
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 431.80999755859375,
-              "required": ">= 488.11"
+              "current": 406.1300048828125,
+              "required": ">= 488.19"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 0.7375234516625283,
+              "passed": true,
+              "current": 1.9247986462491138,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
-              "passed": true,
-              "current": 0.03176277726147059,
+              "passed": false,
+              "current": -0.009833793536560553,
               "required": "> 0"
             }
           ],
           "missing_conditions": [
             "close_above_sma20",
             "relative_qqq_20_positive",
-            "vcp_volume_dryup",
             "vcp_near_high",
             "breakout_price",
-            "breakout_volume"
+            "relative_qqq_5_positive"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 488.1133586338588,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 488.19064440046037,
             "entry_range": [
-              486.18328639439176,
-              491.3301456996373
+              486.02871486118863,
+              491.79386029924666
             ],
-            "chase_limit": 494.5469327654157,
-            "stop": 468.81263623918807,
+            "chase_limit": 495.3970761980329,
+            "stop": 466.57134900774275,
             "targets": [
-              517.0644422258649,
-              536.3651646205357
+              520.6195874895368,
+              542.2388828822544
             ],
-            "risk_per_share": 19.300722394670743,
+            "risk_per_share": 21.619295392717618,
             "model": "vcp_darvas_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 488.1133586338588,
+            "trigger_price": 488.19064440046037,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -2744,39 +2726,39 @@
         "note": "三种策略是条件情景，不是上涨概率，也不声称复制任何专有方法。"
       },
       "indicators": {
-        "signal_date": "2026-10-29",
-        "current_close": 431.80999755859375,
-        "current_low": 428.42999267578125,
-        "previous_high": 440.8800048828125,
-        "atr14": 12.867148263113839,
-        "sma10": 425.32200012207034,
-        "sma20": 440.965998840332,
-        "sma50": 435.115400390625,
-        "sma200": 399.7673001098633,
-        "sma200_slope_20": 13.526350097656291,
-        "ema10": 431.09247097177797,
-        "ema20": 434.55260593861965,
-        "ema50": 434.18424738342895,
+        "signal_date": "2026-10-30",
+        "current_close": 406.1300048828125,
+        "current_low": 400.1199951171875,
+        "previous_high": 436.239990234375,
+        "atr14": 14.412863595145089,
+        "sma10": 424.6740020751953,
+        "sma20": 437.6334991455078,
+        "sma50": 434.9180004882812,
+        "sma200": 400.1624002075195,
+        "sma200_slope_20": 12.99625015258789,
+        "ema10": 426.55384077378426,
+        "ema20": 431.84569155235226,
+        "ema50": 433.08408327205274,
         "prior20_high": 487.4700012207031,
-        "recent10_low": 410.2200012207031,
-        "stock_return_5": 0.04719289721604358,
-        "stock_return_20": -0.05964724285784351,
-        "qqq_return_5": 0.015430119954572996,
-        "qqq_return_20": -0.035968898006320416,
-        "relative_return_5": 0.03176277726147059,
-        "relative_return_20": -0.023678344851523092,
-        "volume_ratio": 0.7375234516625283,
-        "contraction_volume_ratio": 0.926306586343898,
-        "recent_contraction_range_pct": 0.07474039191378662,
-        "prior_contraction_range_pct": 0.15734531179305405,
-        "distance_sma20_atr": -0.7115796829656275,
-        "distance_prior_high_atr": 4.3257451087020975,
-        "qqq_close": 715.3400268554688,
-        "qqq_sma20": 731.1420013427735,
-        "qqq_sma50": 725.409599609375,
-        "qqq_sma200": 679.1646002197266,
-        "qqq_sma200_slope_20": 11.255750732421916,
-        "qqq_close_vs_sma20": -15.801974487304733
+        "recent10_low": 400.1199951171875,
+        "stock_return_5": -0.029581144044190433,
+        "stock_return_20": -0.14097464797278347,
+        "qqq_return_5": -0.01974735050762988,
+        "qqq_return_20": -0.07883084595141532,
+        "relative_return_5": -0.009833793536560553,
+        "relative_return_20": -0.062143802021368155,
+        "volume_ratio": 1.9247986462491138,
+        "contraction_volume_ratio": 0.7845446773815182,
+        "recent_contraction_range_pct": 0.07241375931502135,
+        "prior_contraction_range_pct": 0.14172372705878403,
+        "distance_sma20_atr": -2.185790079447302,
+        "distance_prior_high_atr": 5.643569426778566,
+        "qqq_close": 690.489990234375,
+        "qqq_sma20": 728.1875,
+        "qqq_sma50": 725.0007995605469,
+        "qqq_sma200": 679.5193002319336,
+        "qqq_sma200_slope_20": 10.915250549316397,
+        "qqq_close_vs_sma20": -37.697509765625
       },
       "event_status": "unknown",
       "market_regime": {
@@ -2828,35 +2810,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 213.66000366210938,
-              "required": "> 222.93"
+              "current": 204.63999938964844,
+              "required": "> 221.46"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
-              "passed": true,
-              "current": 222.9250015258789,
-              "required": "> 221.99"
+              "passed": false,
+              "current": 221.45950164794922,
+              "required": "> 221.75"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 221.9928009033203,
-              "required": "> 204.28"
+              "current": 221.74860076904298,
+              "required": "> 204.38"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 3.850750122070309,
+              "current": 3.6699501037597884,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.038535116993110186,
+              "current": -0.046452325413951834,
               "required": "> 0"
             },
             {
@@ -2870,52 +2852,52 @@
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 213.66000366210938,
-              "required": ">= 243.67"
+              "current": 204.63999938964844,
+              "required": ">= 243.70"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 0.7586769898074928,
+              "passed": true,
+              "current": 1.6904024503076591,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.00859728030343776,
+              "current": -0.010210969188438446,
               "required": "> 0"
             }
           ],
           "missing_conditions": [
             "close_above_sma20",
+            "sma20_above_sma50",
             "relative_qqq_20_positive",
             "breakout_price",
-            "breakout_volume",
             "relative_qqq_5_positive"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 243.6671380179269,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 243.69699516296387,
             "entry_range": [
-              242.77570931570872,
-              245.15285252162388
+              242.71599502563478,
+              245.3319953918457
             ],
-            "chase_limit": 246.63856702532087,
-            "stop": 234.75285099574498,
+            "chase_limit": 246.96699562072754,
+            "stop": 233.88699378967286,
             "targets": [
-              257.0385685511998,
-              265.9528555733817
+              258.41199722290037,
+              268.2219985961914
             ],
-            "risk_per_share": 8.914287022181924,
+            "risk_per_share": 9.810001373291016,
             "model": "oneil_volume_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 243.6671380179269,
+            "trigger_price": 243.69699516296387,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -2958,35 +2940,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 213.66000366210938,
-              "required": "> 222.93"
+              "current": 204.63999938964844,
+              "required": "> 221.46"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
-              "passed": true,
-              "current": 222.9250015258789,
-              "required": "> 221.99"
+              "passed": false,
+              "current": 221.45950164794922,
+              "required": "> 221.75"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 221.9928009033203,
-              "required": "> 204.28"
+              "current": 221.74860076904298,
+              "required": "> 204.38"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 3.850750122070309,
+              "current": 3.6699501037597884,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.038535116993110186,
+              "current": -0.046452325413951834,
               "required": "> 0"
             },
             {
@@ -3000,58 +2982,60 @@
               "code": "pullback_touch",
               "label": "盘中回踩 SMA20 附近",
               "passed": true,
-              "current": 212.0800018310547,
-              "required": "<= 227.38"
+              "current": 200.9199981689453,
+              "required": "<= 225.89"
             },
             {
               "code": "pullback_reclaim",
               "label": "收盘重新站上 SMA20",
               "passed": false,
-              "current": 213.66000366210938,
-              "required": ">= 222.93"
+              "current": 204.63999938964844,
+              "required": ">= 221.46"
             },
             {
               "code": "pullback_confirmation",
               "label": "收盘高于前一日高点",
               "passed": false,
-              "current": 213.66000366210938,
-              "required": "> 219.99"
+              "current": 204.63999938964844,
+              "required": "> 215.33"
             },
             {
               "code": "pullback_volume",
               "label": "回踩成交量不过热",
-              "passed": true,
-              "current": 0.7586769898074928,
+              "passed": false,
+              "current": 1.6904024503076591,
               "required": "<= 1.20x"
             }
           ],
           "missing_conditions": [
             "close_above_sma20",
+            "sma20_above_sma50",
             "relative_qqq_20_positive",
             "pullback_reclaim",
-            "pullback_confirmation"
+            "pullback_confirmation",
+            "pullback_volume"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 222.9250015258789,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 221.45950164794922,
             "entry_range": [
-              222.03357282366073,
-              224.4107160295759
+              220.47850151062013,
+              223.09450187683106
             ],
-            "chase_limit": 225.89643053327288,
-            "stop": 214.010714503697,
+            "chase_limit": 224.7295021057129,
+            "stop": 211.6495002746582,
             "targets": [
-              236.2964320591518,
-              245.2107190813337
+              236.17450370788575,
+              245.98450508117676
             ],
-            "risk_per_share": 8.914287022181924,
+            "risk_per_share": 9.810001373291016,
             "model": "trend_pullback",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 222.9250015258789,
+            "trigger_price": 221.45950164794922,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -3094,35 +3078,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": false,
-              "current": 213.66000366210938,
-              "required": "> 222.93"
+              "current": 204.63999938964844,
+              "required": "> 221.46"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
-              "passed": true,
-              "current": 222.9250015258789,
-              "required": "> 221.99"
+              "passed": false,
+              "current": 221.45950164794922,
+              "required": "> 221.75"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 221.9928009033203,
-              "required": "> 204.28"
+              "current": 221.74860076904298,
+              "required": "> 204.38"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 3.850750122070309,
+              "current": 3.6699501037597884,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.038535116993110186,
+              "current": -0.046452325413951834,
               "required": "> 0"
             },
             {
@@ -3137,74 +3121,74 @@
               "label": "波动区间收缩",
               "passed": true,
               "current": 0.04667434179862928,
-              "required": "<= 0.0914"
+              "required": "<= 0.0858"
             },
             {
               "code": "vcp_volume_dryup",
               "label": "收缩期成交量萎缩",
               "passed": false,
-              "current": 0.9441785706002314,
+              "current": 0.8579136924948388,
               "required": "<= 0.85x"
             },
             {
               "code": "vcp_near_high",
               "label": "价格接近箱体上沿",
               "passed": false,
-              "current": 4.9992766748169135,
+              "current": 5.9220168663257935,
               "required": "<= 1.00 ATR"
             },
             {
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 213.66000366210938,
-              "required": ">= 243.67"
+              "current": 204.63999938964844,
+              "required": ">= 243.70"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 0.7586769898074928,
+              "passed": true,
+              "current": 1.6904024503076591,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
               "passed": false,
-              "current": -0.00859728030343776,
+              "current": -0.010210969188438446,
               "required": "> 0"
             }
           ],
           "missing_conditions": [
             "close_above_sma20",
+            "sma20_above_sma50",
             "relative_qqq_20_positive",
             "vcp_volume_dryup",
             "vcp_near_high",
             "breakout_price",
-            "breakout_volume",
             "relative_qqq_5_positive"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 243.6671380179269,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 243.69699516296387,
             "entry_range": [
-              242.77570931570872,
-              245.15285252162388
+              242.71599502563478,
+              245.3319953918457
             ],
-            "chase_limit": 246.63856702532087,
-            "stop": 234.75285099574498,
+            "chase_limit": 246.96699562072754,
+            "stop": 233.88699378967286,
             "targets": [
-              257.0385685511998,
-              265.9528555733817
+              258.41199722290037,
+              268.2219985961914
             ],
-            "risk_per_share": 8.914287022181924,
+            "risk_per_share": 9.810001373291016,
             "model": "vcp_darvas_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 243.6671380179269,
+            "trigger_price": 243.69699516296387,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -3278,39 +3262,39 @@
         "note": "三种策略是条件情景，不是上涨概率，也不声称复制任何专有方法。"
       },
       "indicators": {
-        "signal_date": "2026-10-29",
-        "current_close": 213.66000366210938,
-        "current_low": 212.0800018310547,
-        "previous_high": 219.99000549316406,
-        "atr14": 5.942858014787946,
-        "sma10": 215.58100280761718,
-        "sma20": 222.9250015258789,
-        "sma50": 221.9928009033203,
-        "sma200": 204.27705017089843,
-        "sma200_slope_20": 3.850750122070309,
-        "ema10": 216.80993876988396,
-        "ema20": 219.60389544416472,
-        "ema50": 220.12523430096698,
+        "signal_date": "2026-10-30",
+        "current_close": 204.63999938964844,
+        "current_low": 200.9199981689453,
+        "previous_high": 215.3300018310547,
+        "atr14": 6.540000915527344,
+        "sma10": 214.6320022583008,
+        "sma20": 221.45950164794922,
+        "sma50": 221.74860076904298,
+        "sma200": 204.38455017089845,
+        "sma200_slope_20": 3.6699501037597884,
+        "ema10": 214.59722251893206,
+        "ema20": 218.17876248659175,
+        "ema50": 219.51797237365537,
         "prior20_high": 243.3699951171875,
-        "recent10_low": 210.17999267578125,
-        "stock_return_5": 0.006832839651135236,
-        "stock_return_20": -0.0745040149994306,
-        "qqq_return_5": 0.015430119954572996,
-        "qqq_return_20": -0.035968898006320416,
-        "relative_return_5": -0.00859728030343776,
-        "relative_return_20": -0.038535116993110186,
-        "volume_ratio": 0.7586769898074928,
-        "contraction_volume_ratio": 0.9441785706002314,
+        "recent10_low": 200.9199981689453,
+        "stock_return_5": -0.029958319696068325,
+        "stock_return_20": -0.12528317136536715,
+        "qqq_return_5": -0.01974735050762988,
+        "qqq_return_20": -0.07883084595141532,
+        "relative_return_5": -0.010210969188438446,
+        "relative_return_20": -0.046452325413951834,
+        "volume_ratio": 1.6904024503076591,
+        "contraction_volume_ratio": 0.8579136924948388,
         "recent_contraction_range_pct": 0.04667434179862928,
-        "prior_contraction_range_pct": 0.11420784210090365,
-        "distance_sma20_atr": -1.5590138348779197,
-        "distance_prior_high_atr": 4.9992766748169135,
-        "qqq_close": 715.3400268554688,
-        "qqq_sma20": 731.1420013427735,
-        "qqq_sma50": 725.409599609375,
-        "qqq_sma200": 679.1646002197266,
-        "qqq_sma200_slope_20": 11.255750732421916,
-        "qqq_close_vs_sma20": -15.801974487304733
+        "prior_contraction_range_pct": 0.107261214859949,
+        "distance_sma20_atr": -2.5717889761097337,
+        "distance_prior_high_atr": 5.9220168663257935,
+        "qqq_close": 690.489990234375,
+        "qqq_sma20": 728.1875,
+        "qqq_sma50": 725.0007995605469,
+        "qqq_sma200": 679.5193002319336,
+        "qqq_sma200_slope_20": 10.915250549316397,
+        "qqq_close_vs_sma20": -37.697509765625
       },
       "event_status": "unknown",
       "market_regime": {
@@ -3348,26 +3332,26 @@
         "未通过历史 OOS 的策略只能记录模拟结果"
       ],
       "signal": {
-        "signal_date": "2026-10-29",
-        "earliest_execution_date": "2026-10-30",
-        "entry_reference": 29.950000762939453,
+        "signal_date": "2026-10-30",
+        "earliest_execution_date": "2026-11-02",
+        "entry_reference": 30.520000457763672,
         "entry_range": [
-          29.864822183336532,
-          30.09196506227766
+          30.429464735303608,
+          30.670893328530447
         ],
-        "chase_limit": 30.23392936161586,
-        "stop": 29.16321359361921,
+        "chase_limit": 30.821786199297225,
+        "stop": 29.614643233163015,
         "targets": [
-          31.130181516919816,
-          31.916968686240057
+          31.878036294664657,
+          32.78339351926532
         ],
-        "risk_per_share": 0.7867871693202417,
-        "model": "trend_pullback",
+        "risk_per_share": 0.9053572246006567,
+        "model": "oneil_volume_breakout",
         "holding_window_days": [
           1,
           20
         ],
-        "trigger_price": 29.82999969482422,
+        "trigger_price": 30.47017910821097,
         "prediction_calibrated": false,
         "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
         "exit_rules": {
@@ -3384,43 +3368,43 @@
         {
           "strategy_id": "oneil_volume_breakout",
           "label": "策略一：放量突破",
-          "status": "waiting",
-          "status_label": "等待全部条件触发",
-          "triggered": false,
+          "status": "historical_edge_failed",
+          "status_label": "已触发但历史优势未通过",
+          "triggered": true,
           "condition_checks": [
             {
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 29.950000762939453,
-              "required": "> 29.03"
+              "current": 30.520000457763672,
+              "required": "> 29.17"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 29.032500171661376,
-              "required": "> 28.49"
+              "current": 29.168500232696534,
+              "required": "> 28.55"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 28.49199996948242,
-              "required": "> 26.77"
+              "current": 28.54659996032715,
+              "required": "> 26.80"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 0.3803499984741201,
+              "current": 0.3982000064849842,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.10104712948179095,
+              "current": 0.17667261916546106,
               "required": "> 0"
             },
             {
@@ -3433,51 +3417,47 @@
             {
               "code": "breakout_price",
               "label": "收盘突破参考价",
-              "passed": false,
-              "current": 29.950000762939453,
+              "passed": true,
+              "current": 30.520000457763672,
               "required": ">= 30.47"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 1.174766181356858,
+              "passed": true,
+              "current": 1.553046045763341,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
-              "passed": false,
-              "current": -0.030880458947857847,
+              "passed": true,
+              "current": 0.036064358829779875,
               "required": "> 0"
             }
           ],
-          "missing_conditions": [
-            "breakout_price",
-            "breakout_volume",
-            "relative_qqq_5_positive"
-          ],
+          "missing_conditions": [],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 30.468393393925258,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 30.520000457763672,
             "entry_range": [
-              30.383214814322336,
-              30.610357693263463
+              30.429464735303608,
+              30.670893328530447
             ],
-            "chase_limit": 30.752321992601665,
-            "stop": 29.61660759789603,
+            "chase_limit": 30.821786199297225,
+            "stop": 29.614643233163015,
             "targets": [
-              31.746072087969097,
-              32.59785788399832
+              31.878036294664657,
+              32.78339351926532
             ],
-            "risk_per_share": 0.8517857960292261,
+            "risk_per_share": 0.9053572246006567,
             "model": "oneil_volume_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 30.468393393925258,
+            "trigger_price": 30.47017910821097,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -3512,43 +3492,43 @@
         {
           "strategy_id": "trend_pullback",
           "label": "策略二：趋势回踩",
-          "status": "historical_edge_failed",
-          "status_label": "已触发但历史优势未通过",
-          "triggered": true,
+          "status": "waiting",
+          "status_label": "等待全部条件触发",
+          "triggered": false,
           "condition_checks": [
             {
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 29.950000762939453,
-              "required": "> 29.03"
+              "current": 30.520000457763672,
+              "required": "> 29.17"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 29.032500171661376,
-              "required": "> 28.49"
+              "current": 29.168500232696534,
+              "required": "> 28.55"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 28.49199996948242,
-              "required": "> 26.77"
+              "current": 28.54659996032715,
+              "required": "> 26.80"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 0.3803499984741201,
+              "current": 0.3982000064849842,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.10104712948179095,
+              "current": 0.17667261916546106,
               "required": "> 0"
             },
             {
@@ -3561,54 +3541,57 @@
             {
               "code": "pullback_touch",
               "label": "盘中回踩 SMA20 附近",
-              "passed": true,
-              "current": 29.610000610351562,
-              "required": "<= 29.61"
+              "passed": false,
+              "current": 30.139999389648438,
+              "required": "<= 29.75"
             },
             {
               "code": "pullback_reclaim",
               "label": "收盘重新站上 SMA20",
               "passed": true,
-              "current": 29.950000762939453,
-              "required": ">= 29.03"
+              "current": 30.520000457763672,
+              "required": ">= 29.17"
             },
             {
               "code": "pullback_confirmation",
               "label": "收盘高于前一日高点",
               "passed": true,
-              "current": 29.950000762939453,
-              "required": "> 29.82"
+              "current": 30.520000457763672,
+              "required": "> 30.18"
             },
             {
               "code": "pullback_volume",
               "label": "回踩成交量不过热",
-              "passed": true,
-              "current": 1.174766181356858,
+              "passed": false,
+              "current": 1.553046045763341,
               "required": "<= 1.20x"
             }
           ],
-          "missing_conditions": [],
+          "missing_conditions": [
+            "pullback_touch",
+            "pullback_volume"
+          ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 29.950000762939453,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 30.190000305175783,
             "entry_range": [
-              29.864822183336532,
-              30.09196506227766
+              30.09946458271572,
+              30.340893175942558
             ],
-            "chase_limit": 30.23392936161586,
-            "stop": 29.16321359361921,
+            "chase_limit": 30.491786046709336,
+            "stop": 29.284643080575126,
             "targets": [
-              31.130181516919816,
-              31.916968686240057
+              31.548036142076768,
+              32.453393366677425
             ],
-            "risk_per_share": 0.7867871693202417,
+            "risk_per_share": 0.9053572246006567,
             "model": "trend_pullback",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 29.82999969482422,
+            "trigger_price": 30.190000305175783,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -3651,35 +3634,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 29.950000762939453,
-              "required": "> 29.03"
+              "current": 30.520000457763672,
+              "required": "> 29.17"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 29.032500171661376,
-              "required": "> 28.49"
+              "current": 29.168500232696534,
+              "required": "> 28.55"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 28.49199996948242,
-              "required": "> 26.77"
+              "current": 28.54659996032715,
+              "required": "> 26.80"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 0.3803499984741201,
+              "current": 0.3982000064849842,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.10104712948179095,
+              "current": 0.17667261916546106,
               "required": "> 0"
             },
             {
@@ -3693,72 +3676,69 @@
               "code": "vcp_range_contract",
               "label": "波动区间收缩",
               "passed": true,
-              "current": 0.04175226726119548,
-              "required": "<= 0.0806"
+              "current": 0.03764546226279309,
+              "required": "<= 0.0826"
             },
             {
               "code": "vcp_volume_dryup",
               "label": "收缩期成交量萎缩",
               "passed": false,
-              "current": 0.9396472759281683,
+              "current": 0.971553892971168,
               "required": "<= 0.85x"
             },
             {
               "code": "vcp_near_high",
               "label": "价格接近箱体上沿",
               "passed": true,
-              "current": 0.8628925958892443,
+              "current": -0.13254424032680892,
               "required": "<= 1.00 ATR"
             },
             {
               "code": "breakout_price",
               "label": "收盘突破参考价",
-              "passed": false,
-              "current": 29.950000762939453,
+              "passed": true,
+              "current": 30.520000457763672,
               "required": ">= 30.47"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 1.174766181356858,
+              "passed": true,
+              "current": 1.553046045763341,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
-              "passed": false,
-              "current": -0.030880458947857847,
+              "passed": true,
+              "current": 0.036064358829779875,
               "required": "> 0"
             }
           ],
           "missing_conditions": [
-            "vcp_volume_dryup",
-            "breakout_price",
-            "breakout_volume",
-            "relative_qqq_5_positive"
+            "vcp_volume_dryup"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 30.468393393925258,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 30.47017910821097,
             "entry_range": [
-              30.383214814322336,
-              30.610357693263463
+              30.379643385750907,
+              30.621071978977746
             ],
-            "chase_limit": 30.752321992601665,
-            "stop": 29.61660759789603,
+            "chase_limit": 30.771964849744524,
+            "stop": 29.564821883610314,
             "targets": [
-              31.746072087969097,
-              32.59785788399832
+              31.828214945111956,
+              32.733572169712616
             ],
-            "risk_per_share": 0.8517857960292261,
+            "risk_per_share": 0.9053572246006567,
             "model": "vcp_darvas_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 30.468393393925258,
+            "trigger_price": 30.47017910821097,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -3832,39 +3812,39 @@
         "note": "三种策略是条件情景，不是上涨概率，也不声称复制任何专有方法。"
       },
       "indicators": {
-        "signal_date": "2026-10-29",
-        "current_close": 29.950000762939453,
-        "current_low": 29.610000610351562,
-        "previous_high": 29.81999969482422,
-        "atr14": 0.567857197352818,
-        "sma10": 29.84200038909912,
-        "sma20": 29.032500171661376,
-        "sma50": 28.49199996948242,
-        "sma200": 26.772949991226195,
-        "sma200_slope_20": 0.3803499984741201,
-        "ema10": 29.66007709089076,
-        "ema20": 29.27101419386194,
-        "ema50": 28.411588134044752,
+        "signal_date": "2026-10-30",
+        "current_close": 30.520000457763672,
+        "current_low": 30.139999389648438,
+        "previous_high": 30.18000030517578,
+        "atr14": 0.6035714830671038,
+        "sma10": 29.936000442504884,
+        "sma20": 29.168500232696534,
+        "sma50": 28.54659996032715,
+        "sma200": 26.797649993896485,
+        "sma200_slope_20": 0.3982000064849842,
+        "ema10": 29.816426793958563,
+        "ema20": 29.389965266614485,
+        "ema50": 28.494271099026832,
         "prior20_high": 30.440000534057617,
         "recent10_low": 29.219999313354492,
-        "stock_return_5": -0.015450338993284851,
-        "stock_return_20": 0.06507823147547054,
-        "qqq_return_5": 0.015430119954572996,
-        "qqq_return_20": -0.035968898006320416,
-        "relative_return_5": -0.030880458947857847,
-        "relative_return_20": 0.10104712948179095,
-        "volume_ratio": 1.174766181356858,
-        "contraction_volume_ratio": 0.9396472759281683,
-        "recent_contraction_range_pct": 0.04175226726119548,
-        "prior_contraction_range_pct": 0.10080060057884006,
-        "distance_sma20_atr": 1.6157241566280984,
-        "distance_prior_high_atr": 0.8628925958892443,
-        "qqq_close": 715.3400268554688,
-        "qqq_sma20": 731.1420013427735,
-        "qqq_sma50": 725.409599609375,
-        "qqq_sma200": 679.1646002197266,
-        "qqq_sma200_slope_20": 11.255750732421916,
-        "qqq_close_vs_sma20": -15.801974487304733
+        "stock_return_5": 0.016317008322149995,
+        "stock_return_20": 0.09784177321404575,
+        "qqq_return_5": -0.01974735050762988,
+        "qqq_return_20": -0.07883084595141532,
+        "relative_return_5": 0.036064358829779875,
+        "relative_return_20": 0.17667261916546106,
+        "volume_ratio": 1.553046045763341,
+        "contraction_volume_ratio": 0.971553892971168,
+        "recent_contraction_range_pct": 0.03764546226279309,
+        "prior_contraction_range_pct": 0.10329830973931335,
+        "distance_sma20_atr": 2.2391717683535437,
+        "distance_prior_high_atr": -0.13254424032680892,
+        "qqq_close": 690.489990234375,
+        "qqq_sma20": 728.1875,
+        "qqq_sma50": 725.0007995605469,
+        "qqq_sma200": 679.5193002319336,
+        "qqq_sma200_slope_20": 10.915250549316397,
+        "qqq_close_vs_sma20": -37.697509765625
       },
       "event_status": "unknown",
       "market_regime": {
@@ -3880,12 +3860,12 @@
         },
         "trend_template": true,
         "vcp_contraction": false,
-        "volume_breakout": false,
-        "trend_pullback": true,
+        "volume_breakout": true,
+        "trend_pullback": false,
         "triggered_models": [
-          "trend_pullback"
+          "oneil_volume_breakout"
         ],
-        "triggered_model": "trend_pullback"
+        "triggered_model": "oneil_volume_breakout"
       }
     },
     {
@@ -4030,35 +4010,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 660.0,
-              "required": "> 648.74"
+              "current": 675.47998046875,
+              "required": "> 648.17"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": false,
-              "current": 648.7449981689454,
-              "required": "> 662.71"
+              "current": 648.1689971923828,
+              "required": "> 663.80"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 662.7055969238281,
-              "required": "> 604.01"
+              "current": 663.796396484375,
+              "required": "> 604.82"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 17.12255004882809,
+              "current": 16.94450012207028,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.025088567011847807,
+              "current": 0.06206225856968317,
               "required": "> 0"
             },
             {
@@ -4072,21 +4052,21 @@
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 660.0,
+              "current": 675.47998046875,
               "required": ">= 693.70"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
               "passed": false,
-              "current": 1.2894591316551343,
+              "current": 1.1770061004223369,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.01001968739616066,
+              "current": 0.06513921763830799,
               "required": "> 0"
             }
           ],
@@ -4096,26 +4076,26 @@
             "breakout_volume"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 693.7041242327009,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 693.702410016741,
             "entry_range": [
-              691.0818028041294,
-              698.0746599469866
+              691.0852312360491,
+              698.0643746512277
             ],
-            "chase_limit": 702.4451956612724,
-            "stop": 667.4809099469866,
+            "chase_limit": 702.4263392857142,
+            "stop": 667.5306222098214,
             "targets": [
-              733.0389456612725,
-              759.2621599469867
+              732.9600917271205,
+              759.1318795340401
             ],
-            "risk_per_share": 26.223214285714334,
+            "risk_per_share": 26.17178780691961,
             "model": "oneil_volume_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 693.7041242327009,
+            "trigger_price": 693.702410016741,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -4158,35 +4138,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 660.0,
-              "required": "> 648.74"
+              "current": 675.47998046875,
+              "required": "> 648.17"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": false,
-              "current": 648.7449981689454,
-              "required": "> 662.71"
+              "current": 648.1689971923828,
+              "required": "> 663.80"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 662.7055969238281,
-              "required": "> 604.01"
+              "current": 663.796396484375,
+              "required": "> 604.82"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 17.12255004882809,
+              "current": 16.94450012207028,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.025088567011847807,
+              "current": 0.06206225856968317,
               "required": "> 0"
             },
             {
@@ -4200,56 +4180,55 @@
               "code": "pullback_touch",
               "label": "盘中回踩 SMA20 附近",
               "passed": true,
-              "current": 625.239990234375,
-              "required": "<= 661.72"
+              "current": 659.47998046875,
+              "required": "<= 661.13"
             },
             {
               "code": "pullback_reclaim",
               "label": "收盘重新站上 SMA20",
               "passed": true,
-              "current": 660.0,
-              "required": ">= 648.74"
+              "current": 675.47998046875,
+              "required": ">= 648.17"
             },
             {
               "code": "pullback_confirmation",
               "label": "收盘高于前一日高点",
               "passed": true,
-              "current": 660.0,
-              "required": "> 644.41"
+              "current": 675.47998046875,
+              "required": "> 664.02"
             },
             {
               "code": "pullback_volume",
               "label": "回踩成交量不过热",
-              "passed": false,
-              "current": 1.2894591316551343,
+              "passed": true,
+              "current": 1.1770061004223369,
               "required": "<= 1.20x"
             }
           ],
           "missing_conditions": [
-            "sma20_above_sma50",
-            "pullback_volume"
+            "sma20_above_sma50"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 648.7449981689454,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 664.03001953125,
             "entry_range": [
-              646.1226767403739,
-              653.115533883231
+              661.4128407505581,
+              668.3919841657366
             ],
-            "chase_limit": 657.4860695975168,
-            "stop": 623.4917759486607,
+            "chase_limit": 672.7539488002232,
+            "stop": 637.8582317243304,
             "targets": [
-              686.6248314993724,
-              711.878053719657
+              703.2877012416294,
+              729.459489048549
             ],
-            "risk_per_share": 25.25322222028467,
+            "risk_per_share": 26.17178780691961,
             "model": "trend_pullback",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 648.7449981689454,
+            "trigger_price": 664.03001953125,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -4292,35 +4271,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 660.0,
-              "required": "> 648.74"
+              "current": 675.47998046875,
+              "required": "> 648.17"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": false,
-              "current": 648.7449981689454,
-              "required": "> 662.71"
+              "current": 648.1689971923828,
+              "required": "> 663.80"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 662.7055969238281,
-              "required": "> 604.01"
+              "current": 663.796396484375,
+              "required": "> 604.82"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 17.12255004882809,
+              "current": 16.94450012207028,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.025088567011847807,
+              "current": 0.06206225856968317,
               "required": "> 0"
             },
             {
@@ -4333,73 +4312,73 @@
             {
               "code": "vcp_range_contract",
               "label": "波动区间收缩",
-              "passed": true,
-              "current": 0.04649969751116497,
+              "passed": false,
+              "current": 0.0620242305396014,
               "required": "<= 0.0549"
             },
             {
               "code": "vcp_volume_dryup",
               "label": "收缩期成交量萎缩",
               "passed": true,
-              "current": 0.7326886347477357,
+              "current": 0.8405255748474895,
               "required": "<= 0.85x"
             },
             {
               "code": "vcp_near_high",
               "label": "价格接近箱体上沿",
-              "passed": false,
-              "current": 1.8779172186223185,
+              "passed": true,
+              "current": 0.9943934714601262,
               "required": "<= 1.00 ATR"
             },
             {
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 660.0,
+              "current": 675.47998046875,
               "required": ">= 693.70"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
               "passed": false,
-              "current": 1.2894591316551343,
+              "current": 1.1770061004223369,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.01001968739616066,
+              "current": 0.06513921763830799,
               "required": "> 0"
             }
           ],
           "missing_conditions": [
             "sma20_above_sma50",
-            "vcp_near_high",
+            "vcp_range_contract",
             "breakout_price",
             "breakout_volume"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 693.7041242327009,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 693.702410016741,
             "entry_range": [
-              691.0818028041294,
-              698.0746599469866
+              691.0852312360491,
+              698.0643746512277
             ],
-            "chase_limit": 702.4451956612724,
-            "stop": 667.4809099469866,
+            "chase_limit": 702.4263392857142,
+            "stop": 667.5306222098214,
             "targets": [
-              733.0389456612725,
-              759.2621599469867
+              732.9600917271205,
+              759.1318795340401
             ],
-            "risk_per_share": 26.223214285714334,
+            "risk_per_share": 26.17178780691961,
             "model": "vcp_darvas_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 693.7041242327009,
+            "trigger_price": 693.702410016741,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -4473,39 +4452,39 @@
         "note": "三种策略是条件情景，不是上涨概率，也不声称复制任何专有方法。"
       },
       "indicators": {
-        "signal_date": "2026-10-29",
-        "current_close": 660.0,
-        "current_low": 625.239990234375,
-        "previous_high": 644.4099731445312,
-        "atr14": 17.482142857142858,
-        "sma10": 640.8869995117187,
-        "sma20": 648.7449981689454,
-        "sma50": 662.7055969238281,
-        "sma200": 604.0057495117187,
-        "sma200_slope_20": 17.12255004882809,
-        "ema10": 645.5631803386003,
-        "ema20": 649.6523260280421,
-        "ema50": 650.0522648009169,
+        "signal_date": "2026-10-30",
+        "current_close": 675.47998046875,
+        "current_low": 659.47998046875,
+        "previous_high": 664.02001953125,
+        "atr14": 17.447858537946427,
+        "sma10": 644.2489990234375,
+        "sma20": 648.1689971923828,
+        "sma50": 663.796396484375,
+        "sma200": 604.8226495361328,
+        "sma200_slope_20": 16.94450012207028,
+        "ema10": 651.002598544082,
+        "ema20": 652.1121026414429,
+        "ema50": 651.0494298418465,
         "prior20_high": 692.8300170898438,
         "recent10_low": 625.239990234375,
-        "stock_return_5": 0.025449807350733655,
-        "stock_return_20": -0.010880330994472609,
-        "qqq_return_5": 0.015430119954572996,
-        "qqq_return_20": -0.035968898006320416,
-        "relative_return_5": 0.01001968739616066,
-        "relative_return_20": 0.025088567011847807,
-        "volume_ratio": 1.2894591316551343,
-        "contraction_volume_ratio": 0.7326886347477357,
-        "recent_contraction_range_pct": 0.04649969751116497,
+        "stock_return_5": 0.04539186713067811,
+        "stock_return_20": -0.016768587381732147,
+        "qqq_return_5": -0.01974735050762988,
+        "qqq_return_20": -0.07883084595141532,
+        "relative_return_5": 0.06513921763830799,
+        "relative_return_20": 0.06206225856968317,
+        "volume_ratio": 1.1770061004223369,
+        "contraction_volume_ratio": 0.8405255748474895,
+        "recent_contraction_range_pct": 0.0620242305396014,
         "prior_contraction_range_pct": 0.06859225671268204,
-        "distance_sma20_atr": 0.643799900448478,
-        "distance_prior_high_atr": 1.8779172186223185,
-        "qqq_close": 715.3400268554688,
-        "qqq_sma20": 731.1420013427735,
-        "qqq_sma50": 725.409599609375,
-        "qqq_sma200": 679.1646002197266,
-        "qqq_sma200_slope_20": 11.255750732421916,
-        "qqq_close_vs_sma20": -15.801974487304733
+        "distance_sma20_atr": 1.5652914205471116,
+        "distance_prior_high_atr": 0.9943934714601262,
+        "qqq_close": 690.489990234375,
+        "qqq_sma20": 728.1875,
+        "qqq_sma50": 725.0007995605469,
+        "qqq_sma200": 679.5193002319336,
+        "qqq_sma200_slope_20": 10.915250549316397,
+        "qqq_close_vs_sma20": -37.697509765625
       },
       "event_status": "unknown",
       "market_regime": {
@@ -4532,49 +4511,18 @@
       "ticker": "AAPL",
       "research_only": true,
       "no_trade": true,
-      "status": "simulation_only",
-      "status_label": "已有策略触发，但仅作模拟",
+      "status": "waiting_trigger",
+      "status_label": "三种策略均在等待触发",
       "reason_codes": [
-        "event_date_unknown"
+        "event_date_unknown",
+        "no_trigger"
       ],
       "warnings": [
         "历史 OOS 候选通道已启用；公司研究等级仍为 C_SCREEN，仅可研究观察",
         "三种策略均为条件情景，不是上涨概率",
         "未通过历史 OOS 的策略只能记录模拟结果"
       ],
-      "signal": {
-        "signal_date": "2026-10-29",
-        "earliest_execution_date": "2026-10-30",
-        "entry_reference": 348.9100036621094,
-        "entry_range": [
-          348.0003605433873,
-          350.42607552664623
-        ],
-        "chase_limit": 351.942147391183,
-        "stop": 339.8135724748884,
-        "targets": [
-          362.5546504429408,
-          371.6510816301618
-        ],
-        "risk_per_share": 9.096431187220958,
-        "model": "trend_pullback",
-        "holding_window_days": [
-          1,
-          20
-        ],
-        "trigger_price": 347.18999267578124,
-        "prediction_calibrated": false,
-        "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
-        "exit_rules": {
-          "partial_target_fraction": 0.5,
-          "time_review_days": 10,
-          "time_review_minimum_r": 0.5,
-          "maximum_holding_days": 20,
-          "failed_breakout_review_days": 2,
-          "failed_breakout_action": "exit_review"
-        },
-        "style_fusion_version": "global-style-fusion-v1.3"
-      },
+      "signal": null,
       "strategies": [
         {
           "strategy_id": "oneil_volume_breakout",
@@ -4587,35 +4535,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 348.9100036621094,
-              "required": "> 341.54"
+              "current": 344.6300048828125,
+              "required": "> 342.08"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 341.5365020751953,
-              "required": "> 332.37"
+              "current": 342.0835021972656,
+              "required": "> 333.04"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 332.37420043945315,
-              "required": "> 296.13"
+              "current": 333.04080078125,
+              "required": "> 296.56"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 7.272000579834014,
+              "current": 7.397450561523442,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.09224764566220789,
+              "current": 0.11161577316339333,
               "required": "> 0"
             },
             {
@@ -4629,50 +4577,48 @@
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 348.9100036621094,
-              "required": ">= 352.03"
+              "current": 344.6300048828125,
+              "required": ">= 352.06"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 1.1046201525173283,
+              "passed": true,
+              "current": 1.752663895304717,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
-              "passed": false,
-              "current": -0.01344860700589856,
+              "passed": true,
+              "current": 0.010832370478375153,
               "required": "> 0"
             }
           ],
           "missing_conditions": [
-            "breakout_price",
-            "breakout_volume",
-            "relative_qqq_5_positive"
+            "breakout_price"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 352.0332253592355,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 352.0648325238909,
             "entry_range": [
-              351.1235822405134,
-              353.5492972237723
+              351.0603679112026,
+              353.7389402117048
             ],
-            "chase_limit": 355.0653690883091,
-            "stop": 342.9367941720145,
+            "chase_limit": 355.4130478995187,
+            "stop": 342.02018639700754,
             "targets": [
-              365.67787214006694,
-              374.77430332728784
+              367.13180171421595,
+              377.1764478410994
             ],
-            "risk_per_share": 9.096431187220958,
+            "risk_per_share": 10.044646126883379,
             "model": "oneil_volume_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 352.0332253592355,
+            "trigger_price": 352.0648325238909,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -4707,43 +4653,43 @@
         {
           "strategy_id": "trend_pullback",
           "label": "策略二：趋势回踩",
-          "status": "historical_edge_failed",
-          "status_label": "已触发但历史优势未通过",
-          "triggered": true,
+          "status": "waiting",
+          "status_label": "等待全部条件触发",
+          "triggered": false,
           "condition_checks": [
             {
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 348.9100036621094,
-              "required": "> 341.54"
+              "current": 344.6300048828125,
+              "required": "> 342.08"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 341.5365020751953,
-              "required": "> 332.37"
+              "current": 342.0835021972656,
+              "required": "> 333.04"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 332.37420043945315,
-              "required": "> 296.13"
+              "current": 333.04080078125,
+              "required": "> 296.56"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 7.272000579834014,
+              "current": 7.397450561523442,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.09224764566220789,
+              "current": 0.11161577316339333,
               "required": "> 0"
             },
             {
@@ -4757,53 +4703,56 @@
               "code": "pullback_touch",
               "label": "盘中回踩 SMA20 附近",
               "passed": true,
-              "current": 347.29998779296875,
-              "required": "<= 348.37"
+              "current": 334.3500061035156,
+              "required": "<= 348.93"
             },
             {
               "code": "pullback_reclaim",
               "label": "收盘重新站上 SMA20",
               "passed": true,
-              "current": 348.9100036621094,
-              "required": ">= 341.54"
+              "current": 344.6300048828125,
+              "required": ">= 342.08"
             },
             {
               "code": "pullback_confirmation",
               "label": "收盘高于前一日高点",
-              "passed": true,
-              "current": 348.9100036621094,
-              "required": "> 347.18"
+              "passed": false,
+              "current": 344.6300048828125,
+              "required": "> 351.43"
             },
             {
               "code": "pullback_volume",
               "label": "回踩成交量不过热",
-              "passed": true,
-              "current": 1.1046201525173283,
+              "passed": false,
+              "current": 1.752663895304717,
               "required": "<= 1.20x"
             }
           ],
-          "missing_conditions": [],
+          "missing_conditions": [
+            "pullback_confirmation",
+            "pullback_volume"
+          ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 348.9100036621094,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 351.43999267578124,
             "entry_range": [
-              348.0003605433873,
-              350.42607552664623
+              350.43552806309293,
+              353.1141003635951
             ],
-            "chase_limit": 351.942147391183,
-            "stop": 339.8135724748884,
+            "chase_limit": 354.788208051409,
+            "stop": 341.39534654889786,
             "targets": [
-              362.5546504429408,
-              371.6510816301618
+              366.5069618661063,
+              376.5516079929897
             ],
-            "risk_per_share": 9.096431187220958,
+            "risk_per_share": 10.044646126883379,
             "model": "trend_pullback",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 347.18999267578124,
+            "trigger_price": 351.43999267578124,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -4846,35 +4795,35 @@
               "code": "close_above_sma20",
               "label": "收盘价高于 SMA20",
               "passed": true,
-              "current": 348.9100036621094,
-              "required": "> 341.54"
+              "current": 344.6300048828125,
+              "required": "> 342.08"
             },
             {
               "code": "sma20_above_sma50",
               "label": "SMA20 高于 SMA50",
               "passed": true,
-              "current": 341.5365020751953,
-              "required": "> 332.37"
+              "current": 342.0835021972656,
+              "required": "> 333.04"
             },
             {
               "code": "sma50_above_sma200",
               "label": "SMA50 高于 SMA200",
               "passed": true,
-              "current": 332.37420043945315,
-              "required": "> 296.13"
+              "current": 333.04080078125,
+              "required": "> 296.56"
             },
             {
               "code": "sma200_rising",
               "label": "SMA200 保持上升",
               "passed": true,
-              "current": 7.272000579834014,
+              "current": 7.397450561523442,
               "required": "> 0"
             },
             {
               "code": "relative_qqq_20_positive",
               "label": "20 日相对 QQQ 强度为正",
               "passed": true,
-              "current": 0.09224764566220789,
+              "current": 0.11161577316339333,
               "required": "> 0"
             },
             {
@@ -4889,71 +4838,70 @@
               "label": "波动区间收缩",
               "passed": true,
               "current": 0.03137557471580656,
-              "required": "<= 0.0422"
+              "required": "<= 0.0427"
             },
             {
               "code": "vcp_volume_dryup",
               "label": "收缩期成交量萎缩",
               "passed": false,
-              "current": 1.0679569873976886,
+              "current": 1.036974687161871,
               "required": "<= 0.85x"
             },
             {
               "code": "vcp_near_high",
               "label": "价格接近箱体上沿",
-              "passed": true,
-              "current": 0.465018741885346,
+              "passed": false,
+              "current": 1.0602672329859266,
               "required": "<= 1.00 ATR"
             },
             {
               "code": "breakout_price",
               "label": "收盘突破参考价",
               "passed": false,
-              "current": 348.9100036621094,
-              "required": ">= 352.03"
+              "current": 344.6300048828125,
+              "required": ">= 352.06"
             },
             {
               "code": "breakout_volume",
               "label": "成交量确认",
-              "passed": false,
-              "current": 1.1046201525173283,
+              "passed": true,
+              "current": 1.752663895304717,
               "required": ">= 1.40x"
             },
             {
               "code": "relative_qqq_5_positive",
               "label": "5 日相对 QQQ 强度为正",
-              "passed": false,
-              "current": -0.01344860700589856,
+              "passed": true,
+              "current": 0.010832370478375153,
               "required": "> 0"
             }
           ],
           "missing_conditions": [
             "vcp_volume_dryup",
-            "breakout_price",
-            "breakout_volume",
-            "relative_qqq_5_positive"
+            "vcp_near_high",
+            "breakout_price"
           ],
           "entry_plan": {
-            "signal_date": "2026-10-29",
-            "earliest_execution_date": "2026-10-30",
-            "entry_reference": 352.0332253592355,
+            "signal_date": "2026-10-30",
+            "earliest_execution_date": "2026-11-02",
+            "entry_reference": 352.0648325238909,
             "entry_range": [
-              351.1235822405134,
-              353.5492972237723
+              351.0603679112026,
+              353.7389402117048
             ],
-            "chase_limit": 355.0653690883091,
-            "stop": 342.9367941720145,
+            "chase_limit": 355.4130478995187,
+            "stop": 342.02018639700754,
             "targets": [
-              365.67787214006694,
-              374.77430332728784
+              367.13180171421595,
+              377.1764478410994
             ],
-            "risk_per_share": 9.096431187220958,
+            "risk_per_share": 10.044646126883379,
             "model": "vcp_darvas_breakout",
             "holding_window_days": [
               1,
               20
             ],
-            "trigger_price": 352.0332253592355,
+            "trigger_price": 352.0648325238909,
             "prediction_calibrated": false,
             "directional_hypothesis": "仅当全部条件触发后观察上行延续；未触发时不作方向预测",
             "exit_rules": {
@@ -5027,39 +4975,39 @@
         "note": "三种策略是条件情景，不是上涨概率，也不声称复制任何专有方法。"
       },
       "indicators": {
-        "signal_date": "2026-10-29",
-        "current_close": 348.9100036621094,
-        "current_low": 347.29998779296875,
-        "previous_high": 347.17999267578125,
-        "atr14": 6.064287458147321,
-        "sma10": 344.95899963378906,
-        "sma20": 341.5365020751953,
-        "sma50": 332.37420043945315,
-        "sma200": 296.13269989013673,
-        "sma200_slope_20": 7.272000579834014,
-        "ema10": 344.89917706500114,
-        "ema20": 341.9933207731906,
-        "ema50": 333.782686393009,
+        "signal_date": "2026-10-30",
+        "current_close": 344.6300048828125,
+        "current_low": 334.3500061035156,
+        "previous_high": 351.42999267578125,
+        "atr14": 6.696430751255581,
+        "sma10": 345.0760009765625,
+        "sma20": 342.0835021972656,
+        "sma50": 333.04080078125,
+        "sma200": 296.5560499572754,
+        "sma200_slope_20": 7.397450561523442,
+        "ema10": 344.8502366682396,
+        "ema20": 342.2444335455355,
+        "ema50": 334.208071539721,
         "prior20_high": 351.7300109863281,
-        "recent10_low": 338.70001220703125,
-        "stock_return_5": 0.0019815129486744354,
-        "stock_return_20": 0.05627874765588747,
-        "qqq_return_5": 0.015430119954572996,
-        "qqq_return_20": -0.035968898006320416,
-        "relative_return_5": -0.01344860700589856,
-        "relative_return_20": 0.09224764566220789,
-        "volume_ratio": 1.1046201525173283,
-        "contraction_volume_ratio": 1.0679569873976886,
+        "recent10_low": 334.3500061035156,
+        "stock_return_5": -0.008914980029254727,
+        "stock_return_20": 0.03278492721197801,
+        "qqq_return_5": -0.01974735050762988,
+        "qqq_return_20": -0.07883084595141532,
+        "relative_return_5": 0.010832370478375153,
+        "relative_return_20": 0.11161577316339333,
+        "volume_ratio": 1.752663895304717,
+        "contraction_volume_ratio": 1.036974687161871,
         "recent_contraction_range_pct": 0.03137557471580656,
-        "prior_contraction_range_pct": 0.05276680086279752,
-        "distance_sma20_atr": 1.2158891935453742,
-        "distance_prior_high_atr": 0.465018741885346,
-        "qqq_close": 715.3400268554688,
-        "qqq_sma20": 731.1420013427735,
-        "qqq_sma50": 725.409599609375,
-        "qqq_sma200": 679.1646002197266,
-        "qqq_sma200_slope_20": 11.255750732421916,
-        "qqq_close_vs_sma20": -15.801974487304733
+        "prior_contraction_range_pct": 0.05340179163185337,
+        "distance_sma20_atr": 0.38027761058671866,
+        "distance_prior_high_atr": 1.0602672329859266,
+        "qqq_close": 690.489990234375,
+        "qqq_sma20": 728.1875,
+        "qqq_sma50": 725.0007995605469,
+        "qqq_sma200": 679.5193002319336,
+        "qqq_sma200_slope_20": 10.915250549316397,
+        "qqq_close_vs_sma20": -37.697509765625
       },
       "event_status": "unknown",
       "market_regime": {
@@ -5076,11 +5024,9 @@
         "trend_template": true,
         "vcp_contraction": false,
         "volume_breakout": false,
-        "trend_pullback": true,
-        "triggered_models": [
-          "trend_pullback"
-        ],
-        "triggered_model": "trend_pullback"
+        "trend_pullback": false,
+        "triggered_models": [],
+        "triggered_model": null
       }
     }
   ],
@@ -5093,8 +5039,8 @@
       "historical_watch": 0,
       "preliminary_review": 0,
       "manual_review_ready": 0,
-      "simulation_only": 3,
-      "waiting_trigger": 6,
+      "simulation_only": 1,
+      "waiting_trigger": 8,
       "waiting_breakout": 0,
       "waiting_pullback": 0,
       "chase_blocked": 0,
