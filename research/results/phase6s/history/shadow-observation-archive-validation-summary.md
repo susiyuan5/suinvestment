@@ -3,15 +3,15 @@
 This validation is research-only. It does not rerun observations, fetch prices, promote symbols, or change live/default behavior.
 
 - Archive valid: `True`
-- Archived observation count: `5`
-- Unique observation timestamp count: `5`
-- Unique observation date count: `4`
+- Archived observation count: `6`
+- Unique observation timestamp count: `6`
+- Unique observation date count: `5`
 - Same-day run warning: `True`
-- Latest archived observation timestamp: `2026-10-01T18:53:52.847742+00:00`
+- Latest archived observation timestamp: `2026-11-01T18:25:46.290076+00:00`
 - Actual duplicate timestamp count: `0`
 - Prevented duplicate timestamp count: `1`
 - Missing archive file count: `0`
-- Governance observation runs: `5`
+- Governance observation runs: `6`
 - Minimum observation runs required: `8`
 - Fake run detected: `False`
 - Human-review gate met: `False`

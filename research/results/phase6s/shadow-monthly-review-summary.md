@@ -1,19 +1,19 @@
 # Shadow Monthly Review Summary
 
-Generated: `2026-10-01T18:53:53.121190+00:00`
+Generated: `2026-11-01T18:25:46.565763+00:00`
 
 This report is research-only. It does not rerun observations, fetch prices, archive snapshots, promote symbols, trade, or change live/default behavior.
 
 ## Observation Readiness
 
-- Latest observation timestamp: `2026-10-01T18:53:52.847742+00:00`
-- Observation runs available: `5`
+- Latest observation timestamp: `2026-11-01T18:25:46.290076+00:00`
+- Observation runs available: `6`
 - Minimum observation runs required: `8`
 - Minimum calendar weeks required: `8`
-- Calendar weeks available: `14.8571`
-- Unique observation date count: `4`
-- Calendar span days: `104`
-- Calendar span weeks: `14.8571`
+- Calendar weeks available: `19.2857`
+- Unique observation date count: `5`
+- Calendar span days: `135`
+- Calendar span weeks: `19.2857`
 - Calendar requirement met: `True`
 - Same-day run warning: `True`
 - Cadence status: `same_day_validation_runs_detected`
@@ -26,8 +26,8 @@ This report is research-only. It does not rerun observations, fetch prices, arch
 ## Archive Integrity
 
 - Archive validation status: `valid`
-- Archived observation count: `5`
-- Unique observation timestamp count: `5`
+- Archived observation count: `6`
+- Unique observation timestamp count: `6`
 - Duplicate timestamp count: `0`
 - Missing archive file count: `0`
 
