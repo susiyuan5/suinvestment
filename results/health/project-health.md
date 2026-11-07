@@ -1,7 +1,7 @@
 # Project Health
 
 - Status: **WARNING**
-- Generated: `2026-11-06T20:05:32.789461+00:00`
+- Generated: `2026-11-07T18:18:42.942668+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
@@ -11,8 +11,8 @@
 
 ## Historical Coverage
 
-- QQQ: 283 rows; latest `2026-10-30`; lag `7` days
-- SPY: 283 rows; latest `2026-10-30`; lag `7` days
+- QQQ: 284 rows; latest `2026-11-06`; lag `1` days
+- SPY: 284 rows; latest `2026-11-06`; lag `1` days
 
 ## Workflows
 
@@ -54,8 +54,8 @@
 ## Research Pipeline
 
 - DCA-L2 v2 valid: `True`
-- Schedule events: `282`
-- Executed trades: `5076`
+- Schedule events: `283`
+- Executed trades: `5094`
 - Scope: `research_only`
 
 ## Idea Engine
