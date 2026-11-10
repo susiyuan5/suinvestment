@@ -39,7 +39,7 @@
   <link rel="stylesheet" href="live-data.css?v=live-data-v1">
     <link href="take-profit-panel.css?v=crypto-view-v2" rel="stylesheet" />
     <link href="btc-trend-panel.css?v=crypto-plan-v1" rel="stylesheet" />
-    <link href="tqqq-ma-panel.css?v=tqqq-ma-v1" rel="stylesheet" />
+    <link href="tqqq-ma-panel.css?v=tqqq-ma-v2" rel="stylesheet" />
   </head>
   <body>
     <div class="app-shell">
@@ -1085,7 +1085,8 @@
               <li>在两条线之间不操作，保持上一次信号后的状态。</li>
               <li>QQQ 高于自身均线 30% 为减半仓价位，高于 40% 为清仓价位；本页只显示这两个价位，不把它们计入买卖状态。</li>
             </ol>
-            <p class="tqqq-ma-foot">数据为 Yahoo 的 SPY、QQQ 日线收盘价（未复权），不是实时行情。这是按规则算出的信号，不是投资建议；本规则尚未在本项目内做回测。详见 docs/TQQQ_MA_SIGNAL_2026-11-10.md。</p>
+            <p class="tqqq-ma-foot">数据为 Yahoo 的 SPY、QQQ 日线收盘价（未复权），不是实时行情。这是按规则算出的信号，不是投资建议。</p>
+            <p class="tqqq-ma-foot"><strong>回测（单边 0.1% 成本，信号次日收盘成交）：</strong>2010-02 至 2026-11 规则年化约 31%，最大回撤约 -48%；同期一直持有 TQQQ 年化约 40%，最大回撤约 -82%。把 2000 年起的历史用模拟的三倍 QQQ 补上后，规则年化约 15%，最大回撤约 -86%：2000 年那样从高位快速下跌时，规则来不及离场。阈值在同一段历史中选出，不保证收益；本页不给仓位建议。详见 docs/TQQQ_MA_BACKTEST_2026-11-10.md 与 docs/TQQQ_MA_SIGNAL_2026-11-10.md。</p>
           </section>
         </section>
         <section
