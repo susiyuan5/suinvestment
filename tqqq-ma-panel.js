@@ -21,6 +21,7 @@
   }
   const f2 = (value) => (Number.isFinite(value) ? value.toFixed(2) : "—");
   const f1 = (value) => (Number.isFinite(value) ? value.toFixed(1) : "—");
+  const share = (value) => (Math.round(value * 10000) / 100).toString() + "%";
   const signed = (value) =>
     Number.isFinite(value) ? (value >= 0 ? "+" : "−") + Math.abs(value).toFixed(1) + "%" : "—";
   const ZONE_TEXT = { above: "在买入线上方", below: "在卖出线下方", between: "两线之间" };
@@ -250,6 +251,29 @@
     started = true;
     load();
   }
+
+  // Position cap: fixed guidance from the plan constants, shown with or without data.
+  function renderPlan() {
+    const plan = Signal.plan();
+    const item = (label, value, note) => {
+      const box = node("div", "tqqq-ma-plan-item");
+      box.append(node("span", "", label), node("strong", "", value), node("small", "", note));
+      return box;
+    };
+    byId("tqqqMaPlan").replaceChildren(
+      item(
+        "TQQQ 预算上限",
+        "总资产的 " + share(plan.budgetCap),
+        "总资产最多亏 " + share(plan.lossLimit) + " ÷ 回测最大回撤 " + share(plan.referenceDrawdown) + "，向下取整",
+      ),
+      item("规则持有时", "TQQQ 最多占总资产 " + share(plan.budgetCap), "预算全部为 TQQQ"),
+      item("规则空仓时", "TQQQ 占总资产 0%", "预算全部为现金"),
+    );
+    byId("tqqqMaPlanNote").textContent =
+      "上限按含 2000 年模拟历史的最大回撤反推；只按 2010 年以来的真实历史（回撤 " + share(plan.realDrawdown) + "）算约为总资产的 " +
+      share(plan.realHistoryBudgetCap) + "。未来回撤可能更深，股票也可能同时下跌；这个上限与虚拟货币的上限各自独立计算。本页不读取你的账户，比例需自行核对。";
+  }
+  renderPlan();
 
   const form = byId("tqqqMaCalc");
   form.addEventListener("input", calc);

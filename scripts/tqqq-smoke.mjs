@@ -52,6 +52,13 @@ try {
   assert.equal(await page.locator("#tqqqMaChart svg polyline").count(), 2);
   assert.match(await page.locator("#tqqqMaChart svg").getAttribute("aria-label"), /2026-11-09/);
 
+  // Position cap: 10% loss limit over the backtest's 85.8% drawdown, rounded down.
+  const planText = await text(page, "tqqqMaPlan");
+  assert.match(planText, /TQQQ 预算上限总资产的 11%/);
+  assert.match(planText, /规则持有时TQQQ 最多占总资产 11%/);
+  assert.match(planText, /规则空仓时TQQQ 占总资产 0%/);
+  assert.match(await text(page, "tqqqMaPlanNote"), /真实历史（回撤 48\.1%）算约为总资产的 20%.*不读取你的账户/);
+
   // Manual calculator: prefilled from data, recomputes on input, never stores or sends anything.
   assert.equal(await page.locator("#tqqqMaSpyClose").inputValue(), "752.69");
   assert.match(await text(page, "tqqqMaCalcOut"), /SPY \+3\.0%，两线之间。 QQQ −0\.3%，两线之间。 结论：不操作/);
@@ -135,6 +142,7 @@ try {
   for (const [id, value] of [["tqqqMaSpyClose", "104"], ["tqqqMaSpyMa", "100"], ["tqqqMaQqqClose", "105"], ["tqqqMaQqqMa", "100"]])
     await page.locator("#" + id).fill(value);
   assert.match(await text(page, "tqqqMaCalcOut"), /结论：买入或继续持有。/);
+  assert.match(await text(page, "tqqqMaPlan"), /总资产的 11%/, "the cap is shown without data");
   assert.deepEqual(missing.errors, []);
   await missing.context.close();
   console.log("TQQQ smoke passed: verdict, rulers, levels, overheat levels, chart, manual calculator, stale and missing-data guards, read-only controls, six tabs at desktop, mobile and 200% zoom.");

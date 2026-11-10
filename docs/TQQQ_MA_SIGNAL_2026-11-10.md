@@ -33,7 +33,7 @@ On the frozen fixture (latest session 2026-11-09) the module gives: out since 20
 ## Limitations
 
 - The rule's thresholds were taken as given. A backtest was added afterwards in `docs/TQQQ_MA_BACKTEST_2026-11-10.md`: since 2010 it returned less than holding TQQQ with a much smaller drawdown, and a synthetic extension to 2000 shows an 86% drawdown.
-- TQQQ is a 3× daily-leveraged fund; its losses in a decline are larger than QQQ's and compound unfavourably in choppy markets. The view says nothing about position size.
+- TQQQ is a 3× daily-leveraged fund; its losses in a decline are larger than QQQ's and compound unfavourably in choppy markets. Since the backtest the view shows a budget cap of 11% of total wealth (10% loss limit); see the backtest report.
 - Closes are unadjusted, matching what charting apps show; an adjusted series would give slightly different averages.
 - Signals depend on daily closes from one source. A bad or missing bar is caught only by the coarse validation above.
 

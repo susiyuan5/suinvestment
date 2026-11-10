@@ -71,6 +71,8 @@ REQUIRED_IDS = {
     "tqqqMaChart",
     "tqqqMaCalc",
     "tqqqMaCalcOut",
+    "tqqqMaPlan",
+    "tqqqMaPlanNote",
 }
 REQUIRED_PRE_APP_SCRIPTS = {
     "market-data.js", "market-analysis.js", "signal-engine.js", "portfolio-policy.js",
