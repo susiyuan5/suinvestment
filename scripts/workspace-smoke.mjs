@@ -159,6 +159,23 @@ try {
         ["weekly", "holdings", "dip", "take-profit", "crypto"],
         `${name}/${route} main navigation links`,
       );
+      if (route === "weekly") {
+        const box = (selector) =>
+          page.locator(selector).first().evaluate((e) => e.getBoundingClientRect().toJSON());
+        // The buy/pause verdict leads the plan, ahead of the editing tools.
+        assert.ok(
+          (await box("#weeklyDecisionSafety")).bottom <= (await box("#stockSearchInput")).top,
+          `${name} verdict sits above the add-stock tools`,
+        );
+        if (name === "mobile") {
+          const price = await box("#weeklyDecisionRows .weekly-decision-value-pair");
+          const final = await box("#weeklyDecisionRows .weekly-decision-final");
+          assert.ok(
+            final.top < price.bottom && final.left >= price.right - 1,
+            "phone rows keep the suggested amount beside the price lines",
+          );
+        }
+      }
       await page.screenshot({
         path: `output/playwright/workspace-${name}-${route}.png`,
       });
