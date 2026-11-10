@@ -142,7 +142,7 @@ try {
   ]) {
     await page.setViewportSize({ width, height: 900 });
     await page.evaluate((z) => (document.documentElement.style.zoom = z), zoom);
-    for (const route of ["weekly", "holdings", "dip"]) {
+    for (const route of ["weekly", "holdings", "dip", "crypto"]) {
       await nav(route);
       assert.equal(
         await page.evaluate(
@@ -151,7 +151,14 @@ try {
         true,
         `${name}/${route} overflow`,
       );
-      assert.equal(await page.locator(".workspace-nav a:visible").count(), 4);
+      // Main nav: 本周操作 / 持仓 / 抄底 / 止盈 / 虚拟货币 stay visible at every size.
+      assert.deepEqual(
+        await page
+          .locator(".workspace-nav a:visible")
+          .evaluateAll((links) => links.map((a) => a.dataset.viewLink)),
+        ["weekly", "holdings", "dip", "take-profit", "crypto"],
+        `${name}/${route} main navigation links`,
+      );
       await page.screenshot({
         path: `output/playwright/workspace-${name}-${route}.png`,
       });
