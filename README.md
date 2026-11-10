@@ -2,6 +2,16 @@
 
 Su Investment Pro is a weekly investment calculator, historical backtesting toolkit, and live market decision-support assistant. It is not an automatic trading bot. It never places real orders, never logs in to a brokerage account, and never submits buy or sell instructions through a broker API.
 
+## Manual value-trap exemption for chosen stocks (2026-11-10)
+
+The value-trap guard below still cancels an individual stock's Base at a 52-week drawdown of 35% or more. Su can now exempt
+chosen stocks one at a time from the expanded 详情 row of the weekly plan (shown only for stocks at or past the guard). An
+exempted stock gets its scheduled Base only, never Extra or Crash; data errors, panic mode, manual pauses and an unknown
+drawdown still stop the buy, and index ETFs are unaffected. The choice is stored in this browser
+(`su-investment-pro:value-trap-exemptions-v1`), reported as `STOCK_BASE_MANUAL_VALUE_TRAP_EXEMPTION`, and shown as
+"基础投入 · 手动豁免". The guard's threshold and every other rule are unchanged. See
+`docs/VALUE_TRAP_MANUAL_EXEMPTION_2026-11-10.md`.
+
 ## Stock Base preservation and Crash reserve (weekly-dca-v4, 2026-10-17)
 
 Individual-stock price and market-risk labels now stop only Extra and Crash; scheduled Base continues

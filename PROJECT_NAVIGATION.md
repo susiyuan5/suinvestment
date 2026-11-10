@@ -74,6 +74,10 @@ Entry: workspace main nav → `TQQQ`, after 虚拟货币 (`index.html#tqqq`). Se
 - Design, data rules and limitations: [`docs/TQQQ_MA_SIGNAL_2026-11-10.md`](docs/TQQQ_MA_SIGNAL_2026-11-10.md).
 - Backtest and the 2026-11-10 position cap (11% of total wealth; rule unchanged): [`docs/TQQQ_MA_BACKTEST_2026-11-10.md`](docs/TQQQ_MA_BACKTEST_2026-11-10.md), script `scripts/tqqq-ma-backtest.mjs`.
 
+## A.4 Manual value-trap exemption
+
+- Per-stock, owner-chosen exemption from the 35% drawdown guard on weekly Base (Base only; no Extra or Crash). Toggle in the weekly plan's expanded 详情 row; engine flag `valueTrapExempt` in `weekly-dca-engine.js`; design and limits in [`docs/VALUE_TRAP_MANUAL_EXEMPTION_2026-11-10.md`](docs/VALUE_TRAP_MANUAL_EXEMPTION_2026-11-10.md).
+
 ## A.3 Weekly history for added stocks
 
 - `docs/WEEKLY_HISTORY_EXTRA_SYMBOLS_2026-10-28.md`: weekly history for stocks added in the browser (`data/weekly-history-symbols.json`), fixing 「风险未知」.

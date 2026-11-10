@@ -38,6 +38,7 @@
     ,recentStocks: "su-investment-pro:recent-stocks-v1"
     ,weeklyListSort: "su-investment-pro:weekly-list-sort-v1"
     ,weeklyExcludedSymbols: "su-investment-pro:weekly-excluded-symbols-v1"
+    ,valueTrapExemptions: "su-investment-pro:value-trap-exemptions-v1"
   };
 
   let planningCurrencyMigration = window.WealthsimpleCurrency && window.WealthsimpleCurrency.migrateStoredPlanningCurrency
@@ -4887,7 +4888,8 @@ function equalizeAllocations() {
       inputs: inputs.map(function (item) {
         const gate = WeeklySignalModel.weeklyDcaActionGate(item.entry.signal);
         const detail = WeeklySignalModel.weeklyDcaGateDetail ? WeeklySignalModel.weeklyDcaGateDetail(item.entry.signal) : {};
-        return { symbol: item.entry.signal.symbol, input: item.input, ...gate, ...detail, extraBlocked: gate.extraBlocked || !contribution.valid || !allocationContext.complete };
+        return { symbol: item.entry.signal.symbol, input: item.input, ...gate, ...detail, extraBlocked: gate.extraBlocked || !contribution.valid || !allocationContext.complete,
+          valueTrapExempt: valueTrapExemptions().includes(item.entry.signal.symbol) };
       }),
       policyState: ledger, config: state.dcaL2ConfigReady ? state.dcaL2Config : { ...state.dcaL2Config, configValid: false },
       plannedDate,
@@ -5985,6 +5987,21 @@ function equalizeAllocations() {
     }
   }
 
+  // Per-stock manual exemption from the value-trap guard (Base only). Stored in
+  // this browser; the engine ignores it for index ETFs and unknown drawdowns.
+  function valueTrapExemptions() {
+    const value = loadJson(STORAGE_KEYS.valueTrapExemptions, []);
+    return Array.isArray(value) ? value.filter(function (symbol) { return typeof symbol === "string" && /^[A-Z0-9.\-]{1,12}$/.test(symbol); }) : [];
+  }
+  function valueTrapLimitPct() {
+    const raw = state.dcaL2Config && state.dcaL2Config.stockBasePreservation;
+    return raw && raw.enabled === true && Number.isFinite(Number(raw.maxDrawdownPct)) && raw.maxDrawdownPct !== null ? Number(raw.maxDrawdownPct) : null;
+  }
+  function setValueTrapExemption(symbol, exempt) {
+    const next = valueTrapExemptions().filter(function (item) { return item !== symbol; });
+    if (exempt) next.push(symbol);
+    saveJson(STORAGE_KEYS.valueTrapExemptions, next.sort());
+  }
   function coreSatelliteReason(row) {
     const codes = row && Array.isArray(row.reasonCodes) ? row.reasonCodes : [];
     if (codes.indexOf("ETF_LOOKTHROUGH_LIMIT") >= 0) return "穿透后超过单股上限，请人工调整；金额保留为现金，不转入 SPY";
@@ -5993,6 +6010,7 @@ function equalizeAllocations() {
     if (codes.indexOf("安全检查未通过") >= 0 || codes.indexOf("SPY_DATA_OR_SAFETY_BLOCK") >= 0) return "数据或计算未通过安全检查，请人工复核";
     if (codes.indexOf("INDEX_LADDER_CRASH_PLANNED") >= 0) return "指数回撤阶梯：按该指数离 52 周高点的回撤，动用暴跌备用金加仓";
     if (codes.indexOf("INDEX_BASE_PRESERVED_MARKET_RISK") >= 0) return "指数基础定投不因下跌或市场风险标签暂停，仅数据异常或人工暂停会停止";
+    if (codes.indexOf("STOCK_BASE_MANUAL_VALUE_TRAP_EXEMPTION") >= 0) return "手动豁免：该股离 52 周高点已跌超 " + valueTrapLimitPct() + "%，按你的设置继续基础定投；Extra＋Crash 仍关闭";
     if (codes.indexOf("STOCK_BASE_PRESERVED_PRICE_SIGNAL") >= 0) return "个股价格信号偏弱：只暂停 Extra＋Crash，基础定投照常；离 52 周高点跌超 35% 时才暂停基础定投";
     if (codes.indexOf("ACTION_REQUIRES_ZERO_AMOUNT") >= 0) return "硬风控或人工暂停阻止买入，资金保留为现金";
     if (codes.indexOf("SATELLITE_RISK_BLOCKED") >= 0) return "个股风控门禁阻止买入，资金保留为现金";
@@ -6174,9 +6192,31 @@ function equalizeAllocations() {
       expandedRow.querySelector(".weekly-decision-detail p").textContent = coreSatelliteReason(row) + "；安全门禁状态：" + (safe ? "已通过" : "未通过");
       const execution = executionSummary.statuses[symbol];
       const detail = expandedRow.querySelector(".weekly-decision-detail");
+      const trapLimit = valueTrapLimitPct();
+      const trapDrawdown = Number(signal.algorithm && signal.algorithm.drawdown);
+      const trapIndex = ((state.dcaL2Config.indexDrawdownLadder || {}).symbols || []).includes(symbol);
+      const trapExempt = valueTrapExemptions().includes(symbol);
+      const trapUsed = (row.reasonCodes || []).includes("STOCK_BASE_MANUAL_VALUE_TRAP_EXEMPTION");
+      if (trapUsed && safe && Number(row.finalAmount || 0) > 0) card.querySelector(".weekly-decision-status").textContent = "基础投入 · 手动豁免";
+      if (trapLimit !== null && !trapIndex && (trapExempt || (signal.algorithm && signal.algorithm.drawdown != null && Number.isFinite(trapDrawdown) && trapDrawdown >= trapLimit))) {
+        const trapLabel = document.createElement("label");
+        trapLabel.className = "weekly-value-trap-exemption";
+        const trapBox = document.createElement("input");
+        trapBox.type = "checkbox"; trapBox.checked = trapExempt; trapBox.dataset.valueTrapExempt = symbol;
+        const trapText = document.createElement("span");
+        trapText.textContent = "手动豁免「离 52 周高点跌超 " + trapLimit + "% 暂停基础定投」（" + symbol + " 当前回撤 " + (Number.isFinite(trapDrawdown) ? trapDrawdown.toFixed(1) + "%" : "未知") + "）。勾选后只恢复基础定投，Extra＋Crash 仍关闭；数据异常、恐慌模式和人工暂停仍会停止买入。";
+        trapLabel.append(trapBox, trapText);
+        trapBox.addEventListener("change", function () {
+          if (trapBox.checked && !window.confirm("确认对 " + symbol + " 关闭「跌超 " + trapLimit + "% 暂停基础定投」的保护？个股大跌后可能继续下跌。这只影响本页的定投建议，不会下单。")) { trapBox.checked = false; return; }
+          setValueTrapExemption(symbol, trapBox.checked);
+          render();
+          document.getElementById("weeklyAllocationStatus").textContent = trapBox.checked ? symbol + " 已手动豁免价值陷阱保护，基础定投照常。" : symbol + " 已恢复价值陷阱保护。";
+        });
+        detail.appendChild(trapLabel);
+      }
       card.querySelector(".weekly-decision-final").textContent = "建议 " + formatCurrency(row.finalAmount);
       card.querySelector(".weekly-decision-reason").textContent = coreSatelliteReason(row);
-      card.querySelector(".weekly-decision-status").dataset.state = !safe || riskUnknown ? "warning" : Number(row.finalAmount || 0) > 0 ? "ready" : "neutral";
+      card.querySelector(".weekly-decision-status").dataset.state = !safe || riskUnknown || trapUsed ? "warning" : Number(row.finalAmount || 0) > 0 ? "ready" : "neutral";
       const signalLabel = document.createElement("p");
       signalLabel.textContent = "风险：" + displaySignalRisk(signal) + "；信号：" + (symbol === "SPY" ? "核心基础定投" : "DCA-L2") + "；原因与限制：" + coreSatelliteReason(row);
       detail.prepend(signalLabel);
