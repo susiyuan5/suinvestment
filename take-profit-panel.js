@@ -12,6 +12,8 @@
   const cancelEdit = byId("takeProfitCancelEdit"), status = byId("takeProfitDataStatus");
   let started = false, observations = [], positions = [], index = null, expected = null;
   let editing = null, pendingRemove = null, attempt = 0, busy = false, storageWritable = true;
+  // A freshness check requested while a refresh is loading runs when it ends.
+  let freshnessPending = false;
   let holdings = { available: false, reason: "正在读取当前持仓。", sourceLabel: "当前持仓", positions: [] };
   let holdingsFingerprint = "", refreshingHoldings = false;
   const symbolCache = new Map(), controllers = new Set(), results = new Map();
@@ -342,7 +344,11 @@
       setStatus("股票行情清单读取失败；未生成止盈提示。请更新行情重试。", "error");
       renderCards();
     } finally {
-      if (token === attempt) { busy = false; updateControls(); }
+      if (token === attempt) {
+        busy = false;
+        updateControls();
+        if (freshnessPending) { freshnessPending = false; checkFreshness(); }
+      }
     }
   }
   function resetForm() {
@@ -412,6 +418,7 @@
       abortPending();
       if (busy) symbolCache.clear();
       busy = false;
+      freshnessPending = false;
       updateControls();
       return;
     }
@@ -424,7 +431,10 @@
     if (!view.hidden) activate();
   });
   async function checkFreshness() {
-    if (!started || view.hidden || busy) return;
+    if (!started || view.hidden) return;
+    // The running refresh may already have read the expected session, so the
+    // check is deferred rather than dropped.
+    if (busy) { freshnessPending = true; return; }
     const previous = holdingsFingerprint;
     syncHoldings();
     if (previous !== holdingsFingerprint) { activate(); return; }

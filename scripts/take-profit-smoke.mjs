@@ -30,6 +30,8 @@ for (const symbol of symbols) {
   index.symbols[symbol] = { path: `data/take-profit-v1/symbols/${symbol}.json`, first_date: daily[0].date, last_date: daily.at(-1).date, rows: daily.length };
   payloads[symbol] = { schema_version: "take-profit-browser-bars-v1", research_only: true, currency: "USD", as_of: expected, symbol: symbol === "TSLA" ? "MSFT" : symbol, rows: daily };
 }
+// Delay for symbol snapshots, so a test can hold a refresh in its loading state.
+let symbolDelayMs = 0;
 async function installFixtures(context, requests, isStale = () => false) {
   await context.route(/https:\/\/(finnhub\.io|query1\.finance\.yahoo\.com|www\.bankofcanada\.ca)\//, (route) => route.abort());
   await context.route("https://raw.githubusercontent.com/susiyuan5/suinvestment/**", async (route) => {
@@ -53,6 +55,7 @@ async function installFixtures(context, requests, isStale = () => false) {
     const symbol = path.basename(name, ".json");
     if (symbol === "META") return route.fulfill({ status: 503, body: "fixture unavailable" });
     if (!payloads[symbol]) return route.fulfill({ status: 404, body: "unknown symbol" });
+    if (symbolDelayMs) await new Promise((resolve) => setTimeout(resolve, symbolDelayMs));
     return route.fulfill({ json: payloads[symbol] });
   });
 }
@@ -325,7 +328,14 @@ try {
   await page.waitForFunction(() => document.querySelectorAll(".take-profit-card").length===6 && document.querySelector("#takeProfitRefresh")?.getAttribute("aria-busy")==="false");
   await savePosition("AAPL");
   assert.equal(await watch("AAPL").locator(".take-profit-card-reason").textContent(),firstTriggerText);
+  // A freshness check that arrives while a refresh is still loading symbols must
+  // run once that refresh ends, not be dropped until the next minute's timer.
+  symbolDelayMs = 1500;
+  await page.locator("#takeProfitRefresh").click();
+  await page.waitForFunction(() => document.querySelector("#takeProfitDataStatus").textContent.includes("最新完整日线已核对") && document.querySelector("#takeProfitRefresh").getAttribute("aria-busy") === "true");
   await page.evaluate(() => { document.documentElement.style.zoom = 1; window.__TP_EXPECTED__ = "2026-10-05"; document.dispatchEvent(new Event("visibilitychange")); });
+  assert.equal(await page.locator("#takeProfitRefresh").getAttribute("aria-busy"), "true", "the check was requested during the refresh");
+  symbolDelayMs = 0;
   await page.waitForFunction(() => document.querySelector('.take-profit-card[data-symbol="SPY"]')?.dataset.state === "blocked");
   assert.match(await page.locator("#takeProfitDataStatus").textContent(), /行情过期/);
   assert.equal(await watch("SPY").locator("progress").count(), 0, "new market close invalidates cached old actionable state");
