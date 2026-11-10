@@ -54,6 +54,9 @@ REQUIRED_IDS = {
     "btcTrendMetrics",
     "btcTrendNext",
     "btcTrendHistory",
+    "btcTrendAction",
+    "btcTrendHistoryMore",
+    "btcTrendHistoryMoreWrap",
 }
 REQUIRED_PRE_APP_SCRIPTS = {
     "market-data.js", "market-analysis.js", "signal-engine.js", "portfolio-policy.js",

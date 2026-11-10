@@ -992,8 +992,9 @@ body:has(.workspace-sidebar) > #liveDataStatus { order: 1; margin-left: 156px; b
   .hero .hero-tools { margin-left: auto; }
   .workspace-sidebar { inset: 56px 0 auto; width: auto; padding: 5px 12px; border: 0; border-bottom: 1px solid var(--dashboard-border); }
   .workspace-sidebar > .sidebar-label, .sidebar-tools, .sidebar-note { display: none; }
-  .workspace-sidebar .workspace-nav { display: flex; gap: 4px; }
-  .workspace-sidebar .workspace-nav a { text-align: center; padding: 10px 4px; }
+  .workspace-sidebar .workspace-nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  .workspace-sidebar .workspace-nav::-webkit-scrollbar { display: none; }
+  .workspace-sidebar .workspace-nav a { flex: 1 0 auto; text-align: center; padding: 10px 2px; white-space: nowrap; }
   #decisionSummary > .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .summary-card { padding: 12px; }
   .summary-card > strong { font-size: 20px; }
@@ -1074,3 +1075,5 @@ body:has(.workspace-sidebar) > #liveDataStatus { order: 1; margin-left: 156px; b
 }
 #weeklyDecisionPlan #refreshBtn { min-width: 106px; white-space: nowrap; }
 #weeklyDecisionPlan #weeklyAddStockBtn { min-width: 100px; }
+/* Headings receive programmatic focus on view change so screen readers announce the view; no visible ring is needed on non-interactive text. */
+#workspaceViews h2[tabindex="-1"]:focus { outline: none; }

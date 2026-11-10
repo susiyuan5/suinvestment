@@ -41,8 +41,13 @@
     document.querySelectorAll("[data-view-link]").forEach((link) => {
       const active = link.dataset.viewLink === current;
       link.classList.toggle("is-active", active);
-      if (active) link.setAttribute("aria-current", "page");
-      else link.removeAttribute("aria-current");
+      if (active) {
+        link.setAttribute("aria-current", "page");
+        // Narrow layouts scroll the tab row sideways; keep the active tab in view.
+        const row = link.closest(".workspace-nav");
+        if (row && row.scrollWidth > row.clientWidth)
+          row.scrollLeft = link.offsetLeft - (row.clientWidth - link.offsetWidth) / 2;
+      } else link.removeAttribute("aria-current");
     });
     if (menu) menu.open = false;
     if (current === "tools-watchlist") byId("watchlist").open = true;

@@ -33,12 +33,12 @@
     <link href="settings-center.css?v=settings-center-v2" rel="stylesheet" />
     <link href="allocation-draft.css?v=weekly-contribution-v1" rel="stylesheet" />
     <link
-      href="workspace-navigation.css?v=weekly-contribution-v2"
+      href="workspace-navigation.css?v=crypto-view-v2"
       rel="stylesheet"
     />
   <link rel="stylesheet" href="live-data.css?v=live-data-v1">
-    <link href="take-profit-panel.css?v=take-profit-holdings-selection-v1" rel="stylesheet" />
-    <link href="btc-trend-panel.css?v=crypto-view-v1" rel="stylesheet" />
+    <link href="take-profit-panel.css?v=crypto-view-v2" rel="stylesheet" />
+    <link href="btc-trend-panel.css?v=crypto-view-v2" rel="stylesheet" />
   </head>
   <body>
     <div class="app-shell">
@@ -985,27 +985,30 @@
         >
           <header class="btc-trend-heading">
             <h2 id="btcTrendTitle" tabindex="-1">虚拟货币</h2>
+            <button class="secondary-button" id="btcTrendRefresh" type="button">重新读取</button>
             <p>BTC 周线趋势 · 20 周均线，连续 2 个完整周收盘站上记为持有，1 个完整周收盘跌破记为空仓。独立于股票定投、抄底和止盈资金，仅作参考，不会下单。</p>
           </header>
-          <div class="btc-trend-toolbar">
-            <p class="btc-trend-status" id="btcTrendStatus" role="status" aria-live="polite">进入后读取 BTC 周线数据。</p>
-            <button class="secondary-button" id="btcTrendRefresh" type="button">重新读取</button>
-          </div>
+          <p class="btc-trend-status" id="btcTrendStatus" role="status" aria-live="polite">进入后读取 BTC 周线数据。</p>
           <div id="btcTrendContent" hidden>
             <div class="btc-trend-summary">
               <section class="btc-trend-state" id="btcTrendState" aria-labelledby="btcTrendStateHeading">
                 <h3 id="btcTrendStateHeading">规则状态</h3>
                 <strong id="btcTrendStateLabel">—</strong>
+                <p class="btc-trend-action" id="btcTrendAction"></p>
                 <p id="btcTrendStateSince"></p>
+                <p class="btc-trend-next" id="btcTrendNext"></p>
               </section>
               <div class="btc-trend-metrics" id="btcTrendMetrics"></div>
             </div>
-            <p class="btc-trend-next" id="btcTrendNext"></p>
             <p class="btc-trend-partial" id="btcTrendPartial"></p>
             <div id="btcTrendChartWrap"></div>
             <section class="btc-trend-history-wrap" aria-labelledby="btcTrendHistoryTitle">
               <h3 id="btcTrendHistoryTitle">最近信号</h3>
               <ol class="btc-trend-history" id="btcTrendHistory"></ol>
+              <details class="btc-trend-history-more" id="btcTrendHistoryMoreWrap" hidden>
+                <summary id="btcTrendHistoryMoreSummary">更早的信号</summary>
+                <ol class="btc-trend-history" id="btcTrendHistoryMore"></ol>
+              </details>
             </section>
             <details class="btc-trend-rules">
               <summary>规则与回测依据</summary>
@@ -2559,7 +2562,7 @@
     <script src="take-profit-holdings.js?v=take-profit-holdings-selection-v1"></script>
     <script src="take-profit-panel.js?v=take-profit-holdings-selection-v1"></script>
     <script src="btc-trend-signal.js?v=btc-trend-v1"></script>
-    <script src="btc-trend-panel.js?v=crypto-view-v1"></script>
-    <script src="workspace-navigation.js?v=crypto-view-v1"></script>
+    <script src="btc-trend-panel.js?v=crypto-view-v2"></script>
+    <script src="workspace-navigation.js?v=crypto-view-v2"></script>
   </body>
 </html>
