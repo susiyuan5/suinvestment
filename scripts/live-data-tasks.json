@@ -324,5 +324,20 @@
         "run": "python -m unittest tests.test_btc_weekly\nnode --test tests/btc-trend-signal.test.js"
       }
     ]
+  },
+  "update-tqqq-ma": {
+    "outputs": [
+      "data/tqqq-ma-daily-v1.json"
+    ],
+    "commands": [
+      {
+        "name": "Update SPY and QQQ daily closes",
+        "run": "python scripts/update_tqqq_ma.py"
+      },
+      {
+        "name": "Validate daily snapshot and TQQQ moving-average signal",
+        "run": "python -m unittest tests.test_tqqq_ma\nnode --test tests/tqqq-ma-signal.test.js"
+      }
+    ]
   }
 }
