@@ -5,6 +5,8 @@
   if (!view || !root.BtcTrendSignal) return;
   const DATA_PATH = "data/btc-weekly-v1.json";
   const CHART_WEEKS = 104;
+  const HISTORY_VISIBLE = 3;
+  const HISTORY_TOTAL = 8;
   const byId = (id) => document.getElementById(id);
   const status = byId("btcTrendStatus");
   const refresh = byId("btcTrendRefresh");
@@ -104,6 +106,21 @@
       ? (holding ? "自 " + since + " 周收盘起记为持有" : "自 " + since + " 周收盘起记为空仓")
       : "历史区间内尚无切换";
 
+    // One plain sentence on what the rule asks for this week; never an order.
+    const stale = result.freshness.stale;
+    const justSwitched = since !== null && since === current.weekEnd;
+    const action = byId("btcTrendAction");
+    action.dataset.state = stale ? "stale" : "ready";
+    if (stale) action.textContent = "数据已过期，请先重新读取，暂不据此判断。";
+    else if (justSwitched)
+      action.textContent = holding
+        ? "规则在最新完整周转为持有，按本周执行；是否操作由你自行决定。"
+        : "规则在最新完整周转为空仓，按本周执行；是否操作由你自行决定。";
+    else
+      action.textContent = holding
+        ? "规则未变化：继续记为持有，本周无需调整。"
+        : "规则未变化：继续记为空仓，本周无需调整。";
+
     const metrics = byId("btcTrendMetrics");
     metrics.replaceChildren(
       metric("最新完整周收盘", usd(current.close), "截至 " + current.weekEnd + "（UTC 周日）"),
@@ -135,10 +152,10 @@
 
     byId("btcTrendChartWrap").replaceChildren(renderChart(result.rows));
 
-    const list = byId("btcTrendHistory");
-    const items = result.transitions.slice(-8).reverse();
-    list.replaceChildren(
-      ...items.map((row) => {
+    const items = result.transitions
+      .slice(-HISTORY_TOTAL)
+      .reverse()
+      .map((row) => {
         const item = node("li", "btc-trend-event");
         item.dataset.event = row.event;
         item.append(
@@ -147,8 +164,12 @@
           node("span", "", "收盘 " + usd(row.close) + " · 均线 " + usd(row.ma)),
         );
         return item;
-      }),
-    );
+      });
+    const older = items.slice(HISTORY_VISIBLE);
+    byId("btcTrendHistory").replaceChildren(...items.slice(0, HISTORY_VISIBLE));
+    byId("btcTrendHistoryMore").replaceChildren(...older);
+    byId("btcTrendHistoryMoreWrap").hidden = older.length === 0;
+    byId("btcTrendHistoryMoreSummary").textContent = "更早的信号（" + older.length + " 条）";
 
     const age = result.freshness.ageDays;
     if (result.freshness.stale)
