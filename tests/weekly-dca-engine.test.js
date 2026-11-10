@@ -572,3 +572,35 @@ test('stocks use the Crash allowance left after the index ladder; disabled ladde
   assert.equal(result.decisions.QQQ.crashFundAmount, 0);
   assert.equal(result.plan.plannedCrash, 25);
 });
+
+test('a manual value-trap exemption restores stock Base only, and only for that stock', () => {
+  const run = (drawdown, patch) => {
+    const options = ladderInput(5, drawdown);
+    options.inputs.forEach(row => { row.actionBlocked = true; row.extraBlocked = true; });
+    options.inputs.filter(row => row.symbol === 'NVDA').forEach(row => Object.assign(row, patch));
+    return W.plan(options);
+  };
+  const guarded = run(60, {});
+  assert.equal(guarded.decisions.NVDA.finalAmount, 0, 'without the exemption a 60% drawdown cancels Base');
+  const exempt = run(60, { valueTrapExempt: true });
+  const nvda = exempt.decisions.NVDA;
+  assert.ok(nvda.baseAmount > 0 && nvda.finalAmount === nvda.baseAmount, 'the exemption keeps Base');
+  assert.equal(nvda.extraAmount + nvda.crashFundAmount, 0, 'never Extra or Crash');
+  assert.ok(nvda.reasonCodes.includes('STOCK_BASE_MANUAL_VALUE_TRAP_EXEMPTION'));
+  assert.ok(!nvda.reasonCodes.includes('STOCK_BASE_PRESERVED_PRICE_SIGNAL'));
+  assert.ok(exempt.plan.items.find(row => row.symbol === 'NVDA').reasonCodes.includes('STOCK_BASE_MANUAL_VALUE_TRAP_EXEMPTION'));
+  // Other stocks at the same drawdown stay blocked.
+  for (const [symbol, decision] of Object.entries(exempt.decisions))
+    if (!['NVDA', 'SPY', 'QQQ'].includes(symbol)) assert.equal(decision.finalAmount, guarded.decisions[symbol].finalAmount, symbol);
+  // Below the guard the exemption changes nothing and is not reported.
+  const mild = run(20, { valueTrapExempt: true }).decisions.NVDA;
+  assert.equal(mild.finalAmount, run(20, {}).decisions.NVDA.finalAmount);
+  assert.ok(mild.reasonCodes.includes('STOCK_BASE_PRESERVED_PRICE_SIGNAL'));
+  // Hard blocks and unknown drawdown still win.
+  for (const patch of [{ dataBlocked: true }, { manualBlocked: true }])
+    assert.equal(run(60, { valueTrapExempt: true, ...patch }).decisions.NVDA.finalAmount, 0);
+  assert.equal(run(null, { valueTrapExempt: true }).decisions.NVDA.finalAmount, 0, 'unknown drawdown cannot use the exemption');
+  const panic = ladderInput(5, 60);
+  panic.inputs.forEach(row => { row.actionBlocked = true; row.extraBlocked = true; row.valueTrapExempt = true; row.input.panicActive = true; });
+  assert.equal(W.plan(panic).decisions.NVDA.finalAmount, 0, 'panic mode still stops the buy');
+});

@@ -227,7 +227,11 @@
       && !item.dataBlocked && item.manualBlocked !== true && item.input.panicActive !== true
       && assets.some(asset => asset.symbol === item.symbol && asset.bucket === 'satellite')
       && (stockBase.maxDrawdownPct === null || (item.input.drawdownPct != null && Number.isFinite(Number(item.input.drawdownPct))
-        && Number(item.input.drawdownPct) < stockBase.maxDrawdownPct));
+        && (Number(item.input.drawdownPct) < stockBase.maxDrawdownPct || item.valueTrapExempt === true)));
+    // Owner's explicit per-stock exemption from the value-trap guard: Base only,
+    // never Extra or Crash, and only when the drawdown is known.
+    const exemptionUsed = item => !!stockBase && stockBase.maxDrawdownPct !== null && item.valueTrapExempt === true
+      && Number.isFinite(Number(item.input.drawdownPct)) && Number(item.input.drawdownPct) >= stockBase.maxDrawdownPct;
     const rows = inputs.map((item, i) => {
       const decision = evaluate({ input: { ...item.input, crashFundWeight: deepBase > 0 ? eligible[i] / deepBase : 0 } });
       if (balanced && item.extraBlocked) {
@@ -240,7 +244,7 @@
       } else if (item.actionBlocked && stockBaseAllowed(item)) {
         decision.extraAmount = decision.crashFundAmount = 0;
         decision.finalAmount = decision.baseAmount;
-        decision.reasonCodes.push('STOCK_BASE_PRESERVED_PRICE_SIGNAL');
+        decision.reasonCodes.push(exemptionUsed(item) ? 'STOCK_BASE_MANUAL_VALUE_TRAP_EXEMPTION' : 'STOCK_BASE_PRESERVED_PRICE_SIGNAL');
       } else if (item.actionBlocked) {
         decision.baseAmount = decision.extraAmount = decision.crashFundAmount = decision.finalAmount = 0;
         decision.reasonCodes.push('ACTION_REQUIRES_ZERO_AMOUNT');
@@ -310,7 +314,8 @@
     budget.items.forEach(row => { row.finalAmount = row.decision.finalAmount; });
     core.items.forEach(row => {
       const decision = decisions[row.symbol];
-      if (decision && decision.reasonCodes.includes('STOCK_BASE_PRESERVED_PRICE_SIGNAL') && row.baseAmount > 0 && !row.reasonCodes.includes('STOCK_BASE_PRESERVED_PRICE_SIGNAL')) row.reasonCodes.push('STOCK_BASE_PRESERVED_PRICE_SIGNAL');
+      for (const code of ['STOCK_BASE_PRESERVED_PRICE_SIGNAL', 'STOCK_BASE_MANUAL_VALUE_TRAP_EXEMPTION'])
+        if (decision && decision.reasonCodes.includes(code) && row.baseAmount > 0 && !row.reasonCodes.includes(code)) row.reasonCodes.push(code);
     });
     ladderRows.forEach(row => {
       const decision = decisions[row.symbol];

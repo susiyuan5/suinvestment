@@ -238,8 +238,43 @@ try {
   assert.ok(nvda.reasonCodes.includes('ACTION_REQUIRES_ZERO_AMOUNT'));
   assert.equal(hardPlan.spyRedirected, 0);
   assert.equal(hardPlan.items.find(row => row.symbol === 'SPY').baseAmount, 10);
+  // Manual per-stock exemption from the value-trap guard: offered only on the affected stock, Base only.
+  const exemptKey = 'su-investment-pro:value-trap-exemptions-v1';
+  const trapBox = symbol => hard.page.locator(`#weekly-detail-${symbol} input[data-value-trap-exempt]`);
+  const trapStored = () => hard.page.evaluate(key => localStorage.getItem(key), exemptKey);
+  await hard.page.getByRole('button', { name: 'NVDA 详情' }).click();
+  assert.equal(await trapBox('NVDA').count(), 1);
+  assert.match(await hard.page.locator('#weekly-detail-NVDA .weekly-value-trap-exemption').textContent(), /跌超 35% 暂停基础定投.*NVDA 当前回撤 40\.0%.*Extra＋Crash 仍关闭/);
+  for (const symbol of ['SPY', 'QQQ', 'AAPL']) assert.equal(await trapBox(symbol).count(), 0, symbol + ' is not offered the exemption');
+  hard.page.once('dialog', dialog => dialog.dismiss());
+  await trapBox('NVDA').click();
+  assert.equal(await trapBox('NVDA').isChecked(), false, 'declining the confirmation changes nothing');
+  assert.equal(await trapStored(), null);
+  hard.page.once('dialog', dialog => { assert.match(dialog.message(), /NVDA.*不会下单/); return dialog.accept(); });
+  await trapBox('NVDA').click();
+  await hard.page.waitForFunction(key => localStorage.getItem(key) === '["NVDA"]', exemptKey);
+  const exemptPlan = await plan(hard.page);
+  const exemptNvda = exemptPlan.items.find(row => row.symbol === 'NVDA');
+  assert.ok(exemptNvda.finalAmount > 0 && exemptNvda.finalAmount === exemptNvda.baseAmount, 'exemption restores Base only');
+  assert.equal(Number(exemptNvda.extraAmount || 0) + Number(exemptNvda.crashFundAmount || 0), 0);
+  assert.ok(exemptNvda.reasonCodes.includes('STOCK_BASE_MANUAL_VALUE_TRAP_EXEMPTION'));
+  for (const row of hardPlan.items.filter(item => item.symbol !== 'NVDA'))
+    assert.equal(exemptPlan.items.find(item => item.symbol === row.symbol).finalAmount, row.finalAmount, row.symbol + ' is unchanged by the exemption');
+  const nvdaRow = hard.page.locator('#weeklyDecisionRows tr.weekly-decision-row', { has: hard.page.locator('.weekly-symbol-cell strong', { hasText: /^NVDA$/ }) });
+  assert.equal(await nvdaRow.locator('.weekly-decision-status').textContent(), '基础投入 · 手动豁免');
+  assert.match(await nvdaRow.locator('.weekly-decision-reason').textContent(), /手动豁免.*跌超 35%.*Extra＋Crash 仍关闭/);
+  await fs.mkdir('output/playwright', { recursive: true });
+  await hard.page.locator('#weeklyDecisionPlan').screenshot({ path: 'output/playwright/value-trap-exemption.png' });
+  await hard.page.reload(); await automaticHoldings(hard.page);
+  assert.equal((await plan(hard.page)).items.find(row => row.symbol === 'NVDA').finalAmount, exemptNvda.finalAmount, 'exemption persists across reload');
+  await hard.page.getByRole('button', { name: 'NVDA 详情' }).click();
+  assert.equal(await trapBox('NVDA').isChecked(), true);
+  await trapBox('NVDA').click();
+  await hard.page.waitForFunction(key => localStorage.getItem(key) === '[]', exemptKey);
+  assert.equal((await plan(hard.page)).items.find(row => row.symbol === 'NVDA').finalAmount, 0, 'removing the exemption restores the guard');
   assert.deepEqual(hard.errors, []); await hard.context.close();
   evidence.checks.push('35%+ drawdown hard block survives weekly contribution allocation; blocked cash is not redirected to SPY');
+  evidence.checks.push('manual value-trap exemption restores Base only for the chosen stock, persists, and can be withdrawn');
 
   checkpoint('zero weekly weight');
   const zero = await setup({ weights: { ...weeklyWeights, SPY: 0, QQQ: .35 } });
