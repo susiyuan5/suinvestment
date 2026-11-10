@@ -62,12 +62,18 @@ Sub-periods (rule CAGR vs buy & hold CAGR):
 
 - One data source and one bar alignment. The original report found Yahoo and Kraken differ materially; this was not re-run on Kraken.
 - In-sample: the rule's parameters were chosen on this same history.
-- The fee is a flat percentage per switch. Real costs can vary with order size and volatility, and taxes on each sale are not modelled. The actual Wealthsimple crypto fee was not looked up; pick the tier that matches the account.
+- The fee is a flat percentage per switch. Real costs can vary with order size and volatility, and taxes on each sale are not modelled.
+- Prices are Yahoo BTC-USD; trades on OKX are BTC/USDT, so fills and the weekly close can differ slightly.
 - Cash earns nothing while out of the market.
 - The fixture ends 2026-10-18.
 
+## Which row applies (Su, 2026-11-10)
+
+Su trades BTC on OKX and stays in USDT while the rule is out of the market, so each switch costs only the spot fee. Third-party fee summaries list the OKX regular tier at 0.08% maker / 0.10% taker for BTC/USDT; schedules differ by regional entity and were not read from the account, so confirm on the account's fee page. That puts the cost at the **0.1% row**, the original report's assumption and well below either break-even fee. Fiat on/off-ramp spreads are not incurred per switch and are not modelled.
+
 ## Suggested next steps (not done)
 
-1. Confirm the real per-side cost in the account and read the matching row.
-2. If it is near or above 1%, test ways to switch less often in choppy markets (for example a core holding plus a trend-following portion), judged on both Yahoo and Kraken data.
-3. Add a position-size rule; at any fee the rule still has a drawdown near -57%.
+Cost is not the rule's weak point at this fee level. The open items are:
+
+1. Add a position-size rule; at any fee the rule still has a drawdown near -57%.
+2. Test ways to switch less often in choppy markets (for example a core holding plus a trend-following portion), judged on both Yahoo and Kraken data.
