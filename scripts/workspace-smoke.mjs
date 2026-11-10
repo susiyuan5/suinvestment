@@ -142,7 +142,7 @@ try {
   ]) {
     await page.setViewportSize({ width, height: 900 });
     await page.evaluate((z) => (document.documentElement.style.zoom = z), zoom);
-    for (const route of ["weekly", "holdings", "dip"]) {
+    for (const route of ["weekly", "holdings", "dip", "crypto"]) {
       await nav(route);
       assert.equal(
         await page.evaluate(
@@ -151,7 +151,42 @@ try {
         true,
         `${name}/${route} overflow`,
       );
-      assert.equal(await page.locator(".workspace-nav a:visible").count(), 4);
+      assert.equal(await page.locator(".workspace-nav a:visible").count(), 5);
+      const navLayout = await page.evaluate(() => {
+        const navRect = document
+          .querySelector(".workspace-nav")
+          .getBoundingClientRect();
+        return {
+          left: navRect.left,
+          right: navRect.right,
+          links: [...document.querySelectorAll(".workspace-nav a")].map((a) => {
+            const r = a.getBoundingClientRect();
+            return {
+              label: a.textContent.trim(),
+              left: r.left,
+              right: r.right,
+              top: r.top,
+              bottom: r.bottom,
+              clipped: a.scrollWidth > a.clientWidth + 1,
+            };
+          }),
+        };
+      });
+      navLayout.links.forEach((link, i) => {
+        assert.equal(link.clipped, false, `${name}/${route} nav label ${link.label} overflows its tab`);
+        assert.ok(
+          link.left >= navLayout.left - 1 && link.right <= navLayout.right + 1,
+          `${name}/${route} nav label ${link.label} is clipped by the nav edge`,
+        );
+        for (const other of navLayout.links.slice(i + 1)) {
+          const overlaps =
+            link.left < other.right - 1 &&
+            other.left < link.right - 1 &&
+            link.top < other.bottom - 1 &&
+            other.top < link.bottom - 1;
+          assert.equal(overlaps, false, `${name}/${route} nav labels ${link.label} and ${other.label} overlap`);
+        }
+      });
       await page.screenshot({
         path: `output/playwright/workspace-${name}-${route}.png`,
       });
