@@ -62,6 +62,7 @@ Entry: workspace main nav → `虚拟货币`, below 止盈 (`index.html#crypto`)
 - Logic `btc-trend-signal.js`, panel `btc-trend-panel.js` / `btc-trend-panel.css`, data `data/btc-weekly-v1.json` on the `live-data` branch (task `update-btc-weekly`, workflow `update-btc-weekly.yml`, script `scripts/update_btc_weekly.py`).
 - Design and backtest: [`docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md`](docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md).
 - Fee sensitivity (research only, rule unchanged): [`docs/BTC_TREND_FEE_SENSITIVITY_2026-11-10.md`](docs/BTC_TREND_FEE_SENSITIVITY_2026-11-10.md), script `scripts/btc-trend-fee-sensitivity.mjs`.
+- Core + trend mix and position size (research only, rule unchanged): [`docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md`](docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md), script `scripts/btc-core-trend-research.mjs`.
 
 ## A.3 Weekly history for added stocks
 
