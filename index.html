@@ -39,7 +39,7 @@
   <link rel="stylesheet" href="live-data.css?v=live-data-v1">
     <link href="take-profit-panel.css?v=crypto-view-v2" rel="stylesheet" />
     <link href="btc-trend-panel.css?v=crypto-plan-v1" rel="stylesheet" />
-    <link href="tqqq-ma-panel.css?v=tqqq-ma-v2" rel="stylesheet" />
+    <link href="tqqq-ma-panel.css?v=tqqq-plan-v1" rel="stylesheet" />
   </head>
   <body>
     <div class="app-shell">
@@ -1066,6 +1066,11 @@
               <div class="tqqq-ma-legend"><span class="tqqq-ma-key-spy">SPY</span><span class="tqqq-ma-key-qqq">QQQ</span><span class="tqqq-ma-key-buy">买入线 +4%</span><span class="tqqq-ma-key-sell">卖出线 −3%</span></div>
             </section>
           </div>
+          <section class="tqqq-ma-panel" aria-labelledby="tqqqMaPlanTitle">
+            <h3 id="tqqqMaPlanTitle">仓位上限</h3>
+            <div class="tqqq-ma-plan" id="tqqqMaPlan"></div>
+            <p class="tqqq-ma-note" id="tqqqMaPlanNote"></p>
+          </section>
           <section class="tqqq-ma-panel" aria-labelledby="tqqqMaCalcTitle">
             <h3 id="tqqqMaCalcTitle">手动算一下</h3>
             <p class="tqqq-ma-note">数据没更新时，从行情软件抄四个数进来。只在本页计算，不保存。</p>
@@ -1086,7 +1091,7 @@
               <li>QQQ 高于自身均线 30% 为减半仓价位，高于 40% 为清仓价位；本页只显示这两个价位，不把它们计入买卖状态。</li>
             </ol>
             <p class="tqqq-ma-foot">数据为 Yahoo 的 SPY、QQQ 日线收盘价（未复权），不是实时行情。这是按规则算出的信号，不是投资建议。</p>
-            <p class="tqqq-ma-foot"><strong>回测（单边 0.1% 成本，信号次日收盘成交）：</strong>2010-02 至 2026-11 规则年化约 31%，最大回撤约 -48%；同期一直持有 TQQQ 年化约 40%，最大回撤约 -82%。把 2000 年起的历史用模拟的三倍 QQQ 补上后，规则年化约 15%，最大回撤约 -86%：2000 年那样从高位快速下跌时，规则来不及离场。阈值在同一段历史中选出，不保证收益；本页不给仓位建议。详见 docs/TQQQ_MA_BACKTEST_2026-11-10.md 与 docs/TQQQ_MA_SIGNAL_2026-11-10.md。</p>
+            <p class="tqqq-ma-foot"><strong>回测（单边 0.1% 成本，信号次日收盘成交）：</strong>2010-02 至 2026-11 规则年化约 31%，最大回撤约 -48%；同期一直持有 TQQQ 年化约 40%，最大回撤约 -82%。把 2000 年起的历史用模拟的三倍 QQQ 补上后，规则年化约 15%，最大回撤约 -86%：2000 年那样从高位快速下跌时，规则来不及离场。阈值在同一段历史中选出，不保证收益。详见 docs/TQQQ_MA_BACKTEST_2026-11-10.md 与 docs/TQQQ_MA_SIGNAL_2026-11-10.md。</p>
           </section>
         </section>
         <section
@@ -2633,8 +2638,8 @@
     <script src="take-profit-panel.js?v=take-profit-holdings-selection-v1"></script>
     <script src="btc-trend-signal.js?v=crypto-plan-v1"></script>
     <script src="btc-trend-panel.js?v=crypto-plan-v1"></script>
-    <script src="tqqq-ma-signal.js?v=tqqq-ma-v1"></script>
-    <script src="tqqq-ma-panel.js?v=tqqq-ma-v1"></script>
+    <script src="tqqq-ma-signal.js?v=tqqq-plan-v1"></script>
+    <script src="tqqq-ma-panel.js?v=tqqq-plan-v1"></script>
     <script src="workspace-navigation.js?v=tqqq-ma-v1"></script>
   </body>
 </html>

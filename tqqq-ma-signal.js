@@ -20,7 +20,35 @@
     staleDays: 4,
     chartDays: 252,
   });
+  // Position cap chosen by Su on 2026-11-10 (manual, never an order).
+  // Basis: docs/TQQQ_MA_BACKTEST_2026-11-10.md
+  const PLAN = Object.freeze({
+    lossLimit: 0.1, // largest loss of total wealth accepted from the TQQQ budget
+    referenceDrawdown: 0.858, // rule's worst drawdown since 2000 (synthetic 3x QQQ before 2010)
+    realDrawdown: 0.481, // rule's worst drawdown on real TQQQ, 2010-02 onwards
+  });
   const DAY_MS = 86400000;
+
+  // Largest TQQQ budget, as a share of total wealth, that keeps a drawdown of
+  // `drawdown` within `lossLimit`. Rounded down to a whole percent.
+  function budgetCap(lossLimit, drawdown) {
+    if (!(Number.isFinite(lossLimit) && lossLimit > 0 && lossLimit <= 1))
+      throw new Error("invalid loss limit");
+    if (!(Number.isFinite(drawdown) && drawdown > 0 && drawdown <= 1))
+      throw new Error("invalid drawdown");
+    return Math.min(1, Math.floor((lossLimit / drawdown) * 100 + 1e-9) / 100);
+  }
+
+  function plan(input) {
+    const p = Object.assign({}, PLAN, input || {});
+    return {
+      lossLimit: p.lossLimit,
+      referenceDrawdown: p.referenceDrawdown,
+      realDrawdown: p.realDrawdown,
+      budgetCap: budgetCap(p.lossLimit, p.referenceDrawdown),
+      realHistoryBudgetCap: budgetCap(p.lossLimit, p.realDrawdown),
+    };
+  }
 
   function options(input) {
     const merged = Object.assign({}, DEFAULTS, input || {});
@@ -167,5 +195,5 @@
     return out;
   }
 
-  return { DEFAULTS, deviation, evaluate, freshness, fromSnapshot, manual, validDays, zone };
+  return { DEFAULTS, PLAN, budgetCap, deviation, evaluate, freshness, fromSnapshot, manual, plan, validDays, zone };
 });

@@ -108,3 +108,21 @@ test("manual check mirrors the rule without assuming a previous state", () => {
   assert.equal(S.manual({ spyClose: 110, spyMa: 100, qqqClose: 97, qqqMa: 100 }).verdict, "sell");
   assert.equal(S.manual({ spyClose: 96.9, spyMa: 100, qqqClose: 110, qqqMa: 100 }).verdict, "sell");
 });
+
+test("position cap: 11% of total wealth from a 10% loss limit", async () => {
+  const plan = S.plan();
+  assert.equal(plan.lossLimit, 0.1);
+  assert.equal(plan.budgetCap, 0.11);
+  assert.equal(plan.realHistoryBudgetCap, 0.2);
+  assert.ok(plan.budgetCap * plan.referenceDrawdown <= plan.lossLimit);
+  assert.equal(S.budgetCap(0.5, 0.25), 1);
+  assert.throws(() => S.budgetCap(0, 0.5));
+  assert.throws(() => S.budgetCap(0.1, 1.5));
+  // The reference drawdowns are the backtest's results.
+  const { buildReport } = await import("../scripts/tqqq-ma-backtest.mjs");
+  const periods = buildReport().periods;
+  const long = periods.find((period) => period.name.startsWith("with synthetic")).rule.maxDrawdown;
+  const real = periods.find((period) => period.name === "real TQQQ").rule.maxDrawdown;
+  assert.ok(Math.abs(Math.abs(long) - S.PLAN.referenceDrawdown) < 0.0005);
+  assert.ok(Math.abs(Math.abs(real) - S.PLAN.realDrawdown) < 0.0005);
+});

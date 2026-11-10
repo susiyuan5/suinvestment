@@ -106,6 +106,10 @@ It helped in 2000 and made almost no difference since 2010, where it applied on 
 
 The view gives no position size. For scale only: if the rest of the portfolio is flat, a 10% loss limit on total wealth corresponds to a TQQQ budget of about 20% of total wealth at the real-history drawdown (-48.1%) and about 11% at the long-window drawdown (-85.8%). Stocks would very likely be falling at the same time, so both are upper bounds.
 
+## Decision and rollout (Su, 2026-11-10)
+
+Su chose a **10% loss limit** on total wealth sized against the long-window drawdown. The TQQQ view now shows a 仓位上限 block: TQQQ budget cap = 10% ÷ 85.8%, rounded down to a whole percent = **11% of total wealth** (11% × 85.8% = 9.4%). The note beside it gives the 20% figure that the real-history drawdown (-48.1%) would allow, and says the cap is separate from the crypto view's cap, so both being hit together would lose more than 10%. Constants live in `PLAN` in `tqqq-ma-signal.js`; a unit test ties them to this backtest's results. The buy/sell rule is unchanged, and the page still reads no account and places no orders.
+
 ## Limitations
 
 - **In-sample.** The thresholds were chosen by someone who could see this history; future results are likely to be weaker.
