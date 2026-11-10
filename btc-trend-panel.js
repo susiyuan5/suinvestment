@@ -29,6 +29,9 @@
       ? (value > 0 ? "+" : "") + value.toFixed(1) + "%"
       : "—";
   }
+  function share(value) {
+    return (Math.round(value * 10000) / 100).toString() + "%";
+  }
   function setStatus(message, state = "ready") {
     status.textContent = message;
     status.dataset.state = state;
@@ -101,9 +104,12 @@
     const since = current.lastTransition ? current.lastTransition.weekEnd : null;
     const card = byId("btcTrendState");
     card.dataset.state = current.state;
-    byId("btcTrendStateLabel").textContent = holding ? "持有" : "空仓";
+    const plan = root.BtcTrendSignal.plan();
+    const core = share(plan.coreShare);
+    const rest = share(1 - plan.coreShare);
+    byId("btcTrendStateLabel").textContent = holding ? "持有 100%" : "仅核心仓 " + core;
     byId("btcTrendStateSince").textContent = since
-      ? (holding ? "自 " + since + " 周收盘起记为持有" : "自 " + since + " 周收盘起记为空仓")
+      ? (holding ? "自 " + since + " 周收盘起记为持有" : "自 " + since + " 周收盘起减至核心仓")
       : "历史区间内尚无切换";
 
     // One plain sentence on what the rule asks for this week; never an order.
@@ -114,12 +120,33 @@
     if (stale) action.textContent = "数据已过期，请先重新读取，暂不据此判断。";
     else if (justSwitched)
       action.textContent = holding
-        ? "规则在最新完整周转为持有，按本周执行；是否操作由你自行决定。"
-        : "规则在最新完整周转为空仓，按本周执行；是否操作由你自行决定。";
+        ? "规则在最新完整周转为持有：按本周执行，把 BTC 预算内的 USDT 换回 BTC（回到 100%）；是否操作由你自行决定。"
+        : "规则在最新完整周转出：按本周执行，把 BTC 减到预算的 " + core + "（核心仓），其余 " + rest + " 换成 USDT；是否操作由你自行决定。";
     else
       action.textContent = holding
-        ? "规则未变化：继续记为持有，本周无需调整。"
-        : "规则未变化：继续记为空仓，本周无需调整。";
+        ? "规则未变化：BTC 预算保持 100% 持有，本周无需调整。"
+        : "规则未变化：只保留 " + core + " 核心仓，其余 " + rest + " 留在 USDT，本周无需调整。";
+
+    byId("btcTrendPlan").replaceChildren(
+      metric(
+        "BTC 预算上限",
+        "总资产的 " + share(plan.budgetCap),
+        "总资产最多亏 " + share(plan.lossLimit) + " ÷ 历史最大回撤 " + share(plan.referenceDrawdown) + "，向下取整",
+      ),
+      metric(
+        "规则持有时",
+        "BTC 约占总资产 " + share(plan.wealthShare.holding),
+        "预算全部为 BTC",
+      ),
+      metric(
+        "规则转出时",
+        "BTC 约占总资产 " + share(plan.wealthShare.cash),
+        "保留 " + core + " 核心仓，其余为 USDT",
+      ),
+    );
+    byId("btcTrendPlanNote").textContent =
+      "上限按周收盘的历史最坏情况反推，未来回撤可能更深；按 " + share(root.BtcTrendSignal.PLAN.conservativeDrawdown) +
+      " 回撤保守估算约为总资产的 " + share(plan.conservativeBudgetCap) + "。本页不读取你的账户，比例需自行核对。";
 
     const metrics = byId("btcTrendMetrics");
     metrics.replaceChildren(
@@ -136,7 +163,7 @@
     const nextText = byId("btcTrendNext");
     if (next.kind === "exit-watch") {
       nextText.textContent =
-        "下一个完整周收盘若低于 " + usd(next.price) + "（届时也会低于更新后的 20 周均线），规则将转为空仓。";
+        "下一个完整周收盘若低于 " + usd(next.price) + "（届时也会低于更新后的 20 周均线），规则将减至 " + core + " 核心仓。";
     } else if (next.weeksNeeded > 1) {
       nextText.textContent =
         "需要连续 " + next.weeksNeeded + " 个完整周收盘高于 20 周均线才转为持有；下一周的门槛约为 " + usd(next.price) + "。";
@@ -160,7 +187,7 @@
         item.dataset.event = row.event;
         item.append(
           node("span", "", row.weekEnd),
-          node("strong", "", row.event === "enter" ? "转为持有" : "转为空仓"),
+          node("strong", "", row.event === "enter" ? "转为持有" : "减至核心仓"),
           node("span", "", "收盘 " + usd(row.close) + " · 均线 " + usd(row.ma)),
         );
         return item;

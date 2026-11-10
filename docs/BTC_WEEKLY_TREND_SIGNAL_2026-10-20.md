@@ -2,6 +2,8 @@
 
 Research-only, manual decision support. Adds a read-only `虚拟货币` view to the workspace main nav (below 止盈), separate from the stock pools. BTC is not added to the weekly DCA plan, Manual Trade Plan, holdings logic or any broker flow.
 
+> Update 2026-11-10: the signal below is unchanged, but an exit now means cutting BTC to a 25% core of the BTC budget rather than going fully to cash, and the page shows a position cap. See `docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md`. The backtest tables in this file are for the original all-or-nothing rule.
+
 ## Rule
 
 - Weekly bars: UTC Monday–Sunday; weekly close = Sunday UTC daily close (Yahoo `BTC-USD` daily). The in-progress week is shown but never drives the signal.

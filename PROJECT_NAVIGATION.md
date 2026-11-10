@@ -58,11 +58,11 @@ Important warning:
 
 Entry: workspace main nav → `虚拟货币`, below 止盈 (`index.html#crypto`). Separate from the stock DCA, dip and take-profit pools.
 
-- Read-only 20-week MA trend state for BTC (enter after 2 consecutive complete weekly closes above, exit after 1 below). Not part of the weekly DCA plan or Manual Trade Plan; no trade controls.
+- Read-only 20-week MA trend state for BTC (enter after 2 consecutive complete weekly closes above, exit after 1 below). Since 2026-11-10 an exit means cutting to a 25% core of the BTC budget, and the page shows a budget cap of 15% of total wealth (10% loss limit); constants in `PLAN` in `btc-trend-signal.js`. Not part of the weekly DCA plan or Manual Trade Plan; no trade controls.
 - Logic `btc-trend-signal.js`, panel `btc-trend-panel.js` / `btc-trend-panel.css`, data `data/btc-weekly-v1.json` on the `live-data` branch (task `update-btc-weekly`, workflow `update-btc-weekly.yml`, script `scripts/update_btc_weekly.py`).
 - Design and backtest: [`docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md`](docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md).
 - Fee sensitivity (research only, rule unchanged): [`docs/BTC_TREND_FEE_SENSITIVITY_2026-11-10.md`](docs/BTC_TREND_FEE_SENSITIVITY_2026-11-10.md), script `scripts/btc-trend-fee-sensitivity.mjs`.
-- Core + trend mix and position size (research only, rule unchanged): [`docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md`](docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md), script `scripts/btc-core-trend-research.mjs`.
+- Core + trend mix, position size and the 2026-11-10 decision: [`docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md`](docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md), script `scripts/btc-core-trend-research.mjs`.
 
 ## A.3 Weekly history for added stocks
 

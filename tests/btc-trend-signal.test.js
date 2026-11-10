@@ -77,3 +77,34 @@ test("stale snapshot is flagged and wrong schema is refused", () => {
   assert.equal(r.freshness.stale, true);
   assert.throws(() => S.fromSnapshot({ ...fixture, schema: "x" }), /格式不兼容/);
 });
+
+test("position plan: 25% core and a 15% budget cap from a 10% loss limit", () => {
+  assert.equal(S.targetExposure("holding"), 1);
+  assert.equal(S.targetExposure("cash"), 0.25);
+  assert.equal(S.targetExposure("cash", 0), 0);
+  assert.throws(() => S.targetExposure("other"));
+  assert.throws(() => S.targetExposure("cash", 1.2));
+  const plan = S.plan();
+  assert.equal(plan.coreShare, 0.25);
+  assert.equal(plan.lossLimit, 0.1);
+  assert.equal(plan.budgetCap, 0.15);
+  assert.equal(plan.conservativeBudgetCap, 0.14);
+  assert.equal(plan.wealthShare.holding, 0.15);
+  assert.ok(Math.abs(plan.wealthShare.cash - 0.0375) < 1e-12);
+  // The cap never lets the reference drawdown exceed the loss limit.
+  assert.ok(plan.budgetCap * plan.referenceDrawdown <= plan.lossLimit);
+});
+
+test("budget cap rounds down and rejects invalid inputs", () => {
+  assert.equal(S.budgetCap(0.1, 0.568), 0.17);
+  assert.equal(S.budgetCap(0.1, 0.5), 0.2);
+  assert.equal(S.budgetCap(0.5, 0.25), 1);
+  assert.throws(() => S.budgetCap(0, 0.5));
+  assert.throws(() => S.budgetCap(0.1, 0));
+});
+
+test("the plan's reference drawdown matches the researched 25% core mix", async () => {
+  const { buildReport } = await import("../scripts/btc-core-trend-research.mjs");
+  const row = buildReport().sizing.find((r) => r.core === S.PLAN.coreShare);
+  assert.ok(Math.abs(Math.abs(row.drawdown) - S.PLAN.referenceDrawdown) < 0.0005);
+});

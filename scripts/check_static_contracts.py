@@ -55,6 +55,8 @@ REQUIRED_IDS = {
     "btcTrendNext",
     "btcTrendHistory",
     "btcTrendAction",
+    "btcTrendPlan",
+    "btcTrendPlanNote",
     "btcTrendHistoryMore",
     "btcTrendHistoryMoreWrap",
 }
