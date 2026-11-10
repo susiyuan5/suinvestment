@@ -228,7 +228,11 @@ try {
     await page.setViewportSize({ width, height: 900 });
     await page.evaluate((zoom) => { document.documentElement.style.zoom = zoom; }, zoom);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, name + " horizontal overflow");
-    assert.equal(await page.locator(".workspace-nav a:visible").count(), 4);
+    assert.deepEqual(
+      await page.locator(".workspace-nav a:visible").evaluateAll((links) => links.map((a) => a.dataset.viewLink)),
+      ["weekly", "holdings", "dip", "take-profit", "crypto"],
+      name + " main navigation links",
+    );
     await page.evaluate(() => window.scrollTo(0,0));
     await page.screenshot({ path: path.join(root, `output/playwright/take-profit-${name}.png`), fullPage: true });
   }
