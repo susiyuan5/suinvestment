@@ -14,7 +14,52 @@
     exitWeeks: 1, // exit after N consecutive closes below the MA
     staleDays: 9, // latest complete week older than this → stale
   });
+  // Position plan chosen by Su on 2026-11-10 (manual, never an order).
+  // Basis: docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md
+  const PLAN = Object.freeze({
+    coreShare: 0.25, // share of the BTC budget that stays in BTC when the rule is out
+    lossLimit: 0.1, // largest loss of total wealth accepted from the BTC budget
+    referenceDrawdown: 0.634, // worst historical drawdown of the 25% core mix (weekly closes)
+    conservativeDrawdown: 0.7, // deeper assumed drawdown shown for comparison
+  });
   const DAY_MS = 86400000;
+
+  // Share of the BTC budget held in BTC for a rule state.
+  function targetExposure(state, coreShare) {
+    const core = coreShare === undefined ? PLAN.coreShare : coreShare;
+    if (!(Number.isFinite(core) && core >= 0 && core <= 1))
+      throw new Error("invalid core share");
+    if (state === "holding") return 1;
+    if (state === "cash") return core;
+    throw new Error("unknown state");
+  }
+
+  // Largest BTC budget, as a share of total wealth, that keeps a drawdown of
+  // `drawdown` within `lossLimit`. Rounded down to a whole percent.
+  function budgetCap(lossLimit, drawdown) {
+    if (!(Number.isFinite(lossLimit) && lossLimit > 0 && lossLimit <= 1))
+      throw new Error("invalid loss limit");
+    if (!(Number.isFinite(drawdown) && drawdown > 0 && drawdown <= 1))
+      throw new Error("invalid drawdown");
+    return Math.min(1, Math.floor((lossLimit / drawdown) * 100 + 1e-9) / 100);
+  }
+
+  function plan(input) {
+    const p = Object.assign({}, PLAN, input || {});
+    const cap = budgetCap(p.lossLimit, p.referenceDrawdown);
+    return {
+      coreShare: p.coreShare,
+      lossLimit: p.lossLimit,
+      referenceDrawdown: p.referenceDrawdown,
+      budgetCap: cap,
+      conservativeBudgetCap: budgetCap(p.lossLimit, p.conservativeDrawdown),
+      // BTC as a share of total wealth at the cap, by rule state.
+      wealthShare: {
+        holding: cap * targetExposure("holding", p.coreShare),
+        cash: cap * targetExposure("cash", p.coreShare),
+      },
+    };
+  }
 
   function options(input) {
     const merged = Object.assign({}, DEFAULTS, input || {});
@@ -155,5 +200,5 @@
     return result;
   }
 
-  return { DEFAULTS, evaluate, freshness, fromSnapshot, validWeeks };
+  return { DEFAULTS, PLAN, evaluate, freshness, fromSnapshot, validWeeks, targetExposure, budgetCap, plan };
 });

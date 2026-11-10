@@ -29,8 +29,16 @@ try {
   // Fresh data: the state card carries the verdict, the weekly instruction and the next trigger.
   const fresh = await open("2026-10-20T12:00:00Z");
   let page = fresh.page;
-  assert.equal(await text(page, "btcTrendStateLabel"), "持有");
-  assert.match(await text(page, "btcTrendAction"), /规则未变化.*持有.*无需调整/);
+  assert.equal(await text(page, "btcTrendStateLabel"), "持有 100%");
+  assert.match(await text(page, "btcTrendAction"), /规则未变化.*100% 持有.*无需调整/);
+  assert.match(await text(page, "btcTrendNext"), /减至 25% 核心仓/);
+  // Position plan: 10% loss limit over the 25% core mix's 63.4% drawdown, rounded down.
+  const planText = await text(page, "btcTrendPlan");
+  assert.match(planText, /BTC 预算上限总资产的 15%/);
+  assert.match(planText, /规则持有时BTC 约占总资产 15%/);
+  assert.match(planText, /规则转出时BTC 约占总资产 3\.75%/);
+  assert.match(await text(page, "btcTrendPlanNote"), /保守估算约为总资产的 14%.*不读取你的账户/);
+  assert.doesNotMatch(await page.locator("#view-crypto").textContent(), /转为空仓|记为空仓/, "no wording implies a full exit");
   assert.equal(await page.locator("#btcTrendAction").getAttribute("data-state"), "ready");
   assert.match(await text(page, "btcTrendNext"), /\$[\d,]+/);
   assert.equal(await page.locator("#btcTrendState #btcTrendNext").count(), 1, "next trigger sits inside the state card");
@@ -51,7 +59,7 @@ try {
   assert.equal(await page.locator("#view-crypto :is(input, select, form)").count(), 0);
   await page.locator("#btcTrendRefresh").click();
   await page.waitForFunction(() => document.querySelector("#btcTrendRefresh").getAttribute("aria-busy") === "false");
-  assert.equal(await text(page, "btcTrendStateLabel"), "持有");
+  assert.equal(await text(page, "btcTrendStateLabel"), "持有 100%");
 
   await fs.mkdir("output/playwright", { recursive: true });
   for (const [name, width, zoom] of [["desktop", 1440, 1], ["mobile", 390, 1], ["zoom", 390, 2]]) {
@@ -88,7 +96,7 @@ try {
       }));
       if (zoom === 1) {
         assert.ok(y.state < 450, "state card is on the first phone screen");
-        assert.ok(y.chart < 1100, "chart starts within the second phone screen");
+        assert.ok(y.chart < 1500, "chart starts within the second phone screen");
       }
     }
     await page.evaluate(() => window.scrollTo(0, 0));

@@ -1,6 +1,6 @@
 # BTC — Core + Trend Mix and Position Size (2026-11-10)
 
-Research only. The live rule (20-week MA, enter after 2 closes above, exit after 1 below), the 虚拟货币 page and all data tasks are **unchanged**. Nothing here is a recommendation to trade; it sizes the trade-offs so Su can decide.
+The research below was done with the live rule unchanged, to size the trade-offs so Su could decide; nothing here is a recommendation to trade. The decision taken afterwards and what was rolled out are recorded at the end.
 
 Context: `docs/BTC_TREND_FEE_SENSITIVITY_2026-11-10.md` found that cost is not the rule's weak point at Su's fee level (OKX, 0.1% per side, staying in USDT when out). The two open items were (1) how large a BTC position a loss limit allows, and (2) whether keeping a permanent core holding reduces the rule's lag in choppy markets.
 
@@ -69,7 +69,11 @@ Reading:
 - Prices are USD pairs; trades on OKX are BTC/USDT.
 - Data ends 2026-10-18 (Yahoo) / 2026-10-21 (Kraken).
 
-## Decisions for Su (nothing implemented)
+## Decision and rollout (Su, 2026-11-10)
 
-1. A loss limit for BTC as a share of total wealth, which fixes the position cap from the table above.
-2. Whether to keep the pure rule or adopt a 25% core. The data supports either; larger cores are hard to justify on it.
+Su chose a **25% core** and a **10% loss limit** on total wealth. Implemented on the 虚拟货币 page as manual guidance only; the page still reads no account and places no orders.
+
+- The 20-week MA signal (enter after 2 closes above, exit after 1 below) is unchanged. What an exit means changed: BTC is cut to 25% of the BTC budget and the rest stays in USDT, instead of going fully to cash.
+- BTC budget cap = 10% ÷ 63.4% (worst historical drawdown of the 25% core mix), rounded down to a whole percent = **15% of total wealth**. That is about 15% of total wealth in BTC while the rule holds and about 3.75% while it is out. The table above shows 16% because it rounds to nearest; the page rounds down so the reference drawdown stays within the limit (15% × 63.4% = 9.5%).
+- At an assumed 70% drawdown the cap would be 14%; the page shows this next to the cap.
+- Constants live in `PLAN` in `btc-trend-signal.js` (`coreShare`, `lossLimit`, `referenceDrawdown`); a unit test ties `referenceDrawdown` to this report's result.
