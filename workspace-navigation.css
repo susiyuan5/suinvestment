@@ -1074,3 +1074,20 @@ body:has(.workspace-sidebar) > #liveDataStatus { order: 1; margin-left: 156px; b
 }
 #weeklyDecisionPlan #refreshBtn { min-width: 106px; white-space: nowrap; }
 #weeklyDecisionPlan #weeklyAddStockBtn { min-width: 100px; }
+
+/* Top tab bar in a very narrow layout (e.g. 390px at 200% zoom, where the bar is
+   ~171 CSS px wide): five equal-width tabs are narrower than "本周操作"/"虚拟货币",
+   so size tabs by their label instead. Page zoom does not change media-query
+   widths, hence a container query. If labels still cannot fit, the nav scrolls
+   inside itself rather than overlapping. */
+@media (max-width: 799px) {
+  .workspace-sidebar { container-type: inline-size; }
+}
+@container (max-width: 295px) {
+  .workspace-sidebar .workspace-nav { gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  /* [data-view-link] outranks the later equal-width rule in take-profit-panel.css. */
+  .workspace-sidebar .workspace-nav a[data-view-link] { flex: 1 0 auto; min-width: auto; padding: 10px 2px; white-space: nowrap; }
+}
+@container (max-width: 195px) {
+  .workspace-sidebar .workspace-nav a[data-view-link] { font-size: 10px; }
+}
