@@ -59,6 +59,18 @@ REQUIRED_IDS = {
     "btcTrendPlanNote",
     "btcTrendHistoryMore",
     "btcTrendHistoryMoreWrap",
+    "tqqqMaStatus",
+    "tqqqMaRefresh",
+    "tqqqMaContent",
+    "tqqqMaVerdict",
+    "tqqqMaVerdictLabel",
+    "tqqqMaVerdictText",
+    "tqqqMaRulers",
+    "tqqqMaLevels",
+    "tqqqMaHeat",
+    "tqqqMaChart",
+    "tqqqMaCalc",
+    "tqqqMaCalcOut",
 }
 REQUIRED_PRE_APP_SCRIPTS = {
     "market-data.js", "market-analysis.js", "signal-engine.js", "portfolio-policy.js",

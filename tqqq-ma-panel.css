@@ -1,0 +1,73 @@
+.tqqq-ma-workspace { container-type: inline-size; color: var(--text); }
+.tqqq-ma-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.tqqq-ma-heading h2 { margin: 0; font-size: 20px; }
+.tqqq-ma-heading p { grid-column: 1 / -1; color: var(--muted); font-size: 13px; line-height: 1.7; margin: 2px 0 0; }
+.tqqq-ma-workspace button { min-height: 44px; padding: 9px 14px; font-size: 13px; touch-action: manipulation; }
+.tqqq-ma-workspace button:disabled { opacity: .5; cursor: not-allowed; }
+.tqqq-ma-workspace button:focus-visible, .tqqq-ma-workspace input:focus-visible, .tqqq-ma-workspace summary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; }
+.tqqq-ma-workspace h3 { font-size: 15px; margin: 0 0 10px; }
+.tqqq-ma-status { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 4px 0 14px; overflow-wrap: anywhere; }
+.tqqq-ma-status[data-state="error"] { color: var(--warning); }
+.tqqq-ma-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 16px; min-width: 0; margin-top: 12px; }
+.tqqq-ma-verdict { margin-top: 0; }
+.tqqq-ma-verdict > span { display: block; color: var(--muted); font-size: 12px; }
+.tqqq-ma-verdict strong { display: block; font-size: 28px; line-height: 1.25; margin: 4px 0; }
+.tqqq-ma-verdict[data-verdict="buy"] strong, .tqqq-ma-verdict[data-verdict="hold"] strong { color: var(--accent); }
+.tqqq-ma-verdict[data-verdict="sell"] strong { color: var(--danger); }
+.tqqq-ma-verdict[data-verdict="wait"] strong, .tqqq-ma-verdict[data-verdict="stale"] strong { color: var(--warning); }
+.tqqq-ma-verdict p { margin: 4px 0 0; font-size: 15px; line-height: 1.6; font-variant-numeric: tabular-nums; }
+.tqqq-ma-ruler { margin: 14px 0 30px; }
+.tqqq-ma-ruler:last-child { margin-bottom: 18px; }
+.tqqq-ma-ruler-head { display: flex; justify-content: space-between; gap: 6px 12px; flex-wrap: wrap; font-size: 13px; margin-bottom: 24px; color: var(--soft); font-variant-numeric: tabular-nums; }
+.tqqq-ma-ruler-head b { color: var(--text); margin-right: 8px; }
+.tqqq-ma-bar { position: relative; height: 12px; border-radius: 6px; background: var(--panel-3); }
+.tqqq-ma-zone { position: absolute; top: 0; bottom: 0; opacity: .28; }
+.tqqq-ma-zone[data-side="sell"] { left: 0; background: var(--danger); border-radius: 6px 0 0 6px; }
+.tqqq-ma-zone[data-side="buy"] { right: 0; background: var(--accent); border-radius: 0 6px 6px 0; }
+.tqqq-ma-tick { position: absolute; top: -4px; bottom: -4px; width: 2px; transform: translateX(-1px); background: var(--muted); }
+.tqqq-ma-tick[data-side="sell"] { background: var(--danger); }
+.tqqq-ma-tick[data-side="buy"] { background: var(--accent); }
+.tqqq-ma-tick span { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font-size: 11px; white-space: nowrap; color: var(--muted); }
+.tqqq-ma-mark { position: absolute; top: -20px; transform: translateX(-50%); font-size: 12px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tqqq-ma-mark::after { content: ""; position: absolute; left: 50%; top: 18px; width: 3px; height: 18px; margin-left: -1.5px; border-radius: 2px; background: currentColor; }
+.tqqq-ma-mark[data-symbol="SPY"], .tqqq-ma-key-spy { color: var(--accent-2); }
+.tqqq-ma-mark[data-symbol="QQQ"], .tqqq-ma-key-qqq { color: var(--warning); }
+.tqqq-ma-scroll { overflow-x: auto; }
+.tqqq-ma-table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 420px; font-variant-numeric: tabular-nums; }
+.tqqq-ma-table th, .tqqq-ma-table td { padding: 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tqqq-ma-table th:first-child, .tqqq-ma-table td:first-child { text-align: left; }
+.tqqq-ma-table thead th { font-weight: 500; color: var(--muted); font-size: 12px; }
+.tqqq-ma-table tbody tr:last-child > * { border-bottom: 0; }
+.tqqq-ma-heat, .tqqq-ma-note, .tqqq-ma-foot { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 10px 0 0; }
+.tqqq-ma-chart-scroll { overflow-x: auto; }
+.tqqq-ma-chart { display: block; width: 100%; height: auto; min-width: 520px; }
+.tqqq-ma-chart text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.tqqq-ma-grid { stroke: var(--line); stroke-width: .6; }
+.tqqq-ma-grid[data-zero] { stroke-width: 1.4; }
+.tqqq-ma-line-buy, .tqqq-ma-line-sell { stroke-width: 1.2; stroke-dasharray: 5 4; }
+.tqqq-ma-line-buy { stroke: var(--accent); }
+.tqqq-ma-line-sell { stroke: var(--danger); }
+.tqqq-ma-line-spy, .tqqq-ma-line-qqq { fill: none; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.tqqq-ma-line-spy { stroke: var(--accent-2); stroke-width: 2; }
+.tqqq-ma-line-qqq { stroke: var(--warning); stroke-width: 1.6; }
+.tqqq-ma-chart .tqqq-ma-end-spy { fill: var(--accent-2); font-weight: 700; }
+.tqqq-ma-chart .tqqq-ma-end-qqq { fill: var(--warning); font-weight: 700; }
+.tqqq-ma-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; color: var(--muted); font-size: 12px; }
+.tqqq-ma-legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; background: currentColor; }
+.tqqq-ma-legend .tqqq-ma-key-buy { color: var(--accent); }
+.tqqq-ma-legend .tqqq-ma-key-sell { color: var(--danger); }
+.tqqq-ma-calc { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.tqqq-ma-calc label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; }
+.tqqq-ma-calc input { font: inherit; font-variant-numeric: tabular-nums; min-height: 44px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); color: var(--text); min-width: 0; width: 100%; }
+.tqqq-ma-calc-out { margin: 12px 0 0; font-size: 14px; line-height: 1.7; color: var(--soft); font-variant-numeric: tabular-nums; }
+.tqqq-ma-rules { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.8; color: var(--soft); }
+@container (max-width: 720px) {
+  .tqqq-ma-calc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tqqq-ma-verdict strong { font-size: 24px; }
+  .tqqq-ma-table { min-width: 0; font-size: 12px; }
+  .tqqq-ma-table th, .tqqq-ma-table td { padding: 8px 3px; }
+  .tqqq-ma-table thead th { white-space: normal; font-size: 11px; }
+}
+@container (max-width: 300px) {
+  .tqqq-ma-calc { grid-template-columns: minmax(0, 1fr); }
+}

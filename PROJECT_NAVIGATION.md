@@ -64,6 +64,15 @@ Entry: workspace main nav → `虚拟货币`, below 止盈 (`index.html#crypto`)
 - Fee sensitivity (research only, rule unchanged): [`docs/BTC_TREND_FEE_SENSITIVITY_2026-11-10.md`](docs/BTC_TREND_FEE_SENSITIVITY_2026-11-10.md), script `scripts/btc-trend-fee-sensitivity.mjs`.
 - Core + trend mix, position size and the 2026-11-10 decision: [`docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md`](docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md), script `scripts/btc-core-trend-research.mjs`.
 
+
+## A.3 TQQQ — 200-Day Moving-Average Signal
+
+Entry: workspace main nav → `TQQQ`, after 虚拟货币 (`index.html#tqqq`). Separate from the stock DCA, dip, take-profit and crypto pools.
+
+- Read-only signal: buy TQQQ when SPY and QQQ both close 4% above their 200-day averages, sell when either closes 3% below; QQQ +30% / +40% overheat levels are shown as prices only. Includes a manual calculator. Not part of the weekly DCA plan or Manual Trade Plan; no trade controls.
+- Logic `tqqq-ma-signal.js`, panel `tqqq-ma-panel.js` / `tqqq-ma-panel.css`, data `data/tqqq-ma-daily-v1.json` on the `live-data` branch (task `update-tqqq-ma`, workflow `update-tqqq-ma.yml`, script `scripts/update_tqqq_ma.py`).
+- Design, data rules and limitations (no backtest yet): [`docs/TQQQ_MA_SIGNAL_2026-11-10.md`](docs/TQQQ_MA_SIGNAL_2026-11-10.md).
+
 ## A.3 Weekly history for added stocks
 
 - `docs/WEEKLY_HISTORY_EXTRA_SYMBOLS_2026-10-28.md`: weekly history for stocks added in the browser (`data/weekly-history-symbols.json`), fixing 「风险未知」.

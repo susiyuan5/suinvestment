@@ -39,6 +39,7 @@
   <link rel="stylesheet" href="live-data.css?v=live-data-v1">
     <link href="take-profit-panel.css?v=crypto-view-v2" rel="stylesheet" />
     <link href="btc-trend-panel.css?v=crypto-plan-v1" rel="stylesheet" />
+    <link href="tqqq-ma-panel.css?v=tqqq-ma-v1" rel="stylesheet" />
   </head>
   <body>
     <div class="app-shell">
@@ -79,7 +80,8 @@
           ><a data-view-link="holdings" href="#holdings">持仓</a
           ><a data-view-link="dip" href="#dip">抄底</a
           ><a data-view-link="take-profit" href="#take-profit">止盈</a
-          ><a data-view-link="crypto" href="#crypto">虚拟货币</a>
+          ><a data-view-link="crypto" href="#crypto">虚拟货币</a
+          ><a data-view-link="tqqq" href="#tqqq">TQQQ</a>
         </nav>
         <div class="sidebar-tools">
           <p class="sidebar-label">研究工具</p>
@@ -1024,6 +1026,67 @@
               <p><strong>局限：</strong>参数与核心仓比例在同一段历史中选出，存在过拟合；核心仓让 2023—2026 震荡期年化从约 22% 提高到约 30%，代价是长期最大回撤加深约 6.5 个点，两套数据对长期年化的影响方向不一致。不保证收益。详见 docs/BTC_CORE_TREND_AND_POSITION_SIZE_2026-11-10.md 与 docs/BTC_WEEKLY_TREND_SIGNAL_2026-10-20.md。</p>
             </details>
           </div>
+        </section>
+        <section
+          aria-labelledby="tqqqMaTitle"
+          class="tqqq-ma-workspace"
+          data-workspace-view="tqqq"
+          hidden=""
+          id="view-tqqq"
+        >
+          <header class="tqqq-ma-heading">
+            <h2 id="tqqqMaTitle" tabindex="-1">TQQQ 均线信号</h2>
+            <button class="secondary-button" id="tqqqMaRefresh" type="button">重新读取</button>
+            <p>SPY 和 QQQ 的收盘价都高于各自 200 日均线 4% 才买入 TQQQ，任何一个低于均线 3% 就全部卖出，两线之间不操作。独立于股票定投、抄底、止盈和虚拟货币资金，仅作参考，不会下单。</p>
+          </header>
+          <p class="tqqq-ma-status" id="tqqqMaStatus" role="status" aria-live="polite">进入后读取 SPY、QQQ 日线数据。</p>
+          <div id="tqqqMaContent" hidden>
+            <section class="tqqq-ma-panel tqqq-ma-verdict" id="tqqqMaVerdict" aria-labelledby="tqqqMaVerdictHeading">
+              <span id="tqqqMaVerdictHeading">最新收盘后的结论</span>
+              <strong id="tqqqMaVerdictLabel">—</strong>
+              <p id="tqqqMaVerdictText"></p>
+            </section>
+            <section class="tqqq-ma-panel" aria-labelledby="tqqqMaRulersTitle">
+              <h3 id="tqqqMaRulersTitle">收盘价相对 200 日均线的位置</h3>
+              <div id="tqqqMaRulers"></div>
+            </section>
+            <section class="tqqq-ma-panel" aria-labelledby="tqqqMaLevelsTitle">
+              <h3 id="tqqqMaLevelsTitle">关键价位</h3>
+              <div class="tqqq-ma-scroll" tabindex="0" role="region" aria-labelledby="tqqqMaLevelsTitle">
+                <table class="tqqq-ma-table">
+                  <thead><tr><th scope="col">标的</th><th scope="col">收盘</th><th scope="col">200 日均线</th><th scope="col">卖出线 −3%</th><th scope="col">买入线 +4%</th></tr></thead>
+                  <tbody id="tqqqMaLevels"></tbody>
+                </table>
+              </div>
+              <p class="tqqq-ma-heat" id="tqqqMaHeat"></p>
+            </section>
+            <section class="tqqq-ma-panel" aria-labelledby="tqqqMaChartTitle">
+              <h3 id="tqqqMaChartTitle">近一年：相对 200 日均线的偏离（%）</h3>
+              <div class="tqqq-ma-chart-scroll" id="tqqqMaChart" tabindex="0" role="region" aria-labelledby="tqqqMaChartTitle"></div>
+              <div class="tqqq-ma-legend"><span class="tqqq-ma-key-spy">SPY</span><span class="tqqq-ma-key-qqq">QQQ</span><span class="tqqq-ma-key-buy">买入线 +4%</span><span class="tqqq-ma-key-sell">卖出线 −3%</span></div>
+            </section>
+          </div>
+          <section class="tqqq-ma-panel" aria-labelledby="tqqqMaCalcTitle">
+            <h3 id="tqqqMaCalcTitle">手动算一下</h3>
+            <p class="tqqq-ma-note">数据没更新时，从行情软件抄四个数进来。只在本页计算，不保存。</p>
+            <form class="tqqq-ma-calc" id="tqqqMaCalc">
+              <label for="tqqqMaSpyClose">SPY 收盘<input id="tqqqMaSpyClose" inputmode="decimal" autocomplete="off" /></label>
+              <label for="tqqqMaSpyMa">SPY 200 日均线<input id="tqqqMaSpyMa" inputmode="decimal" autocomplete="off" /></label>
+              <label for="tqqqMaQqqClose">QQQ 收盘<input id="tqqqMaQqqClose" inputmode="decimal" autocomplete="off" /></label>
+              <label for="tqqqMaQqqMa">QQQ 200 日均线<input id="tqqqMaQqqMa" inputmode="decimal" autocomplete="off" /></label>
+            </form>
+            <p class="tqqq-ma-calc-out" id="tqqqMaCalcOut" role="status" aria-live="polite"></p>
+          </section>
+          <section class="tqqq-ma-panel" aria-labelledby="tqqqMaRulesTitle">
+            <h3 id="tqqqMaRulesTitle">规则</h3>
+            <ol class="tqqq-ma-rules">
+              <li>每天收盘后看一次。出现信号，下一个交易日执行。</li>
+              <li>SPY 和 QQQ 的收盘价都高于各自 200 日均线 4% 才买入 TQQQ；任何一个低于均线 3% 就全部卖出。</li>
+              <li>在两条线之间不操作，保持上一次信号后的状态。</li>
+              <li>QQQ 高于自身均线 30% 为减半仓价位，高于 40% 为清仓价位；本页只显示这两个价位，不把它们计入买卖状态。</li>
+            </ol>
+            <p class="tqqq-ma-foot">数据为 Yahoo 的 SPY、QQQ 日线收盘价（未复权），不是实时行情。这是按规则算出的信号，不是投资建议；本规则尚未在本项目内做回测。详见 docs/TQQQ_MA_SIGNAL_2026-11-10.md。</p>
+          </section>
         </section>
         <section
           aria-label="盯盘"
@@ -2521,7 +2584,7 @@
         </details>
       </article>
     </template>
-    <script src="live-data.js?v=btc-trend-v1"></script>
+    <script src="live-data.js?v=tqqq-ma-v1"></script>
     <script src="phase2-template-compat.js?v=phase3-portfolio-risk"></script>
     <script src="dca-policy.js?v=weekly-contribution-v1"></script>
     <script src="market-calendar.js?v=us-sessions-v1"></script>
@@ -2569,6 +2632,8 @@
     <script src="take-profit-panel.js?v=take-profit-holdings-selection-v1"></script>
     <script src="btc-trend-signal.js?v=crypto-plan-v1"></script>
     <script src="btc-trend-panel.js?v=crypto-plan-v1"></script>
-    <script src="workspace-navigation.js?v=crypto-view-v2"></script>
+    <script src="tqqq-ma-signal.js?v=tqqq-ma-v1"></script>
+    <script src="tqqq-ma-panel.js?v=tqqq-ma-v1"></script>
+    <script src="workspace-navigation.js?v=tqqq-ma-v1"></script>
   </body>
 </html>

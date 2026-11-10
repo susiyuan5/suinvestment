@@ -230,7 +230,7 @@ try {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, name + " horizontal overflow");
     assert.deepEqual(
       await page.locator(".workspace-nav a:visible").evaluateAll((links) => links.map((a) => a.dataset.viewLink)),
-      ["weekly", "holdings", "dip", "take-profit", "crypto"],
+      ["weekly", "holdings", "dip", "take-profit", "crypto", "tqqq"],
       name + " main navigation links",
     );
     await page.evaluate(() => window.scrollTo(0,0));

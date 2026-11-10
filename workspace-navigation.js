@@ -10,6 +10,7 @@
     "tools-research",
     "tools-data",
     "crypto",
+    "tqqq",
   ];
   const byId = (id) => document.getElementById(id),
     menu = byId("moreTools");

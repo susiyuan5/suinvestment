@@ -107,6 +107,7 @@ try {
     ["research-panel", "tools-research"],
     ["dataQualityPanel", "tools-data", "dataQualityPanel"],
     ["btcTrendHistory", "crypto"],
+    ["tqqqMaCalc", "tqqq"],
   ]) {
     await page.evaluate((h) => {
       location.hash = h;
@@ -142,7 +143,7 @@ try {
   ]) {
     await page.setViewportSize({ width, height: 900 });
     await page.evaluate((z) => (document.documentElement.style.zoom = z), zoom);
-    for (const route of ["weekly", "holdings", "dip", "crypto"]) {
+    for (const route of ["weekly", "holdings", "dip", "crypto", "tqqq"]) {
       await nav(route);
       assert.equal(
         await page.evaluate(
@@ -151,12 +152,12 @@ try {
         true,
         `${name}/${route} overflow`,
       );
-      // Main nav: 本周操作 / 持仓 / 抄底 / 止盈 / 虚拟货币 stay visible at every size.
+      // Main nav: 本周操作 / 持仓 / 抄底 / 止盈 / 虚拟货币 / TQQQ stay visible at every size.
       assert.deepEqual(
         await page
           .locator(".workspace-nav a:visible")
           .evaluateAll((links) => links.map((a) => a.dataset.viewLink)),
-        ["weekly", "holdings", "dip", "take-profit", "crypto"],
+        ["weekly", "holdings", "dip", "take-profit", "crypto", "tqqq"],
         `${name}/${route} main navigation links`,
       );
       if (route === "weekly") {
