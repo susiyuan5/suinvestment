@@ -267,9 +267,9 @@
       Math.max(0, Number(options.budget.crashFund) * weeklyReleasePct - money(options.budget.weekCrashUsed)))) : budget.crashFundRemaining;
     if (funding) funding.crashLimit = crashLimit;
     let indexCrashEnhancements;
+    const indexBase = ladderRows.reduce((sum, row) => sum + row.base, 0);
     if (ladder) {
       // Split by each index's Base share; index claims are funded before satellites.
-      const indexBase = ladderRows.reduce((sum, row) => sum + row.base, 0);
       activeLadder.forEach(row => {
         row.claim = Math.floor(crashLimit * row.tier.crashReleaseFactor * row.base / indexBase * 100 + 1e-7) / 100;
       });
@@ -327,8 +327,13 @@
       });
     });
     core.funding = funding;
-    core.indexLadder = ladder ? { weeklyReleasePct, rows: ladderRows.map(row => ({ symbol: row.symbol, drawdownPct: row.drawdownPct,
-      tierMinDrawdownPct: row.tier ? row.tier.minDrawdownPct : null, plannedCrash: row.claim, reasonCodes: row.reasons })) } : null;
+    // crashLimit is this week's shared allowance; plannedCrash is each row's claim, fundedCrash what the core plan finally kept.
+    core.indexLadder = ladder ? { weeklyReleasePct, crashLimit,
+      tiers: ladder.tiers.slice().reverse().map(tier => ({ ...tier })),
+      rows: ladderRows.map(row => ({ symbol: row.symbol, drawdownPct: row.drawdownPct,
+        tierMinDrawdownPct: row.tier ? row.tier.minDrawdownPct : null, releaseFactor: row.tier ? row.tier.crashReleaseFactor : 0,
+        baseShare: indexBase > 0 ? row.base / indexBase : 0, plannedCrash: row.claim,
+        fundedCrash: decisions[row.symbol] ? money(decisions[row.symbol].crashFundAmount) : 0, reasonCodes: row.reasons })) } : null;
     return { plan: core, decisions, policyState: state, budgetReport: { ...budget, funding,
       plannedNormal: core.plannedNormal, plannedCrash: core.plannedCrash, plannedOptional: core.plannedOptional,
       portfolioCashCap: core.portfolioCashCap, optionalCashCap: core.optionalCashCap, totalPlanned: core.totalPlanned,

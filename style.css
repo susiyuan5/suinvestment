@@ -5214,3 +5214,28 @@ h2 {
   .weekly-decision-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .weekly-decision-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Index drawdown ladder panel (workspace, display only) */
+.index-ladder-panel { margin-top: 1rem; padding: .85rem 1rem; border: 1px solid var(--line); border-radius: .6rem; background: var(--panel-2); }
+.index-ladder-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .25rem 1rem; }
+.index-ladder-heading h3 { margin: 0; font-size: 1rem; }
+.index-ladder-heading span, .index-ladder-note { color: var(--muted); font-size: .82rem; }
+.index-ladder-heading strong { color: var(--text); }
+.index-ladder-rows { display: grid; gap: .75rem; margin-top: .75rem; }
+.index-ladder-row { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: .25rem .85rem; align-items: start; }
+.index-ladder-row p { margin: 0; font-size: .85rem; overflow-wrap: anywhere; }
+.index-ladder-status { color: var(--text); }
+.index-ladder-next { color: var(--muted); }
+.index-ladder-amount { font-size: .85rem; color: var(--muted); white-space: nowrap; }
+.index-ladder-row[data-state="active"] .index-ladder-amount { color: var(--accent); font-weight: 600; }
+.index-ladder-row[data-state="blocked"] .index-ladder-next { color: var(--warning); }
+.index-ladder-scale { position: relative; height: .4rem; margin: .45rem 0 1.25rem; border-radius: .2rem; background: var(--line); }
+.index-ladder-fill { position: absolute; inset: 0 auto 0 0; border-radius: .2rem; background: var(--accent-2); }
+.index-ladder-row[data-state="active"] .index-ladder-fill { background: var(--accent); }
+.index-ladder-tick { position: absolute; top: -.2rem; bottom: -.2rem; width: 2px; margin-left: -1px; background: var(--muted); z-index: 1;
+  font-style: normal; font-size: .7rem; line-height: 1; color: var(--muted); text-indent: -.6rem; padding-top: .95rem; white-space: nowrap; }
+.index-ladder-note { margin: .25rem 0 0; }
+@media (max-width: 560px) {
+  .index-ladder-row { grid-template-columns: 3rem minmax(0, 1fr); }
+  .index-ladder-amount { grid-column: 2; }
+}

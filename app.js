@@ -5985,6 +5985,43 @@ function equalizeAllocations() {
     }
   }
 
+  // Shows where SPY/QQQ sit on the drawdown ladder. Display only: every number comes from the plan.
+  function renderIndexLadder(plan) {
+    const panel = document.getElementById("indexLadderPanel"), rowsEl = document.getElementById("indexLadderRows");
+    const limitEl = document.getElementById("indexLadderLimit"), noteEl = document.getElementById("indexLadderNote");
+    if (!panel || !rowsEl || !limitEl || !noteEl || !window.IndexLadderView) return;
+    const signals = window.__SUINVESTMENT_SIGNALS__ || [], prices = {}, amounts = {};
+    signals.forEach(function (signal) { prices[signal.symbol] = Number(signal.latest_price); });
+    (plan && plan.items || []).forEach(function (row) { amounts[row.symbol] = Number(row.crashFundEnhancement || 0); });
+    const view = window.IndexLadderView.model({ ladder: plan && plan.indexLadder, safe: Boolean(plan && plan.safe === true), prices: prices, amounts: amounts });
+    panel.hidden = !view.available;
+    if (!view.available) return;
+    limitEl.textContent = formatCurrency(view.weeklyLimit);
+    rowsEl.innerHTML = "";
+    view.rows.forEach(function (row) {
+      const item = document.createElement("div");
+      item.className = "index-ladder-row"; item.dataset.symbol = row.symbol; item.dataset.state = row.state;
+      item.innerHTML = '<strong class="index-ladder-symbol"></strong><div class="index-ladder-body"><p class="index-ladder-status"></p><div class="index-ladder-scale" aria-hidden="true"></div><p class="index-ladder-next"></p></div><span class="index-ladder-amount"></span>';
+      item.querySelector(".index-ladder-symbol").textContent = row.symbol;
+      item.querySelector(".index-ladder-status").textContent = row.status;
+      item.querySelector(".index-ladder-next").textContent = [row.note, row.nextText].filter(Boolean).join(" · ");
+      item.querySelector(".index-ladder-amount").textContent = "本周加仓 " + formatCurrency(row.amount);
+      const scale = item.querySelector(".index-ladder-scale");
+      view.tiers.forEach(function (tier) {
+        const tick = document.createElement("i"); tick.className = "index-ladder-tick"; tick.style.left = tier.markerPct + "%";
+        tick.textContent = tier.minDrawdownPct + "%"; scale.appendChild(tick);
+      });
+      if (row.markerPct !== null) {
+        const fill = document.createElement("i"); fill.className = "index-ladder-fill"; fill.style.width = row.markerPct + "%"; scale.appendChild(fill);
+      }
+      rowsEl.appendChild(item);
+    });
+    noteEl.textContent = "规则：" + view.tiers.map(function (tier, index) {
+      const sameAsPrevious = index > 0 && view.tiers[index - 1].releaseFactor === tier.releaseFactor;
+      return "跌 " + tier.minDrawdownPct + "% " + (sameAsPrevious ? "起每周额度提高到暴跌备用金的 " + Math.round(tier.weeklyReleasePct * 100) + "%" : "起领取本周额度的 " + Math.round(tier.releaseFactor * 100) + "%");
+    }).join("；") + "。按各指数自己离 52 周高点的回撤计算，SPY 与 QQQ 按基础定投比例分这笔额度；金额从暴跌备用金出，仍需人工核对后手动买入。";
+  }
+
   function coreSatelliteReason(row) {
     const codes = row && Array.isArray(row.reasonCodes) ? row.reasonCodes : [];
     if (codes.indexOf("ETF_LOOKTHROUGH_LIMIT") >= 0) return "穿透后超过单股上限，请人工调整；金额保留为现金，不转入 SPY";
@@ -6073,6 +6110,7 @@ function equalizeAllocations() {
     if (weeklyTechnologyTotalEl) weeklyTechnologyTotalEl.textContent = formatCurrency(techTotal);
     if (weeklySpyRedirectEl) weeklySpyRedirectEl.textContent = formatCurrency(plan && plan.spyRedirected || 0);
     if (weeklyRiskCashEl) weeklyRiskCashEl.textContent = formatCurrency(plan && plan.cashRetained || 0);
+    renderIndexLadder(plan);
     const safetyReasons = getSafetyGateReasons(plan, portfolioRisk, window.__SUINVESTMENT_SIGNALS__ || []);
     state.safetyGateReasons = safetyReasons;
     const cashNotice = portfolioRisk && !portfolioRisk.available_cash_provided ? "未填写可用现金，未应用现金上限，请人工核对。" : "";

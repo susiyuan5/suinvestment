@@ -572,3 +572,14 @@ test('stocks use the Crash allowance left after the index ladder; disabled ladde
   assert.equal(result.decisions.QQQ.crashFundAmount, 0);
   assert.equal(result.plan.plannedCrash, 25);
 });
+
+test('plan reports the ladder tiers, weekly allowance and funded amounts for the workspace panel', () => {
+  const ladder = W.plan(ladderInput(15)).plan.indexLadder;
+  assert.equal(ladder.crashLimit, 25);
+  assert.deepEqual(ladder.tiers.map(tier => tier.minDrawdownPct), [10, 20, 35]);
+  const spy = ladder.rows.find(row => row.symbol === 'SPY'), qqq = ladder.rows.find(row => row.symbol === 'QQQ');
+  assert.equal(spy.releaseFactor, 0.5);
+  assert.equal(spy.plannedCrash, spy.fundedCrash);
+  assert.equal(Math.round((spy.plannedCrash + qqq.plannedCrash) * 100) / 100, 12.5);
+  assert.ok(Math.abs(spy.baseShare + qqq.baseShare - 1) < 1e-9);
+});
