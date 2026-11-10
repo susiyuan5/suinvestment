@@ -1077,3 +1077,12 @@ body:has(.workspace-sidebar) > #liveDataStatus { order: 1; margin-left: 156px; b
 #weeklyDecisionPlan #weeklyAddStockBtn { min-width: 100px; }
 /* Headings receive programmatic focus on view change so screen readers announce the view; no visible ring is needed on non-interactive text. */
 #workspaceViews h2[tabindex="-1"]:focus { outline: none; }
+/* Weekly plan: the buy/pause verdict leads the plan, ahead of the editing tools. */
+#weeklyDecisionPlan .weekly-decision-safety { margin-top: 2px; }
+#weeklyDecisionPlan .weekly-allocation-help { margin-top: 8px; }
+@media (max-width: 799px) {
+  /* Phone rows: suggested amount shares the price line instead of taking its own row. */
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td.weekly-decision-final { grid-area: 2 / 2; align-self: end; justify-self: end; text-align: right; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td.weekly-decision-edit { grid-area: 3 / 1; }
+  #weeklyDecisionPlan #weeklyDecisionRows .weekly-decision-row > td.weekly-row-actions { grid-area: 3 / 2; }
+}
