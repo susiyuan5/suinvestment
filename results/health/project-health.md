@@ -1,7 +1,7 @@
 # Project Health
 
 - Status: **HEALTHY**
-- Generated: `2026-11-10T20:36:34.658179+00:00`
+- Generated: `2026-11-12T21:06:04.580634+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
@@ -10,8 +10,8 @@
 
 ## Historical Coverage
 
-- QQQ: 284 rows; latest `2026-11-06`; lag `4` days
-- SPY: 284 rows; latest `2026-11-06`; lag `4` days
+- QQQ: 285 rows; latest `2026-11-10`; lag `2` days
+- SPY: 285 rows; latest `2026-11-10`; lag `2` days
 
 ## Workflows
 
@@ -53,8 +53,8 @@
 ## Research Pipeline
 
 - DCA-L2 v2 valid: `True`
-- Schedule events: `283`
-- Executed trades: `5094`
+- Schedule events: `284`
+- Executed trades: `5112`
 - Scope: `research_only`
 
 ## Idea Engine
@@ -81,7 +81,7 @@
 - Schema: `short-term-trade-plan-v1.3`
 - Style fusion: `global-style-fusion-v1.3`
 - Candidates / strategies: `10` / `30`
-- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 0, 'waiting_trigger': 0, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 10}`
+- Status counts: `{'conditional_review': 0, 'manual_review_ready': 0, 'simulation_only': 0, 'waiting_trigger': 10, 'waiting_breakout': 0, 'waiting_pullback': 0, 'chase_blocked': 0, 'event_blocked': 0, 'invalidated': 0, 'blocked': 0}`
 - Historical OOS: `preliminary_no_reliable_edge` / samples `173` / passed models `[]`
 - Shadow preliminary / formal review: `False` / `False`
 - Scope: research-only simulation; no orders or automatic trading.
