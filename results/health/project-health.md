@@ -1,17 +1,17 @@
 # Project Health
 
-- Status: **HEALTHY**
-- Generated: `2026-11-16T23:01:48.284560+00:00`
+- Status: **WARNING**
+- Generated: `2026-11-17T21:54:20.181071+00:00`
 - Scope: operational data and workflow health only; this is not strategy validation or trading approval.
 
 ## Issues
 
-- `none`
+- `workflow_idea_engine_update_failure`
 
 ## Historical Coverage
 
-- QQQ: 285 rows; latest `2026-11-13`; lag `3` days
-- SPY: 285 rows; latest `2026-11-13`; lag `3` days
+- QQQ: 285 rows; latest `2026-11-13`; lag `4` days
+- SPY: 285 rows; latest `2026-11-13`; lag `4` days
 
 ## Workflows
 
@@ -20,7 +20,7 @@
 - quality_checks: `completed` / `success`
 - pages_smoke: `completed` / `success`
 - shadow_update: `completed` / `success`
-- idea_engine_update: `completed` / `success`
+- idea_engine_update: `completed` / `failure`
 
 ## Pending Automated Updates
 
